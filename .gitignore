@@ -1,0 +1,23 @@
+# App artifacts
+/_build
+/db
+/deps
+/*.ez
+.elixir_ls
+priv/static
+
+# Generated on crash by the VM
+erl_crash.dump
+
+# Files matching config/*.secret.exs pattern contain sensitive
+# data and you should not commit them into version control.
+#
+# Alternatively, you may comment the line below and commit the
+# secrets files as long as you replace their contents by environment
+# variables.
+/config/*.secret.exs
+
+# JS Assets
+assets/node_modules
+assets/css/app.css
+assets/js/app.js
