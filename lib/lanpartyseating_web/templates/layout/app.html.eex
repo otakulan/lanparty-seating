@@ -23,17 +23,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarResponsive">
           <ul class="navbar-nav ml-auto">
-            <li class="nav-item active">
-              <a class="nav-link" href="#">Assign Seating
-                <span class="sr-only">(current)</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Configure Seating</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Help</a>
-            </li>
+            <%= nav_item path: &page_path/2, conn: @conn, action: :index, text: "Assign Seating" %>
+            <%= nav_item path: &settings_path/2, conn: @conn, action: :index, text: "Configure Seating" %>
+            <%= nav_item path: &help_path/2, conn: @conn, action: :index, text: "Help" %>
           </ul>
         </div>
       </div>

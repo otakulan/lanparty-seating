@@ -17,6 +17,8 @@ defmodule LanpartyseatingWeb.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
+    get "/settings", SettingsController, :index
+    get "/help", HelpController, :index
   end
 
   # Other scopes may use custom stacks.
