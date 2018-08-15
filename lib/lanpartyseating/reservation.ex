@@ -16,5 +16,7 @@ defmodule Lanpartyseating.Reservation do
     reservation
     |> cast(attrs, [:UID, :row, :column])
     |> validate_required([:UID, :row, :column])
+    |> validate_number(:row, greater_than: -1)
+    |> validate_number(:column, greater_than: -1)
   end
 end
