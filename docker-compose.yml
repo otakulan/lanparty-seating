@@ -1,6 +1,14 @@
 version: '3.1'
 
 services:
+  lanparty-seating:
+    build:
+      context: .
+    environment:
+      PORT: 4000
+      MIX_ENV: prod
+    ports:
+      - "4000:4000"
 
   db:
     image: postgres
@@ -8,6 +16,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ~/postgresql_lanparty:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgres
