@@ -1,5 +1,7 @@
 defmodule Lanpartyseating.Repo do
-  use Ecto.Repo, otp_app: :lanpartyseating
+  use Ecto.Repo,
+  otp_app: :lanpartyseating,
+  adapter: Ecto.Adapters.Postgres
 
   @doc """
   Dynamically loads the repository url from the

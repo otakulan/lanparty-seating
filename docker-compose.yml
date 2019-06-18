@@ -19,3 +19,4 @@ services:
       - ./db:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lanpartyseating
