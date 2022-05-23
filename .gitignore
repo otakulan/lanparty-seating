@@ -21,3 +21,5 @@ erl_crash.dump
 assets/node_modules
 assets/css/app.css
 assets/js/app.js
+
+.elixir_ls
