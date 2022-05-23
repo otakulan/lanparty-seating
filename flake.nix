@@ -11,9 +11,9 @@
           inherit system;
         };
         inherit (pkgs.lib) optional optionals;
-        erlang = beam.interpreters.erlangR26;
-        elixir = beam.packages.erlangR26.elixir_1_13;
-        nodejs = nodejs-16_x;
+        erlang = pkgs.beam.interpreters.erlangR25;
+        elixir = pkgs.beam.packages.erlangR25.elixir_1_13;
+        nodejs = pkgs.nodejs-16_x;
       in
       {
         devShell = pkgs.mkShell {
