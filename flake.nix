@@ -13,11 +13,12 @@
         inherit (pkgs.lib) optional optionals;
         erlang = pkgs.beam.interpreters.erlangR25;
         elixir = pkgs.beam.packages.erlangR25.elixir_1_13;
+        rebar = pkgs.beam.packages.erlangR25.rebar3;
         nodejs = pkgs.nodejs-16_x;
       in
       {
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [ cacert git erlang elixir cargo nodejs ]
+          buildInputs = with pkgs; [ cacert git erlang elixir rebar cargo nodejs ]
             ++ optional stdenv.isLinux inotify-tools
             ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
             CoreFoundation
