@@ -1,15 +1,29 @@
 defmodule LanpartyseatingWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :lanpartyseating
 
+  # The session will be stored in the cookie and signed,
+  # this means its contents can be read but not tampered with.
+  # Set :encryption_salt if you would also like to encrypt it.
+  @session_options [
+    store: :cookie,
+    key: "_lanpartyseating_key",
+    signing_salt: "F6uh1uE5"
+  ]
+
   socket "/socket", LanpartyseatingWeb.UserSocket,
     websocket: true # or list of options
+
+  socket "/live", Phoenix.LiveView.Socket,
+    websocket: [connect_info: [session: @session_options]]
 
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phoenix.digest
   # when deploying your static files in production.
   plug Plug.Static,
-    at: "/", from: :lanpartyseating, gzip: false,
+    at: "/",
+    from: :lanpartyseating,
+    gzip: false,
     only: ~w(css fonts images js favicon.ico robots.txt)
 
   # Code reloading can be explicitly enabled under the
@@ -18,9 +32,12 @@ defmodule LanpartyseatingWeb.Endpoint do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
+    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :lanpartyseating
   end
 
   plug Plug.Logger
+  plug Plug.RequestId
+  plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
@@ -33,10 +50,7 @@ defmodule LanpartyseatingWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
-  plug Plug.Session,
-    store: :cookie,
-    key: "_lanpartyseating_key",
-    signing_salt: "F6uh1uE5"
+  plug Plug.Session, @session_options
 
   plug LanpartyseatingWeb.Router
 

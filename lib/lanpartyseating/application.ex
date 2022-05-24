@@ -9,11 +9,15 @@ defmodule Lanpartyseating.Application do
     # Define workers and child supervisors to be supervised
     children = [
       # Start the Ecto repository
-      supervisor(Lanpartyseating.Repo, []),
-      # Start the endpoint when the application starts
-      supervisor(LanpartyseatingWeb.Endpoint, []),
-      # Start your own worker by calling: Lanpartyseating.Worker.start_link(arg1, arg2, arg3)
-      # worker(Lanpartyseating.Worker, [arg1, arg2, arg3]),
+      Lanpartyseating.Repo,
+      # Start the Telemetry supervisor
+      LanpartyseatingWeb.Telemetry,
+      # Start the PubSub system
+      {Phoenix.PubSub, name: LanpartyseatingWeb.PubSub},
+      # Start the Endpoint (http/https)
+      LanpartyseatingWeb.Endpoint
+      # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
+      # {Lanpartyseating.Worker, arg}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

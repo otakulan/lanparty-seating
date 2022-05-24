@@ -3,7 +3,16 @@
 #
 # This configuration file is loaded before any dependency and
 # is restricted to this project.
-use Mix.Config
+import Config
+
+# esbuild config
+config :esbuild,
+  version: "0.12.18",
+  default: [
+    args: ~w(js/app.js --bundle --target=es2016 --outdir=../priv/static/js),
+    cd: Path.expand("../assets", __DIR__),
+    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+  ]
 
 # General application configuration
 config :lanpartyseating,
@@ -15,7 +24,8 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
   secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
   render_errors: [view: LanpartyseatingWeb.ErrorView, accepts: ~w(html json)],
   pubsub: [name: Lanpartyseating.PubSub,
-           adapter: Phoenix.PubSub.PG2]
+           adapter: Phoenix.PubSub.PG2],
+  live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"]
 
 # Configures Elixir's Logger
 config :logger, :console,

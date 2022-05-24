@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
@@ -12,13 +12,17 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
   code_reloader: true,
   check_origin: false,
   watchers: [
-    node: [
-      "node_modules/webpack/bin/webpack.js",
-      "--mode",
-      "development",
-      "--watch-stdin",
+    npx: [
+      "tailwindcss",
+      "--input=css/app.css",
+      "--output=../priv/static/css/app.css",
+      "--postcss",
+      "--watch",
       cd: Path.expand("../assets", __DIR__)
-    ]
+    ],
+    # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
+    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch --loader:.woff=file --loader:.woff2=file)]}
+  ]
 
 # ## SSL Support
 #
