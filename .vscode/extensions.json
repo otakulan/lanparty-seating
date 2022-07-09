@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "saratravi.elixir-formatter",
+        "animus-coop.vscode-elixir-mix-formatter",
+        "florinpatrascu.vscode-elixir-snippets",
+        "jakebecker.elixir-ls",
+        "phoenixframework.phoenix",
+        "mkhl.direnv"
+    ]
+}
