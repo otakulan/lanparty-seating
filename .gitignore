@@ -19,8 +19,6 @@ erl_crash.dump
 
 # JS Assets
 assets/node_modules
-assets/css/app.css
-assets/js/app.js
 
 .elixir_ls
 .direnv
