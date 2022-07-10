@@ -13,7 +13,7 @@ defmodule Lanpartyseating.Application do
       # Start the Telemetry supervisor
       LanpartyseatingWeb.Telemetry,
       # Start the PubSub system
-      {Phoenix.PubSub, name: LanpartyseatingWeb.PubSub},
+      {Phoenix.PubSub, [name: Lanpartyseating.PubSub, adapter: Phoenix.PubSub.PG2]},
       # Start the Endpoint (http/https)
       LanpartyseatingWeb.Endpoint
       # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)

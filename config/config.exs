@@ -23,8 +23,7 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
   render_errors: [view: LanpartyseatingWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Lanpartyseating.PubSub,
-           adapter: Phoenix.PubSub.PG2],
+  pubsub_server: Lanpartyseating.PubSub,
   live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"]
 
 # Configures Elixir's Logger
