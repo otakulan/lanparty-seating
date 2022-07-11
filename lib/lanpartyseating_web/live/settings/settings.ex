@@ -14,6 +14,8 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     socket = assign(socket, :temperature, 241)
     socket = assign(socket, :columns, 12)
     socket = assign(socket, :rows, 12)
+    socket = assign(socket, :col_trailing, 1)
+    socket = assign(socket, :row_trailing, 1)
     {:ok, socket}
   end
 
@@ -31,9 +33,36 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     {:noreply, assign(socket, :temperature, 2666)}
   end
 
+  def handle_event("col_trailing", param, socket) do
+
+    bit = String.to_integer(param["col_trailing"])
+
+    cond do
+      bit == 0 -> bit = 1
+      bit != 0 -> bit = 0
+    end
+
+    IO.inspect param
+
+    {:noreply, assign(socket, :col_trailing, bit)}
+  end
+
+  def handle_event("row_trailing", param, socket) do
+
+    bit = String.to_integer(param["row_trailing"])
+
+    if bit == 0 do
+      bit = 1
+    else
+      bit = 0
+    end
+
+    IO.inspect param
+
+    {:noreply, assign(socket, :row_trailing, bit)}
+  end
+
   def handle_event("change_dimensions", params, socket) do
-    IO.inspect(params)
-    #IO.inspect(cols)
     socket = assign(socket, :rows, String.to_integer(params["rows"]))
     socket = assign(socket, :columns, String.to_integer(params["columns"]))
     {:noreply, socket}
