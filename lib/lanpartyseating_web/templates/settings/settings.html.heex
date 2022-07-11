@@ -27,8 +27,8 @@ Configure padding:
   <input type="number" placeholder="Y" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="padding" value="1"/>
 
 
-  <button class="btn btn-sm" phx-click="col_trailing" phx-value-col_trailing={@col_trailing}>⬌ trailing</button>
-  <button class="btn btn-sm" phx-click="row_trailing" phx-value-row_trailing={@row_trailing}>⬍ trailing</button>
+  <button class="btn btn-sm" phx-click="col_trailing">⬌ trailing</button>
+  <button class="btn btn-sm" phx-click="row_trailing">⬍ trailing</button>
 
   <br/><br/>
 
@@ -43,14 +43,12 @@ Lineup configuration:
   <button class="btn btn-sm">⤢ orientation</button>
 
 
-  putain <%= @temperature %>, 
-
   <%= @columns %>,
 
   <%= @rows %>
 
-
-
+  col_trailing: <%= @col_trailing %>
+  row_trailing: <%= @row_trailing %>
 
   <br/><br/>
 
