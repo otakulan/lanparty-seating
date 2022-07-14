@@ -1,0 +1,76 @@
+<div class="jumbotron">
+
+  <h1>User settings</h1>
+
+Configure dimensions:
+
+  <form phx-change="change_dimensions">
+    <input type="number" placeholder="X" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="columns" value={@columns}/>
+    <input type="number" placeholder="Y" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="rows" value={@rows}/>
+  </form>
+
+  <br/>
+  <h1 style="font-size:30px">Cell padding</h1>
+
+Configure padding:
+
+  <form phx-change="change_padding">
+    <input type="number" placeholder="X" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="colpad" value={@colpad}/>
+    <input type="number" placeholder="Y" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="rowpad" value={@rowpad}/>
+  </form>
+
+  <button class="btn btn-sm" phx-click="col_trailing">⬌ trailing</button>
+  <button class="btn btn-sm" phx-click="row_trailing">⬍ trailing</button>
+
+  <br/><br/>
+
+
+Lineup configuration:
+
+  <button class="btn btn-sm" phx-click="number">🡆</button>
+  <button class="btn btn-sm">🡄</button>
+  <button class="btn btn-sm">⬌ even</button>
+  <button class="btn btn-sm">⬌ odd</button>
+  <button class="btn btn-sm">⬍ even</button> 
+  <button class="btn btn-sm">⬍ odd</button>
+  <button class="btn btn-sm">⤢ orientation</button>
+
+
+  <%= @columns %>,
+
+  <%= @rows %>
+
+  col_trailing: <%= @col_trailing %>
+  row_trailing: <%= @row_trailing %>
+
+  col_pad: <%= @colpad %>
+  row_pad: <%= @rowpad %>
+
+  <br/><br/>
+
+
+
+  <h1 style="font-size:30px">Display arrangment</h1>
+
+
+  <div class="flex flex-wrap w-full">
+    <%= for r <- 0..(@rows-1) do %>
+      <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
+      <%= for c <- 0..(@columns-1) do %>
+        <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}  >
+          <button class="btn btn-warning"><%= r * @columns + c + 1 %></button>
+        </div>
+      <%= end %>
+      </div>
+    <%= end %>
+  </div>
+
+
+  <br/><br/>
+
+
+
+  <button class="btn btn-wide">Save layout</button>
+
+
+</div>
