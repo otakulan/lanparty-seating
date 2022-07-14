@@ -1,16 +1,6 @@
 <div class="jumbotron">
-  <h2><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h2>
-  <p class="lead">This is going to be the settings page!</p>
-
 
   <h1>User settings</h1>
-  Number of rows:
-
-  <br/><br/>
-
-
-
-  <br/><br/>
 
 Configure dimensions:
 
@@ -19,18 +9,21 @@ Configure dimensions:
     <input type="number" placeholder="Y" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="rows" value={@rows}/>
   </form>
 
-  <br/><br/>
+  <br/>
+  <h1 style="font-size:30px">Cell padding</h1>
 
 Configure padding:
 
-  <input type="number" placeholder="X" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="padding" value="1"/>
-  <input type="number" placeholder="Y" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="padding" value="1"/>
-
+  <form phx-change="change_padding">
+    <input type="number" placeholder="X" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="colpad" value={@colpad}/>
+    <input type="number" placeholder="Y" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="rowpad" value={@rowpad}/>
+  </form>
 
   <button class="btn btn-sm" phx-click="col_trailing">⬌ trailing</button>
   <button class="btn btn-sm" phx-click="row_trailing">⬍ trailing</button>
 
   <br/><br/>
+
 
 Lineup configuration:
 
@@ -50,16 +43,22 @@ Lineup configuration:
   col_trailing: <%= @col_trailing %>
   row_trailing: <%= @row_trailing %>
 
+  col_pad: <%= @colpad %>
+  row_pad: <%= @rowpad %>
+
   <br/><br/>
 
 
 
+  <h1 style="font-size:30px">Display arrangment</h1>
+
+
   <div class="flex flex-wrap w-full">
     <%= for r <- 0..(@rows-1) do %>
-      <div class={"#{if rem(r,2) == 1, do: "mb-4", else: ""} flex flex-row w-full "}>
+      <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
       <%= for c <- 0..(@columns-1) do %>
-        <div class="flex flex-col h-14 flex-1 grow mx-1"  >
-          <button class="btn btn-warning"><%= (r) * (@columns) + (c) +1 %></button>
+        <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}  >
+          <button class="btn btn-warning"><%= r * @columns + c + 1 %></button>
         </div>
       <%= end %>
       </div>
