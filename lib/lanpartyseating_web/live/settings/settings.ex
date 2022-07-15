@@ -10,6 +10,7 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     |> assign(:row_trailing, 0)
     |> assign(:colpad, 1)
     |> assign(:rowpad, 1)
+    |> assign(:table, Enum.to_list(1..12*12))
     {:ok, socket}
   end
 
@@ -37,6 +38,7 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     socket = socket
     |> assign(:rows, String.to_integer(rows))
     |> assign(:columns, String.to_integer(columns))
+    |> assign(:table, Enum.to_list(1..String.to_integer(rows)*String.to_integer(columns)))
     {:noreply, socket}
   end
 
