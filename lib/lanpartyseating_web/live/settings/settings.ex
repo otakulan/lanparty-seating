@@ -49,4 +49,14 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     {:noreply, socket}
   end
 
+  def handle_event("horizontal_mirror", _params, socket) do
+    table = socket.assigns.table
+    columns = socket.assigns.columns
+    h = socket.assigns.rows
+    w = socket.assigns.columns
+    socket = socket
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> Enum.at(table, trunc(i / columns) * columns + columns - rem(i, columns) - 1) end))
+    {:noreply, socket}
+  end
+
 end
