@@ -85,4 +85,39 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     {:noreply, socket}
   end
 
+  def handle_event("diagonal_mirror", _params, socket) do
+    table = socket.assigns.table
+    h = socket.assigns.rows
+    w = socket.assigns.columns
+    socket = socket
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> Enum.at(table, rem(i, w) * w + trunc(i / w)) end))
+    {:noreply, socket}
+  end
+
+  def handle_event("shift_left", _params, socket) do
+    table = socket.assigns.table
+    h = socket.assigns.rows
+    w = socket.assigns.columns
+    socket = socket
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> Enum.at(table, rem(i + h * w - 1, h * w)) end))
+    {:noreply, socket}
+  end
+
+  def handle_event("shift_right", _params, socket) do
+    table = socket.assigns.table
+    h = socket.assigns.rows
+    w = socket.assigns.columns
+    socket = socket
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> Enum.at(table, rem(i + 1, h * w)) end))
+    {:noreply, socket}
+  end
+
+  def handle_event("reset_grid", _params, socket) do
+    h = socket.assigns.rows
+    w = socket.assigns.columns
+    socket = socket
+    |> assign(:table, Enum.to_list(1..h*w))
+    {:noreply, socket}
+  end
+
 end

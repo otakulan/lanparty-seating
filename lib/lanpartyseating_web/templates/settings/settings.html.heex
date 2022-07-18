@@ -27,34 +27,16 @@ Configure padding:
 
 Lineup configuration:
 
-  <button class="btn btn-sm" phx-click="number">🡆</button>
-  <button class="btn btn-sm">🡄</button>
+  <button class="btn btn-sm" phx-click="shift_left">🡆</button>
+  <button class="btn btn-sm" phx-click="shift_right">🡄</button>
   <button class="btn btn-sm" phx-click="horizontal_mirror_even">⬌ even</button>
   <button class="btn btn-sm" phx-click="horizontal_mirror_odd">⬌ odd</button>
   <button class="btn btn-sm" phx-click="vertical_mirror_even">⬍ even</button>
   <button class="btn btn-sm" phx-click="vertical_mirror_odd">⬍ odd</button>
-  <button class="btn btn-sm">⤢ orientation</button>
-
-
-  <%= @columns %>,
-
-  <%= @rows %>
-
-  col_trailing: <%= @col_trailing %>
-  row_trailing: <%= @row_trailing %>
-
-  col_pad: <%= @colpad %>
-  row_pad: <%= @rowpad %>
-
-  <br/><br/>
-
-Table: 
-  <%= @table |> Enum.at(0) %>  --  <%= length(@table) %>
-
-
+  <button class="btn btn-sm" phx-click="diagonal_mirror">⤢ orientation</button>
+  <button class="btn btn-sm" phx-click="reset_grid">Reset</button>
 
   <h1 style="font-size:30px">Display arrangment</h1>
-
 
   <div class="flex flex-wrap w-full">
     <%= for r <- 0..(@rows-1) do %>
