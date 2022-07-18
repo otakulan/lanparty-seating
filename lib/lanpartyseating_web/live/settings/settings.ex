@@ -51,21 +51,37 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
 
   def handle_event("horizontal_mirror_even", _params, socket) do
     table = socket.assigns.table
-    columns = socket.assigns.columns
     h = socket.assigns.rows
     w = socket.assigns.columns
     socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(trunc(i / columns), 2) == 0 do Enum.at(table, trunc(i / columns) * columns + columns - rem(i, columns) - 1) else Enum.at(table, i) end end))
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(trunc(i / w), 2) == 0 do Enum.at(table, trunc(i / w) * w + w - rem(i, w) - 1) else Enum.at(table, i) end end))
     {:noreply, socket}
   end
 
   def handle_event("horizontal_mirror_odd", _params, socket) do
     table = socket.assigns.table
-    columns = socket.assigns.columns
     h = socket.assigns.rows
     w = socket.assigns.columns
     socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(trunc(i / columns), 2) == 1 do Enum.at(table, trunc(i / columns) * columns + columns - rem(i, columns) - 1) else Enum.at(table, i) end end))
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(trunc(i / w), 2) == 1 do Enum.at(table, trunc(i / w) * w + w - rem(i, w) - 1) else Enum.at(table, i) end end))
+    {:noreply, socket}
+  end
+
+  def handle_event("vertical_mirror_even", _params, socket) do
+    table = socket.assigns.table
+    h = socket.assigns.rows
+    w = socket.assigns.columns
+    socket = socket
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(i, 2) == 0 do Enum.at(table, i-(trunc(i / w) - (w - trunc(i / w) - 1)) * w)  else Enum.at(table, i) end end))
+    {:noreply, socket}
+  end
+
+  def handle_event("vertical_mirror_odd", _params, socket) do
+    table = socket.assigns.table
+    h = socket.assigns.rows
+    w = socket.assigns.columns
+    socket = socket
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(i, 2) == 1 do Enum.at(table, i-(trunc(i / w) - (w - trunc(i / w) - 1)) * w) else Enum.at(table, i) end end))
     {:noreply, socket}
   end
 
