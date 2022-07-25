@@ -1,12 +1,20 @@
-FROM bitwalker/alpine-elixir-phoenix:latest
+FROM alpine
 
 # Set exposed ports
 EXPOSE 4000
 ENV PORT=4000 MIX_ENV=prod
 
+RUN apk add --update-cache \
+    elixir \
+    nodejs \
+    npm \
+  && rm -rf /var/cache/apk/*
+
 # Cache elixir deps
 ADD mix.exs mix.lock ./
-RUN mix do deps.get, deps.compile
+RUN mix local.hex --force \
+  mix local.rebar --force \
+  mix do deps.get, deps.compile
 
 # Same with npm deps
 ADD assets/package.json assets/
@@ -17,7 +25,7 @@ ADD . .
 
 # Run frontend build, compile, and digest assets
 RUN cd assets/ && \
-    npm run deploy && \
+    npm install && \
     cd - && \
     mix do compile, phx.digest
 
