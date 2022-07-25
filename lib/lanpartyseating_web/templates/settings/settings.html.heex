@@ -1,42 +1,61 @@
 <div class="jumbotron">
 
-  <h1>User settings</h1>
-
-Configure dimensions:
+<h1 style="font-size:30px">Grid Size Configuration</h1>
 
   <form phx-change="change_dimensions">
-    <input type="number" placeholder="X" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="columns" value={@columns}/>
-    <input type="number" placeholder="Y" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="rows" value={@rows}/>
+    <input type="number" placeholder="X" min="1" max="15" class="w-16 max-w-xs input input-bordered input-xs" name="columns" value={@columns}/>
+    <input type="number" placeholder="Y" min="1" max="15" class="w-16 max-w-xs input input-bordered input-xs" name="rows" value={@rows}/>
   </form>
 
-  <br/>
-  <h1 style="font-size:30px">Cell padding</h1>
-
-Configure padding:
-
+<h1 style="font-size:30px">Cell Padding Configuration</h1>
   <form phx-change="change_padding">
-    <input type="number" placeholder="X" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="colpad" value={@colpad}/>
-    <input type="number" placeholder="Y" min="1" max="15" class="input input-bordered input-xs w-16 max-w-xs" name="rowpad" value={@rowpad}/>
+    <input type="number" placeholder="X" min="1" max="15" class="w-16 max-w-xs input input-bordered input-xs" name="colpad" value={@colpad}/>
+    <input type="number" placeholder="Y" min="1" max="15" class="w-16 max-w-xs input input-bordered input-xs" name="rowpad" value={@rowpad}/>
   </form>
 
-  <button class="btn btn-sm" phx-click="col_trailing">⬌ trailing</button>
-  <button class="btn btn-sm" phx-click="row_trailing">⬍ trailing</button>
+  <button class="btn btn-sm" phx-click="col_trailing">
+    <IconComponent.double_sided_arrow_horizontal />
+    trailing
+  </button>
+  <button class="btn btn-sm" phx-click="row_trailing">
+    <IconComponent.double_sided_arrow_vertical />
+    trailing
+  </button>
 
-  <br/><br/>
+<h1 style="font-size:30px">Layout Configuration</h1>
 
+<button class="btn btn-sm btn-accent" phx-click="shift_left">
+  <IconComponent.left_arrow />
+</button>
+<button class="btn btn-sm" phx-click="shift_right">
+  <IconComponent.right_arrow />
+</button>
+<button class="btn btn-sm" phx-click="horizontal_mirror_even">
+  <IconComponent.double_sided_arrow_horizontal />
+  even
+</button>
+<button class="btn btn-sm" phx-click="horizontal_mirror_odd">
+  <IconComponent.double_sided_arrow_horizontal />
+  odd
+</button>
+<button class="btn btn-sm" phx-click="vertical_mirror_even">
+  <IconComponent.double_sided_arrow_vertical />
+  even
+</button> 
+<button class="btn btn-sm" phx-click="vertical_mirror_odd">
+  <IconComponent.double_sided_arrow_vertical />
+  odd
+</button>
+<button class="btn btn-sm" phx-click="diagonal_mirror">
+  <IconComponent.refresh />
+  orientation
+</button>
+<button class="btn btn-sm" phx-click="reset_grid">
+  <IconComponent.x />
+  reset
+</button>
 
-Lineup configuration:
-
-  <button class="btn btn-sm" phx-click="shift_left">🡆</button>
-  <button class="btn btn-sm" phx-click="shift_right">🡄</button>
-  <button class="btn btn-sm" phx-click="horizontal_mirror_even">⬌ even</button>
-  <button class="btn btn-sm" phx-click="horizontal_mirror_odd">⬌ odd</button>
-  <button class="btn btn-sm" phx-click="vertical_mirror_even">⬍ even</button>
-  <button class="btn btn-sm" phx-click="vertical_mirror_odd">⬍ odd</button>
-  <button class="btn btn-sm" phx-click="diagonal_mirror">⤢ orientation</button>
-  <button class="btn btn-sm" phx-click="reset_grid">Reset</button>
-
-  <h1 style="font-size:30px">Display arrangment</h1>
+  <h1 style="font-size:30px">Layout Preview</h1>
 
   <div class="flex flex-wrap w-full">
     <%= for r <- 0..(@rows-1) do %>
@@ -45,17 +64,9 @@ Lineup configuration:
         <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}  >
           <button class="btn btn-warning"><%= @table |> Enum.at(r * @columns + c) %></button>
         </div>
-      <%= end %>
+      <% end %>
       </div>
-    <%= end %>
+    <% end %>
   </div>
-
-
-  <br/><br/>
-
-
-
-  <button class="btn btn-wide">Save layout</button>
-
-
+  <button class="btn btn-wide" phx-click="save">Save layout</button>
 </div>

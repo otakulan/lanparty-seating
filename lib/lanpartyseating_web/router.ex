@@ -17,9 +17,13 @@ defmodule LanpartyseatingWeb.Router do
   scope "/", LanpartyseatingWeb do
     pipe_through :browser # Use the default browser stack
 
-    get "/", PageController, :index
-    live "/settings", SettingsControllerLive, :index
-    get "/help", HelpController, :index
+    live_session :nav, on_mount: [
+      LanpartyseatingWeb.Nav
+    ] do
+      live "/", IndexControllerLive, :index
+      live "/settings", SettingsControllerLive, :index
+      live "/display", DisplayControllerLive, :index
+    end
   end
 
   # Other scopes may use custom stacks.

@@ -2,7 +2,6 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
   use Phoenix.LiveView
 
   def mount(_params, _session, socket) do
-    user_id = 1
     socket = socket
     |> assign(:columns, 12)
     |> assign(:rows, 12)
@@ -117,6 +116,12 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     w = socket.assigns.columns
     socket = socket
     |> assign(:table, Enum.to_list(1..h*w))
+    {:noreply, socket}
+  end
+
+  def handle_event("save", _params, socket) do
+    socket = socket
+    |> put_flash(:info, "Welcome Back!")
     {:noreply, socket}
   end
 

@@ -4,4 +4,5 @@ defmodule LanpartyseatingWeb.LayoutView do
   def nav_item(assigns) do
     render "nav_item.html", assigns
   end
+
 end

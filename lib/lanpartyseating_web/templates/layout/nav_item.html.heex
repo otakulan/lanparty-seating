@@ -1,5 +1,0 @@
-<li class={"nav-item" <> if @path.(@conn, @action) === Phoenix.Controller.current_path(@conn), do: " active", else: ""}>
-    <a class="nav-link" href={@path.(@conn, @action)}>
-        <%= @text %>
-    </a>
-</li>
