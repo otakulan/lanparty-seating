@@ -18,6 +18,7 @@
       in
       {
         devShell = pkgs.mkShell {
+          MIX_REBAR3 = "${rebar}/bin/rebar3";
           buildInputs = with pkgs; [ cacert git erlang elixir rebar cargo nodejs ]
             ++ optional stdenv.isLinux inotify-tools
             ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
