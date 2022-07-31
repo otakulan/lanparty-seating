@@ -2,14 +2,15 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
   use Phoenix.LiveView
 
   def mount(_params, _session, socket) do
+    settings = Lanpartyseating.SettingsLogic.get_settings()
     socket = socket
-    |> assign(:columns, 12)
-    |> assign(:rows, 12)
-    |> assign(:col_trailing, 0)
-    |> assign(:row_trailing, 0)
-    |> assign(:colpad, 1)
-    |> assign(:rowpad, 1)
-    |> assign(:table, Enum.to_list(1..12*12))
+    |> assign(:columns, settings.columns)
+    |> assign(:rows, settings.rows)
+    |> assign(:col_trailing, settings.vertical_trailing)
+    |> assign(:row_trailing, settings.horizontal_trailing)
+    |> assign(:colpad, settings.column_padding)
+    |> assign(:rowpad, settings.row_padding)
+    |> assign(:table, Enum.to_list(1..settings.columns*settings.rows))
     {:ok, socket}
   end
 

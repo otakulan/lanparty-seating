@@ -6,10 +6,10 @@ defmodule Lanpartyseating.Setting do
   @foreign_key_type :id
 
   schema "settings" do
-    field :rows, :integer
-    field :columns, :integer
-    field :row_padding, :integer
-    field :column_padding, :integer
+    field :rows, :integer, default: 10
+    field :columns, :integer, default: 4
+    field :row_padding, :integer, default: 1
+    field :column_padding, :integer, default: 1
     field :horizontal_trailing, :integer
     field :vertical_trailing, :integer
     field :deleted_at, :utc_datetime
