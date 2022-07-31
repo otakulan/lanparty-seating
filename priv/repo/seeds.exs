@@ -54,51 +54,11 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
   name: "League of Legends"
 })
 
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-  station_number: 1,
-  display_order: 1,
-  is_closed: false
-})
 
+for val <- 1..225, do:
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-  station_number: 2,
-  display_order: 2,
-  is_closed: false
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-  station_number: 3,
-  display_order: 3,
-  is_closed: false
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-  station_number: 4,
-  display_order: 4,
-  is_closed: false
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-  station_number: 5,
-  display_order: 5,
-  is_closed: false
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-  station_number: 6,
-  display_order: 6,
-  is_closed: false
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-  station_number: 7,
-  display_order: 7,
-  is_closed: false
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-  station_number: 8,
-  display_order: 8,
+  station_number: val,
+  display_order: val,
   is_closed: false
 })
 
