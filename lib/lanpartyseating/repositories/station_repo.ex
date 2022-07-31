@@ -1,6 +1,8 @@
 defmodule Lanpartyseating.Station do
   use Ecto.Schema
   import Ecto.Changeset
+  alias Lanpartyseating.Reservation, as: Reservation
+  alias Lanpartyseating.TournamentReservation, as: TournamentReservation
 
   @primary_key {:id, :id, autogenerate: true}
   @foreign_key_type :id
@@ -11,8 +13,8 @@ defmodule Lanpartyseating.Station do
     field :is_closed, :boolean, default: false
     field :is_displayed, :boolean, default: false
     field :deleted_at, :utc_datetime
-    has_many :reservations, Lanpartyseating.Reservation
-    has_many :tournament_reservations, Lanpartyseating.TournamentReservation
+    has_many :reservations, Reservation
+    has_many :tournament_reservations, TournamentReservation
     timestamps()
   end
 
