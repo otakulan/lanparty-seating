@@ -2,8 +2,8 @@ defmodule Lanpartyseating.Station do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
+  @primary_key {:id, :id, autogenerate: true}
+  @foreign_key_type :id
 
   schema "stations" do
     field :station_number, :integer
@@ -18,9 +18,8 @@ defmodule Lanpartyseating.Station do
   @doc false
   def changeset(reservation, attrs) do
     reservation
-    |> cast(attrs, [:UID, :station_number, :display_order])
-    |> validate_required([:UID, :station_number, :display_order])
+    |> cast(attrs, [:station_number, :display_order, :is_closed, :deleted_at])
+    |> validate_required([:station_number, :display_order])
     |> validate_number(:station_number, greater_than: 0)
-    |> validate_number(:column, greater_than: -1)
   end
 end
