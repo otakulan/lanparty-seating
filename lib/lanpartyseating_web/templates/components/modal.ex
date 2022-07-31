@@ -15,7 +15,7 @@ defmodule ModalComponent do
       assigns.status == "1" ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.number}"} class="btn btn-warning"><%= assigns.number %></label>
+          <label for={"seat-modal-#{assigns.number}"} class="btn btn-info"><%= assigns.number %></label>
 
           <!-- Put this part before </body> tag -->
           <input type="checkbox" id={"seat-modal-#{assigns.number}"} class="modal-toggle" />
@@ -25,12 +25,17 @@ defmodule ModalComponent do
               <h3 class="font-bold text-lg">You have selected seat <%= assigns.number %></h3>
               <p class="py-4">Select the duration of the reservation</p>
 
-              <input type="number" placeholder="Reservation duration" min="15" max="60" class="w-16 max-w-xs input input-bordered input-xs" name="duration" value="45"/> minutes
+              <form phx-submit="reserve_seat">
+                <input type="hidden" name="seat_number" value={"#{assigns.number}"}>
+                <input type="number" placeholder="Reservation duration" min="15" max="60" class="w-16 max-w-xs input input-bordered input-xs" name="duration" value="45"/> minutes
+                <br/><br/>
+                <input type="text" placeholder="Badge number" class="input input-bordered w-full max-w-xs" name="badge_number"/>
 
-              <div class="modal-action">
-                <label for={"seat-modal-#{assigns.number}"} class="btn">Close</label>
-                <label for={"seat-modal-#{assigns.number}"} class="btn">Confirm reservation</label>
-              </div>
+                <div class="modal-action">
+                  <label for={"seat-modal-#{assigns.number}"} class="btn">Close</label>
+                  <button for={"seat-modal-#{assigns.number}"} class="btn" type="submit" onclick={"document.getElementById('seat-modal-#{assigns.number}').checked=false"}>Confirm reservation</button>
+                </div>
+              </form>
             </div>
           </div>
         """
@@ -47,19 +52,22 @@ defmodule ModalComponent do
               <h3 class="font-bold text-lg">You have selected seat <%= assigns.number %></h3>
               <p class="py-4">Enter a reason for canceling the reservation</p>
 
-              <input type="text" placeholder="Reason" class="input input-bordered w-full max-w-xs" name="cancel_reason"/>
+              <form phx-submit="cancel_seat">
+                <input type="hidden" name="seat_number" value={"#{assigns.number}"}>
+                <input type="text" placeholder="Reason" class="input input-bordered w-full max-w-xs" name="cancel_reason"/>
 
-              <div class="modal-action">
-                <label for={"seat-modal-#{assigns.number}"} class="btn">Close</label>
-                <label for={"seat-modal-#{assigns.number}"} class="btn">Confirm cancelation</label>
-              </div>
+                <div class="modal-action">
+                  <label for={"seat-modal-#{assigns.number}"} class="btn">Close</label>
+                  <button for={"seat-modal-#{assigns.number}"} class="btn" type="submit" onclick={"document.getElementById('seat-modal-#{assigns.number}').checked=false"}>Confirm cancelation</button>
+                </div>
+              </form>
             </div>
           </div>
         """
       assigns.status == "3" ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.number}"} class="btn btn-warning"><%= assigns.number %></label>
+          <label for={"seat-modal-#{assigns.number}"} class="btn btn-error"><%= assigns.number %></label>
 
           <!-- Put this part before </body> tag -->
           <input type="checkbox" id={"seat-modal-#{assigns.number}"} class="modal-toggle" />
@@ -78,7 +86,7 @@ defmodule ModalComponent do
       assigns.status == "4" ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.number}"} class="btn btn-warning"><%= assigns.number %></label>
+          <label for={"seat-modal-#{assigns.number}"} class="btn btn-active"><%= assigns.number %></label>
 
           <!-- Put this part before </body> tag -->
           <input type="checkbox" id={"seat-modal-#{assigns.number}"} class="modal-toggle" />
