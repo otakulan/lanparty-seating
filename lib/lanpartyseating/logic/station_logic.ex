@@ -17,17 +17,18 @@ defmodule Lanpartyseating.StationLogic do
 
     station = Station
     |> where(id: ^stationId)
-    # |> where(deleted_at: nil)
+    |> where([v], is_nil(v.deleted_at))
     |> Repo.one()
+
 
     latestReservation = Reservation
     |> where(station_id: ^stationId)
     |> Repo.one()
 
-    end_time = DateTime.add(latestReservation.start_time, :minute, latestReservation.duration)
+    end_time = NaiveDateTime.add(latestReservation.inserted_at, (latestReservation.duration.minute * 60), :second)
 
     cond do
-      latestReservation.start_time <= now && end_time > now -> "occupied"
+      latestReservation.inserted_at <= now && end_time > now -> "occupied"
       station.is_closed -> "closed"
       true -> "unknown"
     end

@@ -128,6 +128,10 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
   def handle_event("save", _params, socket) do
     socket = socket
     |> put_flash(:info, "Welcome Back!")
+
+    s = socket.assigns
+
+    Lanpartyseating.SettingsLogic.save_settings(s.rows, s.columns, s.rowpad, s.colpad, s.row_trailing, s.col_trailing)
     {:noreply, socket}
   end
 
