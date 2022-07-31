@@ -12,46 +12,106 @@
 
 # A few regular reservations
 
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Reservation{
-  UID: "E0040150BD357501",
-  row: 2,
-  column: 1
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2022-08-05 11:30:00Z],
+  end_date: ~U[2022-08-05 14:30:00Z],
+  name: "League of Legends"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2022-08-05 15:30:00Z],
+  end_date: ~U[2022-08-05 18:30:00Z],
+  name: "Rainbow Six Siege"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2022-08-05 20:00:00Z],
+  end_date: ~U[2022-08-05 23:00:00Z],
+  name: "Valorant"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2022-08-06 11:30:00Z],
+  end_date: ~U[2022-08-06 14:30:00Z],
+  name: "Rainbow Six Siege"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2022-08-06 15:30:00Z],
+  end_date: ~U[2022-08-06 18:30:00Z],
+  name: "League of Legends"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2022-08-06 20:00:00Z],
+  end_date: ~U[2022-08-06 23:00:00Z],
+  name: "Valorant"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2022-08-07 11:30:00Z],
+  end_date: ~U[2022-08-07 14:30:00Z],
+  name: "League of Legends"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+  station_number: 1,
+  display_order: 1,
+  is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+  station_number: 2,
+  display_order: 2,
+  is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+  station_number: 3,
+  display_order: 3,
+  is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+  station_number: 4,
+  display_order: 4,
+  is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+  station_number: 5,
+  display_order: 5,
+  is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+  station_number: 6,
+  display_order: 6,
+  is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+  station_number: 7,
+  display_order: 7,
+  is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+  station_number: 8,
+  display_order: 8,
+  is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
+  rows: 2,
+  columns: 4,
+  row_padding: 0,
+  column_padding: 0,
+  horizontal_trailing: 0,
+  vertical_trailing: 0
 })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Reservation{
-  UID: "E0040150BD357501",
-  row: 3,
-  column: 4
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Reservation{
-  UID: "E0040150BD357501",
-  row: 1,
-  column: 3
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Reservation{
-  UID: "E0040150BD357501",
-  row: 2,
-  column: 6
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Reservation{
-  UID: "E0040150BD357501",
-  row: 9,
-  column: 1
-})
-
-# Far away reservations
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Reservation{
-  UID: "E0040150BD357501",
-  row: 99,
-  column: 99
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Reservation{
-  UID: "E0040150BD357501",
-  row: 62,
-  column: 130
+  badge: "xxx111",
+  station_id: 1
 })

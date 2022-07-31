@@ -2,12 +2,12 @@ defmodule Lanpartyseating.TournamentReservation do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
+  @primary_key {:id, :id, autogenerate: true}
+  @foreign_key_type :id
 
   schema "tournament_reservations" do
-    field :station_id, :string
-    field :tournament_id, :string
+    field :station_id, :id
+    field :tournament_id, :id
     field :deleted_at, :utc_datetime
     timestamps()
   end
@@ -15,9 +15,7 @@ defmodule Lanpartyseating.TournamentReservation do
   @doc false
   def changeset(reservation, attrs) do
     reservation
-    |> cast(attrs, [:UID, :row, :column])
-    |> validate_required([:UID, :row, :column])
-    |> validate_number(:row, greater_than: -1)
-    |> validate_number(:column, greater_than: -1)
+    |> cast(attrs, [:station_id, :tournament_id])
+    |> validate_required([:station_id, :tournament_id])
   end
 end

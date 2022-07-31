@@ -2,8 +2,8 @@ defmodule Lanpartyseating.Setting do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
+  @primary_key {:id, :id, autogenerate: true}
+  @foreign_key_type :id
 
   schema "settings" do
     field :rows, :integer
@@ -19,8 +19,7 @@ defmodule Lanpartyseating.Setting do
   @doc false
   def changeset(reservation, attrs) do
     reservation
-    |> cast(attrs, [:UID, :rows, :columns, :row_padding, :column_padding, :horizontal_trailing, :vertical_trailing, :deleted_at])
-    |> validate_required([:UID])
+    |> cast(attrs, [:rows, :columns, :row_padding, :column_padding, :horizontal_trailing, :vertical_trailing, :deleted_at])
     |> validate_number(:rows, greater_than: 0)
     |> validate_number(:columns, greater_than: 0)
     |> validate_number(:row_padding, greater_than: -1)
