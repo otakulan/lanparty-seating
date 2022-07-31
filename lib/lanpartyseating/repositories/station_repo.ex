@@ -11,7 +11,6 @@ defmodule Lanpartyseating.Station do
     field :station_number, :integer
     field :display_order, :integer
     field :is_closed, :boolean, default: false
-    field :is_displayed, :boolean, default: false
     field :deleted_at, :utc_datetime
     has_many :reservations, Reservation
     has_many :tournament_reservations, TournamentReservation

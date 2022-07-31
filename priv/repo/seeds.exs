@@ -105,8 +105,8 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
   rows: 2,
   columns: 4,
-  row_padding: 0,
-  column_padding: 0,
+  row_padding: 1,
+  column_padding: 1,
   horizontal_trailing: 0,
   vertical_trailing: 0
 })
