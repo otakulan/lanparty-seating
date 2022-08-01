@@ -3,7 +3,7 @@ defmodule Lanpartyseating.Repo.Migrations.CreateDb do
 
   def change do
     create table(:reservations) do
-      add :duration, :time
+      add :duration, :integer
       add :badge, :string
       add :incident, :string
       add :deleted_at, :utc_datetime

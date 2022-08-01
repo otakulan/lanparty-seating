@@ -70,8 +70,3 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
   horizontal_trailing: 0,
   vertical_trailing: 0
 })
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Reservation{
-  badge: "xxx111",
-  station_id: 1
-})

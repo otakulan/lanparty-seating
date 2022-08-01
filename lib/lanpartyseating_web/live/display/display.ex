@@ -19,6 +19,9 @@ use Phoenix.LiveView
     |> assign(:seat_number, String.to_integer(seat_number))
     |> assign(:duration, String.to_integer(duration))
     |> assign(:badge_number, badge_number)
+
+    Lanpartyseating.ReservationLogic.create_reservation(seat_number, String.to_integer(duration), badge_number)
+
     {:noreply, socket}
   end
 

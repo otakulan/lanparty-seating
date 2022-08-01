@@ -13,7 +13,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_station_status(stationId) do
-    now = DateTime.utc_now()
+    now = NaiveDateTime.utc_now()
 
     station = Station
     |> where(id: ^stationId)
@@ -23,14 +23,24 @@ defmodule Lanpartyseating.StationLogic do
 
     latestReservation = Reservation
     |> where(station_id: ^stationId)
+    |> last(:inserted_at)
     |> Repo.one()
 
-    end_time = NaiveDateTime.add(latestReservation.inserted_at, (latestReservation.duration.minute * 60), :second)
+    IO.inspect(latestReservation)
 
-    cond do
-      latestReservation.inserted_at <= now && end_time > now -> "occupied"
-      station.is_closed -> "closed"
-      true -> "unknown"
+    if latestReservation == nil do
+      IO.inspect("NNNNIIIIILLLLL")
+      "available"
+
+    else
+
+      end_time = NaiveDateTime.add(latestReservation.inserted_at, (latestReservation.duration * 60), :second)
+
+      cond do
+        NaiveDateTime.compare(latestReservation.inserted_at, now) == :lt && NaiveDateTime.compare(now, end_time) == :lt -> "occupied"
+        station.is_closed -> "closed"
+        true -> "available"
+      end
     end
   end
 end

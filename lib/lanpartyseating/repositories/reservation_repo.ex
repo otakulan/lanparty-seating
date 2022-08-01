@@ -6,7 +6,7 @@ defmodule Lanpartyseating.Reservation do
   @foreign_key_type :id
 
   schema "reservations" do
-    field :duration, :time, default: ~T[00:45:00]
+    field :duration, :integer
     field :badge, :string
     field :incident, :string
     field :deleted_at, :utc_datetime
@@ -19,5 +19,6 @@ defmodule Lanpartyseating.Reservation do
     reservation
     |> cast(attrs, [:duration, :badge_number, :station_id])
     |> validate_required([:badge, :station_id])
+    |> validate_number(:duration, greater_than: 0)
   end
 end
