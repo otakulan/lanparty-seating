@@ -20,6 +20,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: lanpartyseating_dev
+      TZ: "America/Montreal"
 
 volumes:
   db:

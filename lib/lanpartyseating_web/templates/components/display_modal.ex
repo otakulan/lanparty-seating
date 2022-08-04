@@ -12,25 +12,25 @@ defmodule DisplayModalComponent do
     # 4 - réserver pour un tournois / reserved for a tournament  (black: btn-active)
 
     cond do
-      assigns.status == "available" ->
+      assigns.station.status.status == "available" ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.number}"} class="btn btn-info"><%= assigns.number %></label>
+          <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn btn-info"><%= assigns.station.station.station_number %></label>
         """
-      assigns.status == "occupied" ->
+      assigns.station.status.status == "occupied" ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.number}"} class="btn btn-warning"><%= assigns.number %></label>
+          <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn btn-warning"><%= assigns.station.station.station_number %></label>
         """
-      assigns.status == "broken" ->
+      assigns.station.status.status == "broken" ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.number}"} class="btn btn-error"><%= assigns.number %></label>
+          <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn btn-error"><%= assigns.station.station.station_number %></label>
         """
-      assigns.status == "reserved" ->
+      assigns.station.status.status == "reserved" ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.number}"} class="btn btn-active"><%= assigns.number %></label>
+          <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn btn-active"><%= assigns.station.station.station_number %></label>
         """
     end
   end

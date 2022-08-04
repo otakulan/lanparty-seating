@@ -7,8 +7,8 @@
       <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
       <%= for c <- 0..(@columns-1) do %>
         <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
-          <DisplayModalComponent.modal number={(@table |> Enum.at(r * @columns + c)).station_number} 
-            status={Lanpartyseating.StationLogic.get_station_status((@table |> Enum.at(r * @columns + c)).id)}/>
+          <DisplayModalComponent.modal
+            station={(@stations |> Enum.at(r * @columns + c))} />
         </div>
       <% end %>
       </div>

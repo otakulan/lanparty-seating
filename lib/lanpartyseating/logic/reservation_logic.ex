@@ -33,12 +33,17 @@ defmodule Lanpartyseating.ReservationLogic do
     end
   end
 
-  def cancel_reservation(id, reason) do
-    resp = Reservation
-    |> update(set: [incident: ^reason, deleted_at: from_now(0, "second")])
-    |> where(id: ^id)
-
-    IO.inspect(resp)
+  def cancel_reservation(string_id, reason) do
+    id = elem(Integer.parse(string_id),0)
+    reservation = Reservation
+      |> where(station_id: ^id)
+      |> where([v], is_nil(v.deleted_at))
+      |> Repo.one()
+    reservation = Ecto.Changeset.change reservation, incident: reason, deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
+    case Repo.update reservation do
+      {:ok, struct}       -> struct
+      {:error, _}         -> "error"
+    end
   end
 
 end

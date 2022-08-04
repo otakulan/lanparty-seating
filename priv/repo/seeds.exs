@@ -56,7 +56,7 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
 
 test = Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
   start_date: ~U[2022-07-31 22:00:00Z],
-  end_date: ~U[2022-08-04 06:43:00Z],
+  end_date: ~U[2022-08-04 11:30:00Z],
   name: "Test"
 })
 
@@ -67,16 +67,59 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
   is_closed: false
 })
 
+for val <- 1..225, do:
 Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-  station_id: 1,
+  station_id: val,
+  tournament_id: 1,
+})
+
+for val <- 1..225, do:
+Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
+  station_id: val,
+  tournament_id: 2,
+})
+
+for val <- 1..225, do:
+Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
+  station_id: val,
+  tournament_id: 3,
+})
+
+for val <- 1..225, do:
+Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
+  station_id: val,
+  tournament_id: 4,
+})
+
+for val <- 1..225, do:
+Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
+  station_id: val,
+  tournament_id: 5,
+})
+
+for val <- 1..225, do:
+Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
+  station_id: val,
+  tournament_id: 6,
+})
+
+for val <- 1..225, do:
+Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
+  station_id: val,
+  tournament_id: 7,
+})
+
+for val <- 1..225, do:
+Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
+  station_id: val,
   tournament_id: 8,
 })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
-  rows: 2,
-  columns: 4,
-  row_padding: 1,
+  rows: 4,
+  columns: 10,
+  row_padding: 2,
   column_padding: 1,
-  horizontal_trailing: 0,
+  horizontal_trailing: 1,
   vertical_trailing: 0
 })
