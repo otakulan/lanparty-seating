@@ -14,18 +14,18 @@
           <h2><u>End Time</u></h2>
         </div>
       </div>  
-    <%= for tournament <- @tournaments do %>
-      <div class="flex flex-row w-full "}>
-        <div class=" flex flex-col h-14 flex-1 grow mx-1 "}>
-          <h3><%= tournament.name %></h3>
-        </div>
-        <div class=" flex flex-col h-14 flex-1 grow mx-1 "}>
-          <h3><%= Calendar.strftime(tournament.start_date, "%y/%m/%d -> %H:%M") %></h3>
-        </div>
-        <div class=" flex flex-col h-14 flex-1 grow mx-1 "}>
-          <h3><%= Calendar.strftime(tournament.end_date, "%y/%m/%d -> %H:%M") %></h3>
-        </div>
-      </div>  
-    <% end %>
-  </div>
+      <%= for tournament <- @tournaments do %>
+        <div class="flex flex-row w-full "}>
+          <div class=" flex flex-col h-14 flex-1 grow mx-1 "}>
+            <h3><%= tournament.name %></h3>
+          </div>
+          <div class=" flex flex-col h-14 flex-1 grow mx-1 "}>
+            <h3><%= Calendar.strftime(tournament.start_date |> Timex.to_datetime("America/Montreal"), "%y/%m/%d -> %H:%M") %></h3>
+          </div>
+          <div class=" flex flex-col h-14 flex-1 grow mx-1 "}>
+            <h3><%= Calendar.strftime(tournament.end_date |> Timex.to_datetime("America/Montreal"), "%y/%m/%d -> %H:%M") %></h3>
+          </div>
+        </div>  
+      <% end %>
+    </div>
 </div>

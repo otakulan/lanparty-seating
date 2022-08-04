@@ -1,9 +1,13 @@
 defmodule LanpartyseatingWeb.DisplayControllerLive do
 use Phoenix.LiveView
 alias Lanpartyseating.PubSub, as: PubSub
+alias Lanpartyseating.TournamentsLogic, as: TournamentsLogic
+alias Lanpartyseating.SettingsLogic, as: SettingsLogic
+alias Lanpartyseating.StationLogic, as: StationLogic
 
   def mount(_params, _session, socket) do
-    settings = Lanpartyseating.SettingsLogic.get_settings()
+    settings = SettingsLogic.get_settings()
+    tournaments = TournamentsLogic.get_all_daily_tournaments()
 
     Phoenix.PubSub.subscribe(PubSub, "update_stations")
 
@@ -14,7 +18,9 @@ alias Lanpartyseating.PubSub, as: PubSub
     |> assign(:row_trailing, settings.horizontal_trailing)
     |> assign(:colpad, settings.column_padding)
     |> assign(:rowpad, settings.row_padding)
-    |> assign(:stations, Lanpartyseating.StationLogic.get_all_stations())
+    |> assign(:stations, StationLogic.get_all_stations())
+    |> assign(:tournaments, tournaments)
+    |> assign(:tournamentsCount, length(tournaments))
 
     {:ok, socket}
   end
