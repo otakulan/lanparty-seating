@@ -23,6 +23,7 @@ defmodule LanpartyseatingWeb.Router do
       live "/", IndexControllerLive, :index
       live "/settings", SettingsControllerLive, :index
       live "/display", DisplayControllerLive, :index
+      live "/management", ManagementControllerLive, :index
     end
   end
 

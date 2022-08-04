@@ -54,12 +54,22 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
   name: "League of Legends"
 })
 
+test = Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2022-07-31 22:00:00Z],
+  end_date: ~U[2022-08-07 14:30:00Z],
+  name: "Test"
+})
 
 for val <- 1..225, do:
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
   station_number: val,
   display_order: val,
   is_closed: false
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
+  station_id: 1,
+  tournament_id: 8,
 })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{

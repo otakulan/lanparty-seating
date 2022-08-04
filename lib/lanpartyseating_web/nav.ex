@@ -6,6 +6,7 @@ defmodule LanpartyseatingWeb.Nav do
       |> assign(nav_menu: [
           {"Index", Routes.index_controller_path(socket, :index)},
           {"Settings", Routes.settings_controller_path(socket, :index)},
+          {"Management", Routes.management_controller_path(socket, :index)},
           {"Display", Routes.display_controller_path(socket, :index)},
         ])
       |> attach_hook(:set_nav_menu_active_path, :handle_params, fn
