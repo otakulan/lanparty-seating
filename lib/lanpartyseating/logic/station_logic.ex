@@ -11,7 +11,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations do
-    Repo.all(Station)
+    Enum.map(Repo.all(Station), fn station -> %{station: station, status: get_station_status(station.id)} end)
   end
 
   def get_station_status(stationId) do
@@ -20,17 +20,17 @@ defmodule Lanpartyseating.StationLogic do
     |> where([v], is_nil(v.deleted_at))
     |> Repo.one()
 
-
     latestReservation = Reservation
     |> where(station_id: ^stationId)
     |> where([v], v.inserted_at < from_now(0, "second") and from_now(0, "second") < datetime_add(v.inserted_at, v.duration, "minute") )
+    |> where([v], is_nil(v.deleted_at))
     |> last(:inserted_at)
     |> Repo.one()
 
     tournamentReservations = TournamentReservation
-    # TODO: join tournament
     |> join(:inner, [v], p in Tournament, on: v.tournament_id == p.id)
     |> where(station_id: ^stationId)
+    |> where([v], is_nil(v.deleted_at))
     |> where([v, p], from_now(0, "second") > datetime_add(p.start_date, -45, "minute") and from_now(0, "second") < p.end_date)
     |> Repo.one()
 

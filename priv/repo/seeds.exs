@@ -56,7 +56,7 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
 
 test = Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
   start_date: ~U[2022-07-31 22:00:00Z],
-  end_date: ~U[2022-08-07 14:30:00Z],
+  end_date: ~U[2022-08-04 06:43:00Z],
   name: "Test"
 })
 

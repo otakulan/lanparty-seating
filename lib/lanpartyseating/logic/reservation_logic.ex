@@ -33,4 +33,12 @@ defmodule Lanpartyseating.ReservationLogic do
     end
   end
 
+  def cancel_reservation(id, reason) do
+    resp = Reservation
+    |> update(set: [incident: ^reason, deleted_at: from_now(0, "second")])
+    |> where(id: ^id)
+
+    IO.inspect(resp)
+  end
+
 end
