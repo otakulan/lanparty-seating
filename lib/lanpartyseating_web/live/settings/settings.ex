@@ -54,7 +54,6 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     h = socket.assigns.rows
     w = socket.assigns.columns
     socket = socket
-    # fixme: broken for odd grid dimension
     |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(trunc(i / w), 2) == 0 do Enum.at(table, trunc(i / w) * w + w - rem(i, w) - 1) else Enum.at(table, i) end end))
     {:noreply, socket}
   end
@@ -64,7 +63,6 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     h = socket.assigns.rows
     w = socket.assigns.columns
     socket = socket
-    # fixme: broken for odd grid dimension
     |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(trunc(i / w), 2) == 1 do Enum.at(table, trunc(i / w) * w + w - rem(i, w) - 1) else Enum.at(table, i) end end))
     {:noreply, socket}
   end
@@ -74,8 +72,7 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     h = socket.assigns.rows
     w = socket.assigns.columns
     socket = socket
-    # fixme: broken for odd grid dimension
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(i, 2) == 0 do Enum.at(table, i-(trunc(i / w) - (w - trunc(i / w) - 1)) * w)  else Enum.at(table, i) end end))
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(rem(i, w), 2) == 0 do Enum.at(table, i-(trunc(i / w) - (h - trunc(i / w) - 1)) * w)  else Enum.at(table, i) end end))
     {:noreply, socket}
   end
 
@@ -84,8 +81,7 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     h = socket.assigns.rows
     w = socket.assigns.columns
     socket = socket
-    # fixme: broken for odd grid dimension
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(i, 2) == 1 do Enum.at(table, i-(trunc(i / w) - (w - trunc(i / w) - 1)) * w) else Enum.at(table, i) end end))
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(rem(i, w), 2) == 1 do Enum.at(table, i-(trunc(i / w) - (h - trunc(i / w) - 1)) * w) else Enum.at(table, i) end end))
     {:noreply, socket}
   end
 
