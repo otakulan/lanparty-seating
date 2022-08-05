@@ -17,6 +17,7 @@ defmodule Lanpartyseating.Repo.Migrations.CreateDb do
       add :row_padding, :integer
       add :column_padding, :integer
       add :horizontal_trailing, :integer
+      add :is_diagonally_mirrored, :integer
       add :vertical_trailing, :integer
       add :deleted_at, :utc_datetime
       timestamps()

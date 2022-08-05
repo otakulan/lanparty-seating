@@ -10,6 +10,7 @@ defmodule Lanpartyseating.Setting do
     field :columns, :integer, default: 4
     field :row_padding, :integer, default: 1
     field :column_padding, :integer, default: 1
+    field :is_diagonally_mirrored, :integer, default: 0
     field :horizontal_trailing, :integer
     field :vertical_trailing, :integer
     field :deleted_at, :utc_datetime

@@ -8,6 +8,7 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     |> assign(:rows, settings.rows)
     |> assign(:col_trailing, settings.vertical_trailing)
     |> assign(:row_trailing, settings.horizontal_trailing)
+    |> assign(:is_diagonally_mirrored, settings.is_diagonally_mirrored)
     |> assign(:colpad, settings.column_padding)
     |> assign(:rowpad, settings.row_padding)
     |> assign(:table, Enum.to_list(1..settings.columns*settings.rows))
@@ -89,9 +90,10 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     table = socket.assigns.table
     h = socket.assigns.rows
     w = socket.assigns.columns
+    d = socket.assigns.is_diagonally_mirrored
     socket = socket
-    # fixme: broken when grid is not square
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> Enum.at(table, rem(i, w) * w + trunc(i / w)) end))
+    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(d, 2) == 0 do Enum.at(table, rem(i, w) * h + trunc(i / w)) else Enum.at(table, rem(i, h) * w + trunc(i / h)) end end))
+    |> update(:is_diagonally_mirrored, &(&1+1)) # fixme: integer overflow warning
     {:noreply, socket}
   end
 
@@ -127,7 +129,7 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
 
     s = socket.assigns
 
-    Lanpartyseating.SettingsLogic.save_settings(s.rows, s.columns, s.rowpad, s.colpad, s.row_trailing, s.col_trailing)
+    Lanpartyseating.SettingsLogic.save_settings(s.rows, s.columns, s.rowpad, s.colpad, s.is_diagonally_mirrored, s.row_trailing, s.col_trailing)
     {:noreply, socket}
   end
 

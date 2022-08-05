@@ -120,6 +120,7 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
   columns: 10,
   row_padding: 2,
   column_padding: 1,
+  is_diagonally_mirrored: 1,
   horizontal_trailing: 1,
   vertical_trailing: 0
 })
