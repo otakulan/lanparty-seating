@@ -3,7 +3,9 @@ FROM alpine
 # Set exposed ports
 EXPOSE 4000
 ENV PORT=4000 MIX_ENV=prod
-ENV TZ=America/Montreal
+ENV TZ=America/Toronto
+ENV ECTO_IPV6 true
+ENV ERL_AFLAGS "-proto_dist inet6_tcp"
 
 RUN apk add --update-cache \
   elixir \
@@ -31,7 +33,3 @@ RUN cd assets/ && \
   mix do local.rebar, deps.get, compile, phx.digest
 
 CMD ["mix", "phx.server"]
-
-# Appended by flyctl
-ENV ECTO_IPV6 true
-ENV ERL_AFLAGS "-proto_dist inet6_tcp"
