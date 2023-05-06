@@ -5,6 +5,7 @@ defmodule LanpartyseatingWeb.Nav do
     socket = socket
       |> assign(nav_menu: [
           {"Index", Routes.index_controller_path(socket, :index)},
+          {"Participants", Routes.participants_controller_path(socket, :index)},
           {"Settings", Routes.settings_controller_path(socket, :index)},
           {"Management", Routes.management_controller_path(socket, :index)},
           {"Tournaments", Routes.tournaments_controller_path(socket, :index)},
