@@ -21,6 +21,7 @@ defmodule LanpartyseatingWeb.Router do
       LanpartyseatingWeb.Nav
     ] do
       live "/", IndexControllerLive, :index
+      live "/badges", BadgesControllerLive, :index
       live "/participants", ParticipantsControllerLive, :index
       live "/settings", SettingsControllerLive, :index
       live "/display", DisplayControllerLive, :index
