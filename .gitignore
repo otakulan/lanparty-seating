@@ -22,3 +22,4 @@ assets/node_modules
 
 .elixir_ls
 .direnv
+.devenv
