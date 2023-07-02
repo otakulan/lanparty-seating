@@ -13,51 +13,33 @@
 # A few regular reservations
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-  start_date: ~U[2022-08-05 15:30:00Z],
-  end_date: ~U[2022-08-05 18:30:00Z],
+  start_date: ~U[2023-08-11 17:30:00Z],
+  end_date: ~U[2023-08-11 20:30:00Z],
   name: "League of Legends"
 })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-  start_date: ~U[2022-08-05 19:30:00Z],
-  end_date: ~U[2022-08-05 22:30:00Z],
+  start_date: ~U[2023-08-12 17:30:00Z],
+  end_date: ~U[2023-08-12 20:30:00Z],
+  name: "League of Legends"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2023-08-13 17:30:00Z],
+  end_date: ~U[2023-08-13 20:30:00Z],
+  name: "League of Legends"
+})
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
+  start_date: ~U[2023-08-11 22:30:00Z],
+  end_date: ~U[2023-08-12 01:30:00Z],
   name: "Rainbow Six Siege"
 })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-  start_date: ~U[2022-08-06 00:00:00Z],
-  end_date: ~U[2022-08-06 03:00:00Z],
-  name: "Valorant"
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-  start_date: ~U[2022-08-06 15:30:00Z],
-  end_date: ~U[2022-08-06 18:30:00Z],
+  start_date: ~U[2023-08-12 22:30:00Z],
+  end_date: ~U[2023-08-13 01:30:00Z],
   name: "Rainbow Six Siege"
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-  start_date: ~U[2022-08-06 19:30:00Z],
-  end_date: ~U[2022-08-06 22:30:00Z],
-  name: "League of Legends"
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-  start_date: ~U[2022-08-07 00:00:00Z],
-  end_date: ~U[2022-08-07 03:00:00Z],
-  name: "Valorant"
-})
-
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-  start_date: ~U[2022-08-07 15:30:00Z],
-  end_date: ~U[2022-08-07 18:30:00Z],
-  name: "League of Legends"
-})
-
-test = Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-  start_date: ~U[2022-07-31 22:00:00Z],
-  end_date: ~U[2022-08-04 12:45:00Z],
-  name: "Test"
 })
 
 for val <- 1..225, do:
@@ -97,24 +79,6 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
   tournament_id: 5,
 })
 
-for val <- 1..225, do:
-Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-  station_id: val,
-  tournament_id: 6,
-})
-
-for val <- 1..225, do:
-Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-  station_id: val,
-  tournament_id: 7,
-})
-
-for val <- 1..225, do:
-Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-  station_id: val,
-  tournament_id: 8,
-})
-
 # Create only data required in this table: The last assigned seat ID.
 Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
   last_assigned_seat: 0,
@@ -130,7 +94,7 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.StationStatus{
 })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
-  rows: 4,
+  rows: 7,
   columns: 10,
   row_padding: 2,
   column_padding: 1,

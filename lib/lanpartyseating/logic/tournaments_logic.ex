@@ -4,7 +4,9 @@ defmodule Lanpartyseating.TournamentsLogic do
   alias Lanpartyseating.Repo, as: Repo
 
   def get_all_tournaments do
-    Repo.all(Tournament)
+    Tournament
+    |> order_by([v], asc: v.end_date)
+    |> Repo.all()
   end
 
   def get_all_daily_tournaments do
