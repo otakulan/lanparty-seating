@@ -45,6 +45,5 @@ defmodule Lanpartyseating.Repo.Migrations.CreateDb do
       add :deleted_at, :utc_datetime
       timestamps()
     end
-
   end
 end

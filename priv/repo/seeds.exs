@@ -115,6 +115,20 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
   tournament_id: 8,
 })
 
+# Create only data required in this table: The last assigned seat ID.
+Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
+  last_assigned_seat: 0,
+  display_order: ~U[2022-08-05 15:30:00Z]
+})
+
+# Create IDs in the Station Status table for all the stations
+for val <- 1..225, do:
+Lanpartyseating.Repo.insert!(%Lanpartyseating.StationStatus{
+  station_id: val,
+  is_assigned: false,
+  is_out_of_order: false
+})
+
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
   rows: 4,
   columns: 10,

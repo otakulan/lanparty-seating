@@ -1,4 +1,4 @@
-defmodule Lanpartyseating.Repo.Migrations.CreateDb do
+defmodule Lanpartyseating.Repo.Migrations.AddBadgeScanLogsTable do
   use Ecto.Migration
 
   def change do
@@ -12,6 +12,5 @@ defmodule Lanpartyseating.Repo.Migrations.CreateDb do
       add :date_cancelled, :utc_datetime
       timestamps()
     end
-
   end
 end
