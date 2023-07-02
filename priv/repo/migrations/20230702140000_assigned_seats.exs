@@ -5,6 +5,7 @@ defmodule Lanpartyseating.Repo.Migrations.AddAssignedSeatsTables do
     create table(:last_assigned_seat) do
       # ID of the last assigned gaming station
       add :last_assigned_seat, :integer
+      add :last_assigned_seat_date, :utc_datetime
       timestamps()
     end
 
