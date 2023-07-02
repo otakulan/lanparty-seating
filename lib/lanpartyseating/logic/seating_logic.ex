@@ -47,7 +47,7 @@ defmodule Lanpartyseating.SeatingLogic do
       #end
     end
 
-    "123"
+    to_string(:rand.uniform(70))
   end
 
   def cancel_seat(seat_id, reason) do

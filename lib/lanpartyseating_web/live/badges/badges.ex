@@ -3,6 +3,9 @@ defmodule LanpartyseatingWeb.BadgesControllerLive do
   alias Lanpartyseating.SeatingLogic, as: SeatingLogic
 
     def mount(_params, _session, socket) do
+      socket = socket
+      |> assign(:assigned_station_id, "876")
+
       {:ok, socket}
     end
 
@@ -24,7 +27,7 @@ defmodule LanpartyseatingWeb.BadgesControllerLive do
       ## The ID is the one of the next available station. People who come in group should scan their
       ## badge one after another if they want to be togheter.
 
-      {:noreply, socket}
+      {:noreply, assign(socket, :assigned_station_id, assigned_station_id)}
     end
 
   end
