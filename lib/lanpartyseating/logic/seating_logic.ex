@@ -11,7 +11,24 @@ defmodule Lanpartyseating.SeatingLogic do
       %{type: "error", message: "Please fill all the fields" }
     else
 
-      # TODO: Get next available station
+      # Get last assigned seat
+      las = Last_assigned_seat
+      |> Repo.one()
+
+      #my_value = last_assigned_seat.last_assigned_seat
+
+
+      # Get the next available seat
+      next_seat = las.last_assigned_seat + 1
+
+      # TODO: update next availabe seat in DB
+      las = Ecto.Changeset.change las, last_assigned_seat: next_seat
+      case Repo.update las do
+        {:ok, result} -> result
+        {:error, _} -> nil
+      end
+
+
       #station = Station
       #|> where(station_number: ^seat_number)
       #|> where([v], is_nil(v.deleted_at))
@@ -26,6 +43,9 @@ defmodule Lanpartyseating.SeatingLogic do
 
       # TODO: Reserve seat
       # Participant gets his seat reserved
+      # Also log participant in badge_scans_logs table
+
+
       # --> badge number = his bage number
       # --> date scanned = time at which the request was created
       # --> session expiry = date scanned + 45 minutes
