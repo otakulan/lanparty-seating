@@ -14,7 +14,7 @@ defmodule Lanpartyseating.LastAssignedSeat do
   @doc false
   def changeset(reservation, attrs) do
     reservation
-    |> cast(attrs, [:station_id, :tournament_id])
-    |> validate_required([:station_id, :tournament_id])
+    |> cast(attrs, [:last_assigned_seat, :last_assigned_seat])
+    |> validate_number(attrs, [:last_assigned_seat, greater_than: -2])
   end
 end
