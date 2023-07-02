@@ -1,6 +1,72 @@
 defmodule LanpartyseatingWeb.SettingsControllerLive do
   use Phoenix.LiveView
 
+  def make_2d_array(rows, columns) do
+    Enum.to_list(0..rows-1)
+    |> Enum.map(fn x ->
+        Enum.to_list((x*columns)+1..(x+1)*columns)
+      end)
+  end
+
+  def reverse_even_rows(list) when is_list(list) and is_list(hd(list)) do
+    Enum.with_index(list)
+    |> Enum.map(fn {row, index} ->
+      if rem(index + 1, 2) == 0 do
+        Enum.reverse(row)
+      else
+        row
+      end
+    end)
+  end
+
+  def reverse_odd_rows(list) when is_list(list) and is_list(hd(list)) do
+    Enum.with_index(list)
+    |> Enum.map(fn {row, index} ->
+      if rem(index, 2) == 0 do
+        row
+      else
+        Enum.reverse(row)
+      end
+    end)
+  end
+
+  def reverse_odd_rows(list) when is_list(list) and is_list(hd(list)) do
+    Enum.with_index(list)
+    |> Enum.map(fn ({row, index}) ->
+      if rem(index + 1, 2) == 0 do
+        Enum.reverse(row)
+      else
+        row
+      end
+    end)
+  end
+
+  def reverse_even_columns(list) when is_list(list) and is_list(hd(list)) do
+    transpose(list)
+    |> Enum.with_index()
+    |> Enum.map(fn {column, index} ->
+      if rem(index + 1, 2) == 0 do
+        Enum.reverse(column)
+      else
+        column
+      end
+    end)
+    |> transpose()
+  end
+
+  def reverse_odd_columns(list) when is_list(list) and is_list(hd(list)) do
+    transpose(list)
+    |> Enum.with_index()
+    |> Enum.map(fn {column, index} ->
+      if rem(index, 2) == 0 do
+        column
+      else
+        Enum.reverse(column)
+      end
+    end)
+    |> transpose()
+  end
+
   def mount(_params, _session, socket) do
     settings = Lanpartyseating.SettingsLogic.get_settings()
     socket = socket
@@ -11,7 +77,8 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     |> assign(:is_diagonally_mirrored, settings.is_diagonally_mirrored)
     |> assign(:colpad, settings.column_padding)
     |> assign(:rowpad, settings.row_padding)
-    |> assign(:table, Enum.to_list(1..settings.columns*settings.rows))
+    # Creates a 2D array given the number of rows and columns
+    |> assign(:table, make_2d_array(settings.rows, settings.columns))
     {:ok, socket}
   end
 
@@ -39,7 +106,7 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
     socket = socket
     |> assign(:rows, String.to_integer(rows))
     |> assign(:columns, String.to_integer(columns))
-    |> assign(:table, Enum.to_list(1..String.to_integer(rows)*String.to_integer(columns)))
+    |> assign(:table, make_2d_array(String.to_integer(rows), String.to_integer(columns)))
     {:noreply, socket}
   end
 
@@ -51,75 +118,40 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
   end
 
   def handle_event("horizontal_mirror_even", _params, socket) do
-    table = socket.assigns.table
-    h = socket.assigns.rows
-    w = socket.assigns.columns
     socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(trunc(i / w), 2) == 0 do Enum.at(table, trunc(i / w) * w + w - rem(i, w) - 1) else Enum.at(table, i) end end))
+    |> assign(:table, reverse_even_rows(socket.assigns.table))
     {:noreply, socket}
   end
 
   def handle_event("horizontal_mirror_odd", _params, socket) do
-    table = socket.assigns.table
-    h = socket.assigns.rows
-    w = socket.assigns.columns
     socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(trunc(i / w), 2) == 1 do Enum.at(table, trunc(i / w) * w + w - rem(i, w) - 1) else Enum.at(table, i) end end))
+    |> assign(:table, reverse_odd_rows(socket.assigns.table))
     {:noreply, socket}
   end
 
   def handle_event("vertical_mirror_even", _params, socket) do
-    table = socket.assigns.table
-    h = socket.assigns.rows
-    w = socket.assigns.columns
     socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(rem(i, w), 2) == 0 do Enum.at(table, i-(trunc(i / w) - (h - trunc(i / w) - 1)) * w)  else Enum.at(table, i) end end))
+    |> assign(:table, reverse_even_columns(socket.assigns.table))
     {:noreply, socket}
   end
 
   def handle_event("vertical_mirror_odd", _params, socket) do
-    table = socket.assigns.table
-    h = socket.assigns.rows
-    w = socket.assigns.columns
     socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(rem(i, w), 2) == 1 do Enum.at(table, i-(trunc(i / w) - (h - trunc(i / w) - 1)) * w) else Enum.at(table, i) end end))
+    |> assign(:table, reverse_odd_columns(socket.assigns.table))
     {:noreply, socket}
   end
 
   def handle_event("diagonal_mirror", _params, socket) do
-    table = socket.assigns.table
-    h = socket.assigns.rows
-    w = socket.assigns.columns
-    d = socket.assigns.is_diagonally_mirrored
     socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> if rem(d, 2) == 0 do Enum.at(table, rem(i, w) * h + trunc(i / w)) else Enum.at(table, rem(i, h) * w + trunc(i / h)) end end))
-    |> update(:is_diagonally_mirrored, &(&1+1)) # fixme: integer overflow warning
-    {:noreply, socket}
-  end
-
-  def handle_event("shift_left", _params, socket) do
-    table = socket.assigns.table
-    h = socket.assigns.rows
-    w = socket.assigns.columns
-    socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> Enum.at(table, rem(i + h * w - 1, h * w)) end))
-    {:noreply, socket}
-  end
-
-  def handle_event("shift_right", _params, socket) do
-    table = socket.assigns.table
-    h = socket.assigns.rows
-    w = socket.assigns.columns
-    socket = socket
-    |> assign(:table, Enum.map(Enum.to_list(0..w*h-1), fn i -> Enum.at(table, rem(i + 1, h * w)) end))
+    |> assign(:rows, socket.assigns.rows)
+    |> assign(:columns, socket.assigns.columns)
+    |> assign(:table, transpose(socket.assigns.table))
     {:noreply, socket}
   end
 
   def handle_event("reset_grid", _params, socket) do
-    h = socket.assigns.rows
-    w = socket.assigns.columns
     socket = socket
-    |> assign(:table, Enum.to_list(1..h*w))
+    |> assign(:table, make_2d_array(socket.assigns.rows, socket.assigns.columns))
     {:noreply, socket}
   end
 
@@ -129,8 +161,17 @@ defmodule LanpartyseatingWeb.SettingsControllerLive do
 
     s = socket.assigns
 
+    Lanpartyseating.StationLogic.save_station_positions(socket.assigns.table)
     Lanpartyseating.SettingsLogic.save_settings(s.rows, s.columns, s.rowpad, s.colpad, s.is_diagonally_mirrored, s.row_trailing, s.col_trailing)
     {:noreply, socket}
   end
+
+  def transpose(list) when is_list(list) and is_list(hd(list)) do
+    for i <- 0..length(hd(list))-1 do
+      Enum.map(list, &Enum.at(&1, i))
+    end
+  end
+
+  def transpose(_), do: {:error, "Input must be a 2D list"}
 
 end

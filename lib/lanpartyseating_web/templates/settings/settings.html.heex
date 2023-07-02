@@ -24,12 +24,6 @@
 
 <h1 style="font-size:30px">Layout Configuration</h1>
 
-<button class="btn btn-sm" phx-click="shift_left">
-  <IconComponent.left_arrow />
-</button>
-<button class="btn btn-sm" phx-click="shift_right">
-  <IconComponent.right_arrow />
-</button>
 <button class="btn btn-sm" phx-click="horizontal_mirror_even">
   <IconComponent.double_sided_arrow_horizontal />
   even
@@ -41,7 +35,7 @@
 <button class="btn btn-sm" phx-click="vertical_mirror_even">
   <IconComponent.double_sided_arrow_vertical />
   even
-</button> 
+</button>
 <button class="btn btn-sm" phx-click="vertical_mirror_odd">
   <IconComponent.double_sided_arrow_vertical />
   odd
@@ -58,11 +52,11 @@
   <h1 style="font-size:30px">Layout Preview</h1>
 
   <div class="flex flex-wrap w-full">
-    <%= for r <- 0..(@rows-1) do %>
+    <%= for {row, r} <- Enum.with_index(@table) do %>
       <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
-      <%= for c <- 0..(@columns-1) do %>
+      <%= for {column, c} <- Enum.with_index(row) do %>
         <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}  >
-          <button class="btn btn-warning"><%= @table |> Enum.at(r * @columns + c) %></button>
+          <button class="btn btn-warning"><%= column %></button>
         </div>
       <% end %>
       </div>
