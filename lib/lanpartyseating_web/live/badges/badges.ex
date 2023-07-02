@@ -4,7 +4,7 @@ defmodule LanpartyseatingWeb.BadgesControllerLive do
 
     def mount(_params, _session, socket) do
       socket = socket
-      |> assign(:assigned_station_id, "876")
+      |> assign(:message, "")
 
       {:ok, socket}
     end
@@ -14,10 +14,19 @@ defmodule LanpartyseatingWeb.BadgesControllerLive do
     end
 
     def handle_event("submit_reservation", %{"badge_number" => badge_number}, socket) do
-      IO.inspect(label: "******** submit_reservation entered")
-      assigned_station_id = SeatingLogic.register_seat(badge_number)
-      IO.inspect(label: "******** SeatingLogic.register_seat called")
-      IO.inspect(label: "******** assigned id: " <> assigned_station_id)
+
+      message =
+      if String.length(badge_number) > 0 do
+
+        IO.inspect(label: "******** submit_reservation entered")
+        assigned_station_id = SeatingLogic.register_seat(badge_number)
+        IO.inspect(label: "******** SeatingLogic.register_seat called")
+        IO.inspect(label: "******** assigned id: " <> assigned_station_id)
+
+        "Your assigned seat is: " <> assigned_station_id <> " (make this message disappear after 5 seconds with a nice fade out)"
+      else
+        "Empty badge number submitted"
+      end
 
       # ??? is this
       #stations = StationLogic.get_all_stations()
@@ -27,7 +36,7 @@ defmodule LanpartyseatingWeb.BadgesControllerLive do
       ## The ID is the one of the next available station. People who come in group should scan their
       ## badge one after another if they want to be togheter.
 
-      {:noreply, assign(socket, :assigned_station_id, assigned_station_id)}
+      {:noreply, assign(socket, :message, message)}
     end
 
   end
