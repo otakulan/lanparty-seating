@@ -8,9 +8,7 @@ defmodule Lanpartyseating.SeatingLogic do
   alias Lanpartyseating.StationLogic, as: StationLogic
 
   def register_seat(badge_number) do
-
-    next_seat = ""
-
+    number =
     if badge_number == "" do
       %{type: "error", message: "Please fill all the fields" }
     else
@@ -31,33 +29,30 @@ defmodule Lanpartyseating.SeatingLogic do
       # --> was removed from AD: false until expiration
       # --> was cancelled: false unless sucessfully cancelled by a lan admin
       # --> date cancelled: logs the date when the cancel request was completed
-      Repo.insert(%BadgeScanLogs{badge_number: badge_number,
+      case Repo.insert(%BadgeScanLogs{badge_number: badge_number,
                                  date_scanned: DateTime.truncate(DateTime.utc_now(), :second),
                                  session_expiry: expiry_time,
                                  assigned_station_number: next_seat,
                                  was_removed_from_ad: false,
                                  was_cancelled: false,
                                  date_cancelled: nil
-                                 })
+                                 }) do
+                                  {:ok, result} -> result
+                                  {:error, error} -> error
+                                 end
 
       # The seat is registered to participant. Update the last reserved seat in DB.
       las = Ecto.Changeset.change las, last_assigned_seat: next_seat, last_assigned_seat_date: DateTime.truncate(DateTime.utc_now(), :second)
       case Repo.update las do
         {:ok, result} -> result
-        {:error, _} -> nil
+        {:error, error} -> error
       end
 
-      # TODO: return seat ID, to be displayed on screen for the participant
-
-      #if isCreatable == true do
-      #  {:ok, updated} = Repo.insert(%Reservation{duration: duration, badge: badge_number, station_id: station.id})
-      #  %{type: "success", message: "Please fill all the fields", response: Repo.get(Reservation, updated.id)}
-      #else
-      #  %{type: "error", message: "Unavailable"}
-      #end
+      # Return seat ID to be displayed to the participant
+      next_seat
     end
 
-    to_string(next_seat)
+    to_string(number)
   end
 
   def cancel_seat(seat_id, reason) do

@@ -5,7 +5,7 @@ defmodule Lanpartyseating.BadgeScanLogs do
   @primary_key {:id, :id, autogenerate: true}
   @foreign_key_type :id
 
-  schema "badge_scan_logs" do
+  schema "badge_scans_logs" do
     field :badge_number, :string
     field :date_scanned, :utc_datetime
     field :session_expiry, :utc_datetime
