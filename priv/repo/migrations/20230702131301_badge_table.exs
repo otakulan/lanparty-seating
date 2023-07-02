@@ -8,6 +8,8 @@ defmodule Lanpartyseating.Repo.Migrations.CreateDb do
       add :session_expiry, :utc_datetime
       add :assigned_station_number, :integer
       add :was_removed_from_ad, :boolean
+      add :was_cancelled, :boolean
+      add :date_cancelled, :utc_datetime
       timestamps()
     end
 
