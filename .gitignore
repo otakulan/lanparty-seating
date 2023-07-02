@@ -23,3 +23,6 @@ assets/node_modules
 .elixir_ls
 .direnv
 .devenv
+
+# macos
+.DS_STORE
