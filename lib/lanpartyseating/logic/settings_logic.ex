@@ -18,7 +18,7 @@ defmodule Lanpartyseating.SettingsLogic do
       column_padding: column_padding, is_diagonally_mirrored: is_diagonally_mirrored,
       horizontal_trailing: horizontal_trailing, vertical_trailing: vertical_trailing
     case Repo.update settings do
-      {:ok, result}       -> result
+      {:ok, result} -> result
       {:error, _} -> nil
     end
   end
