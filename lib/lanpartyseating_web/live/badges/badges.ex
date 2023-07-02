@@ -1,5 +1,6 @@
 defmodule LanpartyseatingWeb.BadgesControllerLive do
   use Phoenix.LiveView
+  alias Lanpartyseating.SeatingLogic, as: SeatingLogic
 
     def mount(_params, _session, socket) do
       {:ok, socket}
@@ -11,7 +12,9 @@ defmodule LanpartyseatingWeb.BadgesControllerLive do
 
     def handle_event("submit_reservation", %{"badge_number" => badge_number}, socket) do
       IO.inspect(label: "******** submit_reservation entered")
-      #SeatingLogic.register_seat(id)
+      assigned_station_id = SeatingLogic.register_seat(badge_number)
+      IO.inspect(label: "******** SeatingLogic.register_seat called")
+      IO.inspect(label: "******** assigned id: " <> assigned_station_id)
 
       # ??? is this
       #stations = StationLogic.get_all_stations()

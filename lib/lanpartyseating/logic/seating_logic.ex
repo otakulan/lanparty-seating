@@ -46,6 +46,8 @@ defmodule Lanpartyseating.SeatingLogic do
       #  %{type: "error", message: "Unavailable"}
       #end
     end
+
+    "123"
   end
 
   def cancel_seat(seat_id, reason) do
