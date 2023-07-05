@@ -4,6 +4,8 @@ defmodule DisplayModalComponent do
   # Optionally also bring the HTML helpers
   # use Phoenix.HTML
 
+  attr :station, :any, required: true
+
   def modal(assigns) do
     # status:
     # 1 - libre / available  (blue: btn-info)

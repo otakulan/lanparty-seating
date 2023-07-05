@@ -11,9 +11,11 @@
     <title>LAN Party Seating</title>
 
     <%= csrf_meta_tag() %>
-    <%= live_title_tag assigns[:page_title] || "Lan Party Seating" %>
-    <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/css/app.css")}/>
-    <script phx-track-static defer type="text/javascript" src={Routes.static_path(@conn, "/js/app.js")}></script>
+    <.live_title suffix=" - Lan Party Seating">
+      <%= assigns[:page_title] || "Main" %>
+    </.live_title>
+    <link phx-track-static rel="stylesheet" href={~p"/css/app.css"}/>
+    <script phx-track-static defer type="text/javascript" src={~p"/js/app.js"}></script>
 
     <script>
       // Check if the page must be refreshed every 10 seconds
@@ -55,27 +57,6 @@
   </head>
 
   <body>
-    <!-- Navigation -->
-    <NavComponent.nav nav_menu={@nav_menu} nav_menu_active_path={@nav_menu_active_path} />
-    <!-- Page Content -->
-    <div class="container mx-auto px-500">
-        <%= if get_flash(@conn, :info) do %>
-          <div class="shadow-lg alert alert-info">
-            <div>
-              <svg xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0 w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span><%= get_flash(@conn, :info) %></span>
-            </div>
-          </div>
-        <% end %>
-        <%= if get_flash(@conn, :error) do %>
-          <div class="shadow-lg alert alert-error">
-            <div>
-              <svg xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0 w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span><%= get_flash(@conn, :error) %></span>
-            </div>
-          </div>
-        <% end %>
-        <%= @inner_content %>
-    </div> <!-- /container -->
+    <%= @inner_content %>
   </body>
 </html>

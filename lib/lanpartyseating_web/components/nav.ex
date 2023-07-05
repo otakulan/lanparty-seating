@@ -4,6 +4,9 @@ defmodule NavComponent do
   # Optionally also bring the HTML helpers
   # use Phoenix.HTML
 
+  attr :nav_menu, :string, required: true
+  attr :nav_menu_active_path, :string, required: true
+
   def nav(assigns) do
     ~H"""
     <nav class="navbar bg-base-300">

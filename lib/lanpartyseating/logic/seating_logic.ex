@@ -1,11 +1,7 @@
 defmodule Lanpartyseating.SeatingLogic do
-  import Ecto.Query
-  alias Lanpartyseating.Station, as: Station
-  alias Lanpartyseating.Seating, as: Seating
   alias Lanpartyseating.BadgeScanLogs, as: BadgeScanLogs
   alias Lanpartyseating.LastAssignedSeat, as: LastAssignedSeat
   alias Lanpartyseating.Repo, as: Repo
-  alias Lanpartyseating.StationLogic, as: StationLogic
 
   def register_seat(badge_number) do
     number =

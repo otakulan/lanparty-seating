@@ -4,6 +4,8 @@ defmodule ModalComponent do
   # Optionally also bring the HTML helpers
   # use Phoenix.HTML
 
+  attr :station, :any, required: true
+
   def modal(assigns) do
     # status:
     # 1 - libre / available  (blue: btn-info)
@@ -21,14 +23,14 @@ defmodule ModalComponent do
           <div class="modal modal-bottom sm:modal-middle">
             <div class="modal-box">
 
-              <h3 class="font-bold text-lg">You have selected seat <%= assigns.station.station.station_number %></h3>
+              <h3 class="text-lg font-bold">You have selected seat <%= assigns.station.station.station_number %></h3>
               <p class="py-4">Select the duration of the reservation</p>
 
               <form phx-submit="reserve_seat">
                 <input type="hidden" name="seat_number" value={"#{assigns.station.station.station_number}"}>
                 <input type="number" placeholder="Reservation duration" min="15" max="60" class="w-16 max-w-xs input input-bordered input-xs" name="duration" value="45"/> minutes
                 <br/><br/>
-                <input type="text" placeholder="Badge number" class="input input-bordered w-full max-w-xs" name="badge_number"/>
+                <input type="text" placeholder="Badge number" class="w-full max-w-xs input input-bordered" name="badge_number"/>
 
                 <div class="modal-action">
                   <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn">Close</label>
@@ -48,13 +50,13 @@ defmodule ModalComponent do
           <div class="modal modal-bottom sm:modal-middle">
             <div class="modal-box">
 
-              <h3 class="font-bold text-lg">You have selected seat <%= assigns.station.station.station_number %></h3>
+              <h3 class="text-lg font-bold">You have selected seat <%= assigns.station.station.station_number %></h3>
               <p class="py-4">This Place is currently occupied by Badge #<%= assigns.station.status.reservation.badge %></p>
               <p class="py-4">Enter a reason for canceling the reservation</p>
 
               <form phx-submit="cancel_seat">
                 <input type="hidden" name="station_id" value={"#{assigns.station.station.id}"}>
-                <input type="text" placeholder="Reason" class="input input-bordered w-full max-w-xs" name="cancel_reason"/>
+                <input type="text" placeholder="Reason" class="w-full max-w-xs input input-bordered" name="cancel_reason"/>
 
                 <div class="modal-action">
                   <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn">Close</label>
@@ -74,7 +76,7 @@ defmodule ModalComponent do
           <div class="modal modal-bottom sm:modal-middle">
             <div class="modal-box">
 
-              <h3 class="font-bold text-lg">You have selected seat <%= assigns.station.station.station_number %></h3>
+              <h3 class="text-lg font-bold">You have selected seat <%= assigns.station.station.station_number %></h3>
               <p class="py-4">This computer is broken and cannot be reserved</p>
 
               <div class="modal-action">
@@ -93,7 +95,7 @@ defmodule ModalComponent do
           <div class="modal modal-bottom sm:modal-middle">
             <div class="modal-box">
 
-              <h3 class="font-bold text-lg">You have selected seat <%= assigns.station.station.station_number %></h3>
+              <h3 class="text-lg font-bold">You have selected seat <%= assigns.station.station.station_number %></h3>
               <p class="py-4">This computer is reserved for a tournament and may not be used for another purpose until the tournament is finished</p>
 
               <div class="modal-action">

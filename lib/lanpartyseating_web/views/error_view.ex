@@ -1,5 +1,5 @@
 defmodule LanpartyseatingWeb.ErrorView do
-  use LanpartyseatingWeb, :view
+  use LanpartyseatingWeb, :html
 
   # If you want to customize a particular status code
   # for a certain format, you may uncomment below.
