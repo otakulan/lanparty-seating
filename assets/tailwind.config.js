@@ -1,6 +1,5 @@
 module.exports = {
-  purge: ["../lib/*_web/**/*.*ex", "js/**/*.js"],
-  content: [],
+  content: ["../lib/*_web/**/*.*ex", "js/**/*.js"],
   theme: {
     container: {
       center: true,
