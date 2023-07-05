@@ -3,7 +3,6 @@ defmodule Lanpartyseating.Station do
   import Ecto.Changeset
   alias Lanpartyseating.Reservation, as: Reservation
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
-  alias Lanpartyseating.StationPosition, as: StationPosition
 
   @primary_key {:id, :id, autogenerate: true}
   @foreign_key_type :id
@@ -15,7 +14,6 @@ defmodule Lanpartyseating.Station do
     field :deleted_at, :utc_datetime
     has_many :reservations, Reservation
     has_many :tournament_reservations, TournamentReservation
-    has_one :station_position, StationPosition, foreign_key: :station_number
     timestamps()
   end
 

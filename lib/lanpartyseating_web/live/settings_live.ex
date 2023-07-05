@@ -23,17 +23,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
     Enum.with_index(list)
     |> Enum.map(fn {row, index} ->
       if rem(index, 2) == 0 do
-        row
-      else
-        Enum.reverse(row)
-      end
-    end)
-  end
-
-  def reverse_odd_rows(list) when is_list(list) and is_list(hd(list)) do
-    Enum.with_index(list)
-    |> Enum.map(fn {row, index} ->
-      if rem(index + 1, 2) == 0 do
         Enum.reverse(row)
       else
         row
@@ -59,9 +48,9 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.with_index()
     |> Enum.map(fn {column, index} ->
       if rem(index, 2) == 0 do
-        column
-      else
         Enum.reverse(column)
+      else
+        column
       end
     end)
     |> transpose()

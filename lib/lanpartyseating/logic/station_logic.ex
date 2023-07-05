@@ -1,8 +1,8 @@
 defmodule Lanpartyseating.StationLogic do
   import Ecto.Query
+  import Logger
   use Timex
   alias Lanpartyseating.Station, as: Station
-  alias Lanpartyseating.StationPosition, as: StationPosition
   alias Lanpartyseating.Reservation, as: Reservation
   alias Lanpartyseating.Tournament, as: Tournament
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
@@ -13,21 +13,17 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations do
-    Enum.map(Repo.all(Station), fn station -> %{station: station, status: get_station_status(station.id)} end)
+    Enum.map(from(s in Station, order_by: [asc: s.id]) |> Repo.all(), fn station -> Map.merge(%{station: station}, get_station_status(station.id)) end)
   end
 
   def save_station_positions(table) do
-    Repo.delete_all(StationPosition)
+    Repo.delete_all(Station)
     table
-    |> Enum.with_index()
-    |> Enum.each(fn {row, row_index} ->
+    |> Enum.each(fn row ->
       row
-      |> Enum.with_index()
-      |> Enum.each(fn {station_number, col_index} ->
+      |> Enum.each(fn station_number ->
+        IO.inspect(station_number)
         Repo.insert(%Station{station_number: station_number, display_order: station_number})
-        case Repo.insert(%StationPosition{station_number: station_number, row: row_index, column: col_index}) do
-          {:error, error} -> Logger.error(error)
-        end
       end)
     end)
   end
