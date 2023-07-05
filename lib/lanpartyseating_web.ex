@@ -17,20 +17,26 @@ defmodule LanpartyseatingWeb do
   and import those modules here.
   """
 
+  def static_paths do
+    ~w(css fonts images js favicon.ico robots.txt)
+  end
+
   def controller do
     quote do
-      use Phoenix.Controller, namespace: LanpartyseatingWeb
+      use Phoenix.Controller,
+        namespace: LanpartyseatingWeb,
+        layouts: [html: LanpartyseatingWeb.Layouts]
+
       import Plug.Conn
       import LanpartyseatingWeb.Router.Helpers
       import LanpartyseatingWeb.Gettext
+      unquote(verified_routes())
     end
   end
 
-  def view do
+  def html do
     quote do
-      use Phoenix.View,
-        root: "lib/lanpartyseating_web/templates",
-        namespace: LanpartyseatingWeb
+      use Phoenix.Component
 
       # Import convenience functions from controllers
       import Phoenix.Controller, only: [
@@ -43,10 +49,19 @@ defmodule LanpartyseatingWeb do
     end
   end
 
+  def verified_routes do
+    quote do
+      use Phoenix.VerifiedRoutes,
+        endpoint: LanpartyseatingWeb.Endpoint,
+        router: LanpartyseatingWeb.Router,
+        statics: LanpartyseatingWeb.static_paths()
+    end
+  end
+
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {LanpartyseatingWeb.LayoutView, "live.html"}
+        layout: {LanpartyseatingWeb.Layouts, :live}
 
       unquote(view_helpers())
     end
@@ -84,14 +99,12 @@ defmodule LanpartyseatingWeb do
       use Phoenix.HTML
 
       # Import LiveView helpers (live_render, live_component, live_patch, etc)
-      import Phoenix.LiveView.Helpers
-
-      # Import basic rendering functionality (render, render_layout, etc)
-      import Phoenix.View
+      import Phoenix.Component
 
       import LanpartyseatingWeb.ErrorHelpers
       import LanpartyseatingWeb.Gettext
       alias LanpartyseatingWeb.Router.Helpers, as: Routes
+      unquote(verified_routes())
     end
   end
 

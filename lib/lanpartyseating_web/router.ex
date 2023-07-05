@@ -7,7 +7,7 @@ defmodule LanpartyseatingWeb.Router do
     plug :fetch_live_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
-    plug :put_root_layout, {LanpartyseatingWeb.LayoutView, :app}
+    plug :put_root_layout, {LanpartyseatingWeb.Layouts, :root}
   end
 
   pipeline :api do
@@ -20,13 +20,13 @@ defmodule LanpartyseatingWeb.Router do
     live_session :nav, on_mount: [
       LanpartyseatingWeb.Nav
     ] do
-      live "/", IndexControllerLive, :index
-      live "/badges", BadgesControllerLive, :index
-      live "/participants", ParticipantsControllerLive, :index
-      live "/settings", SettingsControllerLive, :index
-      live "/display", DisplayControllerLive, :index
-      live "/management", ManagementControllerLive, :index
-      live "/tournaments", TournamentsControllerLive, :index
+      live "/", IndexLive, :index
+      live "/badges", BadgesLive, :index
+      live "/participants", ParticipantsLive, :index
+      live "/settings", SettingsLive, :index
+      live "/display", DisplayLive, :index
+      live "/management", ManagementLive, :index
+      live "/tournaments", TournamentsLive, :index
     end
   end
 
