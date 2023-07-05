@@ -17,15 +17,18 @@ defmodule Lanpartyseating.ReservationLogic do
       |> Repo.one()
 
       isCreatable = case StationLogic.get_station_status(station.id).status do
-        "occupied"       -> false
-        "closed"         -> false
-        "available"      -> true
+        :occupied       -> false
+        :closed         -> false
+        :available      -> true
       end
 
       if isCreatable == true do
 
-        {:ok, updated} = Repo.insert(%Reservation{duration: duration, badge: badge_number, station_id: station.id})
-        %{type: "success", message: "Please fill all the fields", response: Repo.get(Reservation, updated.id)}
+        IO.inspect("created")
+        case Repo.insert(%Reservation{duration: duration, badge: badge_number, station_id: station.id}) do
+          {:ok, updated} -> {:ok, updated}
+        end
+        # %{type: "success", message: "Please fill all the fields", response: Repo.get(Reservation, updated.id)}
 
       else
         %{type: "error", message: "Unavailable"}

@@ -55,12 +55,12 @@ defmodule Lanpartyseating.StationLogic do
     |> Repo.one()
 
     cond do
-      latestReservation == nil && tournamentReservations == nil -> %{status: "available"}
-      tournamentReservations != nil && latestReservation == nil -> %{status: "reserved", reservation: tournamentReservations}
-      tournamentReservations == nil && latestReservation != nil -> %{status: "occupied", reservation: latestReservation}
-      tournamentReservations != nil && latestReservation != nil -> %{status: "occupied", reservation: latestReservation}
-      station.is_closed -> %{status: "broken"}
-      true -> %{status: "available"}
+      latestReservation == nil && tournamentReservations == nil -> %{status: :available, reservation: nil}
+      tournamentReservations != nil && latestReservation == nil -> %{status: :reserved, reservation: tournamentReservations}
+      tournamentReservations == nil && latestReservation != nil -> %{status: :occupied, reservation: latestReservation}
+      tournamentReservations != nil && latestReservation != nil -> %{status: :occupied, reservation: latestReservation}
+      station.is_closed -> %{status: :broken, reservation: nil}
+      true -> %{status: :available, reservation: nil}
     end
   end
 end

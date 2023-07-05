@@ -16,44 +16,6 @@
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/css/app.css"}/>
     <script phx-track-static defer type="text/javascript" src={~p"/js/app.js"}></script>
-
-    <script>
-      // Check if the page must be refreshed every 10 seconds
-      function refresh() {
-
-        // Always reload the display page after the intended amount of time
-        if (window.location.href.indexOf("display") != -1) {
-          window.location.reload(true);
-        }
-
-        // Inhibit reloads on the management page if a modal is open
-        if (window.location.href.indexOf("management") != -1) {
-          const modals = document.querySelectorAll('*[id^="seat-modal-"]');
-
-          // Count number of modals that are opened
-          count = 0;
-          for (const element of modals) {
-            if (element.checked) {
-              count++;
-            }
-          }
-
-          if (count == 0) {
-            // Refresh page because the user is not entering information into a modal
-            window.location.reload(true);
-          }
-        }
-
-        // This line will execute when no reloading happened
-        // so that we check back later if the page needs to be reloaded.
-        // The settings page is one that will never reload, but if the 
-        // user goes to another page, this will ensure the page will reload
-        // if needed.
-        setTimeout(refresh, 10000);
-      }
-
-      setTimeout(refresh, 10000);
-    </script>
   </head>
 
   <body>

@@ -5,6 +5,8 @@ defmodule DisplayModalComponent do
   # use Phoenix.HTML
 
   attr :station, :any, required: true
+  attr :status, :any, required: true
+  attr :reservation, :any, required: true
 
   def modal(assigns) do
     # status:
@@ -13,26 +15,26 @@ defmodule DisplayModalComponent do
     # 3 - brisé / broken  (red: btn-error)
     # 4 - réserver pour un tournois / reserved for a tournament  (black: btn-active)
 
-    cond do
-      assigns.station.status.status == "available" ->
+    case assigns.status do
+      :available ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn btn-info"><%= assigns.station.station.station_number %></label>
+          <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-info"><%= assigns.station.station_number %></label>
         """
-      assigns.station.status.status == "occupied" ->
+      :occupied ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn btn-warning"><%= assigns.station.station.station_number %></label>
+          <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-warning"><%= assigns.station.station_number %></label>
         """
-      assigns.station.status.status == "broken" ->
+      :broken ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn btn-error"><%= assigns.station.station.station_number %></label>
+          <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-error"><%= assigns.station.station_number %></label>
         """
-      assigns.station.status.status == "reserved" ->
+      :reserved ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.station.station.station_number}"} class="btn btn-active"><%= assigns.station.station.station_number %></label>
+          <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-active"><%= assigns.station.station_number %></label>
         """
     end
   end
