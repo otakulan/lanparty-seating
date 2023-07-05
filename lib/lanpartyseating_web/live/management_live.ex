@@ -9,7 +9,9 @@ defmodule LanpartyseatingWeb.ManagementLive do
     settings = SettingsLogic.get_settings()
     stations = StationLogic.get_all_stations()
 
-    Phoenix.PubSub.subscribe(PubSub, "update_stations")
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(PubSub, "station_status")
+    end
 
     socket =
       socket
@@ -24,34 +26,43 @@ defmodule LanpartyseatingWeb.ManagementLive do
     {:ok, socket}
   end
 
+  defp broadcast_station_reservation(seat_number, reservation) do
+    Phoenix.PubSub.broadcast(PubSub, "station_status", {:reserved, seat_number, reservation})
+  end
+
   def handle_event(
         "reserve_seat",
         %{"seat_number" => seat_number, "duration" => duration, "badge_number" => badge_number},
         socket
       ) do
-    ReservationLogic.create_reservation(seat_number, String.to_integer(duration), badge_number)
-
-    stations = StationLogic.get_all_stations()
-    broadcast_stations(stations)
+    case ReservationLogic.create_reservation(String.to_integer(seat_number), String.to_integer(duration), badge_number) do
+      {:ok, updated} -> broadcast_station_reservation(String.to_integer(seat_number), updated)
+    end
 
     {:noreply, socket}
   end
 
-  def handle_event("cancel_seat", %{"station_id" => id, "cancel_reason" => reason}, socket) do
+  def handle_event("cancel_seat", %{"station_id" => id, "station_number" => station_number, "cancel_reason" => reason}, socket) do
     ReservationLogic.cancel_reservation(id, reason)
 
-    stations = StationLogic.get_all_stations()
-    broadcast_stations(stations)
-
+    Phoenix.PubSub.broadcast(PubSub, "station_status", {:available, String.to_integer(station_number)})
     {:noreply, socket}
   end
 
-  def handle_info({:update_stations, stations}, socket) do
-    {:noreply, assign(socket, :stations, stations)}
+  def handle_info({:available, seat_number}, socket) do
+    new_stations =
+      socket.assigns.stations
+      |> Enum.with_index(1)
+      |> Enum.map(fn {x, i} -> if i == seat_number, do: Map.merge(x, %{status: :available, reservation: nil}), else: x end)
+    {:noreply, assign(socket, :stations, new_stations)}
   end
 
-  defp broadcast_stations(stations) do
-    Phoenix.PubSub.broadcast(PubSub, "update_stations", {:update_stations, stations})
+  def handle_info({:reserved, seat_number, reservation}, socket) do
+    new_stations =
+      socket.assigns.stations
+      |> Enum.with_index(1)
+      |> Enum.map(fn {x, i} -> if i == seat_number, do: Map.merge(x, %{status: :occupied, reservation: reservation}), else: x end)
+    {:noreply, assign(socket, :stations, new_stations)}
   end
 
   def render(assigns) do
@@ -63,7 +74,8 @@ defmodule LanpartyseatingWeb.ManagementLive do
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
             <%= for c <- 0..(@columns-1) do %>
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
-                <ModalComponent.modal station={@stations |> Enum.at(r * @columns + c)} />
+                <% station_data = assigns.stations |> Enum.at(r * @columns + c) %>
+                <ModalComponent.modal reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
               </div>
             <% end %>
           </div>

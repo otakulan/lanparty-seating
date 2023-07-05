@@ -9,7 +9,9 @@ defmodule LanpartyseatingWeb.DisplayLive do
     settings = SettingsLogic.get_settings()
     tournaments = TournamentsLogic.get_all_daily_tournaments()
 
-    Phoenix.PubSub.subscribe(PubSub, "update_stations")
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(PubSub, "station_status")
+    end
 
     socket =
       socket
@@ -26,8 +28,20 @@ defmodule LanpartyseatingWeb.DisplayLive do
     {:ok, socket}
   end
 
-  def handle_info({:update_stations, stations}, socket) do
-    {:noreply, assign(socket, :stations, stations)}
+  def handle_info({:available, seat_number}, socket) do
+    new_stations =
+      socket.assigns.stations
+      |> Enum.with_index(1)
+      |> Enum.map(fn {x, i} -> if i == seat_number, do: Map.merge(x, %{status: :available, reservation: nil}), else: x end)
+    {:noreply, assign(socket, :stations, new_stations)}
+  end
+
+  def handle_info({:reserved, seat_number, _}, socket) do
+    new_stations =
+      socket.assigns.stations
+      |> Enum.with_index(1)
+      |> Enum.map(fn {x, i} -> if i == seat_number, do: Map.put(x, :status, :occupied), else: x end)
+    {:noreply, assign(socket, :stations, new_stations)}
   end
 
   def render(assigns) do
@@ -40,7 +54,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
             <%= for c <- 0..(@columns-1) do %>
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
-                <DisplayModalComponent.modal station={@stations |> Enum.at(r * @columns + c)} />
+                <% station_data = assigns.stations |> Enum.at(r * @columns + c) %>
+                <DisplayModalComponent.modal reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
               </div>
             <% end %>
           </div>
