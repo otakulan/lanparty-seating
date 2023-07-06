@@ -56,6 +56,9 @@
               "STORAGE_DIR=/tmp/tzdata"
               "TZ=America/Toronto"
               "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+              "LOCALE_ARCHIVE=${pkgs.glibcLocales}/lib/locale/locale-archive"
+              "LANG=en_US.UTF-8"
+              "LC_ALL=en_US.UTF-8"
             ];
             user = "1000";
           };
