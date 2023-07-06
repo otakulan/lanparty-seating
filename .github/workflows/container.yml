@@ -1,0 +1,33 @@
+name: "Docker Image"
+on:
+  push:
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+        - x86_64-linux
+        - aarch64-linux
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: docker/setup-qemu-action@v1
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v4
+    - uses: DeterminateSystems/magic-nix-cache-action@main
+    - run: nix run --system ${{ matrix.arch }} --extra-platforms ${{ matrix.arch }} .#container.copyToDockerDaemon
+    - name: Log in to the Container registry
+      uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Tag and push Docker image
+      run: |
+        TAG=$(nix eval '.#lanparty-seating.version' | sed s/\"//g)
+        docker tag lanparty-seating:$TAG ghcr.io/starcraft66/lanparty-seating/lanparty-seating:$TAG
+        docker push ghcr.io/starcraft66/lanparty-seating/lanparty-seating:$TAG
