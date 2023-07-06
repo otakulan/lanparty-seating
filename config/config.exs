@@ -7,7 +7,7 @@ import Config
 
 # esbuild config
 config :esbuild,
-  version: "0.12.18",
+  path: System.get_env("MIX_ESBUILD_PATH"),
   default: [
     args: ~w(js/app.js --bundle --target=es2016 --outdir=../priv/static/js --external:/images/*),
     cd: Path.expand("../assets", __DIR__),

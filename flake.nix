@@ -72,6 +72,7 @@
             listen_addresses = "::1,127.0.0.1";
           };
           env.MIX_REBAR3 = "${rebar}/bin/rebar3";
+          env.MIX_ESBUILD_PATH = "${pkgs.esbuild}/bin/esbuild";
           packages = with pkgs; [ cacert git erlang elixir rebar cargo nodejs yarn elixir-ls ]
             ++ optional stdenv.isLinux inotify-tools
             ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [

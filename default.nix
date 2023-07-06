@@ -3,6 +3,7 @@
 , beamPackages
 , mkYarnModules
 , nodejs
+, esbuild
 }:
 
 let
@@ -37,7 +38,9 @@ beamPackages.mixRelease {
 
   preBuild = ''
     export HOME=$TMPDIR
+    export MIX_ESBUILD_PATH=${esbuild}/bin/esbuild
     ln -sf ${yarnDeps}/node_modules assets/node_modules
+    ln -sf ${esbuild}/bin/esbuild _build/esbuild-linux-x64
     mix assets.deploy
     mix phx.gen.release
   '';
