@@ -19,7 +19,7 @@ jobs:
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@v4
     - uses: DeterminateSystems/magic-nix-cache-action@main
-    - run: nix run -v -L --system ${{ matrix.arch }} --extra-platforms ${{ matrix.arch }} .#container.copyToDockerDaemon
+    - run: nix run -L --system ${{ matrix.arch }} --extra-platforms ${{ matrix.arch }} .#container.copyToDockerDaemon
     - name: Log in to the Container registry
       uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
       with:
