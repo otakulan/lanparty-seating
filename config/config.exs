@@ -20,6 +20,7 @@ config :lanpartyseating,
 
 # Configures the endpoint
 config :lanpartyseating, LanpartyseatingWeb.Endpoint,
+  http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
   url: [host: "localhost"],
   secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
   render_errors: [view: LanpartyseatingWeb.ErrorView, accepts: ~w(html json)],
