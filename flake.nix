@@ -34,10 +34,15 @@
           tmp = pkgs.runCommand "tmp" {} ''
             mkdir -p $out/tmp/tzdata
           '';
+          utils = pkgs.buildEnv {
+            name = "root";
+            paths = with pkgs; [ bashInteractive coreutils gnused gnugrep packages.lanparty-seating ];
+            pathsToLink = [ "/bin" ];
+          };
         in pkgs.nix2container.buildImage {
           name = "lanparty-seating";
           tag = packages.lanparty-seating.version;
-          copyToRoot = [ tmp ];
+          copyToRoot = [ tmp utils ];
           perms = [{
             path = tmp;
             regex = ".*";
