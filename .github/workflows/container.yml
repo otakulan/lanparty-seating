@@ -11,7 +11,8 @@ jobs:
       matrix:
         arch:
         - x86_64-linux
-        - aarch64-linux
+        # Disabled for now due to qemu segfault issue
+        # - aarch64-linux
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -21,7 +22,7 @@ jobs:
     - uses: DeterminateSystems/magic-nix-cache-action@main
     - run: nix run -L --system ${{ matrix.arch }} --extra-platforms ${{ matrix.arch }} .#container.copyToDockerDaemon
     - name: Log in to the Container registry
-      uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      uses: docker/login-action@v2
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
