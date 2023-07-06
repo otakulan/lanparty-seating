@@ -7,7 +7,7 @@ import Config
 
 # esbuild config
 config :esbuild,
-  version: "0.12.18",
+  path: System.get_env("MIX_ESBUILD_PATH"),
   default: [
     args: ~w(js/app.js --bundle --target=es2016 --outdir=../priv/static/js --external:/images/*),
     cd: Path.expand("../assets", __DIR__),
@@ -20,6 +20,7 @@ config :lanpartyseating,
 
 # Configures the endpoint
 config :lanpartyseating, LanpartyseatingWeb.Endpoint,
+  http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
   url: [host: "localhost"],
   secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
   render_errors: [view: LanpartyseatingWeb.ErrorView, accepts: ~w(html json)],
