@@ -1,6 +1,7 @@
 defmodule LanpartyseatingWeb.BadgesLive do
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.SeatingLogic, as: SeatingLogic
+  alias Lanpartyseating.ReservationLogic, as: ReservationLogic
 
   def mount(_params, _session, socket) do
     socket =
@@ -18,20 +19,22 @@ defmodule LanpartyseatingWeb.BadgesLive do
         IO.inspect(label: "******** SeatingLogic.register_seat called")
         IO.inspect(label: "******** assigned id: " <> assigned_station_id)
 
+        # TODO: Handle case where create_reservation failed. It's possible that the function
+        # fails to assign the requested seat.
+        ReservationLogic.create_reservation(String.to_integer(assigned_station_id), 45, badge_number)
+
+        ## TODO: Create username and password in AD
+
+        ## TODO: Display the ID of the reserved seat, all station have a username and password that relates to their ID
+        ## The ID is the one of the next available station. People who come in group should scan their
+        ## badge one after another if they want to be togheter.
+
         "Your assigned seat is: " <>
           assigned_station_id <>
           " (make this message disappear after 5 seconds with a nice fade out)"
       else
         "Empty badge number submitted"
       end
-
-    # ??? is this
-    # stations = StationLogic.get_all_stations()
-    # broadcast_stations(stations)
-
-    ## TODO: Display the ID of the reserved seat, all station have a username and password that relates to their ID
-    ## The ID is the one of the next available station. People who come in group should scan their
-    ## badge one after another if they want to be togheter.
 
     {:noreply, assign(socket, :message, message)}
   end
