@@ -1,6 +1,7 @@
 defmodule Lanpartyseating.SeatingLogic do
   alias Lanpartyseating.BadgeScanLogs, as: BadgeScanLogs
   alias Lanpartyseating.LastAssignedSeat, as: LastAssignedSeat
+  alias Lanpartyseating.SettingsLogic, as: SettingsLogic
   alias Lanpartyseating.Repo, as: Repo
 
   def register_seat(badge_number) do
@@ -12,8 +13,13 @@ defmodule Lanpartyseating.SeatingLogic do
       las = LastAssignedSeat
       |> Repo.one()
 
-      # Get the next available seat
-      next_seat = las.last_assigned_seat + 1
+      settings = SettingsLogic.get_settings()
+
+      # Get the next available seat. Warp around,
+      # TODO: Logic should be more complicated, we have to jump above unavailable seats to get to the next available
+      # Seats are not reservable only if no available seat is left. Handle this via an error.
+      # The user must be informed that no seat is available.
+      next_seat = rem(las.last_assigned_seat + 1, settings.columns * settings.rows)
 
       # Log badge scans, seat ID is set to participant
       expiry_time = DateTime.truncate(DateTime.utc_now() |> DateTime.add(45, :minute), :second)
