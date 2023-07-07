@@ -6,8 +6,8 @@ defmodule Lanpartyseating.TournamentReservation do
   @foreign_key_type :id
 
   schema "tournament_reservations" do
-    field :station_id, :id
-    field :tournament_id, :id
+    belongs_to :station, Lanpartyseating.Station
+    belongs_to :tournament, Lanpartyseating.Tournament
     field :deleted_at, :utc_datetime
     timestamps()
   end

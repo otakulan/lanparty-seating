@@ -11,21 +11,20 @@ defmodule Lanpartyseating.ReservationLogic do
       %{type: "error", message: "Please fill all the fields" }
     else
 
-      station = Station
-      |> where(station_number: ^seat_number)
-      |> where([v], is_nil(v.deleted_at))
-      |> Repo.one()
+      station = StationLogic.get_station(seat_number)
 
-      isCreatable = case StationLogic.get_station_status(station.id).status do
+      isCreatable = case StationLogic.get_station_status(station).status do
         :occupied       -> false
         :closed         -> false
         :available      -> true
       end
 
       if isCreatable == true do
+        now = DateTime.truncate(DateTime.utc_now(), :second)
+        end_time = DateTime.add(now, duration, :minute)
 
         IO.inspect("created")
-        case Repo.insert(%Reservation{duration: duration, badge: badge_number, station_id: station.id}) do
+        case Repo.insert(%Reservation{duration: duration, badge: badge_number, station_id: station.id, start_date: now, end_date: end_time}) do
           {:ok, updated} -> {:ok, updated}
         end
         # %{type: "success", message: "Please fill all the fields", response: Repo.get(Reservation, updated.id)}
