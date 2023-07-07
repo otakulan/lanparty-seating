@@ -31,16 +31,14 @@ defmodule LanpartyseatingWeb.DisplayLive do
   def handle_info({:available, seat_number}, socket) do
     new_stations =
       socket.assigns.stations
-      |> Enum.with_index(1)
-      |> Enum.map(fn {x, i} -> if i == seat_number, do: Map.merge(x, %{status: :available, reservation: nil}), else: x end)
+      |> Enum.map(fn s -> if s.station.station_number == seat_number, do: Map.put(s, :status, :available), else: s end)
     {:noreply, assign(socket, :stations, new_stations)}
   end
 
   def handle_info({:reserved, seat_number, _}, socket) do
     new_stations =
       socket.assigns.stations
-      |> Enum.with_index(1)
-      |> Enum.map(fn {x, i} -> if i == seat_number, do: Map.put(x, :status, :occupied), else: x end)
+      |> Enum.map(fn s -> if s.station.station_number == seat_number, do: Map.put(s, :status, :occupied), else: s end)
     {:noreply, assign(socket, :stations, new_stations)}
   end
 
@@ -55,7 +53,9 @@ defmodule LanpartyseatingWeb.DisplayLive do
             <%= for c <- 0..(@columns-1) do %>
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
                 <% station_data = assigns.stations |> Enum.at(r * @columns + c) %>
+                <%= if !is_nil(station_data) do %>
                 <DisplayModalComponent.modal reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
+                <% end %>
               </div>
             <% end %>
           </div>
