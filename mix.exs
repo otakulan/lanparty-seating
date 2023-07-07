@@ -42,12 +42,18 @@ defmodule Lanpartyseating.Mixfile do
       {:phoenix_live_reload, "~> 1.4.1", only: :dev},
       {:phoenix_pubsub, "~> 2.1.3"},
       {:telemetry_metrics, "~> 0.6.1"},
-      {:telemetry_poller, "~> 0.5"},
+      {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.22.3"},
       {:jason, "~> 1.4.0"},
       {:plug_cowboy, "~> 2.6.1"},
       {:timex, "~> 3.7.11"},
       {:esbuild, "~> 0.7.1", runtime: Mix.env() == :dev},
+      {:opentelemetry, "~> 1.3"},
+      {:opentelemetry_api, "~> 1.2"},
+      {:opentelemetry_ecto, "~> 1.0"},
+      {:opentelemetry_exporter, "~> 1.4"},
+      {:opentelemetry_phoenix, "~> 1.1"},
+      {:opentelemetry_cowboy, "~> 0.2"}
     ]
   end
 
