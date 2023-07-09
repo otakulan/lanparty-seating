@@ -60,17 +60,11 @@ defmodule Lanpartyseating.SeatingLogic do
         # The seat is registered to participant. Update the last reserved seat in DB.
         las = Ecto.Changeset.change las, last_assigned_seat: next_seat, last_assigned_seat_date: DateTime.truncate(DateTime.utc_now(), :second)
         case Repo.update las do
-          {:ok, result} -> result
+          {:ok, result} -> next_seat
           {:error, error} -> error
         end
-
-        # Return seat ID to be displayed to the participant
-        next_seat
-
       end
     end
-
-    number
   end
 
   def cancel_seat(seat_id, reason) do
