@@ -43,7 +43,11 @@ defmodule LanpartyseatingWeb.ParticipantsLive do
           <!-- badge uid -->
           <th><%= participant.date_scanned %></th>
           <!-- scan date that triggered the creation of the user in the AD -->
-          <th>?</th>
+
+          <th><%=case DateTime.diff(participant.session_expiry, DateTime.utc_now(), :minute) do
+            x when x < 0 -> 0
+            x -> x
+          end %></th>
           <!-- minutes left until the user can't login or is logged off -->
 
           <th><%= participant.session_expiry %></th>

@@ -13,6 +13,10 @@ defmodule Lanpartyseating.ReservationLogic do
 
       station = StationLogic.get_station(seat_number)
 
+      if station == nil do
+        IO.inspect("In function 'create_reservation', 'get_station' returned nil. This will crash.")
+      end
+
       isCreatable = case StationLogic.get_station_status(station).status do
         :occupied       -> false
         :closed         -> false
