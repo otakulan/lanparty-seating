@@ -22,6 +22,20 @@ defmodule Lanpartyseating.StationLogic do
     Enum.map(stations, fn station -> Map.merge(%{station: station}, get_station_status(station)) end)
   end
 
+  def get_all_stations_sorted_by_number do
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+    stations =
+      from(s in Station,
+        order_by: [asc: s.station_number],
+        left_join: r in assoc(s, :reservations),
+        left_join: tr in assoc(s, :tournament_reservations),
+        left_join: t in assoc(tr, :tournament),
+        where: is_nil(s.deleted_at),
+        preload: [reservations: r, tournament_reservations: {tr, tournament: t}]
+      ) |> Repo.all()
+    Enum.map(stations, fn station -> Map.merge(%{station: station}, get_station_status(station)) end)
+  end
+
   def get_station(station_number) do
     from(s in Station,
       order_by: [asc: s.id],
