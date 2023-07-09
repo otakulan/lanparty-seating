@@ -13,12 +13,26 @@ defmodule LanpartyseatingWeb.TournamentsLive do
     {:ok, socket}
   end
 
+  def handle_event(
+        "create_tournament",
+        %{"name" => name, "start_time" => start_time, "duration" => duration},
+        socket
+      ) do
+    case TournamentsLogic.create_tournament(name, start_time, duration) do
+      # TODO: new pubsub tournament
+      {:ok, updated} -> "ok"
+    end
+
+    {:noreply, socket}
+  end
+
   def render(assigns) do
     ~H"""
     <div class="jumbotron">
       <h1 style="font-size:30px">Tournaments</h1>
+      <ModalComponent.tournament_modal />
 
-      <div class="flex flex-wrap w-full">
+      <div class="flex flex-wrap w-full mt-3">
         <div class="flex flex-row w-full " }>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
             <h2><u>Name</u></h2>

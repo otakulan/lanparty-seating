@@ -24,4 +24,12 @@ defmodule Lanpartyseating.TournamentsLogic do
     |> Repo.all()
   end
 
+  def create_tournament(name, start_time, duration) do
+    end_time = Datetime.add(start_time, duration, :hour)
+
+    case Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name}) do
+      {:ok, updated} -> {:ok, updated}
+    end
+  end
+
 end
