@@ -10,8 +10,6 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations do
-    now = DateTime.truncate(DateTime.utc_now(), :second)
-
     stations =
       from(s in Station,
         order_by: [asc: s.id],
@@ -36,8 +34,6 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations_sorted_by_number do
-    now = DateTime.truncate(DateTime.utc_now(), :second)
-
     stations =
       from(s in Station,
         order_by: [asc: s.station_number],
