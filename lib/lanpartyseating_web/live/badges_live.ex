@@ -16,7 +16,7 @@ defmodule LanpartyseatingWeb.BadgesLive do
       if String.length(badge_number) > 0 do
         case SeatingLogic.register_seat(badge_number) do
           nil -> "No seat available. Please wait for a seat to be freed and scan your badge again."
-          number -> number
+          number ->
           # TODO: Handle case where create_reservation failed. It's possible that the function
           # fails to assign the requested seat.
 
