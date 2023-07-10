@@ -25,10 +25,9 @@ defmodule Lanpartyseating.SeatingLogic do
       # The stations collection is split in half and we swap the end with the start so that
       # we iterate on the last part first. This is so we search from the current index, but we still search all the stations.
       case Enum.find(Enum.drop(stations, next_seat - 1) ++ Enum.take(stations, next_seat - 1), fn element ->
-        #element.reservation == nil and !element.station.is_closed and !element.station.deleted_at
         case StationLogic.get_station_status(element.station) do
           %{status: :available,  reservation: _} -> true
-          _ ->  false #{:error, }
+          _ ->  false
         end
       end) do
         nil -> nil
