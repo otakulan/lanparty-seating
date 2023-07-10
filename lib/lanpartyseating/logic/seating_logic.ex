@@ -7,7 +7,6 @@ defmodule Lanpartyseating.SeatingLogic do
   alias Lanpartyseating.Repo, as: Repo
 
   def register_seat(badge_number) do
-    number =
     if badge_number == "" do
       %{type: "error", message: "Please fill all the fields" }
     else
@@ -24,15 +23,17 @@ defmodule Lanpartyseating.SeatingLogic do
       # Find the first result matching this condition
       # The stations collection is split in half and we swap the end with the start so that
       # we iterate on the last part first. This is so we search from the current index, but we still search all the stations.
-      case Enum.find(Enum.drop(stations, next_seat - 1) ++ Enum.take(stations, next_seat - 1), fn element ->
+      result = Enum.find(Enum.drop(stations, next_seat - 1) ++ Enum.take(stations, next_seat - 1), fn element ->
         case StationLogic.get_station_status(element.station) do
           %{status: :available,  reservation: _} -> true
           _ ->  false
         end
-      end) do
+      end)
+
+      case result do
         nil -> nil
 
-        result -> next_seat = result.station.station_number
+        result2 -> next_seat = result2.station.station_number
 
         # Log badge scans, seat ID is set to participant
         expiry_time = DateTime.truncate(DateTime.utc_now() |> DateTime.add(45, :minute), :second)
@@ -59,29 +60,10 @@ defmodule Lanpartyseating.SeatingLogic do
         # The seat is registered to participant. Update the last reserved seat in DB.
         las = Ecto.Changeset.change las, last_assigned_seat: next_seat, last_assigned_seat_date: DateTime.truncate(DateTime.utc_now(), :second)
         case Repo.update las do
-          {:ok, result} -> next_seat
+          {:ok, _} -> next_seat
           {:error, error} -> error
         end
       end
     end
   end
-
-  def cancel_seat(seat_id, reason) do
-
-    # TODO: This is for Lan admins. They can cancel a seat (e.g. because is participant gone)
-
-    # Find the current participant assigned to this seat a #cancel him, expire his account
-
-    #id = elem(Integer.parse(string_id),0)
-    #reservation = Reservation
-    #  |> where(station_id: ^id)
-    #  |> where([v], is_nil(v.deleted_at))
-    #  |> Repo.one()
-    #reservation = Ecto.Changeset.change reservation, incident: reason, deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
-    #case Repo.update reservation do
-    #  {:ok, struct}       -> struct
-    #  {:error, _}         -> "error"
-    #end
-  end
-
 end
