@@ -17,9 +17,11 @@ defmodule Lanpartyseating.Application do
       # Start the PubSub system
       {Phoenix.PubSub, [name: Lanpartyseating.PubSub, adapter: Phoenix.PubSub.PG2]},
       # Start the Endpoint (http/https)
-      LanpartyseatingWeb.Endpoint
+      LanpartyseatingWeb.Endpoint,
       # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
       # {Lanpartyseating.Worker, arg}
+      {Task.Supervisor, name: Lanpartyseating.ExpirationTaskSupervisor},
+      Lanpartyseating.ExpirationKickstarter,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

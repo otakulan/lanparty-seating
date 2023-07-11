@@ -1,5 +1,8 @@
 defmodule Lanpartyseating.ReservationLogic do
   import Ecto.Query
+  require Logger
+  alias Lanpartyseating.ExpirationTaskSupervisor, as: ExpirationTaskSupervisor
+  alias Lanpartyseating.ExpireReservation, as: ExpireReservation
   alias Lanpartyseating.Reservation, as: Reservation
   alias Lanpartyseating.Repo, as: Repo
   alias Lanpartyseating.StationLogic, as: StationLogic
@@ -8,7 +11,7 @@ defmodule Lanpartyseating.ReservationLogic do
     IO.inspect(label: "create_reservation called")
 
     if badge_number == "" do
-      %{type: "error", message: "Please fill all the fields" }
+      {:error, "Please fill all the fields"}
     else
 
       station = StationLogic.get_station(seat_number)
@@ -22,20 +25,24 @@ defmodule Lanpartyseating.ReservationLogic do
         :closed         -> false
         :available      -> true
       end
+      Logger.debug("isCreatable: #{isCreatable}")
 
       if isCreatable == true do
         now = DateTime.truncate(DateTime.utc_now(), :second)
         end_time = DateTime.add(now, duration, :minute)
+        expiry_ms = DateTime.diff(end_time, now, :millisecond)
 
         IO.inspect("created")
         case Repo.insert(%Reservation{duration: duration, badge: badge_number, station_id: station.id, start_date: now, end_date: end_time}) do
-          {:ok, updated} -> {:ok, updated}
+          {:ok, updated} ->
+            Task.Supervisor.start_child(ExpirationTaskSupervisor, ExpireReservation, :run, [{expiry_ms, updated.id}])
+            Logger.debug("Created expiration task for reservation #{updated.id}")
+            {:ok, updated}
         end
-        # %{type: "success", message: "Please fill all the fields", response: Repo.get(Reservation, updated.id)}
 
       else
         IO.inspect(label: "is not creatable")
-        %{type: "error", message: "Unavailable"}
+        {:error, "Station is not available"}
       end
     end
   end
