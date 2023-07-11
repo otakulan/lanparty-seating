@@ -6,6 +6,7 @@ defmodule Lanpartyseating.Application do
   def start(_type, _args) do
     :opentelemetry_cowboy.setup()
     OpentelemetryPhoenix.setup(adapter: :cowboy2)
+    OpentelemetryLiveView.setup()
     OpentelemetryEcto.setup([:lanpartyseating, :repo])
 
     # Define workers and child supervisors to be supervised
