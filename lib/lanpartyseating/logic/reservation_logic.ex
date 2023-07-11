@@ -41,16 +41,21 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   def cancel_reservation(string_id, reason) do
-    id = elem(Integer.parse(string_id),0)
+    {id, _} = Integer.parse(string_id)
     reservation = Reservation
       |> where(station_id: ^id)
       |> where([v], is_nil(v.deleted_at))
-      |> Repo.one()
-    reservation = Ecto.Changeset.change reservation, incident: reason, deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
-    case Repo.update reservation do
-      {:ok, struct}       -> struct
-      {:error, _}         -> "error"
-    end
+      # There should, in theory, only be one non-deleted reservation for a station but let's clean up
+      # if that turns out not to be the case.
+      |> Repo.all()
+      |> Enum.map(fn res ->
+        reservation = Ecto.Changeset.change res, incident: reason, deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
+        case Repo.update reservation do
+          {:ok, struct} -> struct
+          # let it crash
+          # {:error, _} -> ...
+        end
+      end)
   end
 
 end
