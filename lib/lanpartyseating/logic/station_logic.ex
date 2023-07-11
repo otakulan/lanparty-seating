@@ -3,6 +3,8 @@ defmodule Lanpartyseating.StationLogic do
   use Timex
   alias Lanpartyseating.Reservation, as: Reservation
   alias Lanpartyseating.Station, as: Station
+  alias Lanpartyseating.Tournament, as: Tournament
+  alias Lanpartyseating.TournamentReservation, as: TournamentReservation
   alias Lanpartyseating.Repo, as: Repo
 
   def number_stations do
@@ -10,20 +12,29 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations do
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+
     stations =
       from(s in Station,
         order_by: [asc: s.id],
-        left_join: r in assoc(s, :reservations),
-        left_join: tr in assoc(s, :tournament_reservations),
-        left_join: t in assoc(tr, :tournament),
         where: is_nil(s.deleted_at),
         preload: [
           reservations:
             ^from(
               r in Reservation,
+              where: r.start_date < ^now,
+              where: r.end_date > ^now,
+              where: is_nil(r.deleted_at),
               order_by: [desc: r.inserted_at]
             ),
-          tournament_reservations: {tr, tournament: t}
+          tournament_reservations:
+            ^from(tr in TournamentReservation,
+              join: t in assoc(tr, :tournament),
+              where: t.start_date < ^now,
+              where: t.end_date > ^now,
+              where: is_nil(t.deleted_at),
+              preload: [tournament: t]
+            )
         ]
       )
       |> Repo.all()
@@ -34,20 +45,29 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations_sorted_by_number do
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+
     stations =
       from(s in Station,
         order_by: [asc: s.station_number],
-        left_join: r in assoc(s, :reservations),
-        left_join: tr in assoc(s, :tournament_reservations),
-        left_join: t in assoc(tr, :tournament),
         where: is_nil(s.deleted_at),
         preload: [
           reservations:
             ^from(
               r in Reservation,
+              where: r.start_date < ^now,
+              where: r.end_date > ^now,
+              where: is_nil(r.deleted_at),
               order_by: [desc: r.inserted_at]
             ),
-          tournament_reservations: {tr, tournament: t}
+          tournament_reservations:
+            ^from(tr in TournamentReservation,
+              join: t in assoc(tr, :tournament),
+              where: t.start_date < ^now,
+              where: t.end_date > ^now,
+              where: is_nil(t.deleted_at),
+              preload: [tournament: t]
+            )
         ]
       )
       |> Repo.all()
@@ -58,20 +78,29 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_station(station_number) do
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+
     from(s in Station,
       order_by: [asc: s.id],
-      left_join: r in assoc(s, :reservations),
-      left_join: tr in assoc(s, :tournament_reservations),
-      left_join: t in assoc(tr, :tournament),
       where: is_nil(s.deleted_at),
       where: s.station_number == ^station_number,
       preload: [
         reservations:
           ^from(
             r in Reservation,
+            where: r.start_date < ^now,
+            where: r.end_date > ^now,
+            where: is_nil(r.deleted_at),
             order_by: [desc: r.inserted_at]
           ),
-        tournament_reservations: {tr, tournament: t}
+        tournament_reservations:
+          ^from(tr in TournamentReservation,
+            join: t in assoc(tr, :tournament),
+            where: t.start_date < ^now,
+            where: t.end_date > ^now,
+            where: is_nil(t.deleted_at),
+            preload: [tournament: t]
+          )
       ]
     )
     |> Repo.one()
