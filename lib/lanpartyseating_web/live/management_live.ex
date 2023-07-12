@@ -22,6 +22,7 @@ defmodule LanpartyseatingWeb.ManagementLive do
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign(:stations, stations)
+      |> assign(:registration_error, nil)
 
     {:ok, socket}
   end
@@ -35,10 +36,14 @@ defmodule LanpartyseatingWeb.ManagementLive do
         %{"seat_number" => seat_number, "duration" => duration, "badge_number" => badge_number},
         socket
       ) do
+    registration_error = nil
     case ReservationLogic.create_reservation(String.to_integer(seat_number), String.to_integer(duration), badge_number) do
       {:ok, updated} -> broadcast_station_reservation(String.to_integer(seat_number), updated)
+      {:error, error} -> registration_error = error
     end
-
+    socket =
+      socket
+      |> assign(:registration_error, registration_error)
     {:noreply, socket}
   end
 
@@ -72,9 +77,9 @@ defmodule LanpartyseatingWeb.ManagementLive do
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
             <%= for c <- 0..(@columns-1) do %>
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
-                <% station_data = assigns.stations |> Enum.at(r * @columns + c) %>
+                <% station_data = @stations |> Enum.at(r * @columns + c) %>
                 <%= if !is_nil(station_data) do %>
-                <ModalComponent.modal reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
+                <ModalComponent.modal error={@registration_error} reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
                 <% end %>
               </div>
             <% end %>

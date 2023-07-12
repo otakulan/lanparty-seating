@@ -14,6 +14,13 @@ defmodule LanpartyseatingWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Healthcheck scope
+  scope "/" do
+    pipe_through :browser # Use the default browser stack
+
+    forward "/healthz", HeartCheck.Plug, heartcheck: LanpartyseatingWeb.HealthCheck
+  end
+
   scope "/", LanpartyseatingWeb do
     pipe_through :browser # Use the default browser stack
 

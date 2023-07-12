@@ -6,6 +6,7 @@ defmodule Lanpartyseating.Application do
   def start(_type, _args) do
     :opentelemetry_cowboy.setup()
     OpentelemetryPhoenix.setup(adapter: :cowboy2)
+    OpentelemetryLiveView.setup()
     OpentelemetryEcto.setup([:lanpartyseating, :repo])
 
     # Define workers and child supervisors to be supervised
@@ -17,9 +18,11 @@ defmodule Lanpartyseating.Application do
       # Start the PubSub system
       {Phoenix.PubSub, [name: Lanpartyseating.PubSub, adapter: Phoenix.PubSub.PG2]},
       # Start the Endpoint (http/https)
-      LanpartyseatingWeb.Endpoint
+      LanpartyseatingWeb.Endpoint,
       # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
       # {Lanpartyseating.Worker, arg}
+      {Task.Supervisor, name: Lanpartyseating.ExpirationTaskSupervisor},
+      Lanpartyseating.ExpirationKickstarter,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

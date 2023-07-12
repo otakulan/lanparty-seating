@@ -4,6 +4,7 @@ defmodule ModalComponent do
   # Optionally also bring the HTML helpers
   # use Phoenix.HTML
 
+  attr :error, :string, required: false
   attr :station, :any, required: true
   attr :status, :any, required: true
   attr :reservation, :any, required: true
@@ -30,9 +31,13 @@ defmodule ModalComponent do
 
               <form phx-submit="reserve_seat">
                 <input type="hidden" name="seat_number" value={"#{@station.station_number}"}>
-                <input type="number" placeholder="Reservation duration" min="15" max="60" class="w-16 max-w-xs input input-bordered input-xs" name="duration" value="45"/> minutes
+                <input type="number" placeholder="Reservation duration" min="1" max="60" class="w-16 max-w-xs input input-bordered input-xs" name="duration" value="45"/> minutes
+                <%= if !is_nil(@error) do %>
+                  <p class="text-error"><%= @error %></p>
+                <% end %>
+                <%!-- <p>@error</p> --%>
                 <br/><br/>
-                <input type="text" placeholder="Badge number" class="w-full max-w-xs input input-bordered" name="badge_number"/>
+                <input type="text" placeholder="Badge number" class="w-full max-w-xs input input-bordered" name="badge_number" autofocus/>
 
                 <div class="modal-action">
                   <label for={"seat-modal-#{@station.station_number}"} class="btn">Close</label>
