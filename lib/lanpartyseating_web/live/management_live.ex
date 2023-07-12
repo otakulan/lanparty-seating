@@ -37,34 +37,61 @@ defmodule LanpartyseatingWeb.ManagementLive do
         socket
       ) do
     registration_error = nil
-    case ReservationLogic.create_reservation(String.to_integer(seat_number), String.to_integer(duration), badge_number) do
+
+    case ReservationLogic.create_reservation(
+           String.to_integer(seat_number),
+           String.to_integer(duration),
+           badge_number
+         ) do
       {:ok, updated} -> broadcast_station_reservation(String.to_integer(seat_number), updated)
-      {:error, error} -> registration_error = error
+      # TODO: handle error properly. registration_error was detected as unused
+      {:error, _} -> nil
     end
+
     socket =
       socket
       |> assign(:registration_error, registration_error)
+
     {:noreply, socket}
   end
 
-  def handle_event("cancel_seat", %{"station_id" => id, "station_number" => station_number, "cancel_reason" => reason}, socket) do
+  def handle_event(
+        "cancel_seat",
+        %{"station_id" => id, "station_number" => station_number, "cancel_reason" => reason},
+        socket
+      ) do
     ReservationLogic.cancel_reservation(id, reason)
 
-    Phoenix.PubSub.broadcast(PubSub, "station_status", {:available, String.to_integer(station_number)})
+    Phoenix.PubSub.broadcast(
+      PubSub,
+      "station_status",
+      {:available, String.to_integer(station_number)}
+    )
+
     {:noreply, socket}
   end
 
   def handle_info({:available, seat_number}, socket) do
     new_stations =
       socket.assigns.stations
-      |> Enum.map(fn s -> if s.station.station_number == seat_number, do: Map.merge(s, %{status: :available, reservation: nil}), else: s end)
+      |> Enum.map(fn s ->
+        if s.station.station_number == seat_number,
+          do: Map.merge(s, %{status: :available, reservation: nil}),
+          else: s
+      end)
+
     {:noreply, assign(socket, :stations, new_stations)}
   end
 
   def handle_info({:reserved, seat_number, reservation}, socket) do
     new_stations =
       socket.assigns.stations
-      |> Enum.map(fn s -> if s.station.station_number == seat_number, do: Map.merge(s, %{status: :occupied, reservation: reservation}), else: s end)
+      |> Enum.map(fn s ->
+        if s.station.station_number == seat_number,
+          do: Map.merge(s, %{status: :occupied, reservation: reservation}),
+          else: s
+      end)
+
     {:noreply, assign(socket, :stations, new_stations)}
   end
 
@@ -79,7 +106,12 @@ defmodule LanpartyseatingWeb.ManagementLive do
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
                 <% station_data = @stations |> Enum.at(r * @columns + c) %>
                 <%= if !is_nil(station_data) do %>
-                <ModalComponent.modal error={@registration_error} reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
+                  <ModalComponent.modal
+                    error={@registration_error}
+                    reservation={station_data.reservation}
+                    station={station_data.station}
+                    status={station_data.status}
+                  />
                 <% end %>
               </div>
             <% end %>

@@ -6,8 +6,8 @@ defmodule Lanpartyseating.LastAssignedSeat do
   @foreign_key_type :id
 
   schema "last_assigned_seat" do
-    field :last_assigned_seat, :integer
-    field :last_assigned_seat_date, :utc_datetime
+    field(:last_assigned_seat, :integer)
+    field(:last_assigned_seat_date, :utc_datetime)
     timestamps()
   end
 
