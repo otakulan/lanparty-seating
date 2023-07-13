@@ -1,7 +1,7 @@
 defmodule LanpartyseatingWeb.TournamentsLive do
-  alias Lanpartyseating.TournamentReservationLogic
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.TournamentsLogic, as: TournamentsLogic
+  alias Lanpartyseating.TournamentReservationLogic, as: TournamentReservationLogic
 
   def mount(_params, _session, socket) do
     tournaments = TournamentsLogic.get_all_tournaments()
@@ -16,17 +16,22 @@ defmodule LanpartyseatingWeb.TournamentsLive do
 
   def handle_event(
         "delete_tournament",
-        %{"tournament_id" => id},
+        %{"tournament_id" => tournament_id},
         socket
       ) do
+    {id, _} = Integer.parse(tournament_id)
+
     TournamentsLogic.delete_tournament(id)
 
-    # TODO:
-    # Phoenix.PubSub.broadcast(
-    #   PubSub,
-    #   "station_status",
-    #   {:available, String.to_integer(station_number)}
-    # )
+    tournaments =
+      socket.assigns.tournaments
+      |> Enum.filter(fn tournament ->
+        tournament.id != id
+      end)
+
+    socket =
+      socket
+      |> assign(:tournaments, tournaments)
 
     {:noreply, socket}
   end
@@ -42,7 +47,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
         },
         socket
       ) do
-    # 2023-08-11T13:03
+    # Convering time string to UTC shifted TimeDate
     {:ok, start_time} = Timex.parse(start_time, "{ISO:Extended:Z}")
 
     {:ok, start_time} =
@@ -50,6 +55,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
 
     {:ok, start_time} = DateTime.shift_zone(start_time, "Etc/UTC", Tzdata.TimeZoneDatabase)
 
+    # Creating tournament
     {:ok, tournament} =
       TournamentsLogic.create_tournament(
         name,
@@ -57,6 +63,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
         String.to_integer(duration, 10)
       )
 
+    # Creating station reservations for the tournament
     TournamentReservationLogic.create_tournament_reservations_by_range(
       String.to_integer(start_station, 10),
       String.to_integer(end_station, 10),
