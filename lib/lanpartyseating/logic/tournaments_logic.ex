@@ -1,5 +1,6 @@
 defmodule Lanpartyseating.TournamentsLogic do
   import Ecto.Query
+  alias Lanpartyseating.TournamentReservation
   alias Lanpartyseating.Tournament, as: Tournament
   alias Lanpartyseating.Repo, as: Repo
 
@@ -25,30 +26,29 @@ defmodule Lanpartyseating.TournamentsLogic do
     |> Repo.all()
   end
 
-  @spec create_tournament(
-          String,
-          %{
-            :calendar => atom,
-            :day => any,
-            :hour => any,
-            :microsecond => {any, any},
-            :minute => any,
-            :month => any,
-            :second => any,
-            :std_offset => integer,
-            :time_zone => any,
-            :utc_offset => integer,
-            :year => any,
-            optional(any) => any
-          },
-          integer
-        ) :: {:ok, any}
-  def create_tournament(name, start_time, duration) do
+  def create_tournament(name, start_time, duration, start_station, end_station) do
     end_time = DateTime.add(start_time, duration, :hour, Tzdata.TimeZoneDatabase)
 
-    case Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name}) do
-      {:ok, updated} -> {:ok, updated}
+    {:ok, tournament} =
+      Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name})
+
+    {:ok, stations} = create_reservation_list([], start_station, end_station, tournament.id)
+
+    Repo.insert_all(TournamentReservation, stations)
+
+    {:ok, "Test"}
+  end
+
+  def create_reservation_list(stations, current_station, end_station, tournament_id)
+      when current_station <= end_station do
+    stations = stations ++ [%{station_id: current_station, tournament_id: tournament_id}]
+
+    if current_station < end_station do
+      ^stations =
+        create_reservation_list(stations, current_station + 1, end_station, tournament_id)
     end
+
+    {:ok, stations}
   end
 
   def delete_tournament(string_id) do

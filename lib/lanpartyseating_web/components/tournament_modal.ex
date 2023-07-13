@@ -31,6 +31,14 @@ defmodule TournamentModalComponent do
           <label for="duration" class="">Duration:</label>
           <input id="duration" name="duration" class=" input input-bordered" type="number" />
 
+          <br />
+          <label for="start_seat" class="">Starting Seat:</label>
+          <input id="start_seat" name="start_seat" class=" input input-bordered" type="number" />
+
+          <br />
+          <label for="end_seat" class="">Last Seating:</label>
+          <input id="end_seat" name="end_seat" class=" input input-bordered" type="number" />
+
           <div class="modal-action">
             <label for="tournament-modal" class="btn">Close</label>
             <button for="tournament-modal" class="btn" type="submit">Create</button>

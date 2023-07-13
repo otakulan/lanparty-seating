@@ -15,17 +15,30 @@ defmodule LanpartyseatingWeb.TournamentsLive do
 
   def handle_event(
         "delete_tournament",
-        %{"id" => id},
+        %{"tournament_id" => id},
         socket
       ) do
     TournamentsLogic.delete_tournament(id)
-    # TODO: pubsub
+
+    # TODO:
+    # Phoenix.PubSub.broadcast(
+    #   PubSub,
+    #   "station_status",
+    #   {:available, String.to_integer(station_number)}
+    # )
+
     {:noreply, socket}
   end
 
   def handle_event(
         "create_tournament",
-        %{"name" => name, "start_time" => start_time, "duration" => duration},
+        %{
+          "name" => name,
+          "start_time" => start_time,
+          "duration" => duration,
+          "start_seat" => start_seat,
+          "end_seat" => end_seat
+        },
         socket
       ) do
     # 2023-08-11T13:03
@@ -36,14 +49,20 @@ defmodule LanpartyseatingWeb.TournamentsLive do
 
     {:ok, start_time} = DateTime.shift_zone(start_time, "Etc/UTC", Tzdata.TimeZoneDatabase)
 
-    case TournamentsLogic.create_tournament(
-           name,
-           start_time,
-           String.to_integer(duration, 10)
-         ) do
-      # TODO: new pubsub tournament
-      {:ok, _} -> "ok"
-    end
+    TournamentsLogic.create_tournament(
+      name,
+      start_time,
+      String.to_integer(duration, 10),
+      String.to_integer(start_seat, 10),
+      String.to_integer(end_seat, 10)
+    )
+
+    # TODO:
+    # Phoenix.PubSub.broadcast(
+    #   PubSub,
+    #   "tournament_created",
+    #   {:available, String.to_integer(station_number)}
+    # )
 
     {:noreply, socket}
   end
@@ -94,7 +113,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
             </div>
             <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
               <form phx-submit="delete_tournament">
-                <input type="hidden" name="id" value={tournament.id} />
+                <input type="hidden" name="tournament_id" value={tournament.id} />
                 <button class="btn" type="submit">Delete</button>
               </form>
           </div>
