@@ -1,4 +1,5 @@
 defmodule LanpartyseatingWeb.TournamentsLive do
+  alias Lanpartyseating.TournamentReservationLogic
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.TournamentsLogic, as: TournamentsLogic
 
@@ -36,8 +37,8 @@ defmodule LanpartyseatingWeb.TournamentsLive do
           "name" => name,
           "start_time" => start_time,
           "duration" => duration,
-          "start_seat" => start_seat,
-          "end_seat" => end_seat
+          "start_station" => start_station,
+          "end_station" => end_station
         },
         socket
       ) do
@@ -49,12 +50,17 @@ defmodule LanpartyseatingWeb.TournamentsLive do
 
     {:ok, start_time} = DateTime.shift_zone(start_time, "Etc/UTC", Tzdata.TimeZoneDatabase)
 
-    TournamentsLogic.create_tournament(
-      name,
-      start_time,
-      String.to_integer(duration, 10),
-      String.to_integer(start_seat, 10),
-      String.to_integer(end_seat, 10)
+    {:ok, tournament} =
+      TournamentsLogic.create_tournament(
+        name,
+        start_time,
+        String.to_integer(duration, 10)
+      )
+
+    TournamentReservationLogic.create_tournament_reservations_by_range(
+      String.to_integer(start_station, 10),
+      String.to_integer(end_station, 10),
+      tournament.id
     )
 
     # TODO:

@@ -32,12 +32,12 @@ defmodule TournamentModalComponent do
           <input id="duration" name="duration" class=" input input-bordered" type="number" />
 
           <br />
-          <label for="start_seat" class="">Starting Seat:</label>
-          <input id="start_seat" name="start_seat" class=" input input-bordered" type="number" />
+          <label for="start_station" class="">Starting Seat:</label>
+          <input id="start_station" name="start_station" class=" input input-bordered" type="number" />
 
           <br />
-          <label for="end_seat" class="">Last Seating:</label>
-          <input id="end_seat" name="end_seat" class=" input input-bordered" type="number" />
+          <label for="end_station" class="">Last Seating:</label>
+          <input id="end_station" name="end_station" class=" input input-bordered" type="number" />
 
           <div class="modal-action">
             <label for="tournament-modal" class="btn">Close</label>

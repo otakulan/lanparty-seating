@@ -3,7 +3,6 @@ defmodule Lanpartyseating.StationLogic do
   use Timex
   alias Lanpartyseating.Reservation, as: Reservation
   alias Lanpartyseating.Station, as: Station
-  alias Lanpartyseating.Tournament, as: Tournament
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
   alias Lanpartyseating.Repo, as: Repo
 
@@ -137,5 +136,15 @@ defmodule Lanpartyseating.StationLogic do
       %Station{} ->
         %{status: :available, reservation: nil}
     end
+  end
+
+  def get_stations_by_range(start_number, end_number) do
+    from(s in Station,
+      order_by: [asc: s.station_number],
+      where: is_nil(s.deleted_at),
+      where: s.station_number >= ^start_number,
+      where: s.station_number <= ^end_number
+    )
+    |> Repo.all()
   end
 end
