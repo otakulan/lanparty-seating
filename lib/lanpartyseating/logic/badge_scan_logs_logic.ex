@@ -1,5 +1,4 @@
 defmodule Lanpartyseating.BadgeScanLogsLogic do
-  import Ecto.Query
   alias Lanpartyseating.BadgeScanLogs, as: BadgeScanLogs
   alias Lanpartyseating.Repo, as: Repo
 

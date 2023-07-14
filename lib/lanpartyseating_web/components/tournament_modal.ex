@@ -23,13 +23,19 @@ defmodule TournamentModalComponent do
           <input
             type="datetime-local"
             class="w-full max-w-xs input input-bordered"
-            min="2023-08-10T00:00"
-            max="2023-08-14T00:00"
             name="start_time"
           />
           <br />
           <label for="duration" class="">Duration:</label>
           <input id="duration" name="duration" class=" input input-bordered" type="number" />
+
+          <br />
+          <label for="start_station" class="">Starting Seat:</label>
+          <input id="start_station" name="start_station" class=" input input-bordered" type="number" />
+
+          <br />
+          <label for="end_station" class="">Last Seating:</label>
+          <input id="end_station" name="end_station" class=" input input-bordered" type="number" />
 
           <div class="modal-action">
             <label for="tournament-modal" class="btn">Close</label>

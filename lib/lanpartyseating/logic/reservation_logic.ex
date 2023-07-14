@@ -1,11 +1,10 @@
 defmodule Lanpartyseating.ReservationLogic do
   import Ecto.Query
   require Logger
-  alias Lanpartyseating.ExpirationTaskSupervisor, as: ExpirationTaskSupervisor
-  alias Lanpartyseating.ExpireReservation, as: ExpireReservation
   alias Lanpartyseating.Reservation, as: Reservation
   alias Lanpartyseating.Repo, as: Repo
   alias Lanpartyseating.StationLogic, as: StationLogic
+  alias Lanpartyseating.PubSub, as: PubSub
 
   def create_reservation(seat_number, duration, badge_number) do
     IO.inspect(label: "create_reservation called")
@@ -45,9 +44,12 @@ defmodule Lanpartyseating.ReservationLogic do
                end_date: end_time
              }) do
           {:ok, updated} ->
-            Task.Supervisor.start_child(ExpirationTaskSupervisor, ExpireReservation, :run, [
-              {expiry_ms, updated.id}
-            ])
+            Phoenix.PubSub.broadcast(PubSub, "station_status", {:occupied, seat_number, updated})
+
+            DynamicSupervisor.start_child(
+              Lanpartyseating.ExpirationTaskSupervisor,
+              {Lanpartyseating.Tasks.ExpireReservation, {expiry_ms, updated.id}}
+            )
 
             Logger.debug("Created expiration task for reservation #{updated.id}")
             {:ok, updated}
@@ -59,29 +61,33 @@ defmodule Lanpartyseating.ReservationLogic do
     end
   end
 
-  def cancel_reservation(string_id, reason) do
-    {id, _} = Integer.parse(string_id)
+  def cancel_reservation(id, station_number, reason) do
+    Reservation
+    |> where(station_id: ^id)
+    |> where([v], is_nil(v.deleted_at))
+    # There should, in theory, only be one non-deleted reservation for a station but let's clean up
+    # if that turns out not to be the case.
+    |> Repo.all()
+    |> Enum.map(fn res ->
+      reservation =
+        Ecto.Changeset.change(res,
+          incident: reason,
+          deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
+        )
 
-    reservation =
-      Reservation
-      |> where(station_id: ^id)
-      |> where([v], is_nil(v.deleted_at))
-      # There should, in theory, only be one non-deleted reservation for a station but let's clean up
-      # if that turns out not to be the case.
-      |> Repo.all()
-      |> Enum.map(fn res ->
-        reservation =
-          Ecto.Changeset.change(res,
-            incident: reason,
-            deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
+      case Repo.update(reservation) do
+        {:ok, struct} ->
+          GenServer.cast(:"expire_reservation_#{res.id}", :terminate)
+          Phoenix.PubSub.broadcast(
+            PubSub,
+            "station_status",
+            {:available, station_number}
           )
 
-        case Repo.update(reservation) do
-          {:ok, struct} ->
-            struct
-            # let it crash
-            # {:error, _} -> ...
-        end
-      end)
+          struct
+          # let it crash
+          # {:error, _} -> ...
+      end
+    end)
   end
 end

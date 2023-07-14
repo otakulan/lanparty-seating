@@ -1,8 +1,9 @@
 defmodule Lanpartyseating.ExpirationKickstarter do
   use Task
   import Ecto.Query
-  alias Lanpartyseating.ExpireReservation, as: ExpireReservation
+  require Logger
   alias Lanpartyseating.Reservation, as: Reservation
+  alias Lanpartyseating.Tournament, as: Tournament
   alias Lanpartyseating.Repo, as: Repo
 
   def start_link(arg) do
@@ -12,6 +13,8 @@ defmodule Lanpartyseating.ExpirationKickstarter do
   def run(_arg) do
     now = DateTime.truncate(DateTime.utc_now(), :second)
 
+    Logger.debug("Starting reservation expiration tasks")
+
     from(r in Reservation,
       where: r.end_date > ^now,
       where: r.start_date < ^now,
@@ -19,13 +22,37 @@ defmodule Lanpartyseating.ExpirationKickstarter do
     )
     |> Repo.all()
     |> Enum.each(fn res ->
-      expiry_time = DateTime.diff(res.end_date, now, :millisecond)
-
-      Task.Supervisor.start_child(
+      DynamicSupervisor.start_child(
         Lanpartyseating.ExpirationTaskSupervisor,
-        ExpireReservation,
-        :run,
-        [{expiry_time, res.id}]
+        {Lanpartyseating.Tasks.ExpireReservation, {res.end_date, res.id}}
+      )
+    end)
+
+    Logger.debug("Starting tournament start tasks")
+
+    from(t in Tournament,
+      where: t.start_date > ^now,
+      where: is_nil(t.deleted_at)
+    )
+    |> Repo.all()
+    |> Enum.each(fn tournament ->
+      DynamicSupervisor.start_child(
+        Lanpartyseating.ExpirationTaskSupervisor,
+        {Lanpartyseating.Tasks.StartTournament, {tournament.start_date, tournament.id}}
+      )
+    end)
+
+    Logger.debug("Starting tournament expiration tasks")
+
+    from(t in Tournament,
+      where: t.end_date > ^now,
+      where: is_nil(t.deleted_at)
+    )
+    |> Repo.all()
+    |> Enum.each(fn tournament ->
+      DynamicSupervisor.start_child(
+        Lanpartyseating.ExpirationTaskSupervisor,
+        {Lanpartyseating.Tasks.ExpireTournament, {tournament.end_date, tournament.id}}
       )
     end)
   end

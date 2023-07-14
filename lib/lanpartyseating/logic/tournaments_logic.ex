@@ -25,49 +25,33 @@ defmodule Lanpartyseating.TournamentsLogic do
     |> Repo.all()
   end
 
-  @spec create_tournament(
-          String,
-          %{
-            :calendar => atom,
-            :day => any,
-            :hour => any,
-            :microsecond => {any, any},
-            :minute => any,
-            :month => any,
-            :second => any,
-            :std_offset => integer,
-            :time_zone => any,
-            :utc_offset => integer,
-            :year => any,
-            optional(any) => any
-          },
-          integer
-        ) :: {:ok, any}
   def create_tournament(name, start_time, duration) do
     end_time = DateTime.add(start_time, duration, :hour, Tzdata.TimeZoneDatabase)
 
     case Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name}) do
-      {:ok, updated} -> {:ok, updated}
+      {:ok, tournament} -> {:ok, tournament}
     end
   end
 
-  def delete_tournament(string_id) do
-    {id, _} = Integer.parse(string_id)
+  def delete_tournament(id) do
 
-    tournament =
-      Tournament
-      |> where(id: ^id)
-      |> where([v], is_nil(v.deleted_at))
-      |> Repo.all()
-      |> Enum.map(fn res ->
-        tournament =
-          Ecto.Changeset.change(res,
-            deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
-          )
+    Tournament
+    |> where(id: ^id)
+    |> where([v], is_nil(v.deleted_at))
+    |> Repo.all()
+    |> Enum.map(fn res ->
+      tournament =
+        Ecto.Changeset.change(res,
+          deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
+        )
 
-        case Repo.update(tournament) do
-          {:ok, struct} -> {:ok, struct}
-        end
-      end)
+      case Repo.update(tournament) do
+        {:ok, struct} ->
+          GenServer.cast(:"expire_tournament_#{id}", :terminate)
+          GenServer.cast(:"start_tournament_#{id}", :terminate)
+          # TODO: Pubsub broadcast to mark stations :available
+          {:ok, struct}
+      end
+    end)
   end
 end

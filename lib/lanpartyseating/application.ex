@@ -21,7 +21,7 @@ defmodule Lanpartyseating.Application do
       LanpartyseatingWeb.Endpoint,
       # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
       # {Lanpartyseating.Worker, arg}
-      {Task.Supervisor, name: Lanpartyseating.ExpirationTaskSupervisor},
+      {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},
       Lanpartyseating.ExpirationKickstarter,
     ]
 

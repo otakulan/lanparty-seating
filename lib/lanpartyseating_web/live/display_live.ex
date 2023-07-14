@@ -31,14 +31,33 @@ defmodule LanpartyseatingWeb.DisplayLive do
   def handle_info({:available, seat_number}, socket) do
     new_stations =
       socket.assigns.stations
-      |> Enum.map(fn s -> if s.station.station_number == seat_number, do: Map.put(s, :status, :available), else: s end)
+      |> Enum.map(fn s ->
+        if s.station.station_number == seat_number,
+          do: Map.merge(s, %{status: :available, reservation: nil}),
+          else: s
+      end)
+
     {:noreply, assign(socket, :stations, new_stations)}
   end
 
-  def handle_info({:reserved, seat_number, _}, socket) do
-    new_stations =
-      socket.assigns.stations
-      |> Enum.map(fn s -> if s.station.station_number == seat_number, do: Map.put(s, :status, :occupied), else: s end)
+  def update_stations(old_stations, status, seat_number, reservation) do
+    old_stations
+      |> Enum.map(fn s ->
+        if s.station.station_number == seat_number,
+          do: Map.merge(s, %{status: status, reservation: reservation}),
+          else: s
+      end)
+  end
+
+  def handle_info({:occupied, seat_number, reservation}, socket) do
+    new_stations = update_stations(socket.assigns.stations, :occupied, seat_number, reservation)
+
+    {:noreply, assign(socket, :stations, new_stations)}
+  end
+
+  def handle_info({:reserved, seat_number, tournament_reservation}, socket) do
+    new_stations = update_stations(socket.assigns.stations, :reserved, seat_number, tournament_reservation)
+
     {:noreply, assign(socket, :stations, new_stations)}
   end
 

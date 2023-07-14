@@ -27,10 +27,6 @@ defmodule LanpartyseatingWeb.ManagementLive do
     {:ok, socket}
   end
 
-  defp broadcast_station_reservation(seat_number, reservation) do
-    Phoenix.PubSub.broadcast(PubSub, "station_status", {:reserved, seat_number, reservation})
-  end
-
   def handle_event(
         "reserve_seat",
         %{"seat_number" => seat_number, "duration" => duration, "badge_number" => badge_number},
@@ -38,19 +34,15 @@ defmodule LanpartyseatingWeb.ManagementLive do
       ) do
     registration_error = nil
 
-    case ReservationLogic.create_reservation(
-           String.to_integer(seat_number),
-           String.to_integer(duration),
-           badge_number
-         ) do
-      {:ok, updated} -> broadcast_station_reservation(String.to_integer(seat_number), updated)
-      # TODO: handle error properly. registration_error was detected as unused
-      {:error, _} -> nil
-    end
+    ReservationLogic.create_reservation(
+      String.to_integer(seat_number),
+      String.to_integer(duration),
+      badge_number
+    )
 
     socket =
       socket
-      |> assign(:registration_error, registration_error)
+      |> assign(:registration_error, nil)
 
     {:noreply, socket}
   end
@@ -60,12 +52,10 @@ defmodule LanpartyseatingWeb.ManagementLive do
         %{"station_id" => id, "station_number" => station_number, "cancel_reason" => reason},
         socket
       ) do
-    ReservationLogic.cancel_reservation(id, reason)
-
-    Phoenix.PubSub.broadcast(
-      PubSub,
-      "station_status",
-      {:available, String.to_integer(station_number)}
+    ReservationLogic.cancel_reservation(
+      String.to_integer(id),
+      String.to_integer(station_number),
+      reason
     )
 
     {:noreply, socket}
@@ -83,14 +73,24 @@ defmodule LanpartyseatingWeb.ManagementLive do
     {:noreply, assign(socket, :stations, new_stations)}
   end
 
-  def handle_info({:reserved, seat_number, reservation}, socket) do
+  def update_stations(old_stations, status, seat_number, reservation) do
+    old_stations
+    |> Enum.map(fn s ->
+      if s.station.station_number == seat_number,
+        do: Map.merge(s, %{status: status, reservation: reservation}),
+        else: s
+    end)
+  end
+
+  def handle_info({:occupied, seat_number, reservation}, socket) do
+    new_stations = update_stations(socket.assigns.stations, :occupied, seat_number, reservation)
+
+    {:noreply, assign(socket, :stations, new_stations)}
+  end
+
+  def handle_info({:reserved, seat_number, tournament_reservation}, socket) do
     new_stations =
-      socket.assigns.stations
-      |> Enum.map(fn s ->
-        if s.station.station_number == seat_number,
-          do: Map.merge(s, %{status: :occupied, reservation: reservation}),
-          else: s
-      end)
+      update_stations(socket.assigns.stations, :reserved, seat_number, tournament_reservation)
 
     {:noreply, assign(socket, :stations, new_stations)}
   end

@@ -1,5 +1,5 @@
-defmodule Lanpartyseating.ExpireReservation do
-  use Task
+defmodule Lanpartyseating.Tasks.ExpireReservation do
+  use GenServer, restart: :transient
   import Ecto.Query
   import Ecto.Changeset
   require Logger
@@ -8,12 +8,26 @@ defmodule Lanpartyseating.ExpireReservation do
   alias Lanpartyseating.PubSub, as: PubSub
 
   def start_link(arg) do
-    Task.start_link(__MODULE__, :run, [arg])
+    {_, reservation_id} = arg
+    GenServer.start_link(__MODULE__, arg, name: :"expire_reservation_#{reservation_id}")
   end
 
-  def run({delay, reservation_id}) do
+  @impl true
+  def init({end_date, reservation_id}) do
+    delay = DateTime.diff(end_date, DateTime.truncate(DateTime.utc_now(), :second), :millisecond) |> max(0)
     Logger.debug("Expiring reservation #{reservation_id} in #{delay} milliseconds")
-    Process.sleep(delay)
+    Process.send_after(self(), :expire_reservation, delay)
+    {:ok, reservation_id}
+  end
+
+  @impl true
+  def handle_cast(:terminate, state) do
+    Logger.debug("Terminating reservation expiration task for #{state}")
+    {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info(:expire_reservation, reservation_id) do
     Logger.debug("Expiring reservation #{reservation_id}")
 
     reservation =
@@ -40,5 +54,6 @@ defmodule Lanpartyseating.ExpireReservation do
           {:available, reservation.station.station_number}
         )
     end
+    {:noreply, reservation_id}
   end
 end
