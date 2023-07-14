@@ -1,4 +1,5 @@
 defmodule LanpartyseatingWeb.TournamentsLive do
+  require Logger
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.TournamentsLogic, as: TournamentsLogic
   alias Lanpartyseating.TournamentReservationLogic, as: TournamentReservationLogic
@@ -19,7 +20,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
         %{"tournament_id" => tournament_id},
         socket
       ) do
-    {id, _} = Integer.parse(tournament_id)
+    id = String.to_integer(tournament_id)
 
     TournamentsLogic.delete_tournament(id)
 
@@ -48,34 +49,44 @@ defmodule LanpartyseatingWeb.TournamentsLive do
         socket
       ) do
     # Convering time string to UTC shifted TimeDate
-    {:ok, start_time} = Timex.parse(start_time, "{ISO:Extended:Z}")
+    {:ok, naive_start_time} = Timex.parse(start_time, "{ISO:Extended:Z}")
 
-    {:ok, start_time} =
-      DateTime.from_naive(start_time, "America/Toronto", Tzdata.TimeZoneDatabase)
+    {:ok, local_start_time} =
+      DateTime.from_naive(naive_start_time, "America/Toronto", Tzdata.TimeZoneDatabase)
 
-    {:ok, start_time} = DateTime.shift_zone(start_time, "Etc/UTC", Tzdata.TimeZoneDatabase)
+    {:ok, utc_start_time} = DateTime.shift_zone(local_start_time, "Etc/UTC", Tzdata.TimeZoneDatabase)
 
     # Creating tournament
     {:ok, tournament} =
       TournamentsLogic.create_tournament(
         name,
-        start_time,
+        utc_start_time,
         String.to_integer(duration, 10)
       )
 
     # Creating station reservations for the tournament
-    TournamentReservationLogic.create_tournament_reservations_by_range(
+    {:ok, _} = TournamentReservationLogic.create_tournament_reservations_by_range(
       String.to_integer(start_station, 10),
       String.to_integer(end_station, 10),
       tournament.id
     )
 
-    # TODO:
-    # Phoenix.PubSub.broadcast(
-    #   PubSub,
-    #   "tournament_created",
-    #   {:available, String.to_integer(station_number)}
-    # )
+    start_delay = DateTime.diff(tournament.start_date, DateTime.utc_now(), :millisecond)
+    expiry_delay = DateTime.diff(tournament.end_date, DateTime.utc_now(), :millisecond)
+
+    DynamicSupervisor.start_child(
+      Lanpartyseating.ExpirationTaskSupervisor,
+      {Lanpartyseating.Tasks.StartTournament, {start_delay, tournament.id}}
+    )
+
+    DynamicSupervisor.start_child(
+      Lanpartyseating.ExpirationTaskSupervisor,
+      {Lanpartyseating.Tasks.ExpireTournament, {expiry_delay, tournament.id}}
+    )
+
+    socket =
+      socket
+      |> assign(:tournaments, TournamentsLogic.get_all_tournaments())
 
     {:noreply, socket}
   end
@@ -102,36 +113,35 @@ defmodule LanpartyseatingWeb.TournamentsLive do
           </div>
         </div>
         <%= for tournament <- @tournaments do %>
-          <div class="flex flex-row w-full " }>
-            <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-              <h3>
-                <%= tournament.name %>
-              </h3>
-            </div>
-            <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-              <h3>
-                <%= Calendar.strftime(
-                  tournament.start_date |> Timex.to_datetime("America/Montreal"),
-                  "%y/%m/%d -> %H:%M"
-                ) %>
-              </h3>
-            </div>
-            <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-              <h3>
-                <%= Calendar.strftime(
-                  tournament.end_date |> Timex.to_datetime("America/Montreal"),
-                  "%y/%m/%d -> %H:%M"
-                ) %>
-              </h3>
-            </div>
-            <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-              <form phx-submit="delete_tournament">
-                <input type="hidden" name="tournament_id" value={tournament.id} />
-                <button class="btn" type="submit">Delete</button>
-              </form>
+        <div class="flex flex-row w-full " }>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+            <h3>
+              <%= tournament.name %>
+            </h3>
           </div>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+            <h3>
+              <%= Calendar.strftime(
+                tournament.start_date |> Timex.to_datetime("America/Montreal"),
+                "%y/%m/%d -> %H:%M"
+              ) %>
+            </h3>
           </div>
-
+          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+            <h3>
+              <%= Calendar.strftime(
+                tournament.end_date |> Timex.to_datetime("America/Montreal"),
+                "%y/%m/%d -> %H:%M"
+              ) %>
+            </h3>
+          </div>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+            <form phx-submit="delete_tournament">
+              <input type="hidden" name="tournament_id" value={tournament.id} />
+              <button class="btn" type="submit" onclick={}>Delete</button>
+            </form>
+          </div>
+        </div>
         <% end %>
       </div>
     </div>

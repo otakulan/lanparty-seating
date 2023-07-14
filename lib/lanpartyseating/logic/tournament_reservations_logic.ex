@@ -1,7 +1,7 @@
 defmodule Lanpartyseating.TournamentReservationLogic do
-  alias Lanpartyseating.SettingsLogic
-  alias Lanpartyseating.StationLogic
-  alias Lanpartyseating.TournamentReservation
+  alias Lanpartyseating.SettingsLogic, as: SettingsLogic
+  alias Lanpartyseating.StationLogic, as: StationLogic
+  alias Lanpartyseating.TournamentReservation, as: TournamentReservation
   alias Lanpartyseating.Repo, as: Repo
 
   def create_tournament_reservations_by_range(start_station, end_station, tournament_id) do
@@ -19,19 +19,21 @@ defmodule Lanpartyseating.TournamentReservationLogic do
         {:error, "Start station is after end station"}
 
       true ->
-        :ok
-    end
+        now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+        reservations = StationLogic.get_stations_by_range(
+          start_station,
+          end_station
+        )
+        |> Enum.map(fn station ->
+          %{
+            tournament_id: tournament_id,
+            station_id: station.id,
+            inserted_at: now,
+            updated_at: now
+          }
+        end)
 
-    StationLogic.get_stations_by_range(
-      String.to_integer(start_station, 10),
-      String.to_integer(end_station, 10)
-    )
-    |> Enum.map(fn station ->
-      %TournamentReservation{
-        tournament_id: tournament_id,
-        station_id: station.id
-      }
-    end)
-    |> Repo.insert_all()
+        {:ok, Repo.insert_all(TournamentReservation, reservations)}
+    end
   end
 end

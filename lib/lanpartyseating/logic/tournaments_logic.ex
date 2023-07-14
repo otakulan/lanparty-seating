@@ -33,8 +33,7 @@ defmodule Lanpartyseating.TournamentsLogic do
     end
   end
 
-  def delete_tournament(string_id) do
-    {id, _} = Integer.parse(string_id)
+  def delete_tournament(id) do
 
     Tournament
     |> where(id: ^id)
@@ -47,7 +46,11 @@ defmodule Lanpartyseating.TournamentsLogic do
         )
 
       case Repo.update(tournament) do
-        {:ok, struct} -> {:ok, struct}
+        {:ok, struct} ->
+          GenServer.cast(:"expire_tournament_#{id}", :terminate)
+          GenServer.cast(:"start_tournament_#{id}", :terminate)
+          # TODO: Pubsub broadcast to mark stations :available
+          {:ok, struct}
       end
     end)
   end

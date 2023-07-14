@@ -23,8 +23,6 @@ defmodule TournamentModalComponent do
           <input
             type="datetime-local"
             class="w-full max-w-xs input input-bordered"
-            min="2023-08-10T00:00"
-            max="2023-08-14T00:00"
             name="start_time"
           />
           <br />
