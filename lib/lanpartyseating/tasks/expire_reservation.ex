@@ -54,6 +54,6 @@ defmodule Lanpartyseating.Tasks.ExpireReservation do
           {:available, reservation.station.station_number}
         )
     end
-    {:noreply, reservation_id}
+    {:stop, :normal, reservation_id}
   end
 end
