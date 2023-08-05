@@ -25,7 +25,7 @@ defmodule DisplayModalComponent do
       :occupied ->
         ~H"""
         <!-- The button to open modal -->
-        <div class="btn btn-warning flex flex-col">
+        <label class="btn btn-warning flex flex-col">
           <div >
             <%= assigns.station.station_number %>
           </div>
@@ -33,7 +33,7 @@ defmodule DisplayModalComponent do
             List.first(assigns.station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
                 "%H:%M"
               ) %>
-        </div>
+        </label>
         """
 
       :broken ->

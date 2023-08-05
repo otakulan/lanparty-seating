@@ -51,7 +51,7 @@ defmodule ModalComponent do
       :occupied ->
         ~H"""
           <!-- The button to open modal -->
-            <div class="btn btn-warning flex flex-col">
+        <label for={"seat-modal-#{@station.station_number}"} class="btn btn-warning flex flex-col" >
           <div >
             <%= @station.station_number %>
           </div>
@@ -59,7 +59,7 @@ defmodule ModalComponent do
             List.first(@station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
                 "%H:%M"
               ) %>
-        </div>
+        </label>
 
           <!-- Put this part before </body> tag -->
           <input type="checkbox" id={"seat-modal-#{@station.station_number}"} class="modal-toggle" />
