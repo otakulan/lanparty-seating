@@ -4,9 +4,9 @@ defmodule DisplayModalComponent do
   # Optionally also bring the HTML helpers
   # use Phoenix.HTML
 
-  attr :station, :any, required: true
-  attr :status, :any, required: true
-  attr :reservation, :any, required: true
+  attr(:station, :any, required: true)
+  attr(:status, :any, required: true)
+  attr(:reservation, :any, required: true)
 
   def modal(assigns) do
     # status:
@@ -21,16 +21,27 @@ defmodule DisplayModalComponent do
           <!-- The button to open modal -->
           <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-info"><%= assigns.station.station_number %></label>
         """
+
       :occupied ->
         ~H"""
-          <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-warning"><%= assigns.station.station_number %></label>
+        <!-- The button to open modal -->
+        <div class="btn btn-warning flex flex-col">
+          <div >
+            <%= assigns.station.station_number %>
+          </div>
+          Until <%= Calendar.strftime(
+            List.first(assigns.station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
+                "%H:%M"
+              ) %>
+        </div>
         """
+
       :broken ->
         ~H"""
           <!-- The button to open modal -->
           <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-error"><%= assigns.station.station_number %></label>
         """
+
       :reserved ->
         ~H"""
           <!-- The button to open modal -->
