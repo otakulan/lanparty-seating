@@ -7,7 +7,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def mount(_params, _session, socket) do
     settings = SettingsLogic.get_settings()
-    tournaments = TournamentsLogic.get_all_daily_tournaments()
+    tournaments = TournamentsLogic.get_upcoming_tournaments()
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_status")
@@ -82,7 +82,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
         <% end %>
       </div>
 
-      <h1 style="font-size:30px">Tournaments</h1>
+      <h1 style="font-size:30px">Upcoming Tournaments / Tournois à venir</h1>
 
       <div class="flex flex-wrap w-full">
         <div class="flex flex-row w-full " }>
