@@ -4,8 +4,8 @@ defmodule NavComponent do
   # Optionally also bring the HTML helpers
   # use Phoenix.HTML
 
-  attr :nav_menu, :string, required: true
-  attr :nav_menu_active_path, :string, required: true
+  attr(:nav_menu, :string, required: true)
+  attr(:nav_menu_active_path, :string, required: true)
 
   def nav(assigns) do
     ~H"""
@@ -18,7 +18,7 @@ defmodule NavComponent do
       <div class="navbar-end">
         <ul class="p-0 menu menu-horizontal">
         <%= for {menu_txt, path} <- assigns.nav_menu do %>
-          <li class={"nav-item #{if path == assigns.nav_menu_active_path, do: "font-bold"}"}>
+          <li class={"nav-item min-w-fit #{if path == assigns.nav_menu_active_path, do: "font-bold"}"}>
             <%= live_redirect menu_txt, to: path, class: "nav-link" %>
           </li>
         <% end %>

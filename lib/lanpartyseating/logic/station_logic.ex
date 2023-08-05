@@ -29,7 +29,7 @@ defmodule Lanpartyseating.StationLogic do
           tournament_reservations:
             ^from(tr in TournamentReservation,
               join: t in assoc(tr, :tournament),
-              where: t.start_date < ^now,
+              # where: t.start_date < ^now,
               where: t.end_date > ^now,
               where: is_nil(t.deleted_at),
               preload: [tournament: t]
@@ -120,10 +120,12 @@ defmodule Lanpartyseating.StationLogic do
   def get_station_status(station) do
     now = DateTime.truncate(DateTime.utc_now(), :second)
 
+    tournament_now = DateTime.add(DateTime.utc_now(), 45, :minute)
+
     case station do
       %Station{tournament_reservations: [res | _]}
       when is_nil(res.tournament.deleted_at) and
-             (res.tournament.end_date > now and res.tournament.start_date < now) ->
+             (res.tournament.end_date > now and res.tournament.start_date <= tournament_now) ->
         %{status: :reserved, reservation: res}
 
       %Station{reservations: [res | _]}

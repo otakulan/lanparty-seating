@@ -4,10 +4,10 @@ defmodule ModalComponent do
   # Optionally also bring the HTML helpers
   # use Phoenix.HTML
 
-  attr :error, :string, required: false
-  attr :station, :any, required: true
-  attr :status, :any, required: true
-  attr :reservation, :any, required: true
+  attr(:error, :string, required: false)
+  attr(:station, :any, required: true)
+  attr(:status, :any, required: true)
+  attr(:reservation, :any, required: true)
 
   def modal(assigns) do
     # status:
@@ -40,13 +40,14 @@ defmodule ModalComponent do
                 <input type="text" placeholder="Badge number" class="w-full max-w-xs input input-bordered" name="badge_number" autofocus/>
 
                 <div class="modal-action">
-                  <label for={"seat-modal-#{@station.station_number}"} class="btn">Close</label>
-                  <button for={"seat-modal-#{@station.station_number}"} class="btn" type="submit">Confirm reservation</button>
+                  <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
+                  <button for={"seat-modal-#{@station.station_number}"} class="btn btn-success" type="submit">Confirm reservation</button>
                 </div>
               </form>
             </div>
           </div>
         """
+
       :occupied ->
         ~H"""
           <!-- The button to open modal -->
@@ -58,22 +59,29 @@ defmodule ModalComponent do
             <div class="modal-box">
 
               <h3 class="text-lg font-bold">You have selected seat <%= @station.station_number %></h3>
-              <p class="py-4">This Place is currently occupied by Badge #<%= @reservation.badge %></p>
+              <p class="py-4">Occupied by badge <b>#<%= @reservation.badge %></b> *REPLACE WITH NAME*</p>
+              <p>The reservation will end at
+              <b><%= Calendar.strftime(
+                @reservation.end_date |> Timex.to_datetime("America/Montreal"),
+                "%H:%M"
+              ) %> *REPLACE WITH COUNTDOWN*</b>
+              </p>
               <p class="py-4">Enter a reason for canceling the reservation</p>
 
               <form phx-submit="cancel_seat">
                 <input type="hidden" name="station_id" value={"#{@station.id}"}>
                 <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
-                <input type="text" placeholder="Reason" class="w-full max-w-xs input input-bordered" name="cancel_reason"/>
+                <input type="text" placeholder="Reason" value="Leaving early" class="w-full max-w-xs input input-bordered" name="cancel_reason"/>
 
                 <div class="modal-action">
-                  <label for={"seat-modal-#{@station.station_number}"} class="btn">Close</label>
-                  <button for={"seat-modal-#{@station.station_number}"} class="btn" type="submit" onclick={"document.getElementById('seat-modal-#{@station.station_number}').checked=false"}>Confirm cancelation</button>
+                  <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
+                  <button for={"seat-modal-#{@station.station_number}"} class="btn btn-success" type="submit" onclick={"document.getElementById('seat-modal-#{@station.station_number}').checked=false"}>Confirm cancelation</button>
                 </div>
               </form>
             </div>
           </div>
         """
+
       :broken ->
         ~H"""
           <!-- The button to open modal -->
@@ -88,11 +96,12 @@ defmodule ModalComponent do
               <p class="py-4">This computer is broken and cannot be reserved</p>
 
               <div class="modal-action">
-                <label for={"seat-modal-#{@station.station_number}"} class="btn">Close</label>
+                <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
               </div>
             </div>
           </div>
         """
+
       :reserved ->
         ~H"""
           <!-- The button to open modal -->
@@ -107,7 +116,7 @@ defmodule ModalComponent do
               <p class="py-4">This computer is reserved for a tournament and may not be used for another purpose until the tournament is finished</p>
 
               <div class="modal-action">
-                <label for={"seat-modal-#{@station.station_number}"} class="btn">Close</label>
+                <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
               </div>
             </div>
           </div>

@@ -7,12 +7,13 @@ defmodule LanpartyseatingWeb.Nav do
       |> assign(
         nav_menu: [
           {"Index", ~p"/"},
-          {"Badges", ~p"/badges"},
-          {"Participants", ~p"/participants"},
-          {"Settings", ~p"/settings"},
+          {"Live Display", ~p"/display"},
+          {"Auto assign", ~p"/badges"},
+          {"Self Sign", ~p"/selfsign"},
           {"Management", ~p"/management"},
           {"Tournaments", ~p"/tournaments"},
-          {"Display", ~p"/display"}
+          {"Log", ~p"/participants"},
+          {"Settings", ~p"/settings"}
         ]
       )
       |> attach_hook(:set_nav_menu_active_path, :handle_params, fn
@@ -25,6 +26,7 @@ defmodule LanpartyseatingWeb.Nav do
 
   def render(assigns) do
     ~H"""
+
     """
   end
 end

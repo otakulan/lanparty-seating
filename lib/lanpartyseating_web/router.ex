@@ -16,19 +16,23 @@ defmodule LanpartyseatingWeb.Router do
 
   # Healthcheck scope
   scope "/" do
-    pipe_through :browser # Use the default browser stack
+    # Use the default browser stack
+    pipe_through :browser
 
     forward "/healthz", HeartCheck.Plug, heartcheck: LanpartyseatingWeb.HealthCheck
   end
 
   scope "/", LanpartyseatingWeb do
-    pipe_through :browser # Use the default browser stack
+    # Use the default browser stack
+    pipe_through :browser
 
-    live_session :nav, on_mount: [
-      LanpartyseatingWeb.Nav
-    ] do
+    live_session :nav,
+      on_mount: [
+        LanpartyseatingWeb.Nav
+      ] do
       live "/", IndexLive, :index
       live "/badges", BadgesLive, :index
+      live "/selfsign", SelfSignLive, :index
       live "/participants", ParticipantsLive, :index
       live "/settings", SettingsLive, :index
       live "/display", DisplayLive, :index
