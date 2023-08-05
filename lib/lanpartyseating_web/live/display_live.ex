@@ -65,7 +65,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
   def render(assigns) do
     ~H"""
     <div class="jumbotron">
-      <h1 style="font-size:30px">Seats</h1>
+      <h1 style="font-size:30px">Stations</h1>
 
       <div class="flex flex-wrap w-full">
         <%= for r <- 0..(@rows-1) do %>
@@ -87,16 +87,16 @@ defmodule LanpartyseatingWeb.DisplayLive do
       <div class="flex flex-wrap w-full">
         <div class="flex flex-row w-full " }>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-            <h2><u>Name</u></h2>
+            <h2><b>Name / Nom</b></h2>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-            <h2><u>Day</u></h2>
+            <h2><b>Day / Jour</b></h2>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-            <h2><u>Start Time</u></h2>
+            <h2><b>Start Time / Début</b></h2>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-            <h2><u>End Time</u></h2>
+            <h2><b>End Time / Fin</b></h2>
           </div>
         </div>
         <%= for tournament <- @tournaments do %>

@@ -27,7 +27,9 @@ defmodule SelfSignModalComponent do
         <div class="modal modal-bottom sm:modal-middle">
           <div class="modal-box">
             <h3 class="text-lg font-bold">Station #<%= @station.station_number %></h3>
-            <p>Once you badge is scanned, a 45min session will start at the chosen computer</p>
+            <p>Once you badge is scanned, a 45 min session will start at the chosen station</p>
+            <br />
+            <p>Une fois votre badge scanné, une session de 45 min commencera à la station choisie</p>
 
             <form phx-submit="reserve_seat">
               <input type="hidden" name="seat_number" value={"#{@station.station_number}"} />
@@ -39,16 +41,16 @@ defmodule SelfSignModalComponent do
               <br /><br />
               <input
                 type="text"
-                placeholder="Badge number"
+                placeholder="Badge number / Numéro de badge"
                 class="w-full max-w-xs input input-bordered"
                 name="badge_number"
                 autofocus
               />
 
               <div class="modal-action">
-                <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
+                <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">X</label>
                 <button for={"seat-modal-#{@station.station_number}"} class="btn btn-success" type="submit">
-                  Confirm reservation
+                ✓
                 </button>
               </div>
             </form>
