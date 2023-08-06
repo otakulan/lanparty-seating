@@ -15,20 +15,24 @@ defmodule LanpartyseatingWeb.BadgesLive do
     message =
       if String.length(badge_number) > 0 do
         case SeatingLogic.register_seat(badge_number) do
-          nil -> "No seat available. Please wait for a seat to be freed and scan your badge again."
+          nil ->
+            "No seat available. Please wait for a seat to be freed and scan your badge again."
+
           number ->
-          # TODO: Handle case where create_reservation failed. It's possible that the function
-          # fails to assign the requested seat.
+            # TODO: Handle case where create_reservation failed. It's possible that the function
+            # fails to assign the requested seat.
 
-          ReservationLogic.create_reservation(number, 45, badge_number)
+            ReservationLogic.create_reservation(number, 45, badge_number)
 
-          ## TODO: Create username and password in AD
+            ## TODO: Create username and password in AD
 
-          ## TODO: Display the ID of the reserved seat, all station have a username and password that relates to their ID
-          ## The ID is the one of the next available station. People who come in group should scan their
-          ## badge one after another if they want to be togheter.
+            ## TODO: Display the ID of the reserved seat, all station have a username and password that relates to their ID
+            ## The ID is the one of the next available station. People who come in group should scan their
+            ## badge one after another if they want to be togheter.
 
-          "Your assigned seat is: " <> to_string(number) <> " (make this message disappear after 5 seconds with a nice fade out)"
+            "Your assigned seat is: " <>
+              to_string(number) <>
+              " (make this message disappear after 5 seconds with a nice fade out)"
         end
       else
         "Empty badge number submitted"
@@ -47,7 +51,7 @@ defmodule LanpartyseatingWeb.BadgesLive do
     </script>
 
     <div class="jumbotron">
-      <h1 style="font-size:30px">Scan your badge</h1>
+      <h1 style="font-size:30px">Scan your badge / Scannez votre badge</h1>
 
       <form phx-submit="submit_reservation">
         <br /><br />
@@ -60,7 +64,7 @@ defmodule LanpartyseatingWeb.BadgesLive do
           autofocus
         />
 
-        <button for="" class="btn" type="submit">Submit</button>
+        <button for="" class="btn" type="submit">Submit / Soumettre</button>
       </form>
 
       <br />

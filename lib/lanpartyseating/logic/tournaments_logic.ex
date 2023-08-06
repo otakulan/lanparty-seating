@@ -25,6 +25,15 @@ defmodule Lanpartyseating.TournamentsLogic do
     |> Repo.all()
   end
 
+  def get_upcoming_tournaments do
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+
+    Tournament
+    |> where([v], v.end_date > from_now(0, "second"))
+    |> where([v], is_nil(v.deleted_at))
+    |> Repo.all()
+  end
+
   def create_tournament(name, start_time, duration) do
     end_time = DateTime.add(start_time, duration, :hour, Tzdata.TimeZoneDatabase)
 
@@ -34,7 +43,6 @@ defmodule Lanpartyseating.TournamentsLogic do
   end
 
   def delete_tournament(id) do
-
     Tournament
     |> where(id: ^id)
     |> where([v], is_nil(v.deleted_at))

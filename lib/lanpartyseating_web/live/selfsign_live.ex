@@ -1,4 +1,4 @@
-defmodule LanpartyseatingWeb.ManagementLive do
+defmodule LanpartyseatingWeb.SelfSignLive do
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.SettingsLogic, as: SettingsLogic
   alias Lanpartyseating.StationLogic, as: StationLogic
@@ -29,34 +29,18 @@ defmodule LanpartyseatingWeb.ManagementLive do
 
   def handle_event(
         "reserve_seat",
-        %{"seat_number" => seat_number, "duration" => duration, "badge_number" => badge_number},
+        %{"seat_number" => seat_number, "badge_number" => badge_number},
         socket
       ) do
-    registration_error = nil
-
     ReservationLogic.create_reservation(
       String.to_integer(seat_number),
-      String.to_integer(duration),
+      String.to_integer("45"),
       badge_number
     )
 
     socket =
       socket
       |> assign(:registration_error, nil)
-
-    {:noreply, socket}
-  end
-
-  def handle_event(
-        "cancel_seat",
-        %{"station_id" => id, "station_number" => station_number, "cancel_reason" => reason},
-        socket
-      ) do
-    ReservationLogic.cancel_reservation(
-      String.to_integer(id),
-      String.to_integer(station_number),
-      reason
-    )
 
     {:noreply, socket}
   end
@@ -100,13 +84,29 @@ defmodule LanpartyseatingWeb.ManagementLive do
     <div class="jumbotron">
       <h1 style="font-size:30px">Stations</h1>
       <div class="flex flex-wrap w-full">
+      <h1 style="font-size:20px">Legend / Légendeé:</h1>
+        <div class="mb-4 flex flex-row w-full ">
+          <label class="btn btn-warning mr-4">
+            Occupied / Occupée
+          </label>
+          <label class="btn btn-active mr-4">
+            Reserved for tournament / Réservée pour un tournois
+          </label>
+          <label class="btn btn-error mr-4">
+            Broken / Brisée
+          </label>
+          <label class="btn btn-info mr-4">
+            Available / Disponible
+          </label>
+        </div>
+        <h1 style="font-size:20px">Please select an available station / Veuillez sélectionner une station disponible:</h1>
         <%= for r <- 0..(@rows-1) do %>
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
             <%= for c <- 0..(@columns-1) do %>
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
                 <% station_data = @stations |> Enum.at(r * @columns + c) %>
                 <%= if !is_nil(station_data) do %>
-                  <ModalComponent.modal
+                  <SelfSignModalComponent.modal
                     error={@registration_error}
                     reservation={station_data.reservation}
                     station={station_data.station}

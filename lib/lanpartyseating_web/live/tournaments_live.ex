@@ -54,7 +54,8 @@ defmodule LanpartyseatingWeb.TournamentsLive do
     {:ok, local_start_time} =
       DateTime.from_naive(naive_start_time, "America/Toronto", Tzdata.TimeZoneDatabase)
 
-    {:ok, utc_start_time} = DateTime.shift_zone(local_start_time, "Etc/UTC", Tzdata.TimeZoneDatabase)
+    {:ok, utc_start_time} =
+      DateTime.shift_zone(local_start_time, "Etc/UTC", Tzdata.TimeZoneDatabase)
 
     # Creating tournament
     {:ok, tournament} =
@@ -65,11 +66,12 @@ defmodule LanpartyseatingWeb.TournamentsLive do
       )
 
     # Creating station reservations for the tournament
-    {:ok, _} = TournamentReservationLogic.create_tournament_reservations_by_range(
-      String.to_integer(start_station, 10),
-      String.to_integer(end_station, 10),
-      tournament.id
-    )
+    {:ok, _} =
+      TournamentReservationLogic.create_tournament_reservations_by_range(
+        String.to_integer(start_station, 10),
+        String.to_integer(end_station, 10),
+        tournament.id
+      )
 
     start_delay = DateTime.diff(tournament.start_date, DateTime.utc_now(), :millisecond)
     expiry_delay = DateTime.diff(tournament.end_date, DateTime.utc_now(), :millisecond)
@@ -121,9 +123,11 @@ defmodule LanpartyseatingWeb.TournamentsLive do
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
             <h3>
-              <%= Calendar.strftime(
+              <%=
+
+              Calendar.strftime(
                 tournament.start_date |> Timex.to_datetime("America/Montreal"),
-                "%y/%m/%d -> %H:%M"
+                "%A %d %b - %H:%M"
               ) %>
             </h3>
           </div>
@@ -131,7 +135,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
             <h3>
               <%= Calendar.strftime(
                 tournament.end_date |> Timex.to_datetime("America/Montreal"),
-                "%y/%m/%d -> %H:%M"
+                "%A %d %b - %H:%M"
               ) %>
             </h3>
           </div>

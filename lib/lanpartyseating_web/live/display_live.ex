@@ -7,7 +7,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def mount(_params, _session, socket) do
     settings = SettingsLogic.get_settings()
-    tournaments = TournamentsLogic.get_all_daily_tournaments()
+    tournaments = TournamentsLogic.get_upcoming_tournaments()
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_status")
@@ -42,11 +42,11 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def update_stations(old_stations, status, seat_number, reservation) do
     old_stations
-      |> Enum.map(fn s ->
-        if s.station.station_number == seat_number,
-          do: Map.merge(s, %{status: status, reservation: reservation}),
-          else: s
-      end)
+    |> Enum.map(fn s ->
+      if s.station.station_number == seat_number,
+        do: Map.merge(s, %{status: status, reservation: reservation}),
+        else: s
+    end)
   end
 
   def handle_info({:occupied, seat_number, reservation}, socket) do
@@ -56,7 +56,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
   end
 
   def handle_info({:reserved, seat_number, tournament_reservation}, socket) do
-    new_stations = update_stations(socket.assigns.stations, :reserved, seat_number, tournament_reservation)
+    new_stations =
+      update_stations(socket.assigns.stations, :reserved, seat_number, tournament_reservation)
 
     {:noreply, assign(socket, :stations, new_stations)}
   end
@@ -64,7 +65,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
   def render(assigns) do
     ~H"""
     <div class="jumbotron">
-      <h1 style="font-size:30px">Seats</h1>
+      <h1 style="font-size:30px">Stations</h1>
 
       <div class="flex flex-wrap w-full">
         <%= for r <- 0..(@rows-1) do %>
@@ -81,18 +82,21 @@ defmodule LanpartyseatingWeb.DisplayLive do
         <% end %>
       </div>
 
-      <h1 style="font-size:30px">Tournaments</h1>
+      <h1 style="font-size:30px">Upcoming Tournaments / Tournois à venir</h1>
 
       <div class="flex flex-wrap w-full">
         <div class="flex flex-row w-full " }>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-            <h2><u>Name</u></h2>
+            <h2><b>Name / Nom</b></h2>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-            <h2><u>Start Time</u></h2>
+            <h2><b>Day / Jour</b></h2>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
-            <h2><u>End Time</u></h2>
+            <h2><b>Start Time / Début</b></h2>
+          </div>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+            <h2><b>End Time / Fin</b></h2>
           </div>
         </div>
         <%= for tournament <- @tournaments do %>
@@ -104,7 +108,15 @@ defmodule LanpartyseatingWeb.DisplayLive do
               <h3>
                 <%= Calendar.strftime(
                   tournament.start_date |> Timex.to_datetime("America/Montreal"),
-                  "%y/%m/%d -> %H:%M"
+                  "%A"
+                ) %>
+              </h3>
+            </div>
+            <div class="flex flex-col flex-1 mx-1 grow" }>
+              <h3>
+                <%= Calendar.strftime(
+                  tournament.start_date |> Timex.to_datetime("America/Montreal"),
+                  "%H:%M"
                 ) %>
               </h3>
             </div>
@@ -112,7 +124,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
               <h3>
                 <%= Calendar.strftime(
                   tournament.end_date |> Timex.to_datetime("America/Montreal"),
-                  "%y/%m/%d -> %H:%M"
+                  "%H:%M"
                 ) %>
               </h3>
             </div>
