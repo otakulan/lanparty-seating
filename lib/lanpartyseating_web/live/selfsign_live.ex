@@ -84,7 +84,7 @@ defmodule LanpartyseatingWeb.SelfSignLive do
     <div class="jumbotron">
       <h1 style="font-size:30px">Stations</h1>
       <div class="flex flex-wrap w-full">
-      <h1 style="font-size:20px">Legend / Légendeé:</h1>
+        <h1 style="font-size:20px">Legend / Légende:</h1>
         <div class="mb-4 flex flex-row w-full ">
           <label class="btn btn-warning mr-4">
             Occupied / Occupée
