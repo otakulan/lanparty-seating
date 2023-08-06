@@ -8,12 +8,12 @@ defmodule LanpartyseatingWeb.Nav do
         nav_menu: [
           {"Index", ~p"/"},
           {"Live Display", ~p"/display"},
-          {"Auto assign", ~p"/badges"},
+          # {"Auto assign", ~p"/badges"},
           {"Self Sign", ~p"/selfsign"},
-          {"Management", ~p"/management"},
-          {"Tournaments", ~p"/tournaments"},
-          {"Log", ~p"/participants"},
-          {"Settings", ~p"/settings"}
+          {"Cancellation", ~p"/management"}
+          # {"Tournaments", ~p"/tournaments"}
+          # {"Log", ~p"/participants"}
+          # {"Settings", ~p"/settings"}
         ]
       )
       |> attach_hook(:set_nav_menu_active_path, :handle_params, fn
