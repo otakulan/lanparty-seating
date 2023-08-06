@@ -65,6 +65,32 @@ defmodule LanpartyseatingWeb.CancellationLive do
     {:noreply, socket}
   end
 
+  def handle_event(
+        "close_station",
+        %{"station_number" => station_number},
+        socket
+      ) do
+    StationLogic.set_station_broken(
+      String.to_integer(station_number),
+      true
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_event(
+        "open_station",
+        %{"station_number" => station_number},
+        socket
+      ) do
+    StationLogic.set_station_broken(
+      String.to_integer(station_number),
+      false
+    )
+
+    {:noreply, socket}
+  end
+
   def handle_info({:available, station_number}, socket) do
     new_stations =
       socket.assigns.stations
@@ -104,21 +130,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
     ~H"""
     <div class="jumbotron">
       <h1 style="font-size:30px">Stations Management</h1>
-      <h1 style="font-size:20px">Legend / Légende:</h1>
-        <div class="mb-4 flex flex-row w-full ">
-          <label class="btn btn-warning mr-4">
-            Occupied / Occupée
-          </label>
-          <label class="btn btn-active mr-4">
-            Reserved for tournament / Réservée pour un tournois
-          </label>
-          <label class="btn btn-error mr-4">
-            Broken / Brisée
-          </label>
-          <label class="btn btn-info mr-4">
-            Available / Disponible
-          </label>
-        </div>
+
       <div class="flex flex-wrap w-full">
         <%= for r <- 0..(@rows-1) do %>
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
@@ -126,7 +138,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
                 <% station_data = @stations |> Enum.at(r * @columns + c) %>
                 <%= if !is_nil(station_data) do %>
-                  <ModalComponent.modal
+                  <CancellationModalComponent.modal
                     error={@registration_error}
                     reservation={station_data.reservation}
                     station={station_data.station}
@@ -137,6 +149,24 @@ defmodule LanpartyseatingWeb.CancellationLive do
             <% end %>
           </div>
         <% end %>
+      </div>
+      <h1 style="font-size:20px">Legend / Légende:</h1>
+      <div class="mb-4 flex flex-row w-full ">
+      <label class="btn btn-info mr-4">
+          Available / Disponible
+        </label>
+        <label class="btn btn-warning mr-4">
+          Occupied / Occupée
+        </label>
+
+        </div>
+        <div class="mb-4 flex flex-row w-full ">
+        <label class="btn btn-error mr-4">
+          Broken / Brisée
+        </label>
+        <label class="btn btn-active mr-4">
+          Reserved for tournament / Réservée pour un tournois
+        </label>
       </div>
     </div>
     """

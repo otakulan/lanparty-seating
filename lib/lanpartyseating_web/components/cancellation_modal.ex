@@ -1,8 +1,5 @@
-defmodule ModalComponent do
+defmodule CancellationModalComponent do
   use Phoenix.Component
-
-  # Optionally also bring the HTML helpers
-  # use Phoenix.HTML
 
   attr(:error, :string, required: false)
   attr(:station, :any, required: true)
@@ -10,11 +7,6 @@ defmodule ModalComponent do
   attr(:reservation, :any, required: true)
 
   def modal(assigns) do
-    # status:
-    # 1 - libre / available  (blue: btn-info)
-    # 2 - occupé / occupied (yellow: btn-warning)
-    # 3 - brisé / broken  (red: btn-error)
-    # 4 - réserver pour un tournois / reserved for a tournament  (black: btn-active)
     case assigns.status do
       :available ->
         ~H"""
@@ -27,21 +19,19 @@ defmodule ModalComponent do
             <div class="modal-box">
 
               <h3 class="text-lg font-bold">You have selected station <%= @station.station_number %></h3>
-              <p class="py-4">Select the duration of the reservation</p>
+              <p class="py-4">Do you want to close this station?</p>
 
-              <form phx-submit="reserve_station">
+              <form phx-submit="close_station">
                 <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
-                <input type="number" placeholder="Reservation duration" min="1" max="60" class="w-16 max-w-xs input input-bordered input-xs" name="duration" value="45"/> minutes
+
                 <%= if !is_nil(@error) do %>
                   <p class="text-error"><%= @error %></p>
                 <% end %>
-                <%!-- <p>@error</p> --%>
                 <br/><br/>
-                <input type="text" placeholder="Badge number" class="w-full max-w-xs input input-bordered" name="badge_number" autofocus/>
 
                 <div class="modal-action">
-                  <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
-                  <button for={"station-modal-#{@station.station_number}"} class="btn btn-success" type="submit">Confirm reservation</button>
+                  <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">X</label>
+                  <button for={"station-modal-#{@station.station_number}"} class="btn btn-success" type="submit">✓</button>
                 </div>
               </form>
             </div>
@@ -101,11 +91,21 @@ defmodule ModalComponent do
             <div class="modal-box">
 
               <h3 class="text-lg font-bold">You have selected station <%= @station.station_number %></h3>
-              <p class="py-4">This computer is broken and cannot be reserved</p>
+              <p class="py-4">Do you want to re-open this station?</p>
 
-              <div class="modal-action">
-                <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
-              </div>
+              <form phx-submit="open_station">
+                <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
+
+                <%= if !is_nil(@error) do %>
+                  <p class="text-error"><%= @error %></p>
+                <% end %>
+                <br/><br/>
+
+                <div class="modal-action">
+                  <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">X</label>
+                  <button for={"station-modal-#{@station.station_number}"} class="btn btn-success" type="submit">✓</button>
+                </div>
+              </form>
             </div>
           </div>
         """
@@ -113,21 +113,7 @@ defmodule ModalComponent do
       :reserved ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"station-modal-#{@station.station_number}"} class="btn btn-active"><%= @station.station_number %></label>
-
-          <!-- Put this part before </body> tag -->
-          <input type="checkbox" id={"station-modal-#{@station.station_number}"} class="modal-toggle" />
-          <div class="modal modal-bottom sm:modal-middle">
-            <div class="modal-box">
-
-              <h3 class="text-lg font-bold">You have selected station <%= @station.station_number %></h3>
-              <p class="py-4">This computer is reserved for a tournament and may not be used for another purpose until the tournament is finished</p>
-
-              <div class="modal-action">
-                <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
-              </div>
-            </div>
-          </div>
+          <label for={"seat-modal-#{@station.station_number}"} class="btn btn-active"><%= @station.station_number %></label>
         """
     end
   end

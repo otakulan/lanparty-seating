@@ -85,21 +85,7 @@ defmodule LanpartyseatingWeb.SelfSignLive do
     <div class="jumbotron">
       <h1 style="font-size:30px">Stations</h1>
       <div class="flex flex-wrap w-full">
-        <h1 style="font-size:20px">Legend / Légende:</h1>
-        <div class="mb-4 flex flex-row w-full ">
-          <label class="btn btn-warning mr-4">
-            Occupied / Occupée
-          </label>
-          <label class="btn btn-active mr-4">
-            Reserved for tournament / Réservée pour un tournois
-          </label>
-          <label class="btn btn-error mr-4">
-            Broken / Brisée
-          </label>
-          <label class="btn btn-info mr-4">
-            Available / Disponible
-          </label>
-        </div>
+
         <h1 style="font-size:20px">Please select an available station / Veuillez sélectionner une station disponible:</h1>
         <%= for r <- 0..(@rows-1) do %>
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
@@ -118,6 +104,24 @@ defmodule LanpartyseatingWeb.SelfSignLive do
             <% end %>
           </div>
         <% end %>
+        <h1 style="font-size:20px">Legend / Légende:</h1>
+        <div class="mb-4 flex flex-row w-full ">
+        <label class="btn btn-info mr-4">
+            Available / Disponible
+          </label>
+          <label class="btn btn-warning mr-4">
+            Occupied / Occupée
+          </label>
+
+          </div>
+          <div class="mb-4 flex flex-row w-full ">
+          <label class="btn btn-error mr-4">
+            Broken / Brisée
+          </label>
+          <label class="btn btn-active mr-4">
+            Reserved for tournament / Réservée pour un tournois
+          </label>
+        </div>
       </div>
     </div>
     """
