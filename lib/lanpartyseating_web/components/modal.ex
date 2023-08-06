@@ -19,18 +19,18 @@ defmodule ModalComponent do
       :available ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{@station.station_number}"} class="btn btn-info"><%= @station.station_number %></label>
+          <label for={"station-modal-#{@station.station_number}"} class="btn btn-info"><%= @station.station_number %></label>
 
           <!-- Put this part before </body> tag -->
-          <input type="checkbox" id={"seat-modal-#{@station.station_number}"} class="modal-toggle" />
+          <input type="checkbox" id={"station-modal-#{@station.station_number}"} class="modal-toggle" />
           <div class="modal modal-bottom sm:modal-middle">
             <div class="modal-box">
 
-              <h3 class="text-lg font-bold">You have selected seat <%= @station.station_number %></h3>
+              <h3 class="text-lg font-bold">You have selected station <%= @station.station_number %></h3>
               <p class="py-4">Select the duration of the reservation</p>
 
-              <form phx-submit="reserve_seat">
-                <input type="hidden" name="seat_number" value={"#{@station.station_number}"}>
+              <form phx-submit="reserve_station">
+                <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
                 <input type="number" placeholder="Reservation duration" min="1" max="60" class="w-16 max-w-xs input input-bordered input-xs" name="duration" value="45"/> minutes
                 <%= if !is_nil(@error) do %>
                   <p class="text-error"><%= @error %></p>
@@ -40,8 +40,8 @@ defmodule ModalComponent do
                 <input type="text" placeholder="Badge number" class="w-full max-w-xs input input-bordered" name="badge_number" autofocus/>
 
                 <div class="modal-action">
-                  <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
-                  <button for={"seat-modal-#{@station.station_number}"} class="btn btn-success" type="submit">Confirm reservation</button>
+                  <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
+                  <button for={"station-modal-#{@station.station_number}"} class="btn btn-success" type="submit">Confirm reservation</button>
                 </div>
               </form>
             </div>
@@ -51,7 +51,7 @@ defmodule ModalComponent do
       :occupied ->
         ~H"""
           <!-- The button to open modal -->
-        <label for={"seat-modal-#{@station.station_number}"} class="btn btn-warning flex flex-col" >
+        <label for={"station-modal-#{@station.station_number}"} class="btn btn-warning flex flex-col" >
           <div >
             <%= @station.station_number %>
           </div>
@@ -62,11 +62,11 @@ defmodule ModalComponent do
         </label>
 
           <!-- Put this part before </body> tag -->
-          <input type="checkbox" id={"seat-modal-#{@station.station_number}"} class="modal-toggle" />
+          <input type="checkbox" id={"station-modal-#{@station.station_number}"} class="modal-toggle" />
           <div class="modal modal-bottom sm:modal-middle">
             <div class="modal-box">
 
-              <h3 class="text-lg font-bold">You have selected seat <%= @station.station_number %></h3>
+              <h3 class="text-lg font-bold">You have selected station <%= @station.station_number %></h3>
               <p class="py-4">Occupied by badge <b>#<%= @reservation.badge %></b> *REPLACE WITH NAME*</p>
               <p>The reservation will end at
               <b><%= Calendar.strftime(
@@ -76,14 +76,14 @@ defmodule ModalComponent do
               </p>
               <p class="py-4">Enter a reason for canceling the reservation</p>
 
-              <form phx-submit="cancel_seat">
+              <form phx-submit="cancel_station">
                 <input type="hidden" name="station_id" value={"#{@station.id}"}>
                 <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
                 <input type="text" placeholder="Reason" value="Leaving early" class="w-full max-w-xs input input-bordered" name="cancel_reason"/>
 
                 <div class="modal-action">
-                  <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
-                  <button for={"seat-modal-#{@station.station_number}"} class="btn btn-success" type="submit" onclick={"document.getElementById('seat-modal-#{@station.station_number}').checked=false"}>Confirm cancelation</button>
+                  <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
+                  <button for={"station-modal-#{@station.station_number}"} class="btn btn-success" type="submit" onclick={"document.getElementById('station-modal-#{@station.station_number}').checked=false"}>Confirm cancelation</button>
                 </div>
               </form>
             </div>
@@ -93,18 +93,18 @@ defmodule ModalComponent do
       :broken ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error"><%= @station.station_number %></label>
+          <label for={"station-modal-#{@station.station_number}"} class="btn btn-error"><%= @station.station_number %></label>
 
           <!-- Put this part before </body> tag -->
-          <input type="checkbox" id={"seat-modal-#{@station.station_number}"} class="modal-toggle" />
+          <input type="checkbox" id={"station-modal-#{@station.station_number}"} class="modal-toggle" />
           <div class="modal modal-bottom sm:modal-middle">
             <div class="modal-box">
 
-              <h3 class="text-lg font-bold">You have selected seat <%= @station.station_number %></h3>
+              <h3 class="text-lg font-bold">You have selected station <%= @station.station_number %></h3>
               <p class="py-4">This computer is broken and cannot be reserved</p>
 
               <div class="modal-action">
-                <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
+                <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
               </div>
             </div>
           </div>
@@ -113,18 +113,18 @@ defmodule ModalComponent do
       :reserved ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{@station.station_number}"} class="btn btn-active"><%= @station.station_number %></label>
+          <label for={"station-modal-#{@station.station_number}"} class="btn btn-active"><%= @station.station_number %></label>
 
           <!-- Put this part before </body> tag -->
-          <input type="checkbox" id={"seat-modal-#{@station.station_number}"} class="modal-toggle" />
+          <input type="checkbox" id={"station-modal-#{@station.station_number}"} class="modal-toggle" />
           <div class="modal modal-bottom sm:modal-middle">
             <div class="modal-box">
 
-              <h3 class="text-lg font-bold">You have selected seat <%= @station.station_number %></h3>
+              <h3 class="text-lg font-bold">You have selected station <%= @station.station_number %></h3>
               <p class="py-4">This computer is reserved for a tournament and may not be used for another purpose until the tournament is finished</p>
 
               <div class="modal-action">
-                <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
+                <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">Close</label>
               </div>
             </div>
           </div>

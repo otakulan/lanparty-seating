@@ -6,14 +6,15 @@ defmodule LanpartyseatingWeb.Nav do
       socket
       |> assign(
         nav_menu: [
-          {"Index", ~p"/"},
-          {"Live Display", ~p"/display"},
-          # {"Auto assign", ~p"/badges"},
+          {"Live Display", ~p"/"},
+          # {"Auto assign", ~p"/autoassign"},
           {"Self Sign", ~p"/selfsign"},
-          {"Cancellation", ~p"/management"}
-          # {"Tournaments", ~p"/tournaments"}
-          # {"Log", ~p"/participants"}
-          # {"Settings", ~p"/settings"}
+          {"Cancellation", ~p"/cancellation"}
+
+          # ADMIN PAGE - DO NOT DISPLAY
+          # {"Tournaments", ~p"/tournaments"},
+          # {"Settings", ~p"/settings"},
+          # {"Log", ~p"/logs"}
         ]
       )
       |> attach_hook(:set_nav_menu_active_path, :handle_params, fn

@@ -7,66 +7,59 @@ defmodule Lanpartyseating.ReservationLogic do
   alias Lanpartyseating.BadgesLogic, as: BadgesLogic
   alias Lanpartyseating.PubSub, as: PubSub
 
-  def create_reservation(seat_number, duration, badge_number) do
-    IO.inspect(label: "create_reservation called")
-
-    if badge_number == "" do
+  def create_reservation(station_number, duration, serial_key) do
+    if serial_key == "" do
       {:error, "Please fill all the fields"}
     else
-      badge = BadgesLogic.get_badge(badge_number)
-      IO.inspect(badge)
+      # Verifying that badge exists
+      badge = BadgesLogic.get_badge(serial_key)
 
       if badge == nil do
         {:error, "Unknown badge serial number"}
       else
-        station = StationLogic.get_station(seat_number)
+        station = StationLogic.get_station(station_number)
 
         if station == nil do
-          IO.inspect(
-            "In function 'create_reservation', 'get_station' returned nil. This will crash."
-          )
-        end
-
-        isCreatable =
-          case StationLogic.get_station_status(station).status do
-            :occupied -> false
-            :closed -> false
-            :available -> true
-          end
-
-        Logger.debug("isCreatable: #{isCreatable}")
-
-        if isCreatable == true do
-          now = DateTime.truncate(DateTime.utc_now(), :second)
-          end_time = DateTime.add(now, duration, :minute)
-
-          IO.inspect("created")
-
-          case Repo.insert(%Reservation{
-                 duration: duration,
-                 badge: badge_number,
-                 station_id: station.id,
-                 start_date: now,
-                 end_date: end_time
-               }) do
-            {:ok, updated} ->
-              Phoenix.PubSub.broadcast(
-                PubSub,
-                "station_status",
-                {:occupied, seat_number, updated}
-              )
-
-              DynamicSupervisor.start_child(
-                Lanpartyseating.ExpirationTaskSupervisor,
-                {Lanpartyseating.Tasks.ExpireReservation, {end_time, updated.id}}
-              )
-
-              Logger.debug("Created expiration task for reservation #{updated.id}")
-              {:ok, updated}
-          end
+          {:error, "Unknown station number"}
         else
-          IO.inspect(label: "is not creatable")
-          {:error, "Station is not available"}
+          isAvailable =
+            case StationLogic.get_station_status(station).status do
+              :reserved -> false
+              :occupied -> false
+              :broken -> false
+              :available -> true
+            end
+
+          if isAvailable == true do
+            now = DateTime.truncate(DateTime.utc_now(), :second)
+            end_time = DateTime.add(now, duration, :minute)
+
+            case Repo.insert(%Reservation{
+                   duration: duration,
+                   badge: badge.uid,
+                   station_id: station.id,
+                   start_date: now,
+                   end_date: end_time
+                 }) do
+              {:ok, updated} ->
+                Phoenix.PubSub.broadcast(
+                  PubSub,
+                  "station_status",
+                  {:occupied, station_number, updated}
+                )
+
+                DynamicSupervisor.start_child(
+                  Lanpartyseating.ExpirationTaskSupervisor,
+                  {Lanpartyseating.Tasks.ExpireReservation, {end_time, updated.id}}
+                )
+
+                Logger.debug("Created expiration task for reservation #{updated.id}")
+                {:ok, updated}
+            end
+          else
+            IO.inspect(label: "is not creatable")
+            {:error, "Station is not available"}
+          end
         end
       end
     end

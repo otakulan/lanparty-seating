@@ -19,11 +19,11 @@ defmodule SelfSignModalComponent do
       :available ->
         ~H"""
         <!-- The button to open modal -->
-        <label for={"seat-modal-#{@station.station_number}"} class="btn btn-info">
+        <label for={"station-modal-#{@station.station_number}"} class="btn btn-info">
           <%= @station.station_number %>
         </label>
         <!-- Put this part before </body> tag -->
-        <input type="checkbox" id={"seat-modal-#{@station.station_number}"} class="modal-toggle" />
+        <input type="checkbox" id={"station-modal-#{@station.station_number}"} class="modal-toggle" />
         <div class="modal modal-bottom sm:modal-middle">
           <div class="modal-box">
             <h3 class="text-lg font-bold">Station #<%= @station.station_number %></h3>
@@ -31,8 +31,8 @@ defmodule SelfSignModalComponent do
             <br />
             <p>Une fois votre badge scanné, une session de 45 min commencera à la station choisie</p>
 
-            <form phx-submit="reserve_seat">
-              <input type="hidden" name="seat_number" value={"#{@station.station_number}"} />
+            <form phx-submit="reserve_station">
+              <input type="hidden" name="station_number" value={"#{@station.station_number}"} />
 
               <%= if !is_nil(@error) do %>
                 <p class="text-error"><%= @error %></p>
@@ -48,8 +48,8 @@ defmodule SelfSignModalComponent do
               />
 
               <div class="modal-action">
-                <label for={"seat-modal-#{@station.station_number}"} class="btn btn-error">X</label>
-                <button for={"seat-modal-#{@station.station_number}"} class="btn btn-success" type="submit">
+                <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">X</label>
+                <button for={"station-modal-#{@station.station_number}"} class="btn btn-success" type="submit">
                 ✓
                 </button>
               </div>
