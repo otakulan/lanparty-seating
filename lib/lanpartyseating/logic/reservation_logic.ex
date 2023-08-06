@@ -32,7 +32,6 @@ defmodule Lanpartyseating.ReservationLogic do
       if isCreatable == true do
         now = DateTime.truncate(DateTime.utc_now(), :second)
         end_time = DateTime.add(now, duration, :minute)
-        expiry_ms = DateTime.diff(end_time, now, :millisecond)
 
         IO.inspect("created")
 
@@ -48,7 +47,7 @@ defmodule Lanpartyseating.ReservationLogic do
 
             DynamicSupervisor.start_child(
               Lanpartyseating.ExpirationTaskSupervisor,
-              {Lanpartyseating.Tasks.ExpireReservation, {expiry_ms, updated.id}}
+              {Lanpartyseating.Tasks.ExpireReservation, {end_time, updated.id}}
             )
 
             Logger.debug("Created expiration task for reservation #{updated.id}")

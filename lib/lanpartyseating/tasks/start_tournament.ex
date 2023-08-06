@@ -44,6 +44,6 @@ defmodule Lanpartyseating.Tasks.StartTournament do
         {:reserved, reservation.station.station_number, reservation}
       )
     end)
-    {:noreply, tournament_id}
+    {:stop, :normal, tournament_id}
   end
 end

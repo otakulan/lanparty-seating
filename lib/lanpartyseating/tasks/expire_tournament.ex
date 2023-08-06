@@ -45,6 +45,6 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
       )
     end)
 
-    {:noreply, tournament_id}
+    {:stop, :normal, tournament_id}
   end
 end
