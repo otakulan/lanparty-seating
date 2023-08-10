@@ -43,6 +43,25 @@ defmodule Lanpartyseating.StationLogic do
     end)
   end
 
+  def set_station_broken(station_number, is_broken) do
+    IO.inspect(is_broken)
+
+    station =
+      Station
+      |> where(station_number: ^station_number)
+      |> Repo.one()
+
+    station =
+      Ecto.Changeset.change(station,
+        is_closed: is_broken
+      )
+
+    case Repo.update(station) do
+      {:ok, result} -> result
+      {:error, _} -> nil
+    end
+  end
+
   def get_all_stations_sorted_by_number do
     now = DateTime.truncate(DateTime.utc_now(), :second)
 
@@ -123,6 +142,9 @@ defmodule Lanpartyseating.StationLogic do
     tournament_now = DateTime.add(DateTime.utc_now(), 45, :minute)
 
     case station do
+      %Station{is_closed: true} ->
+        %{status: :broken, reservation: nil}
+
       %Station{tournament_reservations: [res | _]}
       when is_nil(res.tournament.deleted_at) and
              (res.tournament.end_date > now and res.tournament.start_date <= tournament_now) ->
@@ -131,9 +153,6 @@ defmodule Lanpartyseating.StationLogic do
       %Station{reservations: [res | _]}
       when is_nil(res.deleted_at) and (res.end_date > now and res.start_date < now) ->
         %{status: :occupied, reservation: res}
-
-      %Station{is_closed: true} ->
-        %{status: :broken, reservation: nil}
 
       %Station{} ->
         %{status: :available, reservation: nil}

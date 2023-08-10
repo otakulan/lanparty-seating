@@ -82,8 +82,8 @@ for val <- 1..225,
 
 # Create only data required in this table: The last assigned seat ID.
 Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
-  last_assigned_seat: 0,
-  last_assigned_seat_date: ~U[2022-08-05 15:30:00Z]
+  last_assigned_station: 0,
+  last_assigned_station_date: ~U[2022-08-05 15:30:00Z]
 })
 
 # Create IDs in the Station Status table for all the stations

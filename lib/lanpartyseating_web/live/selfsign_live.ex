@@ -28,14 +28,14 @@ defmodule LanpartyseatingWeb.SelfSignLive do
   end
 
   def handle_event(
-        "reserve_seat",
-        %{"seat_number" => seat_number, "badge_number" => badge_number},
+        "reserve_station",
+        %{"station_number" => station_number, "uid" => uid},
         socket
       ) do
     ReservationLogic.create_reservation(
-      String.to_integer(seat_number),
+      String.to_integer(station_number),
       String.to_integer("45"),
-      badge_number
+      uid
     )
 
     socket =
@@ -45,11 +45,11 @@ defmodule LanpartyseatingWeb.SelfSignLive do
     {:noreply, socket}
   end
 
-  def handle_info({:available, seat_number}, socket) do
+  def handle_info({:available, station_number}, socket) do
     new_stations =
       socket.assigns.stations
       |> Enum.map(fn s ->
-        if s.station.station_number == seat_number,
+        if s.station.station_number == station_number,
           do: Map.merge(s, %{status: :available, reservation: nil}),
           else: s
       end)
@@ -57,24 +57,25 @@ defmodule LanpartyseatingWeb.SelfSignLive do
     {:noreply, assign(socket, :stations, new_stations)}
   end
 
-  def update_stations(old_stations, status, seat_number, reservation) do
+  def update_stations(old_stations, status, station_number, reservation) do
     old_stations
     |> Enum.map(fn s ->
-      if s.station.station_number == seat_number,
+      if s.station.station_number == station_number,
         do: Map.merge(s, %{status: status, reservation: reservation}),
         else: s
     end)
   end
 
-  def handle_info({:occupied, seat_number, reservation}, socket) do
-    new_stations = update_stations(socket.assigns.stations, :occupied, seat_number, reservation)
+  def handle_info({:occupied, station_number, reservation}, socket) do
+    new_stations =
+      update_stations(socket.assigns.stations, :occupied, station_number, reservation)
 
     {:noreply, assign(socket, :stations, new_stations)}
   end
 
-  def handle_info({:reserved, seat_number, tournament_reservation}, socket) do
+  def handle_info({:reserved, station_number, tournament_reservation}, socket) do
     new_stations =
-      update_stations(socket.assigns.stations, :reserved, seat_number, tournament_reservation)
+      update_stations(socket.assigns.stations, :reserved, station_number, tournament_reservation)
 
     {:noreply, assign(socket, :stations, new_stations)}
   end
@@ -84,21 +85,7 @@ defmodule LanpartyseatingWeb.SelfSignLive do
     <div class="jumbotron">
       <h1 style="font-size:30px">Stations</h1>
       <div class="flex flex-wrap w-full">
-        <h1 style="font-size:20px">Legend / Légende:</h1>
-        <div class="mb-4 flex flex-row w-full ">
-          <label class="btn btn-warning mr-4">
-            Occupied / Occupée
-          </label>
-          <label class="btn btn-active mr-4">
-            Reserved for tournament / Réservée pour un tournois
-          </label>
-          <label class="btn btn-error mr-4">
-            Broken / Brisée
-          </label>
-          <label class="btn btn-info mr-4">
-            Available / Disponible
-          </label>
-        </div>
+
         <h1 style="font-size:20px">Please select an available station / Veuillez sélectionner une station disponible:</h1>
         <%= for r <- 0..(@rows-1) do %>
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
@@ -117,6 +104,24 @@ defmodule LanpartyseatingWeb.SelfSignLive do
             <% end %>
           </div>
         <% end %>
+        <h1 style="font-size:20px">Legend / Légende:</h1>
+        <div class="mb-4 flex flex-row w-full ">
+        <label class="btn btn-info mr-4">
+            Available / Disponible
+          </label>
+          <label class="btn btn-warning mr-4">
+            Occupied / Occupée
+          </label>
+
+          </div>
+          <div class="mb-4 flex flex-row w-full ">
+          <label class="btn btn-error mr-4">
+            Broken / Brisée
+          </label>
+          <label class="btn btn-active mr-4">
+            Reserved for tournament / Réservée pour un tournois
+          </label>
+        </div>
       </div>
     </div>
     """

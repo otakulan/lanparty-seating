@@ -136,14 +136,14 @@ defmodule LanpartyseatingWeb.DisplayLive do
           <h1 style="font-size:40px">Rules and Information</h1>
           <div class="flex flex-wrap">
             <ul class="list-disc pl-4"  style="font-size:19px">
-              <li class="my-2"><b class="text-yellow-500">No spectating</b>. To be inside, you need a reservation and to be seated at a station</li>
+              <li class="my-2"><b class="text-yellow-500">No spectators</b>. You need a reservation to be inside and to seat at a station</li>
               <li class="my-2"><b class="text-yellow-500">No free accounts</b>. You need to your own account to play games</li>
               <li class="my-2"><b class="text-yellow-500">No OSU</b> for music copyright reasons</li>
               <li class="my-2">
                 <b class="text-yellow-500">Tournaments</b>:
                 <ul class="list-disc pl-4" style="font-size:17px">
                   <li class="my-2">Complete teams will be prioritized</li>
-                  <li class="my-2">Register your team or as a solo player at the desk info located at the room's entrance</li>
+                  <li class="my-2">Register your team or as a solo player at the info desk located at the room's entrance</li>
                   <li class="my-2">All tournaments are single elimination with prizes for the winning team</li>
                 </ul>
               </li>
@@ -153,7 +153,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
           <h1 style="font-size:40px">Règlements et informations</h1>
           <div class="flex flex-wrap">
             <ul class="list-disc pl-4" style="font-size:19px">
-              <li class="my-2"><b class="text-yellow-500">Pas de spectateurs</b>. Pour entrer dans la zone, il faut prendre une réservation et s'asseoir</li>
+              <li class="my-2"><b class="text-yellow-500">Pas de spectateurs</b>. Il est nécessaire de faire une réservation avant d'entrer dans la zone et de s'asseoir</li>
               <li class="my-2"><b class="text-yellow-500">Pas de comptes de jeu gratuit</b>. Vous devez posséder des comptes pour jouer aux jeux</li>
               <li class="my-2"><b class="text-yellow-500">Pas de OSU</b> pour des raisons de droits d'auteur</li>
               <li class="my-2">

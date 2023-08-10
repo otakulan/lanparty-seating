@@ -1,6 +1,6 @@
-defmodule LanpartyseatingWeb.BadgesLive do
+defmodule LanpartyseatingWeb.AutoAssignLive do
   use LanpartyseatingWeb, :live_view
-  alias Lanpartyseating.SeatingLogic, as: SeatingLogic
+  alias Lanpartyseating.AutoAssignLogic, as: AutoAssignLogic
   alias Lanpartyseating.ReservationLogic, as: ReservationLogic
 
   def mount(_params, _session, socket) do
@@ -11,26 +11,26 @@ defmodule LanpartyseatingWeb.BadgesLive do
     {:ok, socket}
   end
 
-  def handle_event("submit_reservation", %{"badge_number" => badge_number}, socket) do
+  def handle_event("submit_reservation", %{"uid" => uid}, socket) do
     message =
-      if String.length(badge_number) > 0 do
-        case SeatingLogic.register_seat(badge_number) do
+      if String.length(uid) > 0 do
+        case AutoAssignLogic.register_station(uid) do
           nil ->
-            "No seat available. Please wait for a seat to be freed and scan your badge again."
+            "No station available. Please wait for a station to be freed and scan your badge again."
 
           number ->
             # TODO: Handle case where create_reservation failed. It's possible that the function
-            # fails to assign the requested seat.
+            # fails to assign the requested station.
 
-            ReservationLogic.create_reservation(number, 45, badge_number)
+            ReservationLogic.create_reservation(number, 45, uid)
 
             ## TODO: Create username and password in AD
 
-            ## TODO: Display the ID of the reserved seat, all station have a username and password that relates to their ID
+            ## TODO: Display the ID of the reserved station, all station have a username and password that relates to their ID
             ## The ID is the one of the next available station. People who come in group should scan their
             ## badge one after another if they want to be togheter.
 
-            "Your assigned seat is: " <>
+            "Your assigned station is: " <>
               to_string(number) <>
               " (make this message disappear after 5 seconds with a nice fade out)"
         end
@@ -60,7 +60,7 @@ defmodule LanpartyseatingWeb.BadgesLive do
           type="text"
           placeholder="Badge number"
           class="w-full max-w-xs input input-bordered"
-          name="badge_number"
+          name="uid"
           autofocus
         />
 

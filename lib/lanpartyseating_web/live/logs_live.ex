@@ -1,9 +1,9 @@
-defmodule LanpartyseatingWeb.ParticipantsLive do
+defmodule LanpartyseatingWeb.LogsLive do
   use LanpartyseatingWeb, :live_view
-  alias Lanpartyseating.BadgeScanLogsLogic, as: BadgeScanLogsLogic
 
   def mount(_params, _session, socket) do
-    participants = BadgeScanLogsLogic.get_all_participants()
+    # BadgeScanLogsLogic.get_all_participants()
+    participants = []
 
     socket =
       socket
@@ -32,7 +32,7 @@ defmodule LanpartyseatingWeb.ParticipantsLive do
 
               <th>expiry</th>
 
-              <th>seat number</th>
+              <th>station number</th>
 
               <th>deactivated</th>
               <!-- a boolean that's true once the user has been successfully deleted from the AD -->

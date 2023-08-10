@@ -5,16 +5,16 @@ defmodule Lanpartyseating.LastAssignedSeat do
   @primary_key {:id, :id, autogenerate: true}
   @foreign_key_type :id
 
-  schema "last_assigned_seat" do
-    field(:last_assigned_seat, :integer)
-    field(:last_assigned_seat_date, :utc_datetime)
+  schema "last_assigned_station" do
+    field(:last_assigned_station, :integer)
+    field(:last_assigned_station_date, :utc_datetime)
     timestamps()
   end
 
   @doc false
   def changeset(reservation, attrs) do
     reservation
-    |> cast(attrs, [:last_assigned_seat, :last_assigned_seat])
-    |> validate_number(attrs, [:last_assigned_seat, greater_than: -2])
+    |> cast(attrs, [:last_assigned_station, :last_assigned_station])
+    |> validate_number(attrs, [:last_assigned_station, greater_than: -2])
   end
 end
