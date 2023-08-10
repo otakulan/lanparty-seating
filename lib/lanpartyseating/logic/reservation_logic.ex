@@ -7,12 +7,14 @@ defmodule Lanpartyseating.ReservationLogic do
   alias Lanpartyseating.BadgesLogic, as: BadgesLogic
   alias Lanpartyseating.PubSub, as: PubSub
 
-  def create_reservation(station_number, duration, serial_key) do
-    if serial_key == "" do
+  def create_reservation(station_number, duration, uid) do
+    if uid == "" do
       {:error, "Please fill all the fields"}
     else
       # Verifying that badge exists
-      badge = BadgesLogic.get_badge(serial_key)
+      badge = BadgesLogic.get_badge(uid)
+
+      IO.inspect(badge)
 
       if badge == nil do
         {:error, "Unknown badge serial number"}
@@ -36,7 +38,7 @@ defmodule Lanpartyseating.ReservationLogic do
 
             case Repo.insert(%Reservation{
                    duration: duration,
-                   badge: badge.uid,
+                   badge: badge.serial_key,
                    station_id: station.id,
                    start_date: now,
                    end_date: end_time

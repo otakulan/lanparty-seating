@@ -5,11 +5,11 @@ defmodule Lanpartyseating.AutoAssignLogic do
   alias Lanpartyseating.Station, as: Station
   alias Lanpartyseating.Repo, as: Repo
 
-  def register_station(serial_key) do
-    if serial_key == "" do
+  def register_station(uid) do
+    if uid == "" do
       %{type: "error", message: "Please fill all the fields"}
     else
-      # TODO: verify that badge serial_key exists and continue using uid. Else error
+      # TODO: verify that badge uid exists and continue using serial_key. Else error
 
       # Get last assigned station
       las =

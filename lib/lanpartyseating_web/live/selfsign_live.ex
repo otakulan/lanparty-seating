@@ -29,13 +29,13 @@ defmodule LanpartyseatingWeb.SelfSignLive do
 
   def handle_event(
         "reserve_station",
-        %{"station_number" => station_number, "badge_number" => badge_number},
+        %{"station_number" => station_number, "uid" => uid},
         socket
       ) do
     ReservationLogic.create_reservation(
       String.to_integer(station_number),
       String.to_integer("45"),
-      badge_number
+      uid
     )
 
     socket =

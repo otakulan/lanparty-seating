@@ -3,9 +3,12 @@ defmodule Lanpartyseating.BadgesLogic do
   alias Lanpartyseating.Badge, as: Badge
   alias Lanpartyseating.Repo, as: Repo
 
-  def get_badge(serial_key) do
+  def get_badge(uid) do
+    min_uid = String.upcase(uid)
+    IO.inspect(min_uid)
+
     from(s in Badge,
-      where: s.serial_key == ^serial_key
+      where: s.uid == ^min_uid
     )
     |> Repo.one()
   end
