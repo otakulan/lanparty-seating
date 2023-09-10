@@ -27,7 +27,7 @@ defmodule SelfSignModalComponent do
         <div class="modal modal-bottom sm:modal-middle">
           <div class="modal-box">
             <h3 class="text-lg font-bold">Station #<%= @station.station_number %></h3>
-            <p>Once you badge is scanned, a 45 min session will start at the chosen station</p>
+            <p>Once your badge is scanned, a 45 min session will start at the chosen station</p>
             <br />
             <p>Une fois votre badge scanné, une session de 45 min commencera à la station choisie</p>
 

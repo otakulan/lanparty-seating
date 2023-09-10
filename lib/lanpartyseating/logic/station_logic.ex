@@ -13,7 +13,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations(now \\ DateTime.utc_now()) do
-    tournament_now = DateTime.add(DateTime.utc_now(), 45, :minute)
+    tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
 
     stations =
       from(s in Station,
@@ -31,8 +31,8 @@ defmodule Lanpartyseating.StationLogic do
           tournament_reservations:
             ^from(tr in TournamentReservation,
               join: t in assoc(tr, :tournament),
-              where: t.start_date < ^tournament_now,
-              where: t.end_date > ^tournament_now,
+              where: t.start_date < ^tournament_buffer,
+              where: t.end_date > ^now,
               where: is_nil(t.deleted_at),
               preload: [tournament: t]
             )
@@ -69,7 +69,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations_sorted_by_number(now \\ DateTime.utc_now()) do
-    tournament_now = DateTime.add(DateTime.utc_now(), 45, :minute)
+    tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
 
     stations =
       from(s in Station,
@@ -87,8 +87,8 @@ defmodule Lanpartyseating.StationLogic do
           tournament_reservations:
             ^from(tr in TournamentReservation,
               join: t in assoc(tr, :tournament),
-              where: t.start_date < ^tournament_now,
-              where: t.end_date > ^tournament_now,
+              where: t.start_date < ^tournament_buffer,
+              where: t.end_date > ^now,
               where: is_nil(t.deleted_at),
               preload: [tournament: t]
             )
@@ -102,7 +102,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_station(station_number, now \\ DateTime.utc_now()) do
-    tournament_now = DateTime.add(DateTime.utc_now(), 45, :minute)
+    tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
 
     from(s in Station,
       order_by: [asc: s.id],
@@ -120,8 +120,8 @@ defmodule Lanpartyseating.StationLogic do
         tournament_reservations:
           ^from(tr in TournamentReservation,
             join: t in assoc(tr, :tournament),
-            where: t.start_date < ^tournament_now,
-            where: t.end_date > ^tournament_now,
+            where: t.start_date < ^tournament_buffer,
+            where: t.end_date > ^now,
             where: is_nil(t.deleted_at),
             preload: [tournament: t]
           )

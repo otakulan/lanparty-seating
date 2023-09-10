@@ -9,7 +9,6 @@ defmodule LanpartyseatingWeb.TournamentsLive do
     socket =
       socket
       |> assign(:tournaments, tournaments)
-      |> assign(:tournamentsCount, length(tournaments))
 
     {:ok, socket}
   end

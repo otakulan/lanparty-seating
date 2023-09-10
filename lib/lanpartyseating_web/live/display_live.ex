@@ -24,7 +24,6 @@ defmodule LanpartyseatingWeb.DisplayLive do
       |> assign(:rowpad, settings.row_padding)
       |> assign(:stations, StationLogic.get_all_stations())
       |> assign(:tournaments, tournaments)
-      |> assign(:tournamentsCount, length(tournaments))
 
     {:ok, socket}
   end

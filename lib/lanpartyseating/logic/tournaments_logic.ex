@@ -42,23 +42,20 @@ defmodule Lanpartyseating.TournamentsLogic do
 
     case Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name}) do
       {:ok, tournament} ->
-        start_delay = DateTime.diff(tournament.start_date, DateTime.utc_now(), :millisecond)
-        expiry_delay = DateTime.diff(tournament.end_date, DateTime.utc_now(), :millisecond)
-
         DynamicSupervisor.start_child(
           Lanpartyseating.ExpirationTaskSupervisor,
-          {Lanpartyseating.Tasks.StartTournament, {start_delay, tournament.id}}
+          {Lanpartyseating.Tasks.StartTournament, {tournament.start_date, tournament.id}}
         )
 
         DynamicSupervisor.start_child(
           Lanpartyseating.ExpirationTaskSupervisor,
-          {Lanpartyseating.Tasks.ExpireTournament, {expiry_delay, tournament.id}}
+          {Lanpartyseating.Tasks.ExpireTournament, {tournament.end_date, tournament.id}}
         )
 
         Phoenix.PubSub.broadcast(
           PubSub,
           "tournament_update",
-          {:tournaments, get_all_tournaments()}
+          {:tournaments, get_upcoming_tournaments()}
         )
         {:ok, tournament}
     end
@@ -88,7 +85,7 @@ defmodule Lanpartyseating.TournamentsLogic do
           Phoenix.PubSub.broadcast(
             PubSub,
             "tournament_update",
-            {:tournaments, get_all_tournaments()}
+            {:tournaments, get_upcoming_tournaments()}
           )
           {:ok, struct}
       end
