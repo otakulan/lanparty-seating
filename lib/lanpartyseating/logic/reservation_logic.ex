@@ -44,8 +44,8 @@ defmodule Lanpartyseating.ReservationLogic do
               {:ok, updated} ->
                 Phoenix.PubSub.broadcast(
                   PubSub,
-                  "station_status",
-                  {:occupied, station_number, updated}
+                  "station_update",
+                  {:stations, StationLogic.get_all_stations(now)}
                 )
 
                 DynamicSupervisor.start_child(
@@ -84,8 +84,8 @@ defmodule Lanpartyseating.ReservationLogic do
 
           Phoenix.PubSub.broadcast(
             PubSub,
-            "station_status",
-            {:available, station_number}
+            "station_update",
+            {:stations, StationLogic.get_all_stations()}
           )
 
           struct

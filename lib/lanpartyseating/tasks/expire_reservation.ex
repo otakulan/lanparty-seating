@@ -3,6 +3,7 @@ defmodule Lanpartyseating.Tasks.ExpireReservation do
   import Ecto.Query
   import Ecto.Changeset
   require Logger
+  alias Lanpartyseating.StationLogic
   alias Lanpartyseating.Reservation, as: Reservation
   alias Lanpartyseating.Repo, as: Repo
   alias Lanpartyseating.PubSub, as: PubSub
@@ -50,8 +51,8 @@ defmodule Lanpartyseating.Tasks.ExpireReservation do
 
         Phoenix.PubSub.broadcast(
           PubSub,
-          "station_status",
-          {:available, reservation.station.station_number}
+          "station_update",
+          {:stations, StationLogic.get_all_stations()}
         )
     end
     {:stop, :normal, reservation_id}
