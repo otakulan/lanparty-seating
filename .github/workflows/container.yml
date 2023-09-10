@@ -3,7 +3,6 @@ on:
   push:
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 jobs:
   build:
     strategy:
@@ -22,12 +21,14 @@ jobs:
     - uses: DeterminateSystems/magic-nix-cache-action@main
     - run: nix run -L --system ${{ matrix.arch }} --extra-platforms ${{ matrix.arch }} .#container.copyToDockerDaemon
     - name: Log in to the Container registry
+      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
       uses: docker/login-action@v2
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Tag and push Docker image
+      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
       run: |
         TAG=$(nix eval '.#lanparty-seating.version' | sed s/\"//g)
         docker tag lanparty-seating:$TAG ghcr.io/otakulan/lanparty-seating/lanparty-seating:$TAG
