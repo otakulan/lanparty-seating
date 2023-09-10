@@ -11,6 +11,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_update")
+      Phoenix.PubSub.subscribe(PubSub, "tournament_update")
     end
 
     socket =
@@ -26,6 +27,10 @@ defmodule LanpartyseatingWeb.DisplayLive do
       |> assign(:tournamentsCount, length(tournaments))
 
     {:ok, socket}
+  end
+
+  def handle_info({:tournaments, tournaments}, socket) do
+    {:noreply, assign(socket, :tournaments, tournaments)}
   end
 
   def handle_info({:stations, stations}, socket) do

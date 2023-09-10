@@ -65,9 +65,10 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   def cancel_reservation(id, reason) do
-    Reservation
-    |> where(station_id: ^id)
-    |> where([v], is_nil(v.deleted_at))
+    from(r in Reservation,
+      where: r.station_id == ^id,
+      where: is_nil(r.deleted_at)
+    )
     # There should, in theory, only be one non-deleted reservation for a station but let's clean up
     # if that turns out not to be the case.
     |> Repo.all()
