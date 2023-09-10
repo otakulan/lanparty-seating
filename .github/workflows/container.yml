@@ -30,5 +30,5 @@ jobs:
     - name: Tag and push Docker image
       run: |
         TAG=$(nix eval '.#lanparty-seating.version' | sed s/\"//g)
-        docker tag lanparty-seating:$TAG ghcr.io/starcraft66/lanparty-seating/lanparty-seating:$TAG
-        docker push ghcr.io/starcraft66/lanparty-seating/lanparty-seating:$TAG
+        docker tag lanparty-seating:$TAG ghcr.io/otakulan/lanparty-seating/lanparty-seating:$TAG
+        docker push ghcr.io/otakulan/lanparty-seating/lanparty-seating:$TAG
