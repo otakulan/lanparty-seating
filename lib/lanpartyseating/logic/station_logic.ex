@@ -142,7 +142,7 @@ defmodule Lanpartyseating.StationLogic do
     end)
   end
 
-  def get_station_status(station, now \\ DateTime.utc_now()) do
+  def get_station_status(station) do
     case station do
       %Station{is_closed: true} ->
         %{status: :broken, reservation: nil}

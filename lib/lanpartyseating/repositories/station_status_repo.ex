@@ -14,8 +14,8 @@ defmodule Lanpartyseating.StationStatus do
 
   @doc false
   def changeset(reservation, attrs) do
-    #reservation
-    #|> cast(attrs, [:station_id, :tournament_id])
-    #|> validate_required([:station_id, :tournament_id])
+    reservation
+    |> cast(attrs, [:station_id, :tournament_id])
+    |> validate_required([:station_id, :tournament_id])
   end
 end

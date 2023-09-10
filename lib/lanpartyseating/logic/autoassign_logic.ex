@@ -2,7 +2,6 @@ defmodule Lanpartyseating.AutoAssignLogic do
   alias Lanpartyseating.LastAssignedSeat, as: LastAssignedStation
   alias Lanpartyseating.SettingsLogic, as: SettingsLogic
   alias Lanpartyseating.StationLogic, as: StationLogic
-  alias Lanpartyseating.Station, as: Station
   alias Lanpartyseating.Repo, as: Repo
 
   def register_station(uid) do

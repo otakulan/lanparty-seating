@@ -67,8 +67,8 @@
         devenv.shells.default = let
           inherit (pkgs.lib) optional optionals;
           erlang = pkgs.beam.interpreters.erlangR25;
-          elixir = pkgs.beam.packages.erlangR25.elixir_1_14;
-          rebar = pkgs.beam.packages.erlangR25.rebar3;
+          elixir = pkgs.beam.packages.erlangR26.elixir_1_15;
+          rebar = pkgs.rebar3;
           nodejs = pkgs.nodejs_20;
         in {
           services.postgres = {
