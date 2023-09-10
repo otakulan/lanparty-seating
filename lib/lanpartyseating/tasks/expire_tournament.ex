@@ -1,10 +1,7 @@
 defmodule Lanpartyseating.Tasks.ExpireTournament do
   use GenServer, restart: :transient
-  import Ecto.Query
   require Logger
   alias Lanpartyseating.StationLogic
-  alias Lanpartyseating.Tournament, as: Tournament
-  alias Lanpartyseating.Repo, as: Repo
   alias Lanpartyseating.PubSub, as: PubSub
 
   def start_link(arg) do
@@ -30,21 +27,11 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
   def handle_info(:expire_tournament, tournament_id) do
     Logger.debug("Expiring tournament #{tournament_id}")
 
-    tournament =
-      from(t in Tournament,
-        where: t.id == ^tournament_id,
-        join: tr in assoc(t, :tournament_reservations),
-        join: s in assoc(tr, :station),
-        preload: [tournament_reservations: {tr, station: s}]
-      ) |> Repo.one()
-
-    Enum.map(tournament.tournament_reservations, fn reservation ->
-      Phoenix.PubSub.broadcast(
-        PubSub,
-        "station_update",
-        {:stations, StationLogic.get_all_stations()}
-      )
-    end)
+    Phoenix.PubSub.broadcast(
+      PubSub,
+      "station_update",
+      {:stations, StationLogic.get_all_stations()}
+    )
 
     {:stop, :normal, tournament_id}
   end

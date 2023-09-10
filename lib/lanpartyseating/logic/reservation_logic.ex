@@ -64,7 +64,7 @@ defmodule Lanpartyseating.ReservationLogic do
     end
   end
 
-  def cancel_reservation(id, station_number, reason) do
+  def cancel_reservation(id, reason) do
     Reservation
     |> where(station_id: ^id)
     |> where([v], is_nil(v.deleted_at))

@@ -46,19 +46,18 @@ defmodule LanpartyseatingWeb.CancellationLive do
 
     socket =
       socket
-      |> assign(:registration_error, nil)
+      |> assign(:registration_error, registration_error)
 
     {:noreply, socket}
   end
 
   def handle_event(
         "cancel_station",
-        %{"station_id" => id, "station_number" => station_number, "cancel_reason" => reason},
+        %{"station_id" => id, "station_number" => _station_number, "cancel_reason" => reason},
         socket
       ) do
     ReservationLogic.cancel_reservation(
       String.to_integer(id),
-      String.to_integer(station_number),
       reason
     )
 
