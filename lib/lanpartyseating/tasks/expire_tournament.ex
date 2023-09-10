@@ -1,6 +1,7 @@
 defmodule Lanpartyseating.Tasks.ExpireTournament do
   use GenServer, restart: :transient
   require Logger
+  alias Lanpartyseating.TournamentsLogic
   alias Lanpartyseating.StationLogic
   alias Lanpartyseating.PubSub, as: PubSub
 
@@ -26,6 +27,12 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
   @impl true
   def handle_info(:expire_tournament, tournament_id) do
     Logger.debug("Expiring tournament #{tournament_id}")
+
+    Phoenix.PubSub.broadcast(
+      PubSub,
+      "tournament_update",
+      {:tournaments, TournamentsLogic.get_upcoming_tournaments()}
+    )
 
     Phoenix.PubSub.broadcast(
       PubSub,
