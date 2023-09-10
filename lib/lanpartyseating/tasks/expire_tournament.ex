@@ -2,6 +2,7 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
   use GenServer, restart: :transient
   import Ecto.Query
   require Logger
+  alias Lanpartyseating.StationLogic
   alias Lanpartyseating.Tournament, as: Tournament
   alias Lanpartyseating.Repo, as: Repo
   alias Lanpartyseating.PubSub, as: PubSub
@@ -40,8 +41,8 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
     Enum.map(tournament.tournament_reservations, fn reservation ->
       Phoenix.PubSub.broadcast(
         PubSub,
-        "station_status",
-        {:available, reservation.station.station_number}
+        "station_update",
+        {:stations, StationLogic.get_all_stations()}
       )
     end)
 

@@ -1,4 +1,5 @@
 defmodule Lanpartyseating.TournamentReservationLogic do
+  alias Lanpartyseating.PubSub, as: PubSub
   alias Lanpartyseating.SettingsLogic, as: SettingsLogic
   alias Lanpartyseating.StationLogic, as: StationLogic
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
@@ -33,7 +34,15 @@ defmodule Lanpartyseating.TournamentReservationLogic do
           }
         end)
 
-        {:ok, Repo.insert_all(TournamentReservation, reservations)}
+        inserted = Repo.insert_all(TournamentReservation, reservations)
+
+        Phoenix.PubSub.broadcast(
+          PubSub,
+          "station_update",
+          {:stations, StationLogic.get_all_stations()}
+        )
+
+        {:ok, inserted}
     end
   end
 end

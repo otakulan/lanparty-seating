@@ -1,5 +1,7 @@
 defmodule Lanpartyseating.TournamentsLogic do
   import Ecto.Query
+  alias Lanpartyseating.PubSub, as: PubSub
+  alias Lanpartyseating.StationLogic, as: StationLogic
   alias Lanpartyseating.Tournament, as: Tournament
   alias Lanpartyseating.Repo, as: Repo
 
@@ -26,8 +28,6 @@ defmodule Lanpartyseating.TournamentsLogic do
   end
 
   def get_upcoming_tournaments do
-    now = DateTime.truncate(DateTime.utc_now(), :second)
-
     Tournament
     |> where([v], v.end_date > from_now(0, "second"))
     |> where([v], is_nil(v.deleted_at))
@@ -57,7 +57,11 @@ defmodule Lanpartyseating.TournamentsLogic do
         {:ok, struct} ->
           GenServer.cast(:"expire_tournament_#{id}", :terminate)
           GenServer.cast(:"start_tournament_#{id}", :terminate)
-          # TODO: Pubsub broadcast to mark stations :available
+          Phoenix.PubSub.broadcast(
+            PubSub,
+            "station_update",
+            {:stations, StationLogic.get_all_stations()}
+          )
           {:ok, struct}
       end
     end)

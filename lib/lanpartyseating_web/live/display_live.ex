@@ -10,7 +10,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
     tournaments = TournamentsLogic.get_upcoming_tournaments()
 
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(PubSub, "station_status")
+      Phoenix.PubSub.subscribe(PubSub, "station_update")
     end
 
     socket =
@@ -28,38 +28,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
     {:ok, socket}
   end
 
-  def handle_info({:available, seat_number}, socket) do
-    new_stations =
-      socket.assigns.stations
-      |> Enum.map(fn s ->
-        if s.station.station_number == seat_number,
-          do: Map.merge(s, %{status: :available, reservation: nil}),
-          else: s
-      end)
-
-    {:noreply, assign(socket, :stations, new_stations)}
-  end
-
-  def update_stations(old_stations, status, seat_number, reservation) do
-    old_stations
-    |> Enum.map(fn s ->
-      if s.station.station_number == seat_number,
-        do: Map.merge(s, %{status: status, reservation: reservation}),
-        else: s
-    end)
-  end
-
-  def handle_info({:occupied, seat_number, reservation}, socket) do
-    new_stations = update_stations(socket.assigns.stations, :occupied, seat_number, reservation)
-
-    {:noreply, assign(socket, :stations, new_stations)}
-  end
-
-  def handle_info({:reserved, seat_number, tournament_reservation}, socket) do
-    new_stations =
-      update_stations(socket.assigns.stations, :reserved, seat_number, tournament_reservation)
-
-    {:noreply, assign(socket, :stations, new_stations)}
+  def handle_info({:stations, stations}, socket) do
+    {:noreply, assign(socket, :stations, stations)}
   end
 
   def render(assigns) do
@@ -70,9 +40,9 @@ defmodule LanpartyseatingWeb.DisplayLive do
           <h1 style="font-size:30px">Stations</h1>
           <div class="flex flex-wrap w-full">
             <%= for r <- 0..(@rows-1) do %>
-              <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
+              <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full"}>
                 <%= for c <- 0..(@columns-1) do %>
-                  <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
+                  <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1"}>
                     <% station_data = assigns.stations |> Enum.at(r * @columns + c) %>
                     <%= if !is_nil(station_data) do %>
                     <DisplayModalComponent.modal reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
@@ -85,26 +55,26 @@ defmodule LanpartyseatingWeb.DisplayLive do
           <%!-- TOURNAMENTS --%>
           <h1 style="font-size:30px">Upcoming Tournaments / Tournois à venir</h1>
           <div class="flex flex-wrap w-full">
-            <div class="flex flex-row w-full border-b-4 " }>
-              <div class="flex flex-col flex-1 mx-1 h-14 grow justify-center border-r-2" }>
+            <div class="flex flex-row w-full border-b-4">
+              <div class="flex flex-col flex-1 mx-1 h-14 grow justify-center border-r-2">
                 <h2><b>Name / Nom</b></h2>
               </div>
-              <div class="flex flex-col flex-1 mx-1 h-14 grow justify-center border-r-2" }>
+              <div class="flex flex-col flex-1 mx-1 h-14 grow justify-center border-r-2">
                 <h2><b>Day / Jour</b></h2>
               </div>
-              <div class="flex flex-col flex-1 mx-1 h-14 grow justify-center border-r-2" }>
+              <div class="flex flex-col flex-1 mx-1 h-14 grow justify-center border-r-2">
                 <h2><b>Start Time / Début</b></h2>
               </div>
-              <div class="flex flex-col flex-1 mx-1 h-14 grow justify-center" }>
+              <div class="flex flex-col flex-1 mx-1 h-14 grow justify-center">
                 <h2><b>End Time / Fin</b></h2>
               </div>
             </div>
             <%= for tournament <- @tournaments do %>
-              <div class="flex flex-row w-full " }>
-                <div class="flex flex-col flex-1 mx-1 h-10 grow justify-center border-r-2" }>
+              <div class="flex flex-row w-full">
+                <div class="flex flex-col flex-1 mx-1 h-10 grow justify-center border-r-2">
                   <h3><%= tournament.name %></h3>
                 </div>
-                <div class="flex flex-col flex-1 mx-1 h-10 grow justify-center border-r-2" }>
+                <div class="flex flex-col flex-1 mx-1 h-10 grow justify-center border-r-2">
                   <h3>
                     <%= Calendar.strftime(
                       tournament.start_date |> Timex.to_datetime("America/Montreal"),
@@ -112,7 +82,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
                     ) %>
                   </h3>
                 </div>
-                <div class="flex flex-col flex-1 mx-1 h-10 grow justify-center border-r-2" }>
+                <div class="flex flex-col flex-1 mx-1 h-10 grow justify-center border-r-2">
                   <h3>
                     <%= Calendar.strftime(
                       tournament.start_date |> Timex.to_datetime("America/Montreal"),
@@ -120,7 +90,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
                     ) %>
                   </h3>
                 </div>
-                <div class="flex flex-col flex-1 mx-1 h-10 grow justify-center" }>
+                <div class="flex flex-col flex-1 mx-1 h-10 grow justify-center">
                   <h3>
                     <%= Calendar.strftime(
                       tournament.end_date |> Timex.to_datetime("America/Montreal"),

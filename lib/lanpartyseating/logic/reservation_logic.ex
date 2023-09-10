@@ -14,8 +14,6 @@ defmodule Lanpartyseating.ReservationLogic do
       # Verifying that badge exists
       badge = BadgesLogic.get_badge(uid)
 
-      IO.inspect(badge)
-
       if badge == nil do
         {:error, "Unknown badge serial number"}
       else
@@ -46,8 +44,8 @@ defmodule Lanpartyseating.ReservationLogic do
               {:ok, updated} ->
                 Phoenix.PubSub.broadcast(
                   PubSub,
-                  "station_status",
-                  {:occupied, station_number, updated}
+                  "station_update",
+                  {:stations, StationLogic.get_all_stations(now)}
                 )
 
                 DynamicSupervisor.start_child(
@@ -59,7 +57,6 @@ defmodule Lanpartyseating.ReservationLogic do
                 {:ok, updated}
             end
           else
-            IO.inspect(label: "is not creatable")
             {:error, "Station is not available"}
           end
         end
@@ -87,8 +84,8 @@ defmodule Lanpartyseating.ReservationLogic do
 
           Phoenix.PubSub.broadcast(
             PubSub,
-            "station_status",
-            {:available, station_number}
+            "station_update",
+            {:stations, StationLogic.get_all_stations()}
           )
 
           struct

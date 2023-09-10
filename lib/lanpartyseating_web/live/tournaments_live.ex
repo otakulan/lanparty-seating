@@ -100,28 +100,28 @@ defmodule LanpartyseatingWeb.TournamentsLive do
       <TournamentModalComponent.tournament_modal />
 
       <div class="flex flex-wrap w-full mt-3">
-        <div class="flex flex-row w-full " }>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+        <div class="flex flex-row w-full">
+          <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h2><u>Name</u></h2>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h2><u>Start Time</u></h2>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h2><u>End Time</u></h2>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow">
 
           </div>
         </div>
         <%= for tournament <- @tournaments do %>
-        <div class="flex flex-row w-full " }>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+        <div class="flex flex-row w-full">
+          <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
               <%= tournament.name %>
             </h3>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
               <%=
 
@@ -131,7 +131,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
               ) %>
             </h3>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
               <%= Calendar.strftime(
                 tournament.end_date |> Timex.to_datetime("America/Montreal"),
@@ -139,7 +139,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
               ) %>
             </h3>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow" }>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <form phx-submit="delete_tournament">
               <input type="hidden" name="tournament_id" value={tournament.id} />
               <button class="btn" type="submit" onclick={}>Delete</button>

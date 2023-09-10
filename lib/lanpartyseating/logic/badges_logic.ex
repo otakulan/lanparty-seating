@@ -5,7 +5,6 @@ defmodule Lanpartyseating.BadgesLogic do
 
   def get_badge(uid) do
     min_uid = String.upcase(uid)
-    IO.inspect(min_uid)
 
     from(s in Badge,
       where: s.uid == ^min_uid
