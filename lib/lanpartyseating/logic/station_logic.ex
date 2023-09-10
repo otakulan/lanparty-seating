@@ -44,8 +44,6 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def set_station_broken(station_number, is_broken) do
-    IO.inspect(is_broken)
-
     station =
       Station
       |> where(station_number: ^station_number)

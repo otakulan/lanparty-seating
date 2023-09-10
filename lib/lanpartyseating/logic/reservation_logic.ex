@@ -14,8 +14,6 @@ defmodule Lanpartyseating.ReservationLogic do
       # Verifying that badge exists
       badge = BadgesLogic.get_badge(uid)
 
-      IO.inspect(badge)
-
       if badge == nil do
         {:error, "Unknown badge serial number"}
       else
@@ -59,7 +57,6 @@ defmodule Lanpartyseating.ReservationLogic do
                 {:ok, updated}
             end
           else
-            IO.inspect(label: "is not creatable")
             {:error, "Station is not available"}
           end
         end
