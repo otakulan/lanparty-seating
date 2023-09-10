@@ -1,8 +1,7 @@
 defmodule LanpartyseatingWeb.TournamentsLive do
   require Logger
   use LanpartyseatingWeb, :live_view
-  alias Lanpartyseating.TournamentsLogic, as: TournamentsLogic
-  alias Lanpartyseating.TournamentReservationLogic, as: TournamentReservationLogic
+  alias Lanpartyseating.TournamentsLogic
 
   def mount(_params, _session, socket) do
     tournaments = TournamentsLogic.get_all_tournaments()
@@ -66,25 +65,12 @@ defmodule LanpartyseatingWeb.TournamentsLive do
       )
 
     # Creating station reservations for the tournament
-    {:ok, _} =
-      TournamentReservationLogic.create_tournament_reservations_by_range(
+    {:ok, _reservations} =
+      TournamentsLogic.create_tournament_reservations_by_range(
         String.to_integer(start_station, 10),
         String.to_integer(end_station, 10),
         tournament.id
       )
-
-    start_delay = DateTime.diff(tournament.start_date, DateTime.utc_now(), :millisecond)
-    expiry_delay = DateTime.diff(tournament.end_date, DateTime.utc_now(), :millisecond)
-
-    DynamicSupervisor.start_child(
-      Lanpartyseating.ExpirationTaskSupervisor,
-      {Lanpartyseating.Tasks.StartTournament, {start_delay, tournament.id}}
-    )
-
-    DynamicSupervisor.start_child(
-      Lanpartyseating.ExpirationTaskSupervisor,
-      {Lanpartyseating.Tasks.ExpireTournament, {expiry_delay, tournament.id}}
-    )
 
     socket =
       socket

@@ -47,9 +47,9 @@ defmodule Lanpartyseating.StationLogic do
 
   def set_station_broken(station_number, is_broken) do
     station =
-      Station
-      |> where(station_number: ^station_number)
-      |> Repo.one()
+      from(s in Station,
+        where: s.station_number == ^station_number
+      ) |> Repo.one()
 
     station =
       Ecto.Changeset.change(station,
