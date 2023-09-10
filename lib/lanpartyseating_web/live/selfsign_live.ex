@@ -88,9 +88,9 @@ defmodule LanpartyseatingWeb.SelfSignLive do
 
         <h1 style="font-size:20px">Please select an available station / Veuillez sélectionner une station disponible:</h1>
         <%= for r <- 0..(@rows-1) do %>
-          <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
+          <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full"}>
             <%= for c <- 0..(@columns-1) do %>
-              <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
+              <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1"}>
                 <% station_data = @stations |> Enum.at(r * @columns + c) %>
                 <%= if !is_nil(station_data) do %>
                   <SelfSignModalComponent.modal
