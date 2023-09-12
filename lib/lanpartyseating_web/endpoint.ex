@@ -10,8 +10,9 @@ defmodule LanpartyseatingWeb.Endpoint do
     signing_salt: "F6uh1uE5"
   ]
 
-  socket "/socket", LanpartyseatingWeb.UserSocket,
-    websocket: true # or list of options
+  socket "/desktop", LanpartyseatingWeb.DesktopClientSocket,
+    websocket: true,
+    longpoll: false
 
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]]

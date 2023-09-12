@@ -6,6 +6,7 @@ defmodule Lanpartyseating.ReservationLogic do
   alias Lanpartyseating.StationLogic, as: StationLogic
   alias Lanpartyseating.BadgesLogic, as: BadgesLogic
   alias Lanpartyseating.PubSub, as: PubSub
+  alias LanpartyseatingWeb.Endpoint, as: Endpoint
 
   def create_reservation(station_number, duration, uid) do
     if uid == "" do
@@ -48,6 +49,17 @@ defmodule Lanpartyseating.ReservationLogic do
                   {:stations, StationLogic.get_all_stations(now)}
                 )
 
+                Endpoint.broadcast!(
+                  "desktop:all",
+                  "new_reservation",
+                  %{
+                    station_number: station_number,
+                    # reservation: updated
+                  }
+                )
+
+                Logger.debug("Broadcasted station status change to occupied")
+
                 DynamicSupervisor.start_child(
                   Lanpartyseating.ExpirationTaskSupervisor,
                   {Lanpartyseating.Tasks.ExpireReservation, {end_time, updated.id}}
@@ -67,7 +79,9 @@ defmodule Lanpartyseating.ReservationLogic do
   def cancel_reservation(id, reason) do
     from(r in Reservation,
       where: r.station_id == ^id,
-      where: is_nil(r.deleted_at)
+      where: is_nil(r.deleted_at),
+      join: s in assoc(r, :station),
+      preload: [station: s]
     )
     # There should, in theory, only be one non-deleted reservation for a station but let's clean up
     # if that turns out not to be the case.
@@ -80,8 +94,17 @@ defmodule Lanpartyseating.ReservationLogic do
         )
 
       case Repo.update(reservation) do
-        {:ok, struct} ->
+        {:ok, reservation} ->
           GenServer.cast(:"expire_reservation_#{res.id}", :terminate)
+
+          Endpoint.broadcast!(
+            "desktop:all",
+            "cancel_reservation",
+            %{
+              station_number: reservation.station.station_number,
+              # reservation: updated
+            }
+          )
 
           Phoenix.PubSub.broadcast(
             PubSub,
@@ -89,7 +112,7 @@ defmodule Lanpartyseating.ReservationLogic do
             {:stations, StationLogic.get_all_stations()}
           )
 
-          struct
+          reservation
           # let it crash
           # {:error, _} -> ...
       end
