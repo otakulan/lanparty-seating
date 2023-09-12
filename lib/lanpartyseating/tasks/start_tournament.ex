@@ -1,8 +1,12 @@
 defmodule Lanpartyseating.Tasks.StartTournament do
   use GenServer, restart: :transient
+  import Ecto.Query
   require Logger
+  alias Lanpartyseating.Repo
+  alias Lanpartyseating.TournamentReservation
+  alias LanpartyseatingWeb.Endpoint
   alias Lanpartyseating.StationLogic
-  alias Lanpartyseating.PubSub, as: PubSub
+  alias Lanpartyseating.PubSub
 
   def start_link(arg) do
     {_, tournament_id} = arg
@@ -32,6 +36,23 @@ defmodule Lanpartyseating.Tasks.StartTournament do
       "station_update",
       {:stations, StationLogic.get_all_stations()}
     )
+
+    from(r in TournamentReservation,
+      where: r.tournament_id == ^tournament_id,
+      join: s in assoc(r, :station),
+      preload: [station: s]
+    )
+    |> Repo.all()
+    |> Enum.map(fn res ->
+      Endpoint.broadcast(
+        "desktop:all",
+        "tournament_start",
+        %{
+          station_number: res.station.station_number,
+        }
+      )
+    end)
+
 
     {:stop, :normal, tournament_id}
   end
