@@ -11,14 +11,16 @@ defmodule Lanpartyseating.Application do
 
     # Define workers and child supervisors to be supervised
     children = [
+      # Start the Endpoint (http/https)
+      LanpartyseatingWeb.Endpoint,
+      # Start prometheus metrics
+      Lanpartyseating.PromEx,
       # Start the Ecto repository
       Lanpartyseating.Repo,
       # Start the Telemetry supervisor
       LanpartyseatingWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, [name: Lanpartyseating.PubSub, adapter: Phoenix.PubSub.PG2]},
-      # Start the Endpoint (http/https)
-      LanpartyseatingWeb.Endpoint,
       # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
       # {Lanpartyseating.Worker, arg}
       {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},

@@ -27,6 +27,14 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
   pubsub_server: Lanpartyseating.PubSub,
   live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"]
 
+# Configures PromEx
+config :lanpartyseating, Lanpartyseating.PromEx,
+  disabled: false,
+  manual_metrics_start_delay: :no_delay,
+  drop_metrics_groups: [],
+  grafana: :disabled,
+  metrics_server: :disabled
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
