@@ -57,6 +57,11 @@ defmodule Lanpartyseating.SettingsLogic do
         vertical_trailing: vertical_trailing
       )
 
-    Repo.update(settings)
+    with {:ok, _updated} <- Repo.update(settings) do
+      :ok
+    else
+      {:error, error} ->
+        {:error, {:save_settings_failed, error}}
+    end
   end
 end

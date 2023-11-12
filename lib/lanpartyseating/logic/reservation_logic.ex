@@ -16,15 +16,7 @@ defmodule Lanpartyseating.ReservationLogic do
     {:ok, badge} = BadgesLogic.get_badge(uid)
     {:ok, station} = StationLogic.get_station(station_number)
 
-    is_available =
-      case StationLogic.get_station_status(station).status do
-        :reserved -> false
-        :occupied -> false
-        :broken -> false
-        :available -> true
-      end
-
-    case is_available do
+    case StationLogic.is_station_available(station) do
       true ->
         Logger.debug("Station is available")
         now = DateTime.truncate(DateTime.utc_now(), :second)
@@ -39,6 +31,7 @@ defmodule Lanpartyseating.ReservationLogic do
               }) do
           {:ok, updated} ->
             {:ok, stations} = StationLogic.get_all_stations(now)
+
             Phoenix.PubSub.broadcast(
               PubSub,
               "station_update",
@@ -63,10 +56,13 @@ defmodule Lanpartyseating.ReservationLogic do
 
             Logger.debug("Created expiration task for reservation #{updated.id}")
             {:ok, updated}
+
+          {:error, err} ->
+            {:error, {:reservation_failed, err}}
         end
       false ->
         Logger.debug("Station is not available")
-        {:error, "Station is not available"}
+        {:error, :station_unavailable}
     end
   end
 
@@ -88,28 +84,30 @@ defmodule Lanpartyseating.ReservationLogic do
             deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
           )
 
-        case Repo.update(reservation) do
-          {:ok, reservation} ->
-            GenServer.cast(:"expire_reservation_#{res.id}", :terminate)
+        with {:ok, reservation} <- Repo.update(reservation) do
+          GenServer.cast(:"expire_reservation_#{res.id}", :terminate)
 
-            Endpoint.broadcast!(
-              "desktop:all",
-              "cancel_reservation",
-              %{
-                station_number: reservation.station.station_number,
-                # reservation: updated
-              }
-            )
+          Endpoint.broadcast!(
+            "desktop:all",
+            "cancel_reservation",
+            %{
+              station_number: reservation.station.station_number,
+              # reservation: updated
+            }
+          )
 
-            {:ok, stations} = StationLogic.get_all_stations()
+          {:ok, stations} = StationLogic.get_all_stations()
 
-            Phoenix.PubSub.broadcast(
-              PubSub,
-              "station_update",
-              {:stations, stations}
-            )
+          Phoenix.PubSub.broadcast(
+            PubSub,
+            "station_update",
+            {:stations, stations}
+          )
 
-            reservation
+          reservation
+        else
+          {:error, err} ->
+            {:error, {:reservation_failed, err}}
         end
       end)
 

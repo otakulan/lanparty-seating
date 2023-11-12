@@ -20,7 +20,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
       ) do
     id = String.to_integer(tournament_id)
 
-    TournamentsLogic.delete_tournament(id)
+    :ok = TournamentsLogic.delete_tournament(id)
 
     tournaments =
       socket.assigns.tournaments

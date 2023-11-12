@@ -43,25 +43,27 @@ defmodule Lanpartyseating.TournamentsLogic do
   def create_tournament(name, start_time, duration) do
     end_time = DateTime.add(start_time, duration, :hour, Tzdata.TimeZoneDatabase)
 
-    case Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name}) do
-      {:ok, tournament} ->
-        DynamicSupervisor.start_child(
-          Lanpartyseating.ExpirationTaskSupervisor,
-          {Lanpartyseating.Tasks.StartTournament, {tournament.start_date, tournament.id}}
-        )
+    with {:ok, tournament} <- Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name}) do
+      DynamicSupervisor.start_child(
+        Lanpartyseating.ExpirationTaskSupervisor,
+        {Lanpartyseating.Tasks.StartTournament, {tournament.start_date, tournament.id}}
+      )
 
-        DynamicSupervisor.start_child(
-          Lanpartyseating.ExpirationTaskSupervisor,
-          {Lanpartyseating.Tasks.ExpireTournament, {tournament.end_date, tournament.id}}
-        )
+      DynamicSupervisor.start_child(
+        Lanpartyseating.ExpirationTaskSupervisor,
+        {Lanpartyseating.Tasks.ExpireTournament, {tournament.end_date, tournament.id}}
+      )
 
-        {:ok, tournaments} = get_upcoming_tournaments()
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "tournament_update",
-          {:tournaments, tournaments}
-        )
-        {:ok, tournament}
+      {:ok, tournaments} = get_upcoming_tournaments()
+      Phoenix.PubSub.broadcast(
+        PubSub,
+        "tournament_update",
+        {:tournaments, tournaments}
+      )
+      {:ok, tournament}
+    else
+      {:error, err} ->
+        {:error, {:create_tournament_failed, err}}
     end
   end
 
@@ -77,23 +79,25 @@ defmodule Lanpartyseating.TournamentsLogic do
           deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
         )
 
-      case updated = Repo.update(tournament) do
-        {:ok, _} ->
-          {:ok, stations} = StationLogic.get_all_stations()
-          {:ok, tournaments} = get_upcoming_tournaments()
-          GenServer.cast(:"expire_tournament_#{id}", :terminate)
-          GenServer.cast(:"start_tournament_#{id}", :terminate)
-          Phoenix.PubSub.broadcast(
-            PubSub,
-            "station_update",
-            {:stations, stations}
-          )
-          Phoenix.PubSub.broadcast(
-            PubSub,
-            "tournament_update",
-            {:tournaments, tournaments}
-          )
-          updated
+      with {:ok, _updated} <- Repo.update(tournament) do
+        {:ok, stations} = StationLogic.get_all_stations()
+        {:ok, tournaments} = get_upcoming_tournaments()
+        GenServer.cast(:"expire_tournament_#{id}", :terminate)
+        GenServer.cast(:"start_tournament_#{id}", :terminate)
+        Phoenix.PubSub.broadcast(
+          PubSub,
+          "station_update",
+          {:stations, stations}
+        )
+        Phoenix.PubSub.broadcast(
+          PubSub,
+          "tournament_update",
+          {:tournaments, tournaments}
+        )
+        :ok
+      else
+        {:error, err} ->
+          {:error, {:delete_failed, err}}
       end
     end)
   end

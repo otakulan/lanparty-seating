@@ -174,7 +174,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     s = socket.assigns
 
-    {:ok, _} = Lanpartyseating.StationLogic.save_station_positions(socket.assigns.table)
+    :ok = Lanpartyseating.StationLogic.save_station_positions(socket.assigns.table)
 
     {:ok, _} = Lanpartyseating.SettingsLogic.save_settings(
       s.rows,

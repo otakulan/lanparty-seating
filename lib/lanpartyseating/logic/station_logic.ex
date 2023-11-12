@@ -42,7 +42,8 @@ defmodule Lanpartyseating.StationLogic do
       |> Repo.all()
 
     case stations do
-      [] -> {:error, "No stations found"}
+      [] ->
+        {:error, :no_stations}
       _ ->
         stations_map =
           Enum.map(stations, fn station ->
@@ -63,18 +64,17 @@ defmodule Lanpartyseating.StationLogic do
         is_closed: is_broken
       )
 
-    update = Repo.update(station)
-
-    case update do
-      {:ok, _} ->
-        {:ok, stations} = StationLogic.get_all_stations()
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "station_update",
-          {:stations, stations}
-        )
-        update
-      _ -> update
+    with {:ok, update} <- Repo.update(station) do
+      {:ok, stations} = StationLogic.get_all_stations()
+      Phoenix.PubSub.broadcast(
+        PubSub,
+        "station_update",
+        {:stations, stations}
+      )
+      {:ok, update}
+    else
+      {:error, _} ->
+        {:error, :station_not_found}
     end
   end
 
@@ -143,7 +143,7 @@ defmodule Lanpartyseating.StationLogic do
     |> Repo.one()
 
     case station do
-      nil -> {:error, "Station not found"}
+      nil -> {:error, :station_not_found}
       _ -> {:ok, station}
     end
   end
@@ -160,7 +160,8 @@ defmodule Lanpartyseating.StationLogic do
         end)
       end)
 
-    {:ok, Repo.insert_all(Station, positions)}
+    Repo.insert_all(Station, positions)
+    :ok
   end
 
   def get_station_status(station) do
@@ -178,6 +179,17 @@ defmodule Lanpartyseating.StationLogic do
 
       %Station{} ->
         %{status: :available, reservation: nil}
+    end
+  end
+
+  def is_station_available(station) do
+    %{status: status} = StationLogic.get_station_status(station)
+
+    case status do
+      :reserved -> false
+      :occupied -> false
+      :broken -> false
+      :available -> true
     end
   end
 
