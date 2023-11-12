@@ -6,8 +6,9 @@ defmodule LanpartyseatingWeb.DisplayLive do
   alias Lanpartyseating.StationLogic, as: StationLogic
 
   def mount(_params, _session, socket) do
-    settings = SettingsLogic.get_settings()
-    tournaments = TournamentsLogic.get_upcoming_tournaments()
+    {:ok, settings} = SettingsLogic.get_settings()
+    {:ok, stations} = StationLogic.get_all_stations()
+    {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_update")
@@ -22,7 +23,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
       |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
-      |> assign(:stations, StationLogic.get_all_stations())
+      |> assign(:stations, stations)
       |> assign(:tournaments, tournaments)
 
     {:ok, socket}

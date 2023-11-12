@@ -31,10 +31,13 @@ defmodule Lanpartyseating.TournamentsLogic do
   end
 
   def get_upcoming_tournaments do
-    from(t in Tournament,
-      where: t.end_date > from_now(0, "second"),
-      where: is_nil(t.deleted_at)
-    ) |> Repo.all()
+    tournaments =
+      from(t in Tournament,
+        where: t.end_date > from_now(0, "second"),
+        where: is_nil(t.deleted_at)
+      ) |> Repo.all()
+
+    {:ok, tournaments}
   end
 
   def create_tournament(name, start_time, duration) do
@@ -52,10 +55,11 @@ defmodule Lanpartyseating.TournamentsLogic do
           {Lanpartyseating.Tasks.ExpireTournament, {tournament.end_date, tournament.id}}
         )
 
+        {:ok, tournaments} = get_upcoming_tournaments()
         Phoenix.PubSub.broadcast(
           PubSub,
           "tournament_update",
-          {:tournaments, get_upcoming_tournaments()}
+          {:tournaments, tournaments}
         )
         {:ok, tournament}
     end
@@ -73,28 +77,30 @@ defmodule Lanpartyseating.TournamentsLogic do
           deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
         )
 
-      case Repo.update(tournament) do
-        {:ok, struct} ->
+      case updated = Repo.update(tournament) do
+        {:ok, _} ->
+          {:ok, stations} = StationLogic.get_all_stations()
+          {:ok, tournaments} = get_upcoming_tournaments()
           GenServer.cast(:"expire_tournament_#{id}", :terminate)
           GenServer.cast(:"start_tournament_#{id}", :terminate)
           Phoenix.PubSub.broadcast(
             PubSub,
             "station_update",
-            {:stations, StationLogic.get_all_stations()}
+            {:stations, stations}
           )
           Phoenix.PubSub.broadcast(
             PubSub,
             "tournament_update",
-            {:tournaments, get_upcoming_tournaments()}
+            {:tournaments, tournaments}
           )
-          {:ok, struct}
+          updated
       end
     end)
   end
 
   def create_tournament_reservations_by_range(start_station, end_station, tournament_id) do
     # Input validation
-    settings = SettingsLogic.get_settings()
+    {:ok, settings} = SettingsLogic.get_settings()
 
     cond do
       start_station < 1 or start_station > settings.columns * settings.rows ->
@@ -121,7 +127,7 @@ defmodule Lanpartyseating.TournamentsLogic do
           }
         end)
 
-        inserted = Repo.insert_all(TournamentReservation, reservations)
+        Repo.insert_all(TournamentReservation, reservations)
 
         Phoenix.PubSub.broadcast(
           PubSub,
@@ -129,7 +135,7 @@ defmodule Lanpartyseating.TournamentsLogic do
           {:stations, StationLogic.get_all_stations()}
         )
 
-        {:ok, inserted}
+        {:ok, reservations}
     end
   end
 end

@@ -49,10 +49,11 @@ defmodule Lanpartyseating.Tasks.ExpireReservation do
       {:ok, _} ->
         Logger.debug("Reservation #{reservation_id} expired")
 
+        {:ok, stations} = StationLogic.get_all_stations()
         Phoenix.PubSub.broadcast(
           PubSub,
           "station_update",
-          {:stations, StationLogic.get_all_stations()}
+          {:stations, stations}
         )
     end
     {:stop, :normal, reservation_id}

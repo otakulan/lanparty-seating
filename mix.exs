@@ -56,7 +56,8 @@ defmodule Lanpartyseating.Mixfile do
       {:opentelemetry_liveview, "~> 1.0.0-rc"},
       {:opentelemetry_cowboy, "~> 0.2"},
       {:heartcheck, "~> 0.4"},
-      {:prom_ex, "~> 1.8.0"}
+      {:prom_ex, "~> 1.8.0"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 

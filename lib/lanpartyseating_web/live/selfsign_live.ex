@@ -6,8 +6,8 @@ defmodule LanpartyseatingWeb.SelfSignLive do
   alias Lanpartyseating.PubSub, as: PubSub
 
   def mount(_params, _session, socket) do
-    settings = SettingsLogic.get_settings()
-    stations = StationLogic.get_all_stations()
+    {:ok, settings} = SettingsLogic.get_settings()
+    {:ok, stations} = StationLogic.get_all_stations()
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_status")

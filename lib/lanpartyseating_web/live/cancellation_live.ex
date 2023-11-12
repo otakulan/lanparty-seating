@@ -6,8 +6,8 @@ defmodule LanpartyseatingWeb.CancellationLive do
   alias Lanpartyseating.PubSub, as: PubSub
 
   def mount(_params, _session, socket) do
-    settings = SettingsLogic.get_settings()
-    stations = StationLogic.get_all_stations()
+    {:ok, settings} = SettingsLogic.get_settings()
+    {:ok, stations} = StationLogic.get_all_stations()
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_update")
@@ -38,7 +38,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
       ) do
     registration_error = nil
 
-    ReservationLogic.create_reservation(
+    {:ok, _} = ReservationLogic.create_reservation(
       String.to_integer(station_number),
       String.to_integer(duration),
       badge_number
@@ -56,7 +56,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{"station_id" => id, "station_number" => _station_number, "cancel_reason" => reason},
         socket
       ) do
-    ReservationLogic.cancel_reservation(
+    {:ok, _} = ReservationLogic.cancel_reservation(
       String.to_integer(id),
       reason
     )
@@ -69,10 +69,10 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{"station_number" => station_number},
         socket
       ) do
-    StationLogic.set_station_broken(
-      String.to_integer(station_number),
-      true
-    )
+    {:ok, _} = StationLogic.set_station_broken(
+        String.to_integer(station_number),
+        true
+      )
 
     {:noreply, socket}
   end
@@ -82,7 +82,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{"station_number" => station_number},
         socket
       ) do
-    StationLogic.set_station_broken(
+    {:ok, _} = StationLogic.set_station_broken(
       String.to_integer(station_number),
       false
     )

@@ -1,13 +1,20 @@
 defmodule Lanpartyseating.SettingsLogic do
   import Ecto.Query
+  require Logger
   alias Lanpartyseating.Setting, as: Setting
   alias Lanpartyseating.LastAssignedSeat, as: LastAssignedSeat
   alias Lanpartyseating.Repo, as: Repo
 
   def get_settings do
-    Setting
-    |> last(:inserted_at)
-    |> Repo.one()
+    settings =
+      Setting
+      |> last(:inserted_at)
+      |> Repo.one()
+
+    case settings do
+      nil -> {:error, "No settings found"}
+      _ -> {:ok, settings}
+    end
   end
 
   def save_settings(
@@ -50,9 +57,6 @@ defmodule Lanpartyseating.SettingsLogic do
         vertical_trailing: vertical_trailing
       )
 
-    case Repo.update(settings) do
-      {:ok, result} -> result
-      {:error, _} -> nil
-    end
+    Repo.update(settings)
   end
 end
