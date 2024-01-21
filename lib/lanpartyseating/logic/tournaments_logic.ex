@@ -79,9 +79,10 @@ defmodule Lanpartyseating.TournamentsLogic do
           deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
         )
 
-      with {:ok, _updated} <- Repo.update(tournament) do
-        {:ok, stations} = StationLogic.get_all_stations()
-        {:ok, tournaments} = get_upcoming_tournaments()
+      with {:ok, _updated} <- Repo.update(tournament),
+           {:ok, stations} <- StationLogic.get_all_stations(),
+           {:ok, tournaments} <- get_upcoming_tournaments()
+      do
         GenServer.cast(:"expire_tournament_#{id}", :terminate)
         GenServer.cast(:"start_tournament_#{id}", :terminate)
         Phoenix.PubSub.broadcast(
