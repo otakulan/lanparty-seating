@@ -64,8 +64,9 @@ defmodule Lanpartyseating.StationLogic do
         is_closed: is_broken
       )
 
-    with {:ok, update} <- Repo.update(station) do
-      {:ok, stations} = StationLogic.get_all_stations()
+    with {:ok, update} <- Repo.update(station),
+         {:ok, stations} <- StationLogic.get_all_stations()
+    do
       Phoenix.PubSub.broadcast(
         PubSub,
         "station_update",
