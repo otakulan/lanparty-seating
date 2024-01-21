@@ -57,7 +57,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   end
 
   def mount(_params, _session, socket) do
-    settings = Lanpartyseating.SettingsLogic.get_settings()
+    {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
 
     socket =
       socket
@@ -174,9 +174,9 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     s = socket.assigns
 
-    Lanpartyseating.StationLogic.save_station_positions(socket.assigns.table)
+    :ok = Lanpartyseating.StationLogic.save_station_positions(socket.assigns.table)
 
-    Lanpartyseating.SettingsLogic.save_settings(
+    {:ok, _} = Lanpartyseating.SettingsLogic.save_settings(
       s.rows,
       s.columns,
       s.rowpad,

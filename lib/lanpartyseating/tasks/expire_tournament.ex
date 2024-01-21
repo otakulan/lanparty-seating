@@ -28,16 +28,18 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
   def handle_info(:expire_tournament, tournament_id) do
     Logger.debug("Expiring tournament #{tournament_id}")
 
+    {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
     Phoenix.PubSub.broadcast(
       PubSub,
       "tournament_update",
-      {:tournaments, TournamentsLogic.get_upcoming_tournaments()}
+      {:tournaments, tournaments}
     )
 
+    {:ok, stations} = StationLogic.get_all_stations()
     Phoenix.PubSub.broadcast(
       PubSub,
       "station_update",
-      {:stations, StationLogic.get_all_stations()}
+      {:stations, stations}
     )
 
     {:stop, :normal, tournament_id}

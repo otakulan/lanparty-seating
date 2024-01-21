@@ -11,31 +11,20 @@ defmodule LanpartyseatingWeb.AutoAssignLive do
     {:ok, socket}
   end
 
+  def handle_event("submit_reservation", %{"uid" => ""}, socket) do
+    {:noreply, assign(socket, :message, "Empty badge number submitted")}
+  end
+
   def handle_event("submit_reservation", %{"uid" => uid}, socket) do
     message =
-      if String.length(uid) > 0 do
-        case AutoAssignLogic.register_station(uid) do
-          nil ->
-            "No station available. Please wait for a station to be freed and scan your badge again."
+      case AutoAssignLogic.register_station(uid) do
+        {:error, error} ->
+          "No station available. Please wait for a station to be freed and scan your badge again. (#{error})"
 
-          number ->
-            # TODO: Handle case where create_reservation failed. It's possible that the function
-            # fails to assign the requested station.
+        {:ok, number} ->
+          {:ok, _} = ReservationLogic.create_reservation(number, 45, uid)
 
-            ReservationLogic.create_reservation(number, 45, uid)
-
-            ## TODO: Create username and password in AD
-
-            ## TODO: Display the ID of the reserved station, all station have a username and password that relates to their ID
-            ## The ID is the one of the next available station. People who come in group should scan their
-            ## badge one after another if they want to be togheter.
-
-            "Your assigned station is: " <>
-              to_string(number) <>
-              " (make this message disappear after 5 seconds with a nice fade out)"
-        end
-      else
-        "Empty badge number submitted"
+          "Your assigned station is: #{to_string(number)} (make this message disappear after 5 seconds with a nice fade out)"
       end
 
     {:noreply, assign(socket, :message, message)}

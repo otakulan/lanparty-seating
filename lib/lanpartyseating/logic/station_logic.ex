@@ -1,6 +1,7 @@
 defmodule Lanpartyseating.StationLogic do
   import Ecto.Query
   use Timex
+  alias Ecto.Changeset
   alias Lanpartyseating.PubSub, as: PubSub
   alias Lanpartyseating.StationLogic, as: StationLogic
   alias Lanpartyseating.Reservation, as: Reservation
@@ -40,9 +41,16 @@ defmodule Lanpartyseating.StationLogic do
       )
       |> Repo.all()
 
-    Enum.map(stations, fn station ->
-      Map.merge(%{station: station}, get_station_status(station))
-    end)
+    case stations do
+      [] ->
+        {:error, :no_stations}
+      _ ->
+        stations_map =
+          Enum.map(stations, fn station ->
+            Map.merge(%{station: station}, get_station_status(station))
+          end)
+        {:ok, stations_map}
+    end
   end
 
   def set_station_broken(station_number, is_broken) do
@@ -56,15 +64,18 @@ defmodule Lanpartyseating.StationLogic do
         is_closed: is_broken
       )
 
-    case Repo.update(station) do
-      {:ok, result} ->
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "station_update",
-          {:stations, StationLogic.get_all_stations()}
-        )
-        result
-      {:error, _} -> nil
+    with {:ok, update} <- Repo.update(station),
+         {:ok, stations} <- StationLogic.get_all_stations()
+    do
+      Phoenix.PubSub.broadcast(
+        PubSub,
+        "station_update",
+        {:stations, stations}
+      )
+      {:ok, update}
+    else
+      {:error, _} ->
+        {:error, :station_not_found}
     end
   end
 
@@ -96,15 +107,18 @@ defmodule Lanpartyseating.StationLogic do
       )
       |> Repo.all()
 
-    Enum.map(stations, fn station ->
-      Map.merge(%{station: station}, get_station_status(station))
-    end)
+    stations_map =
+      Enum.map(stations, fn station ->
+        Map.merge(%{station: station}, get_station_status(station))
+      end)
+
+    {:ok, stations_map}
   end
 
   def get_station(station_number, now \\ DateTime.utc_now()) do
     tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
 
-    from(s in Station,
+    station = from(s in Station,
       order_by: [asc: s.id],
       where: is_nil(s.deleted_at),
       where: s.station_number == ^station_number,
@@ -128,18 +142,27 @@ defmodule Lanpartyseating.StationLogic do
       ]
     )
     |> Repo.one()
+
+    case station do
+      nil -> {:error, :station_not_found}
+      _ -> {:ok, station}
+    end
   end
 
   def save_station_positions(table) do
     Repo.delete_all(Station)
 
-    table
-    |> Enum.each(fn row ->
-      row
-      |> Enum.each(fn station_number ->
-        Repo.insert(%Station{station_number: station_number, display_order: station_number})
+    positions =
+      table
+      |> Enum.flat_map(fn row ->
+        row
+        |> Enum.map(fn station_number ->
+          Changeset.change(%Station{station_number: station_number, display_order: station_number})
+        end)
       end)
-    end)
+
+    Repo.insert_all(Station, positions)
+    :ok
   end
 
   def get_station_status(station) do
@@ -157,6 +180,17 @@ defmodule Lanpartyseating.StationLogic do
 
       %Station{} ->
         %{status: :available, reservation: nil}
+    end
+  end
+
+  def is_station_available(station) do
+    %{status: status} = StationLogic.get_station_status(station)
+
+    case status do
+      :reserved -> false
+      :occupied -> false
+      :broken -> false
+      :available -> true
     end
   end
 

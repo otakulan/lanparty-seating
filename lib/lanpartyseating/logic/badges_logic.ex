@@ -6,9 +6,14 @@ defmodule Lanpartyseating.BadgesLogic do
   def get_badge(uid) do
     min_uid = String.upcase(uid)
 
-    from(s in Badge,
-      where: s.uid == ^min_uid
-    )
-    |> Repo.one()
+    badge = from(s in Badge,
+        where: s.uid == ^min_uid
+      )
+      |> Repo.one()
+
+    case badge do
+      nil -> {:error, "Unknown badge serial number"}
+      _ -> {:ok, badge}
+    end
   end
 end

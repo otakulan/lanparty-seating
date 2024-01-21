@@ -31,10 +31,11 @@ defmodule Lanpartyseating.Tasks.StartTournament do
   def handle_info(:start_tournament, tournament_id) do
     Logger.debug("Starting tournament #{tournament_id}")
 
+    {:ok, stations} = StationLogic.get_all_stations()
     Phoenix.PubSub.broadcast(
       PubSub,
       "station_update",
-      {:stations, StationLogic.get_all_stations()}
+      {:stations, stations}
     )
 
     from(r in TournamentReservation,
@@ -43,7 +44,7 @@ defmodule Lanpartyseating.Tasks.StartTournament do
       preload: [station: s]
     )
     |> Repo.all()
-    |> Enum.map(fn res ->
+    |> Enum.each(fn res ->
       Endpoint.broadcast(
         "desktop:all",
         "tournament_start",
