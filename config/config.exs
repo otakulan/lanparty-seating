@@ -9,7 +9,7 @@ import Config
 config :esbuild,
   path: System.get_env("MIX_ESBUILD_PATH"),
   default: [
-    args: ~w(js/app.js --bundle --target=es2016 --outdir=../priv/static/js --external:/images/*),
+    args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/js --external:/images/*),
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
   ]
