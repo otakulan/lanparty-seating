@@ -19,7 +19,7 @@ defmodule NavComponent do
         <ul class="p-0 menu menu-horizontal">
         <%= for {menu_txt, path} <- assigns.nav_menu do %>
           <li class={"nav-item min-w-fit #{if path == assigns.nav_menu_active_path, do: "font-bold"}"}>
-            <%= live_redirect menu_txt, to: path, class: "nav-link" %>
+            <.link patch={path} class="nav-link"><%= menu_txt %></.link>
           </li>
         <% end %>
         </ul>

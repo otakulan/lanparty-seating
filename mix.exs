@@ -37,7 +37,7 @@ defmodule Lanpartyseating.Mixfile do
       {:ecto_sql, "~> 3.10.1"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 3.3.1"},
-      {:phoenix_live_view, "~> 0.19.3"},
+      {:phoenix_live_view, "~> 0.20.0"},
       {:phoenix_live_dashboard, "~> 0.8.0"},
       {:phoenix_live_reload, "~> 1.4.1", only: :dev},
       {:phoenix_pubsub, "~> 2.1.3"},

@@ -19,33 +19,33 @@ defmodule DisplayModalComponent do
       :available ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-info"><%= assigns.station.station_number %></label>
+          <label class="btn btn-info"><%= assigns.station.station_number %></label>
         """
 
       :occupied ->
         ~H"""
-        <!-- The button to open modal -->
-        <label class="btn btn-warning flex flex-col">
-          <div >
-            <%= assigns.station.station_number %>
-          </div>
-          Until <%= Calendar.strftime(
-            List.first(assigns.station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
-                "%H:%M"
-              ) %>
-        </label>
+          <!-- The button to open modal -->
+          <label class="btn btn-warning flex flex-col">
+            <div >
+              <%= assigns.station.station_number %>
+            </div>
+            Until <%= Calendar.strftime(
+              List.first(assigns.station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
+                  "%H:%M"
+                ) %>
+          </label>
         """
 
       :broken ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-error"><%= assigns.station.station_number %></label>
+          <label class="btn btn-error"><%= assigns.station.station_number %></label>
         """
 
       :reserved ->
         ~H"""
           <!-- The button to open modal -->
-          <label for={"seat-modal-#{assigns.station.station_number}"} class="btn btn-active"><%= assigns.station.station_number %></label>
+          <label class="btn btn-active"><%= assigns.station.station_number %></label>
         """
     end
   end

@@ -104,3 +104,9 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
   horizontal_trailing: 1,
   vertical_trailing: 0
 })
+
+Lanpartyseating.Repo.insert!(%Lanpartyseating.Badge{
+  uid: "1",
+  serial_key: "1",
+  is_banned: false
+})

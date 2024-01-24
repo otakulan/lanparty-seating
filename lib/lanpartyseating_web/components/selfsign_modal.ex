@@ -18,74 +18,87 @@ defmodule SelfSignModalComponent do
     case assigns.status do
       :available ->
         ~H"""
-        <!-- The button to open modal -->
-        <label for={"station-modal-#{@station.station_number}"} class="btn btn-info">
-          <%= @station.station_number %>
-        </label>
-        <!-- Put this part before </body> tag -->
-        <input type="checkbox" id={"station-modal-#{@station.station_number}"} class="modal-toggle" />
-        <div class="modal modal-bottom sm:modal-middle">
-          <div class="modal-box">
-            <h3 class="text-lg font-bold">Station #<%= @station.station_number %></h3>
-            <p>Once your badge is scanned, a 45 min session will start at the chosen station</p>
-            <br />
-            <p>Une fois votre badge scanné, une session de 45 min commencera à la station choisie</p>
+          <div class="flex flex-col h-14 flex-1 grow mx-1" x-data>
+            <!-- The button to open modal -->
+            <label
+              x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
+              class="btn btn-info">
+              <%= @station.station_number %>
+            </label>
+            <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
+              <div class="modal-box">
+                <h3 class="text-lg font-bold">Station #<%= @station.station_number %></h3>
+                <p>Once your badge is scanned, a 45 min session will start at the chosen station</p>
+                <br />
+                <p>Une fois votre badge scanné, une session de 45 min commencera à la station choisie</p>
+                <form method="dialog">
+                  <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                </form>
+                <form phx-submit="reserve_station">
+                  <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
 
-            <form phx-submit="reserve_station">
-              <input type="hidden" name="station_number" value={"#{@station.station_number}"} />
+                  <%= if !is_nil(@error) do %>
+                    <p class="text-error"><%= @error %></p>
+                  <% end %>
+                  <%!-- <p>@error</p> --%>
+                  <br /><br />
+                  <input
+                    type="text"
+                    placeholder="Badge number / Numéro de badge"
+                    class="w-full max-w-xs input input-bordered"
+                    name="uid"
+                    autofocus
+                  />
 
-              <%= if !is_nil(@error) do %>
-                <p class="text-error"><%= @error %></p>
-              <% end %>
-              <%!-- <p>@error</p> --%>
-              <br /><br />
-              <input
-                type="text"
-                placeholder="Badge number / Numéro de badge"
-                class="w-full max-w-xs input input-bordered"
-                name="uid"
-                autofocus
-              />
-
-              <div class="modal-action">
-                <label for={"station-modal-#{@station.station_number}"} class="btn btn-error">X</label>
-                <button for={"station-modal-#{@station.station_number}"} class="btn btn-success" type="submit">
-                ✓
-                </button>
+                  <div class="modal-action">
+                    <button class="btn btn-success" type="submit">
+                    ✓
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
+            </dialog>
           </div>
-        </div>
         """
 
       :occupied ->
         ~H"""
-        <!-- The button to open modal -->
-        <div class="btn btn-warning flex flex-col">
-          <div >
-            <%= @station.station_number %>
+          <div class="flex flex-col h-14 flex-1 grow mx-1" x-data>
+            <!-- The button to open modal -->
+            <div
+              class="btn btn-warning flex flex-col"
+              x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}>
+              <div >
+                <%= @station.station_number %>
+              </div>
+              Until <%= Calendar.strftime(
+                List.first(@station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
+                    "%H:%M"
+                  ) %>
+            </div>
           </div>
-          Until <%= Calendar.strftime(
-            List.first(@station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
-                "%H:%M"
-              ) %>
-        </div>
         """
 
       :broken ->
         ~H"""
-        <!-- The button to open modal -->
-        <label class="btn btn-error">
-          <%= @station.station_number %>
-        </label>
+          <div class="flex flex-col h-14 flex-1 grow mx-1" x-data>
+            <!-- The button to open modal -->
+            <label class="btn btn-error">
+              <%= @station.station_number %>
+            </label>
+          </div>
         """
 
       :reserved ->
         ~H"""
-        <!-- The button to open modal -->
-        <label class="btn btn-active">
-          <%= @station.station_number %>
-        </label>
+          <div class="flex flex-col h-14 flex-1 grow mx-1" x-data>
+            <!-- The button to open modal -->
+            <label
+              class="btn btn-active"
+              x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}>
+              <%= @station.station_number %>
+            </label>
+          </div>
         """
     end
   end
