@@ -74,10 +74,28 @@ defmodule CancellationModalComponent do
                   "%H:%M"
                 ) %> *REPLACE WITH COUNTDOWN*</b>
                 </p>
-                <p class="py-4">Enter a reason for canceling the reservation</p>
                 <form method="dialog">
                   <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
                 </form>
+
+                <p class="py-4">Enter an amount of minutes to extend the reservation by</p>
+
+                <form phx-submit="extend_reservation">
+                  <input type="hidden" name="station_id" value={"#{@station.id}"}>
+                  <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
+                  <input type="text" placeholder="Minutes to add" value="5" class="w-full max-w-xs input input-bordered" name="minutes_increment"/>
+
+                  <div class="modal-action">
+                    <button
+                      class="btn btn-success"
+                      x-on:click={"$refs.station_modal_#{@station.station_number}.close()"}
+                      type="submit">
+                      Add time to reservation
+                    </button>
+                  </div>
+                </form>
+
+                <p class="py-4">Enter a reason for canceling the reservation</p>
 
                 <form phx-submit="cancel_station">
                   <input type="hidden" name="station_id" value={"#{@station.id}"}>
