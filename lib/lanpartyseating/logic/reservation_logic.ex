@@ -43,7 +43,8 @@ defmodule Lanpartyseating.ReservationLogic do
               "new_reservation",
               %{
                 station_number: station_number,
-                # reservation: updated
+                start_date: updated.start_date |> DateTime.to_iso8601(),
+                end_date: updated.end_date |> DateTime.to_iso8601(),
               }
             )
 
@@ -64,6 +65,63 @@ defmodule Lanpartyseating.ReservationLogic do
         Logger.debug("Station is not available")
         {:error, :station_unavailable}
     end
+  end
+
+  def extend_reservation(_id, minutes) when minutes <= 0 do
+    {:error, "Reservations can only be extended by a positive non-zero amount of minutes"}
+  end
+
+  def extend_reservation(id, minutes) do
+    existing_reservation =
+      from(r in Reservation,
+        where: r.station_id == ^id,
+        where: is_nil(r.deleted_at),
+        join: s in assoc(r, :station),
+        preload: [station: s]
+      )
+      |> Repo.one()
+
+    new_end_date = DateTime.add(existing_reservation.end_date, minutes, :minute)
+    updated_reservation =
+      Ecto.Changeset.change(existing_reservation,
+        end_date: new_end_date
+      )
+
+    reservation = with {:ok, reservation} <- Repo.update(updated_reservation) do
+      # Terminate the reservation expiration task with the old end date
+      GenServer.cast(:"expire_reservation_#{reservation.id}", :terminate)
+
+      # Start a new reservation expiration task with the new end date
+      DynamicSupervisor.start_child(
+        Lanpartyseating.ExpirationTaskSupervisor,
+        {Lanpartyseating.Tasks.ExpireReservation, {new_end_date, reservation.id}}
+      )
+
+      Endpoint.broadcast!(
+        "desktop:all",
+        "extend_reservation",
+        %{
+          station_number: reservation.station.station_number,
+          start_date: reservation.start_date |> DateTime.to_iso8601(),
+          end_date: reservation.end_date |> DateTime.to_iso8601(),
+        }
+      )
+
+      {:ok, stations} = StationLogic.get_all_stations()
+
+      Phoenix.PubSub.broadcast(
+        PubSub,
+        "station_update",
+        {:stations, stations}
+      )
+
+      reservation
+    else
+      {:error, err} ->
+        {:error, {:reservation_failed, err}}
+    end
+
+    {:ok, reservation}
   end
 
   def cancel_reservation(id, reason) do
