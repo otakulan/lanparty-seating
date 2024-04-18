@@ -64,13 +64,13 @@
           };
         };
 
-        devenv.shells.default = let
-          inherit (pkgs.lib) optional optionals;
-          erlang = pkgs.beam.interpreters.erlangR25;
-          elixir = pkgs.beam.packages.erlangR26.elixir_1_15;
-          rebar = pkgs.rebar3;
-          nodejs = pkgs.nodejs_20;
-        in {
+        devenv.shells.default = {
+          languages.elixir.enable = true;
+          languages.elixir.package = pkgs.beam.packages.erlangR26.elixir_1_16;
+          languages.erlang.enable = true;
+          languages.erlang.package = pkgs.beam.interpreters.erlangR26;
+          languages.javascript.enable = true;
+          languages.javascript.yarn.enable = true;
           services.postgres = {
             enable = true;
             initialDatabases = [ { name = "lanpartyseating_dev"; } ];
@@ -79,14 +79,8 @@
             '';
             listen_addresses = "::1,127.0.0.1";
           };
-          env.MIX_REBAR3 = "${rebar}/bin/rebar3";
+          env.MIX_REBAR3 = "${pkgs.rebar3}/bin/rebar3";
           env.MIX_ESBUILD_PATH = "${pkgs.esbuild}/bin/esbuild";
-          packages = with pkgs; [ cacert git erlang elixir rebar cargo nodejs yarn elixir-ls ]
-            ++ optional stdenv.isLinux inotify-tools
-            ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
-            CoreFoundation
-            CoreServices
-          ]);
           enterShell = ''
             alias mdg="mix deps.get"
             alias mps="mix phx.server"
