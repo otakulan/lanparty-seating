@@ -15,8 +15,8 @@ defmodule LanpartyseatingWeb.CancellationLive do
 
     socket =
       socket
-      |> assign(:columns, settings.columns)
-      |> assign(:rows, settings.rows)
+      |> assign(:columns, if(settings.is_diagonally_mirrored, do: settings.rows, else: settings.columns))
+      |> assign(:rows, if(settings.is_diagonally_mirrored, do: settings.columns, else: settings.rows))
       |> assign(:col_trailing, settings.vertical_trailing)
       |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)

@@ -154,6 +154,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
       socket
       |> assign(:rows, socket.assigns.rows)
       |> assign(:columns, socket.assigns.columns)
+      |> assign(:is_diagnoally_mirrored, !socket.assigns.is_diagonally_mirrored)
       |> assign(:table, transpose(socket.assigns.table))
 
     {:noreply, socket}
@@ -176,7 +177,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     :ok = Lanpartyseating.StationLogic.save_station_positions(socket.assigns.table)
 
-    {:ok, _} = Lanpartyseating.SettingsLogic.save_settings(
+    :ok = Lanpartyseating.SettingsLogic.save_settings(
       s.rows,
       s.columns,
       s.rowpad,
