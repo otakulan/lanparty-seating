@@ -152,14 +152,18 @@ defmodule Lanpartyseating.StationLogic do
   def save_station_positions(table) do
     Repo.delete_all(Station)
 
+    now_naive =
+      NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+
     positions =
       table
       |> Enum.flat_map(fn row ->
         row
         |> Enum.map(fn station_number ->
-          %Station{station_number: station_number, display_order: station_number}
+          %{station_number: station_number, display_order: station_number, inserted_at: now_naive, updated_at: now_naive}
         end)
       end)
+      |> IO.inspect
 
     Repo.insert_all(Station, positions)
     :ok
