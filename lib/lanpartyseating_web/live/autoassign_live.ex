@@ -50,6 +50,7 @@ defmodule LanpartyseatingWeb.AutoAssignLive do
           placeholder="Badge number"
           class="w-full max-w-xs input input-bordered"
           name="uid"
+          autocomplete="off"
           autofocus
         />
 
