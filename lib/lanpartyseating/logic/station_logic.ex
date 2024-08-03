@@ -157,7 +157,7 @@ defmodule Lanpartyseating.StationLogic do
       |> Enum.flat_map(fn row ->
         row
         |> Enum.map(fn station_number ->
-          Changeset.change(%Station{station_number: station_number, display_order: station_number})
+          %Station{station_number: station_number, display_order: station_number}
         end)
       end)
 
