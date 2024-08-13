@@ -18,7 +18,7 @@ defmodule Lanpartyseating.StationLogic do
 
     stations =
       from(s in Station,
-        order_by: [asc: s.id],
+        order_by: [asc: s.display_order],
         where: is_nil(s.deleted_at),
         preload: [
           reservations:
@@ -155,13 +155,11 @@ defmodule Lanpartyseating.StationLogic do
     now_naive =
       NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
 
-    positions =
-      table
-      |> Enum.flat_map(fn row ->
-        row
-        |> Enum.map(fn station_number ->
-          %{station_number: station_number, display_order: station_number, inserted_at: now_naive, updated_at: now_naive}
-        end)
+    flattened = table |> Enum.flat_map(fn row -> row end)
+    positions = flattened
+      |> Enum.with_index()
+      |> Enum.map(fn {station_number, index} ->
+        %{station_number: station_number, display_order: index, inserted_at: now_naive, updated_at: now_naive}
       end)
 
     Repo.insert_all(Station, positions)
