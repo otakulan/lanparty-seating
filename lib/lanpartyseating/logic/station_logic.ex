@@ -8,6 +8,7 @@ defmodule Lanpartyseating.StationLogic do
   alias Lanpartyseating.Station, as: Station
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
   alias Lanpartyseating.Repo, as: Repo
+  alias Lanpartyseating.StationSwap, as: Swap
 
   def number_stations do
     Repo.aggregate(Station, :count)
@@ -41,6 +42,9 @@ defmodule Lanpartyseating.StationLogic do
       )
       |> Repo.all()
 
+    swaps = Repo.all(from(Swap))
+    stations = apply_swaps(stations, swaps)
+
     case stations do
       [] ->
         {:error, :no_stations}
@@ -51,6 +55,17 @@ defmodule Lanpartyseating.StationLogic do
           end)
         {:ok, stations_map}
     end
+  end
+
+  def apply_swaps(stations, swaps) do
+    station_by_num = Enum.into(stations, %{}, fn station -> {station.station_number, station} end)
+    swap_map = Enum.flat_map(swaps, fn %{this: k, that: v} -> [{k, v}, {v, k}] end) |> Enum.into(%{})
+
+    Enum.map(stations, fn station ->
+      # Get the corresponding station if there's a swap otherwise use the given station
+      num = Map.get(swap_map, station.station_number, station.station_number)
+      Map.get(station_by_num, num)
+    end)
   end
 
   def set_station_broken(station_number, is_broken) do
