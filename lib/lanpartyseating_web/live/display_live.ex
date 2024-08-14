@@ -9,6 +9,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
     {:ok, settings} = SettingsLogic.get_settings()
     {:ok, stations} = StationLogic.get_all_stations()
     {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
+    {stations_by_pos, {columns, rows}} = stations_by_xy(stations)
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_update")
@@ -17,16 +18,29 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
     socket =
       socket
-      |> assign(:columns, if(settings.is_diagonally_mirrored, do: settings.rows, else: settings.columns))
-      |> assign(:rows, if(settings.is_diagonally_mirrored, do: settings.columns, else: settings.rows))
+      |> assign(:columns, columns)
+      |> assign(:rows, rows)
       |> assign(:col_trailing, settings.vertical_trailing)
       |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign(:stations, stations)
+      |> assign(:stations_by_xy, stations_by_pos)
       |> assign(:tournaments, tournaments)
 
     {:ok, socket}
+  end
+
+  def stations_by_xy(stations) do
+    by_pos = stations
+      |> Enum.map(fn s -> {{s.station.station_layout.x, s.station.station_layout.y}, s} end)
+      |> Enum.into(%{})
+
+    {max_x, max_y} = Map.keys(by_pos)
+      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+
+    # {columns, rows}
+    {by_pos, {max_x + 1, max_y + 1}}
   end
 
   def handle_info({:tournaments, tournaments}, socket) do
@@ -48,7 +62,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
               <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full"}>
                 <%= for c <- 0..(@columns-1) do %>
                   <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1"}>
-                    <% station_data = assigns.stations |> Enum.at(r * @columns + c) %>
+                    <% station_data = assigns.stations_by_xy |> Map.get({c, r}) %>
                     <%= if !is_nil(station_data) do %>
                     <DisplayModalComponent.modal reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
                     <% end %>
