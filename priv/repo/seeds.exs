@@ -42,14 +42,6 @@
 #   name: "Rainbow Six Siege"
 # })
 
-for val <- 1..225,
-    do:
-      Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-        station_number: val,
-        display_order: val,
-        is_closed: false
-      })
-
 # for val <- 1..225, do:
 # Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
 #   station_id: val,
@@ -87,12 +79,24 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
 })
 
 # Create IDs in the Station Status table for all the stations
-for val <- 1..225,
-    do:
+for val <- 1..225 do
       Lanpartyseating.Repo.insert!(%Lanpartyseating.StationStatus{
         station_id: val,
         is_assigned: false,
         is_out_of_order: false
+      })
+      Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
+        station_number: val,
+        x: rem(val - 1, 7),
+        y: div(val - 1, 7)
+    })
+end
+
+for val <- 1..225,
+    do:
+      Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+        station_number: val,
+        is_closed: false
       })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{

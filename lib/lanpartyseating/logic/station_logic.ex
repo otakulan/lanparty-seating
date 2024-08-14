@@ -1,5 +1,6 @@
 defmodule Lanpartyseating.StationLogic do
   import Ecto.Query
+  alias Lanpartyseating.StationLayout
   use Timex
   alias Ecto.Changeset
   alias Lanpartyseating.PubSub, as: PubSub
@@ -19,8 +20,8 @@ defmodule Lanpartyseating.StationLogic do
 
     stations =
       from(s in Station,
-        order_by: [asc: s.display_order],
         where: is_nil(s.deleted_at),
+        #join: pos in StationLayout, on: s.station_number == pos.station_number, select: {s, pos.x, pos.y},
         preload: [
           reservations:
             ^from(
@@ -42,8 +43,7 @@ defmodule Lanpartyseating.StationLogic do
       )
       |> Repo.all()
 
-    swaps = Repo.all(from(Swap))
-    stations = apply_swaps(stations, swaps)
+    #IO.inspect(stations)
 
     case stations do
       [] ->
