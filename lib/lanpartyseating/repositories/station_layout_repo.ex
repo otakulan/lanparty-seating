@@ -1,4 +1,5 @@
 defmodule Lanpartyseating.StationLayout do
+  alias Lanpartyseating.Station
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -6,6 +7,7 @@ defmodule Lanpartyseating.StationLayout do
   @foreign_key_type :integer
 
   schema "station_layout" do
+    has_one :stations, Station, foreign_key: :station_number
     field :x, :integer
     field :y, :integer
   end

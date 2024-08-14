@@ -10,6 +10,7 @@ defmodule Lanpartyseating.StationLogic do
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
   alias Lanpartyseating.Repo, as: Repo
   alias Lanpartyseating.StationSwap, as: Swap
+  alias Lanpartyseating.StationLayout, as: Layout
 
   def number_stations do
     Repo.aggregate(Station, :count)
@@ -21,8 +22,9 @@ defmodule Lanpartyseating.StationLogic do
     stations =
       from(s in Station,
         where: is_nil(s.deleted_at),
-        #join: pos in StationLayout, on: s.station_number == pos.station_number, select: {s, pos.x, pos.y},
         preload: [
+          station_layout:
+            ^from(Layout),
           reservations:
             ^from(
               r in Reservation,
@@ -43,7 +45,6 @@ defmodule Lanpartyseating.StationLogic do
       )
       |> Repo.all()
 
-    #IO.inspect(stations)
 
     case stations do
       [] ->
