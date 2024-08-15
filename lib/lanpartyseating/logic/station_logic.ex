@@ -58,6 +58,12 @@ defmodule Lanpartyseating.StationLogic do
     end
   end
 
+  def get_station_layout() do
+    rows = Repo.all(from(Layout))
+    Enum.map(rows, fn r -> {{r.x, r.y}, r.station_number} end)
+      |> Enum.into(%{})
+  end
+
   def apply_swaps(stations, swaps) do
     station_by_num = Enum.into(stations, %{}, fn station -> {station.station_number, station} end)
     swap_map = Enum.flat_map(swaps, fn %{this: k, that: v} -> [{k, v}, {v, k}] end) |> Enum.into(%{})

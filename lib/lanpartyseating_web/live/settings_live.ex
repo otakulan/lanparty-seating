@@ -58,18 +58,23 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def mount(_params, _session, socket) do
     {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+    layout = Lanpartyseating.StationLogic.get_station_layout()
+    {max_x, max_y} = Map.keys(layout)
+      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+    columns = max_x + 1
+    rows = max_y + 1
 
     socket =
       socket
-      |> assign(:columns, settings.columns)
-      |> assign(:rows, settings.rows)
+      |> assign(:columns, columns)
+      |> assign(:rows, rows)
       |> assign(:col_trailing, settings.vertical_trailing)
       |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:is_diagonally_mirrored, settings.is_diagonally_mirrored)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       # Creates a 2D array given the number of rows and columns
-      |> assign(:table, make_2d_array(settings.rows, settings.columns))
+      |> assign(:grid, layout)
 
     {:ok, socket}
   end
@@ -200,10 +205,19 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def handle_event("swap", params, socket) do
     IO.puts("meow")
-    IO.inspect(params)
+    grid = socket.assigns.grid
+    as_list = Map.to_list(grid)
+    {from, _} = Map.get(params, "from") |> Integer.parse()
+    {to, _} = Map.get(params, "to") |> Integer.parse()
+    {from_pos, from_num} = List.keyfind(as_list, from, 1)
+    {to_pos, to_num} = List.keyfind(as_list, to, 1)
+    grid = grid
+      |> Map.put(from_pos, to_num)
+      |> Map.put(to_pos, from_num)
+
     socket =
       socket
-      |> put_flash(:info, "meow meow meow")
+      |> assign(:grid, grid)
 
     {:noreply, socket}
   end
@@ -288,11 +302,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
       <h1 style="font-size:30px">Layout Preview</h1>
 
       <div id="staton-grid" phx-hook="ButtonGridHook" class="flex flex-wrap w-full">
-        <%= for {row, r} <- Enum.with_index(@table) do %>
+        <%= for r <- 0..(@rows-1) do %>
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
-            <%= for {column, c} <- Enum.with_index(row) do %>
+            <%= for c <- 0..(@columns-1) do %>
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
-                <div class="btn btn-warning" station-number={"#{column}"} station-x={"#{c}"} station-y={"#{r}"} draggable="true"><%= column %></div>
+                <div class="btn btn-warning" station-number={"#{Map.get(@grid, {c, r})}"} station-x={"#{c}"} station-y={"#{r}"} draggable="true"><%= Map.get(@grid, {c, r}) %></div>
               </div>
             <% end %>
           </div>
