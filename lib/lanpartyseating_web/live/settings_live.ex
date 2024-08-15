@@ -198,6 +198,17 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def transpose(_), do: {:error, "Input must be a 2D list"}
 
+  def handle_event("swap", params, socket) do
+    IO.puts("meow")
+    IO.inspect(params)
+    socket =
+      socket
+      |> put_flash(:info, "meow meow meow")
+
+    {:noreply, socket}
+  end
+
+  @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
     <div class="jumbotron">
@@ -276,12 +287,12 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
       <h1 style="font-size:30px">Layout Preview</h1>
 
-      <div class="flex flex-wrap w-full">
+      <div id="staton-grid" phx-hook="ButtonGridHook" class="flex flex-wrap w-full">
         <%= for {row, r} <- Enum.with_index(@table) do %>
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
             <%= for {column, c} <- Enum.with_index(row) do %>
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
-                <button class="btn btn-warning"><%= column %></button>
+                <div class="btn btn-warning" station-number={"#{column}"} station-x={"#{c}"} station-y={"#{r}"} draggable="true"><%= column %></div>
               </div>
             <% end %>
           </div>
@@ -289,6 +300,38 @@ defmodule LanpartyseatingWeb.SettingsLive do
       </div>
       <button class="btn btn-wide" phx-click="save">Save layout</button>
     </div>
+    <script>
+      let hooks = {};
+      let draggedElement = null;
+
+      hooks.ButtonGridHook = {
+        mounted() {
+          const gridItems = document.querySelectorAll('[station-number]');
+
+          gridItems.forEach(item => {
+            item.addEventListener('dragstart', event => {
+              draggedElement = event.target;
+            });
+
+            item.addEventListener("dragend", event => {
+              // for some reason this print statement is required ???
+              console.log('dragend');
+            });
+
+            item.addEventListener("drop", event => {
+              console.log('drop');
+              console.log(draggedElement);
+              console.log(event.target);
+              // Push an event to the LiveView with some parameters
+              this.pushEvent("swap", { from: draggedElement.getAttribute("station-number"), to: event.target.getAttribute("station-number") });
+            });
+          });
+
+
+        }
+      };
+      window.customHooks = hooks;
+    </script>
     """
   end
 end

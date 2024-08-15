@@ -16,7 +16,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
         window.Alpine.clone(from, to)
       }
     }
-  }
+  },
+  hooks: window.customHooks
 })
 
 // Connect if there are any LiveViews on the page
