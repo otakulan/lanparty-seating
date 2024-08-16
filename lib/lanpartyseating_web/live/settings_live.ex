@@ -86,7 +86,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> assign(:station_count, settings.station_count)
       |> assign(:col_trailing, settings.vertical_trailing)
       |> assign(:row_trailing, settings.horizontal_trailing)
-      |> assign(:is_diagonally_mirrored, settings.is_diagonally_mirrored)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> socket_assign_grid(layout)
@@ -174,7 +173,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
       socket
       |> assign(:rows, socket.assigns.rows)
       |> assign(:columns, socket.assigns.columns)
-      |> assign(:is_diagnoally_mirrored, !socket.assigns.is_diagonally_mirrored)
       |> assign(:table, transpose(socket.assigns.table))
 
     {:noreply, socket}
@@ -195,13 +193,13 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     s = socket.assigns
 
-    :ok = Lanpartyseating.StationLogic.save_station_positions(socket.assigns.table)
+    #:ok = Lanpartyseating.StationLogic.save_station_positions(socket.assigns.grid)
 
     :ok = Lanpartyseating.SettingsLogic.save_settings(
+      s.grid,
       s.station_count,
       s.rowpad,
       s.colpad,
-      s.is_diagonally_mirrored,
       s.row_trailing,
       s.col_trailing
     )

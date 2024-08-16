@@ -103,7 +103,6 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
   station_count: 70,
   row_padding: 2,
   column_padding: 1,
-  is_diagonally_mirrored: 1,
   horizontal_trailing: 1,
   vertical_trailing: 0
 })

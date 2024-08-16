@@ -18,10 +18,10 @@ defmodule Lanpartyseating.SettingsLogic do
   end
 
   def save_settings(
+        grid,
         station_count,
         row_padding,
         column_padding,
-        is_diagonally_mirrored,
         horizontal_trailing,
         vertical_trailing
       ) do
@@ -50,16 +50,35 @@ defmodule Lanpartyseating.SettingsLogic do
         station_count: station_count,
         row_padding: row_padding,
         column_padding: column_padding,
-        is_diagonally_mirrored: is_diagonally_mirrored,
         horizontal_trailing: horizontal_trailing,
         vertical_trailing: vertical_trailing
       )
+    layout_multi = grid
+      |> Enum.map(fn {{x, y}, num} -> %Lanpartyseating.StationLayout{station_number: num, x: x, y: y} end)
+      |> Enum.reduce(Ecto.Multi.new(), fn row, multi -> Ecto.Multi.insert(multi, {:insert_position, row.station_number}, row) end)
 
-    with {:ok, _updated} <- Repo.update(settings) do
-      :ok
-    else
-      {:error, error} ->
-        {:error, {:save_settings_failed, error}}
+    multi = Ecto.Multi.new()
+      |> Ecto.Multi.insert_or_update(:insert_settings, settings)
+      |> Ecto.Multi.delete_all(:delete_layout, from(Lanpartyseating.StationLayout))
+      |> Ecto.Multi.append(layout_multi)
+
+    case Repo.transaction(multi) do
+      {:ok, result} ->
+        IO.puts("Transaction succeeded!")
+        IO.inspect(result)
+        :ok
+      {:error, failed_operation, failed_value, _changes_so_far} ->
+        IO.puts("Transaction failed!")
+        IO.inspect(failed_operation)
+        IO.inspect(failed_value)
+        {:error, {:save_settings_failed, failed_operation}}
     end
+
+    #with {:ok, _updated} <- Repo.update(settings) do
+    #  :ok
+    #else
+    #  {:error, error} ->
+    #    {:error, {:save_settings_failed, error}}
+    #end
   end
 end
