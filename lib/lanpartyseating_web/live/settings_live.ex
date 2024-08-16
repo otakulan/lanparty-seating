@@ -63,9 +63,20 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {max_x + 1, max_y + 1}
   end
 
+  def socket_assign_grid(socket, grid) do
+    {columns, rows} = grid_dimensions(grid)
+    socket
+      |> assign(:grid_width, columns)
+      |> assign(:grid_height, rows)
+      |> assign(:grid, grid)
+  end
+
   def mount(_params, _session, socket) do
     {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
     layout = Lanpartyseating.StationLogic.get_station_layout()
+    {columns, rows} = grid_dimensions(layout)
+    # number of rows in layout table might not match station_count setting
+    layout = resize_grid(layout, columns, settings.station_count)
     {columns, rows} = grid_dimensions(layout)
 
     socket =
@@ -78,8 +89,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> assign(:is_diagonally_mirrored, settings.is_diagonally_mirrored)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
-      # Creates a 2D array given the number of rows and columns
-      |> assign(:grid, layout)
+      |> socket_assign_grid(layout)
 
     {:ok, socket}
   end
@@ -225,7 +235,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     socket =
       socket
-      |> assign(:grid, grid)
+      |> socket_assign_grid(grid)
 
     {:noreply, socket}
   end
@@ -240,19 +250,27 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> Enum.into(grid)
   end
 
+  def truncate_grid(grid, count) do
+    grid |> Enum.reject(fn {_, num} -> num > count end) |> Enum.into(%{})
+  end
+
+  def resize_grid(grid, columns, count) do
+    if map_size(grid) > count do
+      truncate_grid(grid, count)
+    else
+      add_stations_to_grid(grid, columns, map_size(grid) + 1, count - map_size(grid))
+    end
+  end
+
   def handle_event("change_station_count", %{"station_count" => count}, socket) do
     grid = socket.assigns.grid
     count = String.to_integer(count)
-    grid = if map_size(grid) > count do
-      grid |> Enum.reject(fn {_, num} -> num > count end) |> Enum.into(%{})
-    else
-      add_stations_to_grid(grid, socket.assigns.columns, map_size(grid) + 1, count - map_size(grid))
-    end
+    grid = resize_grid(grid, socket.assigns.columns, count)
 
     socket =
       socket
       |> assign(:station_count, count)
-      |> assign(:grid, grid)
+      |> socket_assign_grid(grid)
 
     {:noreply, socket}
   end
@@ -267,7 +285,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
         <input
           type="number"
           placeholder="X"
-          min="1"
+          min={@grid_width}
           #max="15"
           class="w-16 max-w-xs input input-bordered input-xs"
           name="columns"
@@ -277,7 +295,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
         <input
           type="number"
           placeholder="Y"
-          min="1"
+          min={@grid_height}
           #max="15"
           class="w-16 max-w-xs input input-bordered input-xs"
           name="rows"
@@ -291,7 +309,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           type="number"
           placeholder="X"
           min="1"
-          #max="100"
+          max={"#{@rows * @columns}"}
           class="w-16 max-w-xs input input-bordered input-xs"
           name="station_count"
           value={@station_count}
