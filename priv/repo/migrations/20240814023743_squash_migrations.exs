@@ -14,8 +14,9 @@ defmodule Lanpartyseating.Repo.Migrations.SquashMigrations do
     end
 
     create table(:settings) do
-      add :rows, :integer
-      add :columns, :integer
+      #add :rows, :integer
+      #add :columns, :integer
+      add :station_count, :integer
       add :row_padding, :integer
       add :column_padding, :integer
       add :horizontal_trailing, :integer

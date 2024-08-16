@@ -100,8 +100,7 @@ for val <- 1..225,
       })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
-  rows: 7,
-  columns: 10,
+  station_count: 70,
   row_padding: 2,
   column_padding: 1,
   is_diagonally_mirrored: 1,

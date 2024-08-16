@@ -6,8 +6,7 @@ defmodule Lanpartyseating.Setting do
   @foreign_key_type :id
 
   schema "settings" do
-    field :rows, :integer, default: 10
-    field :columns, :integer, default: 4
+    field :station_count, :integer, default: 70
     field :row_padding, :integer, default: 1
     field :column_padding, :integer, default: 1
     field :is_diagonally_mirrored, :integer, default: 0
@@ -20,9 +19,8 @@ defmodule Lanpartyseating.Setting do
   @doc false
   def changeset(reservation, attrs) do
     reservation
-    |> cast(attrs, [:rows, :columns, :row_padding, :column_padding, :horizontal_trailing, :vertical_trailing, :deleted_at])
-    |> validate_number(:rows, greater_than: 0)
-    |> validate_number(:columns, greater_than: 0)
+    |> cast(attrs, [:station_count, :row_padding, :column_padding, :horizontal_trailing, :vertical_trailing, :deleted_at])
+    |> validate_number(:station_count, greater_than: 0)
     |> validate_number(:row_padding, greater_than: -1)
     |> validate_number(:column_padding, greater_than: -1)
   end

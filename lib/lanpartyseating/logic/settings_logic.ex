@@ -18,8 +18,7 @@ defmodule Lanpartyseating.SettingsLogic do
   end
 
   def save_settings(
-        rows,
-        columns,
+        station_count,
         row_padding,
         column_padding,
         is_diagonally_mirrored,
@@ -48,8 +47,7 @@ defmodule Lanpartyseating.SettingsLogic do
 
     settings =
       Ecto.Changeset.change(settings,
-        rows: rows,
-        columns: columns,
+        station_count: station_count,
         row_padding: row_padding,
         column_padding: column_padding,
         is_diagonally_mirrored: is_diagonally_mirrored,

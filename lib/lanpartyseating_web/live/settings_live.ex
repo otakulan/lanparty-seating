@@ -56,18 +56,23 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> transpose()
   end
 
+  # {columns, rows}
+  def grid_dimensions(grid) do
+    {max_x, max_y} = Map.keys(grid)
+      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+    {max_x + 1, max_y + 1}
+  end
+
   def mount(_params, _session, socket) do
     {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
     layout = Lanpartyseating.StationLogic.get_station_layout()
-    {max_x, max_y} = Map.keys(layout)
-      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
-    columns = max_x + 1
-    rows = max_y + 1
+    {columns, rows} = grid_dimensions(layout)
 
     socket =
       socket
       |> assign(:columns, columns)
       |> assign(:rows, rows)
+      |> assign(:station_count, settings.station_count)
       |> assign(:col_trailing, settings.vertical_trailing)
       |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:is_diagonally_mirrored, settings.is_diagonally_mirrored)
@@ -183,8 +188,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     :ok = Lanpartyseating.StationLogic.save_station_positions(socket.assigns.table)
 
     :ok = Lanpartyseating.SettingsLogic.save_settings(
-      s.rows,
-      s.columns,
+      s.station_count,
       s.rowpad,
       s.colpad,
       s.is_diagonally_mirrored,
@@ -203,20 +207,51 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def transpose(_), do: {:error, "Input must be a 2D list"}
 
-  def handle_event("swap", params, socket) do
-    IO.puts("meow")
+  def handle_event("move", params, socket) do
     grid = socket.assigns.grid
-    as_list = Map.to_list(grid)
-    {from, _} = Map.get(params, "from") |> Integer.parse()
-    {to, _} = Map.get(params, "to") |> Integer.parse()
-    {from_pos, from_num} = List.keyfind(as_list, from, 1)
-    {to_pos, to_num} = List.keyfind(as_list, to, 1)
-    grid = grid
-      |> Map.put(from_pos, to_num)
-      |> Map.put(to_pos, from_num)
+    %{"from" => %{"x" => x1, "y" => y1}, "to" => %{"x" => x2, "y" => y2}} = params
+    from_num = Map.get(grid, {x1, y1}) # should never be nil
+    to_num = Map.get(grid, {x2, y2}) # nil if empty slot
+    grid =
+    if to_num != nil do
+      grid
+        |> Map.put({x1, y1}, to_num)
+        |> Map.put({x2, y2}, from_num)
+    else
+      grid
+        |> Map.delete({x1, y1})
+        |> Map.put({x2, y2}, from_num)
+    end
 
     socket =
       socket
+      |> assign(:grid, grid)
+
+    {:noreply, socket}
+  end
+
+  def add_stations_to_grid(grid, columns, first_num, count) do
+    Stream.iterate(0, &(&1 + 1)) # infinite stream
+      |> Stream.flat_map(fn r -> 0..columns - 1 |> Enum.map(fn c -> {c, r} end) end)
+      |> Stream.reject(fn pos -> Map.has_key?(grid, pos) end)
+      |> Enum.take(count)
+      |> Enum.with_index()
+      |> Enum.map(fn {pos, index} -> {pos, index + first_num} end)
+      |> Enum.into(grid)
+  end
+
+  def handle_event("change_station_count", %{"station_count" => count}, socket) do
+    grid = socket.assigns.grid
+    count = String.to_integer(count)
+    grid = if map_size(grid) > count do
+      grid |> Enum.reject(fn {_, num} -> num > count end) |> Enum.into(%{})
+    else
+      add_stations_to_grid(grid, socket.assigns.columns, map_size(grid) + 1, count - map_size(grid))
+    end
+
+    socket =
+      socket
+      |> assign(:station_count, count)
       |> assign(:grid, grid)
 
     {:noreply, socket}
@@ -227,25 +262,39 @@ defmodule LanpartyseatingWeb.SettingsLive do
     ~H"""
     <div class="jumbotron">
       <h1 style="font-size:30px">Grid Size Configuration</h1>
-
       <form phx-change="change_dimensions">
+        columns:
         <input
           type="number"
           placeholder="X"
           min="1"
-          max="15"
+          #max="15"
           class="w-16 max-w-xs input input-bordered input-xs"
           name="columns"
           value={@columns}
         />
+        rows:
         <input
           type="number"
           placeholder="Y"
           min="1"
-          max="15"
+          #max="15"
           class="w-16 max-w-xs input input-bordered input-xs"
           name="rows"
           value={@rows}
+        />
+      </form>
+
+      <h1 style="font-size:30px">Number Of Stations</h1>
+      <form phx-change="change_station_count">
+        <input
+          type="number"
+          placeholder="X"
+          min="1"
+          #max="100"
+          class="w-16 max-w-xs input input-bordered input-xs"
+          name="station_count"
+          value={@station_count}
         />
       </form>
 
@@ -306,7 +355,12 @@ defmodule LanpartyseatingWeb.SettingsLive do
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
             <%= for c <- 0..(@columns-1) do %>
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
+                <% station_num = assigns.grid |> Map.get({c, r}) %>
+                <%= if !is_nil(station_num) do %>
                 <div class="btn btn-warning" station-number={"#{Map.get(@grid, {c, r})}"} station-x={"#{c}"} station-y={"#{r}"} draggable="true"><%= Map.get(@grid, {c, r}) %></div>
+                <% else %>
+                <div class="btn btn-outline" station-x={"#{c}"} station-y={"#{r}"}></div>
+                <% end %>
               </div>
             <% end %>
           </div>
@@ -320,28 +374,23 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
       hooks.ButtonGridHook = {
         mounted() {
-          const gridItems = document.querySelectorAll('[station-number]');
-
-          gridItems.forEach(item => {
-            item.addEventListener('dragstart', event => {
-              draggedElement = event.target;
-            });
-
-            item.addEventListener("dragend", event => {
-              // for some reason this print statement is required ???
-              console.log('dragend');
-            });
-
-            item.addEventListener("drop", event => {
-              console.log('drop');
-              console.log(draggedElement);
-              console.log(event.target);
-              // Push an event to the LiveView with some parameters
-              this.pushEvent("swap", { from: draggedElement.getAttribute("station-number"), to: event.target.getAttribute("station-number") });
-            });
+          const container = document.getElementById('staton-grid');
+          container.addEventListener('dragstart', event => {
+            if (!event.target.matches('[station-x]')) return;
+            console.log('Drag started:', event.target);
+            draggedElement = event.target;
           });
 
-
+          container.addEventListener("drop", event => {
+          if (!event.target.matches('[station-x]')) return;
+            console.log('drop');
+            console.log(draggedElement);
+            console.log(event.target);
+            // Push an event to the LiveView with some parameters
+            let from = { x: parseInt(draggedElement.getAttribute("station-x")), y: parseInt(draggedElement.getAttribute("station-y")) };
+            let to = { x: parseInt(event.target.getAttribute("station-x")), y: parseInt(event.target.getAttribute("station-y")) };
+            this.pushEvent("move", { from: from, to: to });
+          });
         }
       };
       window.customHooks = hooks;
