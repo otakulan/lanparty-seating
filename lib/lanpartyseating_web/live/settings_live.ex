@@ -1,5 +1,7 @@
 defmodule LanpartyseatingWeb.SettingsLive do
   use LanpartyseatingWeb, :live_view
+  alias Lanpartyseating.Repo, as: Repo
+  require Ecto.Query
 
   def make_2d_array(rows, columns) do
     Enum.to_list(0..(rows - 1))
@@ -193,9 +195,9 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     s = socket.assigns
 
-    #:ok = Lanpartyseating.StationLogic.save_station_positions(socket.assigns.grid)
+    insert_stations = Lanpartyseating.StationLogic.insert_stations(socket.assigns.grid)
 
-    :ok = Lanpartyseating.SettingsLogic.save_settings(
+    insert_settings = Lanpartyseating.SettingsLogic.save_settings(
       s.grid,
       s.station_count,
       s.rowpad,
@@ -203,6 +205,23 @@ defmodule LanpartyseatingWeb.SettingsLive do
       s.row_trailing,
       s.col_trailing
     )
+    IO.inspect(Ecto.Query.from(Lanpartyseating.Station, []))
+    multi = Ecto.Multi.new()
+      # because of the foreign key these need to be deleted and inserted specifically in this order
+      |> Ecto.Multi.delete_all(:delete_stations, Ecto.Query.from(Lanpartyseating.Station))
+      |> Ecto.Multi.delete_all(:delete_layout, Ecto.Query.from(Lanpartyseating.StationLayout))
+      |> Ecto.Multi.append(insert_settings)
+      |> Ecto.Multi.append(insert_stations)
+
+    case Repo.transaction(multi) do
+      {:ok, result} ->
+        :ok
+      {:error, failed_operation, failed_value, _changes_so_far} ->
+        IO.puts("Transaction failed!")
+        IO.inspect(failed_operation)
+        IO.inspect(failed_value)
+        {:error, {:save_settings_failed, failed_operation}}
+    end
 
     {:noreply, socket}
   end

@@ -171,21 +171,17 @@ defmodule Lanpartyseating.StationLogic do
     end
   end
 
-  def save_station_positions(table) do
-    Repo.delete_all(Station)
-
+  def insert_stations(grid) do
     now_naive =
       NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
 
-    flattened = table |> Enum.flat_map(fn row -> row end)
-    positions = flattened
-      |> Enum.with_index()
-      |> Enum.map(fn {station_number, index} ->
-        %{station_number: station_number, display_order: index, inserted_at: now_naive, updated_at: now_naive}
+    stations = grid
+      |> Enum.map(fn {_xy, station_number} ->
+        %{station_number: station_number, inserted_at: now_naive, updated_at: now_naive}
       end)
 
-    Repo.insert_all(Station, positions)
-    :ok
+      Ecto.Multi.new()
+      |> Ecto.Multi.insert_all(:insert_stations, Station, stations)
   end
 
   def get_station_status(station) do
