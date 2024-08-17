@@ -171,7 +171,7 @@ defmodule Lanpartyseating.StationLogic do
     end
   end
 
-  def insert_stations(grid) do
+  def save_stations(grid) do
     now_naive =
       NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
 
@@ -179,8 +179,15 @@ defmodule Lanpartyseating.StationLogic do
       |> Enum.map(fn {_xy, station_number} ->
         %{station_number: station_number, inserted_at: now_naive, updated_at: now_naive}
       end)
+    layout = grid
+      |> Enum.map(fn {{x, y}, num} -> %{station_number: num, x: x, y: y} end)
+      #|> Enum.reduce(Ecto.Multi.new(), fn row, multi -> Ecto.Multi.insert(multi, {:insert_position, row.station_number}, row) end)
 
       Ecto.Multi.new()
+      # because of the foreign key these need to be deleted and inserted specifically in this order
+      |> Ecto.Multi.delete_all(:delete_stations, from(Lanpartyseating.Station))
+      |> Ecto.Multi.delete_all(:delete_layout, from(Lanpartyseating.StationLayout))
+      |> Ecto.Multi.insert_all(:insert_layout, Lanpartyseating.StationLayout, layout)
       |> Ecto.Multi.insert_all(:insert_stations, Station, stations)
   end
 

@@ -19,7 +19,6 @@ defmodule Lanpartyseating.SettingsLogic do
 
   # returns an Ecto.Multi that has to be written
   def save_settings(
-        grid,
         station_count,
         row_padding,
         column_padding,
@@ -49,13 +48,9 @@ defmodule Lanpartyseating.SettingsLogic do
         horizontal_trailing: horizontal_trailing,
         vertical_trailing: vertical_trailing
       )
-    layout_multi = grid
-      |> Enum.map(fn {{x, y}, num} -> %Lanpartyseating.StationLayout{station_number: num, x: x, y: y} end)
-      |> Enum.reduce(Ecto.Multi.new(), fn row, multi -> Ecto.Multi.insert(multi, {:insert_position, row.station_number}, row) end)
 
     Ecto.Multi.new()
       |> Ecto.Multi.insert_or_update(:set_last_assigned_station, las)
       |> Ecto.Multi.insert_or_update(:insert_settings, settings)
-      |> Ecto.Multi.append(layout_multi)
   end
 end

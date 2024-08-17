@@ -195,23 +195,19 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     s = socket.assigns
 
-    insert_stations = Lanpartyseating.StationLogic.insert_stations(socket.assigns.grid)
+    save_stations = Lanpartyseating.StationLogic.save_stations(s.grid)
 
-    insert_settings = Lanpartyseating.SettingsLogic.save_settings(
-      s.grid,
+    save_settings = Lanpartyseating.SettingsLogic.save_settings(
       s.station_count,
       s.rowpad,
       s.colpad,
       s.row_trailing,
       s.col_trailing
     )
-    IO.inspect(Ecto.Query.from(Lanpartyseating.Station, []))
+
     multi = Ecto.Multi.new()
-      # because of the foreign key these need to be deleted and inserted specifically in this order
-      |> Ecto.Multi.delete_all(:delete_stations, Ecto.Query.from(Lanpartyseating.Station))
-      |> Ecto.Multi.delete_all(:delete_layout, Ecto.Query.from(Lanpartyseating.StationLayout))
-      |> Ecto.Multi.append(insert_settings)
-      |> Ecto.Multi.append(insert_stations)
+      |> Ecto.Multi.append(save_settings)
+      |> Ecto.Multi.append(save_stations)
 
     case Repo.transaction(multi) do
       {:ok, result} ->
@@ -220,6 +216,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
         IO.puts("Transaction failed!")
         IO.inspect(failed_operation)
         IO.inspect(failed_value)
+        # TODO: display error
         {:error, {:save_settings_failed, failed_operation}}
     end
 
