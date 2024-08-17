@@ -3,59 +3,66 @@ defmodule LanpartyseatingWeb.SettingsLive do
   alias Lanpartyseating.Repo, as: Repo
   require Ecto.Query
 
-  def make_2d_array(rows, columns) do
-    Enum.to_list(0..(rows - 1))
-    |> Enum.map(fn x ->
-      Enum.to_list((x * columns + 1)..((x + 1) * columns))
-    end)
+  def minmax_row(grid, y_in) do
+    grid
+      |> Enum.reject(fn {{x, y}, _} -> y != y_in end)
+      |> Enum.map(fn {{x, _}, _} -> x end)
+      |> Enum.min_max()
   end
 
-  def reverse_even_rows(list) when is_list(list) and is_list(hd(list)) do
-    Enum.with_index(list)
-    |> Enum.map(fn {row, index} ->
-      if rem(index + 1, 2) == 0 do
-        Enum.reverse(row)
-      else
-        row
-      end
-    end)
+  def minmax_column(grid, x_in) do
+    grid
+      |> Enum.reject(fn {{x, y}, _} -> x != x_in end)
+      |> Enum.map(fn {{_, y}, _} -> y end)
+      |> Enum.min_max()
   end
 
-  def reverse_odd_rows(list) when is_list(list) and is_list(hd(list)) do
-    Enum.with_index(list)
-    |> Enum.map(fn {row, index} ->
-      if rem(index, 2) == 0 do
-        Enum.reverse(row)
-      else
-        row
-      end
-    end)
+  def reverse_rows(grid, rem) do
+    grid
+      |> Enum.map(fn {{x, y}, num} ->
+        if rem(y, 2) == rem do
+          {min_x, max_x} = minmax_row(grid, y)
+          {{(max_x - x) + min_x, y}, num}
+        else
+          {{x, y}, num}
+        end
+      end)
+      |> Enum.into(%{})
   end
 
-  def reverse_even_columns(list) when is_list(list) and is_list(hd(list)) do
-    transpose(list)
-    |> Enum.with_index()
-    |> Enum.map(fn {column, index} ->
-      if rem(index + 1, 2) == 0 do
-        Enum.reverse(column)
-      else
-        column
-      end
-    end)
-    |> transpose()
+  def reverse_even_rows_map(grid) do
+    reverse_rows(grid, 0)
   end
 
-  def reverse_odd_columns(list) when is_list(list) and is_list(hd(list)) do
-    transpose(list)
-    |> Enum.with_index()
-    |> Enum.map(fn {column, index} ->
-      if rem(index, 2) == 0 do
-        Enum.reverse(column)
-      else
-        column
-      end
-    end)
-    |> transpose()
+  def reverse_odd_rows_map(grid) do
+    reverse_rows(grid, 1)
+  end
+
+  def reverse_columns(grid, rem) do
+    grid
+      |> Enum.map(fn {{x, y}, num} ->
+        if rem(x, 2) == rem do
+          {min_y, max_y} = minmax_column(grid, x)
+          {{x, (max_y - y) + min_y}, num}
+        else
+          {{x, y}, num}
+        end
+      end)
+      |> Enum.into(%{})
+  end
+
+  def reverse_even_columns_map(grid) do
+    reverse_columns(grid, 0)
+  end
+
+  def reverse_odd_columns_map(grid) do
+    reverse_columns(grid, 1)
+  end
+
+  def transpose_map(grid) do
+    grid
+      |> Enum.map(fn {{x, y}, num} -> {{y, x}, num} end)
+      |> Enum.into(%{})
   end
 
   # {columns, rows}
@@ -78,7 +85,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     layout = Lanpartyseating.StationLogic.get_station_layout()
     {columns, rows} = grid_dimensions(layout)
     # number of rows in layout table might not match station_count setting
-    layout = resize_grid(layout, columns, settings.station_count)
+    layout = resize_grid(layout, columns, rows, settings.station_count)
     {columns, rows} = grid_dimensions(layout)
 
     socket =
@@ -122,7 +129,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
       socket
       |> assign(:rows, String.to_integer(rows))
       |> assign(:columns, String.to_integer(columns))
-      |> assign(:table, make_2d_array(String.to_integer(rows), String.to_integer(columns)))
 
     {:noreply, socket}
   end
@@ -141,7 +147,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("horizontal_mirror_even", _params, socket) do
     socket =
       socket
-      |> assign(:table, reverse_even_rows(socket.assigns.table))
+      |> socket_assign_grid(reverse_even_rows_map(socket.assigns.grid))
 
     {:noreply, socket}
   end
@@ -149,7 +155,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("horizontal_mirror_odd", _params, socket) do
     socket =
       socket
-      |> assign(:table, reverse_odd_rows(socket.assigns.table))
+      |> socket_assign_grid(reverse_odd_rows_map(socket.assigns.grid))
 
     {:noreply, socket}
   end
@@ -157,7 +163,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("vertical_mirror_even", _params, socket) do
     socket =
       socket
-      |> assign(:table, reverse_even_columns(socket.assigns.table))
+      |> socket_assign_grid(reverse_even_columns_map(socket.assigns.grid))
 
     {:noreply, socket}
   end
@@ -165,34 +171,33 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("vertical_mirror_odd", _params, socket) do
     socket =
       socket
-      |> assign(:table, reverse_odd_columns(socket.assigns.table))
+      |> socket_assign_grid(reverse_odd_columns_map(socket.assigns.grid))
 
     {:noreply, socket}
   end
 
   def handle_event("diagonal_mirror", _params, socket) do
+    grid = transpose_map(socket.assigns.grid)
+    {columns, rows} = grid_dimensions(grid)
     socket =
       socket
-      |> assign(:rows, socket.assigns.rows)
-      |> assign(:columns, socket.assigns.columns)
-      |> assign(:table, transpose(socket.assigns.table))
+      |> assign(:columns, columns)
+      |> assign(:rows, rows)
+      |> socket_assign_grid(grid)
 
     {:noreply, socket}
   end
 
   def handle_event("reset_grid", _params, socket) do
+    grid = add_stations_to_grid(%{}, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
     socket =
       socket
-      |> assign(:table, make_2d_array(socket.assigns.rows, socket.assigns.columns))
+      |> socket_assign_grid(grid)
 
     {:noreply, socket}
   end
 
   def handle_event("save", _params, socket) do
-    socket =
-      socket
-      |> put_flash(:info, "Welcome Back!")
-
     s = socket.assigns
 
     save_stations = Lanpartyseating.StationLogic.save_stations(s.grid)
@@ -209,27 +214,18 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> Ecto.Multi.append(save_settings)
       |> Ecto.Multi.append(save_stations)
 
-    case Repo.transaction(multi) do
+    socket = case Repo.transaction(multi) do
       {:ok, result} ->
-        :ok
+        socket |> put_flash(:info, "Saved successfully")
       {:error, failed_operation, failed_value, _changes_so_far} ->
         IO.puts("Transaction failed!")
         IO.inspect(failed_operation)
         IO.inspect(failed_value)
-        # TODO: display error
-        {:error, {:save_settings_failed, failed_operation}}
+        socket |> put_flash(:info, "Transaction failed")
     end
 
     {:noreply, socket}
   end
-
-  def transpose(list) when is_list(list) and is_list(hd(list)) do
-    for i <- 0..(length(hd(list)) - 1) do
-      Enum.map(list, &Enum.at(&1, i))
-    end
-  end
-
-  def transpose(_), do: {:error, "Input must be a 2D list"}
 
   def handle_event("move", params, socket) do
     grid = socket.assigns.grid
@@ -254,9 +250,9 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {:noreply, socket}
   end
 
-  def add_stations_to_grid(grid, columns, first_num, count) do
-    Stream.iterate(0, &(&1 + 1)) # infinite stream
-      |> Stream.flat_map(fn r -> 0..columns - 1 |> Enum.map(fn c -> {c, r} end) end)
+  def add_stations_to_grid(grid, columns, rows, first_num, count) do
+    0..columns - 1
+      |> Stream.flat_map(fn c -> 0..rows - 1 |> Enum.map(fn r -> {c, r} end) end)
       |> Stream.reject(fn pos -> Map.has_key?(grid, pos) end)
       |> Enum.take(count)
       |> Enum.with_index()
@@ -268,18 +264,18 @@ defmodule LanpartyseatingWeb.SettingsLive do
     grid |> Enum.reject(fn {_, num} -> num > count end) |> Enum.into(%{})
   end
 
-  def resize_grid(grid, columns, count) do
+  def resize_grid(grid, columns, rows, count) do
     if map_size(grid) > count do
       truncate_grid(grid, count)
     else
-      add_stations_to_grid(grid, columns, map_size(grid) + 1, count - map_size(grid))
+      add_stations_to_grid(grid, columns, rows, map_size(grid) + 1, count - map_size(grid))
     end
   end
 
   def handle_event("change_station_count", %{"station_count" => count}, socket) do
     grid = socket.assigns.grid
     count = String.to_integer(count)
-    grid = resize_grid(grid, socket.assigns.columns, count)
+    grid = resize_grid(grid, socket.assigns.columns, socket.assigns.rows, count)
 
     socket =
       socket
