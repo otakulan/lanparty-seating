@@ -80,10 +80,14 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> assign(:grid, grid)
   end
 
-  def add_stations_to_grid(grid, columns, rows, first_num, count) do
-    # fill columns first
-    0..columns - 1
-      |> Stream.flat_map(fn c -> 0..rows - 1 |> Enum.map(fn r -> {c, r} end) end)
+  def add_stations_to_grid(grid, column_major?, columns, rows, first_num, count) do
+    order = if column_major? do
+      0..columns - 1 |> Stream.flat_map(fn c -> 0..rows - 1 |> Enum.map(fn r -> {c, r} end) end)
+    else
+      0..rows - 1 |> Stream.flat_map(fn r -> 0..columns - 1 |> Enum.map(fn c -> {c, r} end) end)
+    end
+
+    order
       |> Stream.reject(fn pos -> Map.has_key?(grid, pos) end)
       |> Enum.take(count)
       |> Enum.with_index()
@@ -99,7 +103,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     if map_size(grid) > count do
       truncate_grid(grid, count)
     else
-      add_stations_to_grid(grid, columns, rows, map_size(grid) + 1, count - map_size(grid))
+      add_stations_to_grid(grid, true, columns, rows, map_size(grid) + 1, count - map_size(grid))
     end
   end
 
@@ -211,8 +215,17 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {:noreply, socket}
   end
 
-  def handle_event("reset_grid", _params, socket) do
-    grid = add_stations_to_grid(%{}, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
+  def handle_event("reset_grid_column_major", _params, socket) do
+    grid = add_stations_to_grid(%{}, true, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
+    socket =
+      socket
+      |> socket_assign_grid(grid)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("reset_grid_row_major", _params, socket) do
+    grid = add_stations_to_grid(%{}, false, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
     socket =
       socket
       |> socket_assign_grid(grid)
@@ -371,8 +384,12 @@ defmodule LanpartyseatingWeb.SettingsLive do
       <button class="btn btn-sm" phx-click="diagonal_mirror">
         <IconComponent.refresh /> orientation
       </button>
-      <button class="btn btn-sm" phx-click="reset_grid">
-        <IconComponent.x /> reset
+      <h1 style="font-size:30px">Reset</h1>
+      <button class="btn btn-sm" phx-click="reset_grid_column_major">
+        <IconComponent.x /> column major
+      </button>
+      <button class="btn btn-sm" phx-click="reset_grid_row_major">
+        <IconComponent.x /> row major
       </button>
 
       <h1 style="font-size:30px">Layout Preview</h1>
