@@ -80,6 +80,29 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> assign(:grid, grid)
   end
 
+  def add_stations_to_grid(grid, columns, rows, first_num, count) do
+    # fill columns first
+    0..columns - 1
+      |> Stream.flat_map(fn c -> 0..rows - 1 |> Enum.map(fn r -> {c, r} end) end)
+      |> Stream.reject(fn pos -> Map.has_key?(grid, pos) end)
+      |> Enum.take(count)
+      |> Enum.with_index()
+      |> Enum.map(fn {pos, index} -> {pos, index + first_num} end)
+      |> Enum.into(grid)
+  end
+
+  def truncate_grid(grid, max) do
+    grid |> Enum.reject(fn {_, num} -> num > max end) |> Enum.into(%{})
+  end
+
+  def resize_grid(grid, columns, rows, count) do
+    if map_size(grid) > count do
+      truncate_grid(grid, count)
+    else
+      add_stations_to_grid(grid, columns, rows, map_size(grid) + 1, count - map_size(grid))
+    end
+  end
+
   def mount(_params, _session, socket) do
     {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
     layout = Lanpartyseating.StationLogic.get_station_layout()
@@ -248,28 +271,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> socket_assign_grid(grid)
 
     {:noreply, socket}
-  end
-
-  def add_stations_to_grid(grid, columns, rows, first_num, count) do
-    0..columns - 1
-      |> Stream.flat_map(fn c -> 0..rows - 1 |> Enum.map(fn r -> {c, r} end) end)
-      |> Stream.reject(fn pos -> Map.has_key?(grid, pos) end)
-      |> Enum.take(count)
-      |> Enum.with_index()
-      |> Enum.map(fn {pos, index} -> {pos, index + first_num} end)
-      |> Enum.into(grid)
-  end
-
-  def truncate_grid(grid, count) do
-    grid |> Enum.reject(fn {_, num} -> num > count end) |> Enum.into(%{})
-  end
-
-  def resize_grid(grid, columns, rows, count) do
-    if map_size(grid) > count do
-      truncate_grid(grid, count)
-    else
-      add_stations_to_grid(grid, columns, rows, map_size(grid) + 1, count - map_size(grid))
-    end
   end
 
   def handle_event("change_station_count", %{"station_count" => count}, socket) do
