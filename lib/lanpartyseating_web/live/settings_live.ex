@@ -30,11 +30,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> Enum.into(%{})
   end
 
-  def reverse_even_rows_map(grid) do
+  def reverse_even_rows(grid) do
     reverse_rows(grid, 0)
   end
 
-  def reverse_odd_rows_map(grid) do
+  def reverse_odd_rows(grid) do
     reverse_rows(grid, 1)
   end
 
@@ -51,15 +51,15 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> Enum.into(%{})
   end
 
-  def reverse_even_columns_map(grid) do
+  def reverse_even_columns(grid) do
     reverse_columns(grid, 0)
   end
 
-  def reverse_odd_columns_map(grid) do
+  def reverse_odd_columns(grid) do
     reverse_columns(grid, 1)
   end
 
-  def transpose_map(grid) do
+  def transpose(grid) do
     grid
       |> Enum.map(fn {{x, y}, num} -> {{y, x}, num} end)
       |> Enum.into(%{})
@@ -174,7 +174,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("horizontal_mirror_even", _params, socket) do
     socket =
       socket
-      |> socket_assign_grid(reverse_even_rows_map(socket.assigns.grid))
+      |> socket_assign_grid(reverse_even_rows(socket.assigns.grid))
 
     {:noreply, socket}
   end
@@ -182,7 +182,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("horizontal_mirror_odd", _params, socket) do
     socket =
       socket
-      |> socket_assign_grid(reverse_odd_rows_map(socket.assigns.grid))
+      |> socket_assign_grid(reverse_odd_rows(socket.assigns.grid))
 
     {:noreply, socket}
   end
@@ -190,7 +190,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("vertical_mirror_even", _params, socket) do
     socket =
       socket
-      |> socket_assign_grid(reverse_even_columns_map(socket.assigns.grid))
+      |> socket_assign_grid(reverse_even_columns(socket.assigns.grid))
 
     {:noreply, socket}
   end
@@ -198,13 +198,13 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("vertical_mirror_odd", _params, socket) do
     socket =
       socket
-      |> socket_assign_grid(reverse_odd_columns_map(socket.assigns.grid))
+      |> socket_assign_grid(reverse_odd_columns(socket.assigns.grid))
 
     {:noreply, socket}
   end
 
   def handle_event("diagonal_mirror", _params, socket) do
-    grid = transpose_map(socket.assigns.grid)
+    grid = transpose(socket.assigns.grid)
     {columns, rows} = grid_dimensions(grid)
     socket =
       socket
@@ -401,7 +401,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
                 <% station_num = assigns.grid |> Map.get({c, r}) %>
                 <%= if !is_nil(station_num) do %>
-                <div class="btn btn-warning" station-number={"#{Map.get(@grid, {c, r})}"} station-x={"#{c}"} station-y={"#{r}"} draggable="true"><%= Map.get(@grid, {c, r}) %></div>
+                <div class="btn btn-warning" station-x={"#{c}"} station-y={"#{r}"} draggable="true"><%= Map.get(@grid, {c, r}) %></div>
                 <% else %>
                 <div class="btn btn-outline" station-x={"#{c}"} station-y={"#{r}"}></div>
                 <% end %>
@@ -421,15 +421,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
           const container = document.getElementById('staton-grid');
           container.addEventListener('dragstart', event => {
             if (!event.target.matches('[station-x]')) return;
-            console.log('Drag started:', event.target);
             draggedElement = event.target;
           });
 
           container.addEventListener("drop", event => {
           if (!event.target.matches('[station-x]')) return;
-            console.log('drop');
-            console.log(draggedElement);
-            console.log(event.target);
             // Push an event to the LiveView with some parameters
             let from = { x: parseInt(draggedElement.getAttribute("station-x")), y: parseInt(draggedElement.getAttribute("station-y")) };
             let to = { x: parseInt(event.target.getAttribute("station-x")), y: parseInt(event.target.getAttribute("station-y")) };
