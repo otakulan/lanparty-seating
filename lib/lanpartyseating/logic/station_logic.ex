@@ -9,7 +9,6 @@ defmodule Lanpartyseating.StationLogic do
   alias Lanpartyseating.Station, as: Station
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
   alias Lanpartyseating.Repo, as: Repo
-  alias Lanpartyseating.StationSwap, as: Swap
   alias Lanpartyseating.StationLayout, as: Layout
 
   def number_stations do
@@ -64,15 +63,16 @@ defmodule Lanpartyseating.StationLogic do
       |> Enum.into(%{})
   end
 
-  def apply_swaps(stations, swaps) do
-    station_by_num = Enum.into(stations, %{}, fn station -> {station.station_number, station} end)
-    swap_map = Enum.flat_map(swaps, fn %{this: k, that: v} -> [{k, v}, {v, k}] end) |> Enum.into(%{})
+  def stations_by_xy(stations) do
+    by_pos = stations
+      |> Enum.map(fn s -> {{s.station.station_layout.x, s.station.station_layout.y}, s} end)
+      |> Enum.into(%{})
 
-    Enum.map(stations, fn station ->
-      # Get the corresponding station if there's a swap otherwise use the given station
-      num = Map.get(swap_map, station.station_number, station.station_number)
-      Map.get(station_by_num, num)
-    end)
+    {max_x, max_y} = Map.keys(by_pos)
+      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+
+    # {columns, rows}
+    {by_pos, {max_x + 1, max_y + 1}}
   end
 
   def set_station_broken(station_number, is_broken) do
