@@ -296,7 +296,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
           type="number"
           placeholder="X"
           min={@grid_width}
-          #max="15"
           class="w-16 max-w-xs input input-bordered input-xs"
           name="columns"
           value={@columns}
@@ -306,7 +305,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
           type="number"
           placeholder="Y"
           min={@grid_height}
-          #max="15"
           class="w-16 max-w-xs input input-bordered input-xs"
           name="rows"
           value={@rows}
