@@ -121,7 +121,6 @@ defmodule Lanpartyseating.StationLogic do
       end)
     layout = grid
       |> Enum.map(fn {{x, y}, num} -> %{station_number: num, x: x, y: y} end)
-      #|> Enum.reduce(Ecto.Multi.new(), fn row, multi -> Ecto.Multi.insert(multi, {:insert_position, row.station_number}, row) end)
 
       Ecto.Multi.new()
       # because of the foreign key these need to be deleted and inserted specifically in this order

@@ -83,9 +83,9 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def add_stations_to_grid(grid, column_major?, columns, rows, first_num, count) do
     order = if column_major? do
-      0..columns - 1 |> Stream.flat_map(fn c -> 0..rows - 1 |> Enum.map(fn r -> {c, r} end) end)
+      for c <- 0..(columns - 1), r <- 0..(rows - 1), do: {c, r}
     else
-      0..rows - 1 |> Stream.flat_map(fn r -> 0..columns - 1 |> Enum.map(fn c -> {c, r} end) end)
+      for r <- 0..(rows - 1), c <- 0..(columns - 1), do: {c, r}
     end
 
     order
