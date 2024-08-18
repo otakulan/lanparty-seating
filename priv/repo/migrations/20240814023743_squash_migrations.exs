@@ -66,7 +66,7 @@ defmodule Lanpartyseating.Repo.Migrations.SquashMigrations do
       # A station can be set out of order if it stops working during the event.
       add(:station_id, :integer, primary_key: true)
       add(:is_assigned, :boolean)
-      add(:is_out_of_order, :boolean)
+      add(:is_broken, :boolean)
       timestamps()
     end
 

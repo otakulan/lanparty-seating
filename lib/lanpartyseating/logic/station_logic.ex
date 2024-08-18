@@ -10,18 +10,21 @@ defmodule Lanpartyseating.StationLogic do
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
   alias Lanpartyseating.Repo, as: Repo
   alias Lanpartyseating.StationLayout, as: Layout
+  alias Lanpartyseating.StationStatus, as: Status
 
   def number_stations do
     Repo.aggregate(Station, :count)
   end
 
-  def get_all_stations(now \\ DateTime.utc_now()) do
+  def get_station_query(now \\ DateTime.utc_now()) do
     tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
 
-    stations =
-      from(s in Station,
+    from(s in Station,
+        order_by: [asc: s.station_number], # only needed by autoassign
         where: is_nil(s.deleted_at),
         preload: [
+          stations_status:
+            ^from(Status), # may return nil
           station_layout:
             ^from(Layout),
           reservations:
@@ -42,8 +45,10 @@ defmodule Lanpartyseating.StationLogic do
             )
         ]
       )
-      |> Repo.all()
+  end
 
+  def get_all_stations(now \\ DateTime.utc_now()) do
+    stations = get_station_query(now) |> Repo.all()
 
     case stations do
       [] ->
@@ -76,17 +81,13 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def set_station_broken(station_number, is_broken) do
-    station =
-      from(s in Station,
-        where: s.station_number == ^station_number
-      ) |> Repo.one()
+    result = Repo.insert(
+      %Lanpartyseating.StationStatus{station_id: station_number, is_broken: is_broken},
+      on_conflict: [set: [is_broken: is_broken]],
+      conflict_target: :station_id
+    )
 
-    station =
-      Ecto.Changeset.change(station,
-        is_closed: is_broken
-      )
-
-    with {:ok, update} <- Repo.update(station),
+    with {:ok, update} <- result,
          {:ok, stations} <- StationLogic.get_all_stations()
     do
       Phoenix.PubSub.broadcast(
@@ -101,69 +102,8 @@ defmodule Lanpartyseating.StationLogic do
     end
   end
 
-  def get_all_stations_sorted_by_number(now \\ DateTime.utc_now()) do
-    tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
-
-    stations =
-      from(s in Station,
-        order_by: [asc: s.station_number],
-        where: is_nil(s.deleted_at),
-        preload: [
-          reservations:
-            ^from(
-              r in Reservation,
-              where: r.start_date <= ^now,
-              where: r.end_date > ^now,
-              where: is_nil(r.deleted_at),
-              order_by: [desc: r.inserted_at]
-            ),
-          tournament_reservations:
-            ^from(tr in TournamentReservation,
-              join: t in assoc(tr, :tournament),
-              where: t.start_date < ^tournament_buffer,
-              where: t.end_date > ^now,
-              where: is_nil(t.deleted_at),
-              preload: [tournament: t]
-            )
-        ]
-      )
-      |> Repo.all()
-
-    stations_map =
-      Enum.map(stations, fn station ->
-        Map.merge(%{station: station}, get_station_status(station))
-      end)
-
-    {:ok, stations_map}
-  end
-
   def get_station(station_number, now \\ DateTime.utc_now()) do
-    tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
-
-    station = from(s in Station,
-      order_by: [asc: s.id],
-      where: is_nil(s.deleted_at),
-      where: s.station_number == ^station_number,
-      preload: [
-        reservations:
-          ^from(
-            r in Reservation,
-            where: r.start_date <= ^now,
-            where: r.end_date > ^now,
-            where: is_nil(r.deleted_at),
-            order_by: [desc: r.inserted_at]
-          ),
-        tournament_reservations:
-          ^from(tr in TournamentReservation,
-            join: t in assoc(tr, :tournament),
-            where: t.start_date < ^tournament_buffer,
-            where: t.end_date > ^now,
-            where: is_nil(t.deleted_at),
-            preload: [tournament: t]
-          )
-      ]
-    )
-    |> Repo.one()
+    station = get_station_query(now) |> Repo.one()
 
     case station do
       nil -> {:error, :station_not_found}
@@ -193,7 +133,7 @@ defmodule Lanpartyseating.StationLogic do
 
   def get_station_status(station) do
     case station do
-      %Station{is_closed: true} ->
+      %Station{stations_status: %{is_broken: true}} ->
         %{status: :broken, reservation: nil}
 
       %Station{tournament_reservations: [res | _]}

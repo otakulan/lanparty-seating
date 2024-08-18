@@ -2,6 +2,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.Repo, as: Repo
   require Ecto.Query
+  alias Lanpartyseating.PubSub, as: PubSub
 
   def minmax_row(grid, y_in) do
     grid
@@ -240,7 +241,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
     save_stations = Lanpartyseating.StationLogic.save_stations(s.grid)
 
     save_settings = Lanpartyseating.SettingsLogic.save_settings(
-      s.station_count,
       s.rowpad,
       s.colpad,
       s.row_trailing,
@@ -253,6 +253,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     socket = case Repo.transaction(multi) do
       {:ok, result} ->
+        publish_station_update()
         socket |> put_flash(:info, "Saved successfully")
       {:error, failed_operation, failed_value, _changes_so_far} ->
         IO.puts("Transaction failed!")
@@ -262,6 +263,15 @@ defmodule LanpartyseatingWeb.SettingsLive do
     end
 
     {:noreply, socket}
+  end
+
+  def publish_station_update() do
+    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
+    Phoenix.PubSub.broadcast(
+      PubSub,
+      "station_update",
+      {:stations, stations}
+    )
   end
 
   def handle_event("move", params, socket) do

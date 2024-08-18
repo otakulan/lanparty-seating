@@ -78,29 +78,23 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
   last_assigned_station_date: ~U[2022-08-05 15:30:00Z]
 })
 
-# Create IDs in the Station Status table for all the stations
-for val <- 1..225 do
-      Lanpartyseating.Repo.insert!(%Lanpartyseating.StationStatus{
-        station_id: val,
-        is_assigned: false,
-        is_out_of_order: false
-      })
+# Default layout which closely matches what we had for 2024
+for val <- 1..70 do
       Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
         station_number: val,
-        x: rem(val - 1, 7),
-        y: div(val - 1, 7)
+        x: div(val - 1, 10),
+        y: rem(val - 1, 10)
     })
 end
 
-for val <- 1..225,
+# In 2024 we had 70 PCs
+for val <- 1..70,
     do:
       Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-        station_number: val,
-        is_closed: false
+        station_number: val
       })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
-  station_count: 70,
   row_padding: 2,
   column_padding: 1,
   horizontal_trailing: 1,
