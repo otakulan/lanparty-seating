@@ -19,7 +19,6 @@ defmodule Lanpartyseating.SettingsLogic do
 
   # returns an Ecto.Multi that has to be written
   def save_settings(
-        station_count,
         row_padding,
         column_padding,
         horizontal_trailing,
@@ -42,7 +41,6 @@ defmodule Lanpartyseating.SettingsLogic do
 
     settings =
       Ecto.Changeset.change(settings,
-        station_count: station_count,
         row_padding: row_padding,
         column_padding: column_padding,
         horizontal_trailing: horizontal_trailing,

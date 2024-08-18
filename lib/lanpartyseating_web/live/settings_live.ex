@@ -111,15 +111,16 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
     layout = Lanpartyseating.StationLogic.get_station_layout()
     {columns, rows} = grid_dimensions(layout)
-    # number of rows in layout table might not match station_count setting
-    layout = resize_grid(layout, columns, rows, settings.station_count)
+    # number of rows in layout table might not the number of rows in the stations table
+    station_count = Repo.one(Ecto.Query.from s in Lanpartyseating.Station, select: count("*"))
+    layout = resize_grid(layout, columns, rows, station_count)
     {columns, rows} = grid_dimensions(layout)
 
     socket =
       socket
       |> assign(:columns, columns)
       |> assign(:rows, rows)
-      |> assign(:station_count, settings.station_count)
+      |> assign(:station_count, station_count)
       |> assign(:col_trailing, settings.vertical_trailing)
       |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
