@@ -257,8 +257,12 @@ defmodule LanpartyseatingWeb.SettingsLive do
     socket = try do
       case Repo.transaction(multi) do
         {:ok, _result} ->
+          {columns, rows} = grid_dimensions(s.grid)
           publish_station_update()
-          socket |> put_flash(:info, "Saved successfully")
+          socket
+          |> assign(:columns, columns)
+          |> assign(:rows, rows)
+          |> put_flash(:info, "Saved successfully")
         {:error, failed_operation, failed_value, changes_so_far} ->
           Logger.error("Transaction error")
           Logger.error("operation: #{failed_operation}")
