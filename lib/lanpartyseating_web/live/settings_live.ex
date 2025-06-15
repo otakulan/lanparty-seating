@@ -1,4 +1,5 @@
 defmodule LanpartyseatingWeb.SettingsLive do
+  require Logger
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.Repo, as: Repo
   require Ecto.Query
@@ -240,7 +241,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     save_stations = Lanpartyseating.StationLogic.save_stations(s.grid)
 
-    save_settings = Lanpartyseating.SettingsLogic.save_settings(
+    save_settings = Lanpartyseating.SettingsLogic.settings_db_changes(
       s.rowpad,
       s.colpad,
       s.row_trailing,
@@ -251,16 +252,23 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> Ecto.Multi.append(save_settings)
       |> Ecto.Multi.append(save_stations)
 
-    socket = case Repo.transaction(multi) do
-      {:ok, result} ->
-        publish_station_update()
-        socket |> put_flash(:info, "Saved successfully")
-      {:error, failed_operation, failed_value, _changes_so_far} ->
-        IO.puts("Transaction failed!")
-        IO.inspect(failed_operation)
-        IO.inspect(failed_value)
-        socket |> put_flash(:info, "Transaction failed")
-    end
+    socket = try do
+      case Repo.transaction(multi) do
+        {:ok, _result} ->
+          publish_station_update()
+          socket |> put_flash(:info, "Saved successfully")
+        {:error, failed_operation, failed_value, changes_so_far} ->
+          Logger.error("Transaction error")
+          Logger.error("operation: #{failed_operation}")
+          Logger.error("failed value: #{failed_value}")
+          Logger.error("#{inspect(changes_so_far)}")
+          socket |> put_flash(:error, "Transaction error\noperation: #{failed_operation}\nfailed value: #{failed_value}\n#{inspect(changes_so_far)}")
+      end
+    rescue
+      e ->
+        Logger.error("Postgres exception trying to commit transaction: #{inspect(e)}")
+        socket |> put_flash(:error, "Postgres exception trying to commit transaction:\n#{inspect(e)}")
+      end
 
     {:noreply, socket}
   end

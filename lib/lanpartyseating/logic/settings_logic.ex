@@ -18,7 +18,7 @@ defmodule Lanpartyseating.SettingsLogic do
   end
 
   # returns an Ecto.Multi that has to be written
-  def save_settings(
+  def settings_db_changes(
         row_padding,
         column_padding,
         horizontal_trailing,
