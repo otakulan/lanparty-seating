@@ -17,7 +17,10 @@ defmodule Lanpartyseating.SettingsLogic do
     end
   end
 
-  # returns an Ecto.Multi that has to be written
+ @doc """
+ Creates an Ecto.Multi that updates the settings table and last_assigned_station table.
+ The object returned from this function needs to be written to the database by the caller.
+ """
   def settings_db_changes(
         row_padding,
         column_padding,

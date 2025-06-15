@@ -67,7 +67,9 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> Enum.into(%{})
   end
 
-  # {columns, rows}
+  @doc """
+  returns {columns, rows}
+  """
   def grid_dimensions(grid) do
     {max_x, max_y} = Map.keys(grid)
       |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
