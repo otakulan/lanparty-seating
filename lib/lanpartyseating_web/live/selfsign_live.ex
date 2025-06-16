@@ -39,15 +39,17 @@ defmodule LanpartyseatingWeb.SelfSignLive do
         %{"station_number" => station_number, "uid" => uid},
         socket
       ) do
-    ReservationLogic.create_reservation(
+
+    socket = case ReservationLogic.create_reservation(
       String.to_integer(station_number),
       String.to_integer("45"),
       uid
     )
-
-    socket =
-      socket
-      |> assign(:registration_error, nil)
+    do
+      # TODO: fix modal closing when registration_error is assigned
+      {:error, error} -> socket |> put_flash(:error, error)
+      {:ok, _updated} -> socket |> assign(:registration_error, nil) |> clear_flash(:error)
+    end
 
     {:noreply, socket}
   end

@@ -13,57 +13,58 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   def create_reservation(station_number, duration, uid) do
-    {:ok, badge} = BadgesLogic.get_badge(uid)
-    {:ok, station} = StationLogic.get_station(station_number)
+    with {:ok, badge} <- BadgesLogic.get_badge(uid) do
+      {:ok, station} = StationLogic.get_station(station_number)
 
-    case StationLogic.is_station_available(station) do
-      true ->
-        Logger.debug("Station is available")
-        now = DateTime.truncate(DateTime.utc_now(), :second)
-        end_time = DateTime.add(now, duration, :minute)
+      case StationLogic.is_station_available(station) do
+        true ->
+          Logger.debug("Station is available")
+          now = DateTime.truncate(DateTime.utc_now(), :second)
+          end_time = DateTime.add(now, duration, :minute)
 
-        case Repo.insert(%Reservation{
-                duration: duration,
-                badge: badge.serial_key,
-                station_id: station.id,
-                start_date: now,
-                end_date: end_time
-              }) do
-          {:ok, updated} ->
-            {:ok, stations} = StationLogic.get_all_stations(now)
+          case Repo.insert(%Reservation{
+                  duration: duration,
+                  badge: badge.serial_key,
+                  station_id: station.station_number,
+                  start_date: now,
+                  end_date: end_time
+                }) do
+            {:ok, updated} ->
+              {:ok, stations} = StationLogic.get_all_stations(now)
 
-            Phoenix.PubSub.broadcast(
-              PubSub,
-              "station_update",
-              {:stations, stations}
-            )
+              Phoenix.PubSub.broadcast(
+                PubSub,
+                "station_update",
+                {:stations, stations}
+              )
 
-            Endpoint.broadcast!(
-              "desktop:all",
-              "new_reservation",
-              %{
-                station_number: station_number,
-                start_date: updated.start_date |> DateTime.to_iso8601(),
-                end_date: updated.end_date |> DateTime.to_iso8601(),
-              }
-            )
+              Endpoint.broadcast!(
+                "desktop:all",
+                "new_reservation",
+                %{
+                  station_number: station_number,
+                  start_date: updated.start_date |> DateTime.to_iso8601(),
+                  end_date: updated.end_date |> DateTime.to_iso8601(),
+                }
+              )
 
-            Logger.debug("Broadcasted station status change to occupied")
+              Logger.debug("Broadcasted station status change to occupied")
 
-            DynamicSupervisor.start_child(
-              Lanpartyseating.ExpirationTaskSupervisor,
-              {Lanpartyseating.Tasks.ExpireReservation, {end_time, updated.id}}
-            )
+              DynamicSupervisor.start_child(
+                Lanpartyseating.ExpirationTaskSupervisor,
+                {Lanpartyseating.Tasks.ExpireReservation, {end_time, updated.id}}
+              )
 
-            Logger.debug("Created expiration task for reservation #{updated.id}")
-            {:ok, updated}
+              Logger.debug("Created expiration task for reservation #{updated.id}")
+              {:ok, updated}
 
-          {:error, err} ->
-            {:error, {:reservation_failed, err}}
-        end
-      false ->
-        Logger.debug("Station is not available")
-        {:error, :station_unavailable}
+            {:error, err} ->
+              {:error, {:reservation_failed, err}}
+          end
+        false ->
+          Logger.debug("Station is not available")
+          {:error, :station_unavailable}
+      end
     end
   end
 
