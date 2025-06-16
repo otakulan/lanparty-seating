@@ -59,7 +59,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
 
   def handle_event(
         "extend_reservation",
-        %{"station_id" => id, "station_number" => _station_number, "minutes_increment" => minutes},
+        %{"station_number" => id, "minutes_increment" => minutes},
         socket
       ) do
     {:ok, _} = ReservationLogic.extend_reservation(
@@ -72,7 +72,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
 
   def handle_event(
         "cancel_station",
-        %{"station_id" => id, "station_number" => _station_number, "cancel_reason" => reason},
+        %{"station_nunber" => id, "cancel_reason" => reason},
         socket
       ) do
     {:ok, _} = ReservationLogic.cancel_reservation(
