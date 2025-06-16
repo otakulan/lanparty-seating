@@ -103,7 +103,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_station(station_number, now \\ DateTime.utc_now()) do
-    station = get_station_query(now) |> Repo.one()
+    station = get_station_query(now) |> where([s], s.station_number == ^station_number) |> Repo.one()
 
     case station do
       nil -> {:error, :station_not_found}
