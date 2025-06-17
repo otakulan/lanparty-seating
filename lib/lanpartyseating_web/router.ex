@@ -28,12 +28,31 @@ defmodule LanpartyseatingWeb.Router do
 
     live_session :nav,
       on_mount: [
-        LanpartyseatingWeb.Nav
+        LanpartyseatingWeb.Nav,
+        LanpartyseatingWeb.Public
       ] do
       live("/", DisplayLive, :index)
       live("/autoassign", AutoAssignLive, :index)
       live("/selfsign", SelfSignLive, :index)
       live("/cancellation", CancellationLive, :index)
+      # ADMIN PAGES
+      #live("/tournaments", TournamentsLive, :index)
+      #live("/settings", SettingsLive, :index)
+      #live("/logs", LogsLive, :index)
+    end
+  end
+
+  scope "/", LanpartyseatingWeb do
+    pipe_through(:browser)
+
+    live_session :admin,
+      on_mount: [
+        LanpartyseatingWeb.AdminBadgeCheckLive,
+        LanpartyseatingWeb.Nav
+      ] do
+      live("/login", AdminBadgeLoginLive, :index)
+      get("/auth", TestController, :check_badge)
+      get("/reset_admin", TestController, :reset_admin)
       # ADMIN PAGES
       live("/tournaments", TournamentsLive, :index)
       live("/settings", SettingsLive, :index)

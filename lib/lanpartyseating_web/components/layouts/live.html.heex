@@ -1,3 +1,7 @@
+<!-- Bullshit to trigger http request where the session can be updated -->
+<%= if @is_public_page do %>
+<iframe src="/reset_admin" style="display: none;" width="0" height="0"></iframe>
+<% end %>
 <!-- Navigation -->
 <NavComponent.nav nav_menu={@nav_menu} nav_menu_active_path={@nav_menu_active_path} />
 <!-- Page Content -->
