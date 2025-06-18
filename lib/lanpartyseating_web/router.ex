@@ -35,10 +35,6 @@ defmodule LanpartyseatingWeb.Router do
       live("/autoassign", AutoAssignLive, :index)
       live("/selfsign", SelfSignLive, :index)
       live("/cancellation", CancellationLive, :index)
-      # ADMIN PAGES
-      #live("/tournaments", TournamentsLive, :index)
-      #live("/settings", SettingsLive, :index)
-      #live("/logs", LogsLive, :index)
     end
   end
 
