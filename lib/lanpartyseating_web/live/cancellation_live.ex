@@ -72,7 +72,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
 
   def handle_event(
         "cancel_station",
-        %{"station_nunber" => id, "cancel_reason" => reason},
+        %{"station_number" => id, "cancel_reason" => reason},
         socket
       ) do
     {:ok, _} = ReservationLogic.cancel_reservation(
