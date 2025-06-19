@@ -42,14 +42,6 @@
 #   name: "Rainbow Six Siege"
 # })
 
-for val <- 1..225,
-    do:
-      Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-        station_number: val,
-        display_order: val,
-        is_closed: false
-      })
-
 # for val <- 1..225, do:
 # Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
 #   station_id: val,
@@ -86,21 +78,25 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
   last_assigned_station_date: ~U[2022-08-05 15:30:00Z]
 })
 
-# Create IDs in the Station Status table for all the stations
-for val <- 1..225,
+# Default layout which closely matches what we had for 2024
+for val <- 1..70 do
+      Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
+        station_number: val,
+        x: div(val - 1, 10),
+        y: rem(val - 1, 10)
+    })
+end
+
+# In 2024 we had 70 PCs
+for val <- 1..70,
     do:
-      Lanpartyseating.Repo.insert!(%Lanpartyseating.StationStatus{
-        station_id: val,
-        is_assigned: false,
-        is_out_of_order: false
+      Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+        station_number: val
       })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
-  rows: 7,
-  columns: 10,
   row_padding: 2,
   column_padding: 1,
-  is_diagonally_mirrored: 1,
   horizontal_trailing: 1,
   vertical_trailing: 0
 })

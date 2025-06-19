@@ -17,12 +17,13 @@ defmodule Lanpartyseating.SettingsLogic do
     end
   end
 
-  def save_settings(
-        rows,
-        columns,
+ @doc """
+ Creates an Ecto.Multi that updates the settings table and last_assigned_station table.
+ The object returned from this function needs to be written to the database by the caller.
+ """
+  def settings_db_changes(
         row_padding,
         column_padding,
-        is_diagonally_mirrored,
         horizontal_trailing,
         vertical_trailing
       ) do
@@ -41,27 +42,16 @@ defmodule Lanpartyseating.SettingsLogic do
         last_assigned_station_date: DateTime.truncate(DateTime.utc_now(), :second)
       )
 
-    case Repo.update(las) do
-      {:ok, result} -> result
-      {:error, error} -> error
-    end
-
     settings =
       Ecto.Changeset.change(settings,
-        rows: rows,
-        columns: columns,
         row_padding: row_padding,
         column_padding: column_padding,
-        is_diagonally_mirrored: is_diagonally_mirrored,
         horizontal_trailing: horizontal_trailing,
         vertical_trailing: vertical_trailing
       )
 
-    with {:ok, _updated} <- Repo.update(settings) do
-      :ok
-    else
-      {:error, error} ->
-        {:error, {:save_settings_failed, error}}
-    end
+    Ecto.Multi.new()
+      |> Ecto.Multi.insert_or_update(:set_last_assigned_station, las)
+      |> Ecto.Multi.insert_or_update(:insert_settings, settings)
   end
 end

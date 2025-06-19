@@ -16,7 +16,7 @@ defmodule Lanpartyseating.AutoAssignLogic do
     {:ok, settings} = SettingsLogic.get_settings()
     next_station = rem(las.last_assigned_station, settings.columns * settings.rows) + 1
 
-    {:ok, stations} = StationLogic.get_all_stations_sorted_by_number()
+    {:ok, stations} = StationLogic.get_all_stations()
 
     # Find the first result matching this condition
     # The stations collection is split in half and we swap the end with the start so that

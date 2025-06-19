@@ -5,9 +5,17 @@ defmodule LanpartyseatingWeb.DisplayLive do
   alias Lanpartyseating.SettingsLogic, as: SettingsLogic
   alias Lanpartyseating.StationLogic, as: StationLogic
 
+  def assign_stations(socket, station_list) do
+    {stations, {columns, rows}} = StationLogic.stations_by_xy(station_list)
+    socket
+      |> assign(:columns, columns)
+      |> assign(:rows, rows)
+      |> assign(:stations, stations)
+  end
+
   def mount(_params, _session, socket) do
     {:ok, settings} = SettingsLogic.get_settings()
-    {:ok, stations} = StationLogic.get_all_stations()
+    {:ok, station_list} = StationLogic.get_all_stations()
     {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
 
     if connected?(socket) do
@@ -17,13 +25,11 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
     socket =
       socket
-      |> assign(:columns, if(settings.is_diagonally_mirrored, do: settings.rows, else: settings.columns))
-      |> assign(:rows, if(settings.is_diagonally_mirrored, do: settings.columns, else: settings.rows))
       |> assign(:col_trailing, settings.vertical_trailing)
       |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
-      |> assign(:stations, stations)
+      |> assign_stations(station_list)
       |> assign(:tournaments, tournaments)
 
     {:ok, socket}
@@ -33,8 +39,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
     {:noreply, assign(socket, :tournaments, tournaments)}
   end
 
-  def handle_info({:stations, stations}, socket) do
-    {:noreply, assign(socket, :stations, stations)}
+  def handle_info({:stations, station_list}, socket) do
+    {:noreply, assign_stations(socket, station_list)}
   end
 
   def render(assigns) do
@@ -48,7 +54,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
               <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full"}>
                 <%= for c <- 0..(@columns-1) do %>
                   <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1"}>
-                    <% station_data = assigns.stations |> Enum.at(r * @columns + c) %>
+                    <% station_data = @stations |> Map.get({c, r}) %>
                     <%= if !is_nil(station_data) do %>
                     <DisplayModalComponent.modal reservation={station_data.reservation} station={station_data.station} status={station_data.status}/>
                     <% end %>

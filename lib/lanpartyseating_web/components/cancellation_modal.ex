@@ -81,7 +81,6 @@ defmodule CancellationModalComponent do
                 <p class="py-4">Enter an amount of minutes to extend the reservation by</p>
 
                 <form phx-submit="extend_reservation">
-                  <input type="hidden" name="station_id" value={"#{@station.id}"}>
                   <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
                   <input type="text" placeholder="Minutes to add" value="5" class="w-full max-w-xs input input-bordered" name="minutes_increment"/>
 
@@ -98,7 +97,6 @@ defmodule CancellationModalComponent do
                 <p class="py-4">Enter a reason for canceling the reservation</p>
 
                 <form phx-submit="cancel_station">
-                  <input type="hidden" name="station_id" value={"#{@station.id}"}>
                   <input type="hidden" name="station_number" value={"#{@station.station_number}"}>
                   <input type="text" placeholder="Reason" value="Leaving early" class="w-full max-w-xs input input-bordered" name="cancel_reason"/>
 

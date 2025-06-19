@@ -126,7 +126,7 @@ defmodule Lanpartyseating.TournamentsLogic do
         |> Enum.map(fn station ->
           %{
             tournament_id: tournament_id,
-            station_id: station.id,
+            station_id: station.station_number,
             inserted_at: now,
             updated_at: now
           }

@@ -4,24 +4,23 @@ defmodule Lanpartyseating.Station do
   alias Lanpartyseating.Reservation, as: Reservation
   alias Lanpartyseating.TournamentReservation, as: TournamentReservation
 
-  @primary_key {:id, :id, autogenerate: true}
-  @foreign_key_type :id
+  @primary_key {:station_number, :integer, autogenerate: false}
+  @foreign_key_type :integer
 
   schema "stations" do
-    field :station_number, :integer
-    field :display_order, :integer
-    field :is_closed, :boolean, default: false
     field :deleted_at, :utc_datetime
-    has_many :reservations, Reservation
-    has_many :tournament_reservations, TournamentReservation
+    belongs_to :station_layout, StationLayout, foreign_key: :station_number, references: :station_number, define_field: false
+    has_one :stations_status, StationStatus, foreign_key: :station_id, references: :station_number
+    has_many :reservations, Reservation, foreign_key: :station_id
+    has_many :tournament_reservations, TournamentReservation, foreign_key: :station_id
     timestamps()
   end
 
   @doc false
   def changeset(reservation, attrs) do
     reservation
-    |> cast(attrs, [:station_number, :display_order, :is_displayed, :is_closed, :deleted_at])
-    |> validate_required([:station_number, :display_order])
+    |> cast(attrs, [:station_number, :is_displayed, :is_closed, :deleted_at])
+    |> validate_required([:station_number])
     |> validate_number(:station_number, greater_than: 0)
   end
 end
