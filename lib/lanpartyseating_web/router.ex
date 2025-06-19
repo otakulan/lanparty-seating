@@ -43,7 +43,7 @@ defmodule LanpartyseatingWeb.Router do
 
     live_session :admin,
       on_mount: [
-        LanpartyseatingWeb.AdminBadgeCheckLive,
+        LanpartyseatingWeb.AdminBadgeCheck,
         LanpartyseatingWeb.Nav
       ] do
       live("/login", AdminBadgeLoginLive, :index)

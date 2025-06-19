@@ -1,4 +1,4 @@
-defmodule LanpartyseatingWeb.AdminBadgeCheckLive do
+defmodule LanpartyseatingWeb.AdminBadgeCheck do
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.Repo, as: Repo
   require Ecto.Query
