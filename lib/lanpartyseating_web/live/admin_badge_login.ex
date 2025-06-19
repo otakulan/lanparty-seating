@@ -43,7 +43,6 @@ defmodule LanpartyseatingWeb.AdminBadgeLoginLive do
                     } else {
                       alert('not an admin badge')
                     }
-                    console.log('meow');
                   })
                   .catch(e => {
                     console.log(e);
