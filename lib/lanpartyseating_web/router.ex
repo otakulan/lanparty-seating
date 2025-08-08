@@ -38,6 +38,7 @@ defmodule LanpartyseatingWeb.Router do
       live("/tournaments", TournamentsLive, :index)
       live("/settings", SettingsLive, :index)
       live("/logs", LogsLive, :index)
+      live("/manhole", ManholeLive, :index)
     end
   end
 
