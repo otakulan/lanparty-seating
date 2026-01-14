@@ -4,10 +4,9 @@ defmodule Lanpartyseating.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
-    # :opentelemetry_cowboy.setup()
-    # OpentelemetryPhoenix.setup(adapter: :cowboy2)
-    # OpentelemetryLiveView.setup()
-    # OpentelemetryEcto.setup([:lanpartyseating, :repo])
+    OpentelemetryBandit.setup()
+    OpentelemetryPhoenix.setup(adapter: :bandit, liveview: true)
+    OpentelemetryEcto.setup([:lanpartyseating, :repo])
 
     # Define workers and child supervisors to be supervised
     children = [

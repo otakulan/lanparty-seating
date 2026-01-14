@@ -47,7 +47,7 @@ defmodule Lanpartyseating.Mixfile do
       {:telemetry_poller, "~> 1.3"},
       {:gettext, "~> 0.26"},
       {:jason, "~> 1.4.0"},
-      {:plug_cowboy, "~> 2.7"},
+      {:bandit, "~> 1.10"},
       {:timex, "~> 3.7.13"},
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:lazy_html, ">= 0.0.0", only: :test},
@@ -57,7 +57,7 @@ defmodule Lanpartyseating.Mixfile do
       {:opentelemetry_exporter, "~> 1.10"},
       {:opentelemetry_phoenix, "~> 2.0"},
       # Removed opentelemetry_liveview (superseded by opentelemetry_phoenix 2.0+ with built-in LiveView support)
-      {:opentelemetry_cowboy, "~> 1.0"},
+      {:opentelemetry_bandit, "~> 0.3"},
       {:heartcheck, "~> 0.4"},
       {:prom_ex, "~> 1.11"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false}

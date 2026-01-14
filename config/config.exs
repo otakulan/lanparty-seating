@@ -28,7 +28,8 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Lanpartyseating.PubSub,
-  live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"]
+  live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"],
+  adapter: Bandit.PhoenixAdapter
 
 # Configures PromEx
 config :lanpartyseating, Lanpartyseating.PromEx,
