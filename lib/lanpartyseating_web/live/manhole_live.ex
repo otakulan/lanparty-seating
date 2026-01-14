@@ -205,16 +205,14 @@ defmodule LanpartyseatingWeb.ManholeLive do
             <h3 class="card-title text-error">Single Station Tournament Start</h3>
             <p class="text-base-content/70">Broadcast tournament start command to a single station</p>
 
-            <form phx-submit="single_station_broadcast" class="form-control w-full max-w-xs">
-              <label class="label">
-                <span class="label-text">Station Number</span>
-              </label>
+            <form phx-submit="single_station_broadcast" class="w-full max-w-xs">
+              <label class="label" for="station_number">Station Number</label>
               <input
                 type="number"
                 min="1"
                 step="1"
                 placeholder="Enter station number"
-                class="input input-border w-full max-w-xs"
+                class="input w-full max-w-xs"
                 name="station_number"
                 value={@single_station_number}
                 phx-change="update_single_station"
@@ -238,18 +236,16 @@ defmodule LanpartyseatingWeb.ManholeLive do
               Broadcast tournament start command to a range of stations
             </p>
 
-            <form phx-submit="range_broadcast" class="form-control">
+            <form phx-submit="range_broadcast">
               <div class="flex gap-4 items-end">
-                <div class="form-control w-full max-w-xs">
-                  <label class="label">
-                    <span class="label-text">Start Station</span>
-                  </label>
+                <div class="w-full max-w-xs">
+                  <label class="label" for="range_start">Start Station</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     placeholder="Start station"
-                    class="input input-border w-full max-w-xs"
+                    class="input w-full max-w-xs"
                     name="range_start"
                     value={@range_start}
                     phx-change="update_range_start"
@@ -258,16 +254,14 @@ defmodule LanpartyseatingWeb.ManholeLive do
                   />
                 </div>
 
-                <div class="form-control w-full max-w-xs">
-                  <label class="label">
-                    <span class="label-text">End Station</span>
-                  </label>
+                <div class="w-full max-w-xs">
+                  <label class="label" for="range_end">End Station</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     placeholder="End station"
-                    class="input input-border w-full max-w-xs"
+                    class="input w-full max-w-xs"
                     name="range_end"
                     value={@range_end}
                     phx-change="update_range_end"
@@ -297,16 +291,14 @@ defmodule LanpartyseatingWeb.ManholeLive do
             <h3 class="card-title text-error">Single Station Logout</h3>
             <p class="text-base-content/70">Cancel reservation and log out a single station</p>
 
-            <form phx-submit="cancel_single_station" class="form-control w-full max-w-xs">
-              <label class="label">
-                <span class="label-text">Station Number</span>
-              </label>
+            <form phx-submit="cancel_single_station" class="w-full max-w-xs">
+              <label class="label" for="station_number">Station Number</label>
               <input
                 type="number"
                 min="1"
                 step="1"
                 placeholder="Enter station number"
-                class="input input-border w-full max-w-xs"
+                class="input w-full max-w-xs"
                 name="station_number"
                 value={@cancel_single_station_number}
                 phx-change="update_cancel_single_station"
@@ -328,18 +320,16 @@ defmodule LanpartyseatingWeb.ManholeLive do
             <h3 class="card-title text-error">Station Range Logout</h3>
             <p class="text-base-content/70">Cancel reservations and log out a range of stations</p>
 
-            <form phx-submit="cancel_range" class="form-control">
+            <form phx-submit="cancel_range">
               <div class="flex gap-4 items-end">
-                <div class="form-control w-full max-w-xs">
-                  <label class="label">
-                    <span class="label-text">Start Station</span>
-                  </label>
+                <div class="w-full max-w-xs">
+                  <label class="label" for="range_start">Start Station</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     placeholder="Start station"
-                    class="input input-border w-full max-w-xs"
+                    class="input w-full max-w-xs"
                     name="range_start"
                     value={@cancel_range_start}
                     phx-change="update_cancel_range_start"
@@ -348,16 +338,14 @@ defmodule LanpartyseatingWeb.ManholeLive do
                   />
                 </div>
 
-                <div class="form-control w-full max-w-xs">
-                  <label class="label">
-                    <span class="label-text">End Station</span>
-                  </label>
+                <div class="w-full max-w-xs">
+                  <label class="label" for="range_end">End Station</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     placeholder="End station"
-                    class="input input-border w-full max-w-xs"
+                    class="input w-full max-w-xs"
                     name="range_end"
                     value={@cancel_range_end}
                     phx-change="update_cancel_range_end"

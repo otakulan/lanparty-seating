@@ -92,7 +92,7 @@ defmodule CancellationModalComponent do
                   type="text"
                   placeholder="Minutes to add"
                   value="5"
-                  class="w-full max-w-xs input input-border"
+                  class="w-full max-w-xs input"
                   name="minutes_increment"
                 />
 
@@ -115,7 +115,7 @@ defmodule CancellationModalComponent do
                   type="text"
                   placeholder="Reason"
                   value="Leaving early"
-                  class="w-full max-w-xs input input-border"
+                  class="w-full max-w-xs input"
                   name="cancel_reason"
                 />
 

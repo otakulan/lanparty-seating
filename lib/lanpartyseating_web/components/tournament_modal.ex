@@ -22,32 +22,32 @@ defmodule TournamentModalComponent do
             <input
               type="text"
               placeholder="Tournament Name"
-              class="w-full max-w-xs input input-border"
+              class="w-full max-w-xs input"
               name="name"
             />
             <br />
             <label for="start_time" class="">Start time:</label>
             <input
               type="datetime-local"
-              class="w-full max-w-xs input input-border"
+              class="w-full max-w-xs input"
               name="start_time"
             />
             <br />
             <label for="duration" class="">Duration:</label>
-            <input id="duration" name="duration" class=" input input-border" type="number" />
+            <input id="duration" name="duration" class="input" type="number" />
 
             <br />
             <label for="start_station" class="">Starting Station:</label>
             <input
               id="start_station"
               name="start_station"
-              class=" input input-border"
+              class="input"
               type="number"
             />
 
             <br />
             <label for="end_station" class="">Last Station:</label>
-            <input id="end_station" name="end_station" class=" input input-bordered" type="number" />
+            <input id="end_station" name="end_station" class="input" type="number" />
 
             <div class="modal-action">
               <button for="tournament-modal" class="btn" type="submit">Create</button>
