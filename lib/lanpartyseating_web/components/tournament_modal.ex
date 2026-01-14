@@ -22,26 +22,26 @@ defmodule TournamentModalComponent do
             <input
               type="text"
               placeholder="Tournament Name"
-              class="w-full max-w-xs input input-bordered"
+              class="w-full max-w-xs input input-border"
               name="name"
             />
             <br />
             <label for="start_time" class="">Start time:</label>
             <input
               type="datetime-local"
-              class="w-full max-w-xs input input-bordered"
+              class="w-full max-w-xs input input-border"
               name="start_time"
             />
             <br />
             <label for="duration" class="">Duration:</label>
-            <input id="duration" name="duration" class=" input input-bordered" type="number" />
+            <input id="duration" name="duration" class=" input input-border" type="number" />
 
             <br />
             <label for="start_station" class="">Starting Station:</label>
             <input
               id="start_station"
               name="start_station"
-              class=" input input-bordered"
+              class=" input input-border"
               type="number"
             />
 

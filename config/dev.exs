@@ -19,10 +19,9 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
   check_origin: false,
   watchers: [
     npx: [
-      "tailwindcss",
+      "@tailwindcss/cli",
       "--input=css/app.css",
       "--output=../priv/static/css/app.css",
-      "--postcss",
       "--watch",
       cd: Path.expand("../assets", __DIR__)
     ],

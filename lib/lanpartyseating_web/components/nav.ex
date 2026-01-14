@@ -12,9 +12,9 @@ defmodule NavComponent do
     <nav class="navbar bg-base-300">
       <div class="navbar-start">
         <div class="flex-1">
-          <a class="text-xl normal-case btn btn-ghost primary-content" href="/">
+          <.link patch="/" class="text-xl normal-case btn btn-ghost primary-content">
             PC Gaming / Jeux PC
-          </a>
+          </.link>
         </div>
       </div>
       <div class="navbar-end">

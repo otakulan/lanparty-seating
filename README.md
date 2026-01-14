@@ -20,7 +20,8 @@ To start lanparty-seating:
 - Install dependencies with `mix deps.get`
 - Create and migrate your database with `mix ecto.create && mix ecto.migrate`
 - Populate database with `mix ecto.reset`
-- Install Node.js dependencies with `cd assets && yarn install --dev && cd ..`
+- Install Node.js dependencies with `cd assets && yarn install && cd ..`
+- Deploy assets with `mix assets.deploy`
 - Start Phoenix endpoint with `mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.

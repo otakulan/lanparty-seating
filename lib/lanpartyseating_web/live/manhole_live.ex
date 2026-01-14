@@ -214,7 +214,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
                 min="1"
                 step="1"
                 placeholder="Enter station number"
-                class="input input-bordered w-full max-w-xs"
+                class="input input-border w-full max-w-xs"
                 name="station_number"
                 value={@single_station_number}
                 phx-change="update_single_station"
@@ -249,7 +249,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
                     min="1"
                     step="1"
                     placeholder="Start station"
-                    class="input input-bordered w-full max-w-xs"
+                    class="input input-border w-full max-w-xs"
                     name="range_start"
                     value={@range_start}
                     phx-change="update_range_start"
@@ -267,7 +267,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
                     min="1"
                     step="1"
                     placeholder="End station"
-                    class="input input-bordered w-full max-w-xs"
+                    class="input input-border w-full max-w-xs"
                     name="range_end"
                     value={@range_end}
                     phx-change="update_range_end"
@@ -306,7 +306,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
                 min="1"
                 step="1"
                 placeholder="Enter station number"
-                class="input input-bordered w-full max-w-xs"
+                class="input input-border w-full max-w-xs"
                 name="station_number"
                 value={@cancel_single_station_number}
                 phx-change="update_cancel_single_station"
@@ -339,7 +339,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
                     min="1"
                     step="1"
                     placeholder="Start station"
-                    class="input input-bordered w-full max-w-xs"
+                    class="input input-border w-full max-w-xs"
                     name="range_start"
                     value={@cancel_range_start}
                     phx-change="update_cancel_range_start"
@@ -357,7 +357,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
                     min="1"
                     step="1"
                     placeholder="End station"
-                    class="input input-bordered w-full max-w-xs"
+                    class="input input-border w-full max-w-xs"
                     name="range_end"
                     value={@cancel_range_end}
                     phx-change="update_cancel_range_end"

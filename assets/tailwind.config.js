@@ -1,13 +1,6 @@
-module.exports = {
+export default {
   content: ["../lib/*_web/**/*.*ex", "js/**/*.js"],
-  theme: {
-    container: {
-      center: true,
-    },
-    extend: {},
+  daisyui: {
+    themes: ["light", "dark"],
   },
-  plugins: [
-    require("@tailwindcss/typography"),
-    require("daisyui"),
-  ],
 }

@@ -46,7 +46,7 @@ defmodule SelfSignModalComponent do
                 <input
                   type="text"
                   placeholder="Badge number / Numéro de badge"
-                  class="w-full max-w-xs input input-bordered"
+                  class="w-full max-w-xs input input-border"
                   name="uid"
                   autocomplete="off"
                   autofocus

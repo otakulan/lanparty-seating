@@ -376,7 +376,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           type="number"
           placeholder="X"
           min={@grid_width}
-          class="w-16 max-w-xs input input-bordered input-xs"
+          class="w-16 max-w-xs input input-border input-xs"
           name="columns"
           value={@columns}
         /> rows:
@@ -384,7 +384,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           type="number"
           placeholder="Y"
           min={@grid_height}
-          class="w-16 max-w-xs input input-bordered input-xs"
+          class="w-16 max-w-xs input input-border input-xs"
           name="rows"
           value={@rows}
         />
@@ -397,7 +397,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           placeholder="X"
           min="1"
           max={"#{@rows * @columns}"}
-          class="w-16 max-w-xs input input-bordered input-xs"
+          class="w-16 max-w-xs input input-border input-xs"
           name="station_count"
           value={@station_count}
         />
@@ -410,7 +410,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           placeholder="X"
           min="1"
           max="15"
-          class="w-16 max-w-xs input input-bordered input-xs"
+          class="w-16 max-w-xs input input-border input-xs"
           name="colpad"
           value={@colpad}
         />
@@ -419,7 +419,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           placeholder="Y"
           min="1"
           max="15"
-          class="w-16 max-w-xs input input-bordered input-xs"
+          class="w-16 max-w-xs input input-border input-xs"
           name="rowpad"
           value={@rowpad}
         />
@@ -470,7 +470,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
                     {Map.get(@grid, {c, r})}
                   </div>
                 <% else %>
-                  <div class="btn btn-outline" station-x={"#{c}"} station-y={"#{r}"}></div>
+                  <div class="btn btn-border" station-x={"#{c}"} station-y={"#{r}"}></div>
                 <% end %>
               </div>
             <% end %>
