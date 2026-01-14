@@ -75,7 +75,7 @@
 # Create only data required in this table: The last assigned seat ID.
 Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
   last_assigned_station: 0,
-  last_assigned_station_date: ~U[2022-08-05 15:30:00Z]
+  last_assigned_station_date: ~U[2022-08-05 15:30:00Z],
 })
 
 # Default layout which closely matches what we had for 2024
@@ -83,7 +83,7 @@ for val <- 1..70 do
   Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
     station_number: val,
     x: div(val - 1, 10),
-    y: rem(val - 1, 10)
+    y: rem(val - 1, 10),
   })
 end
 
@@ -91,18 +91,18 @@ end
 for val <- 1..70,
     do:
       Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-        station_number: val
+        station_number: val,
       })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
   row_padding: 2,
   column_padding: 1,
   horizontal_trailing: 1,
-  vertical_trailing: 0
+  vertical_trailing: 0,
 })
 
 Lanpartyseating.Repo.insert!(%Lanpartyseating.Badge{
   uid: "1",
   serial_key: "1",
-  is_banned: false
+  is_banned: false,
 })

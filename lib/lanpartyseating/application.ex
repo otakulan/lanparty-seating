@@ -25,7 +25,7 @@ defmodule Lanpartyseating.Application do
       # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
       # {Lanpartyseating.Worker, arg}
       {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},
-      Lanpartyseating.ExpirationKickstarter
+      Lanpartyseating.ExpirationKickstarter,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

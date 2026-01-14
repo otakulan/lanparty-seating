@@ -28,11 +28,10 @@ defmodule LanpartyseatingWeb.Router do
 
     live_session :nav,
       on_mount: [
-        LanpartyseatingWeb.Nav
+        LanpartyseatingWeb.Nav,
       ],
       layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/", DisplayLive, :index)
-      live("/autoassign", AutoAssignLive, :index)
       live("/selfsign", SelfSignLive, :index)
       live("/cancellation", CancellationLive, :index)
       # ADMIN PAGES

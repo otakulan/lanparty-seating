@@ -39,7 +39,7 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{
           "station_number" => station_number,
           "duration" => duration,
-          "badge_number" => badge_number
+          "badge_number" => badge_number,
         },
         socket
       ) do

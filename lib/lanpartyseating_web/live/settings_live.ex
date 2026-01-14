@@ -227,14 +227,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def handle_event("reset_grid_column_major", _params, socket) do
     grid =
-      add_stations_to_grid(
-        %{},
-        true,
-        socket.assigns.columns,
-        socket.assigns.rows,
-        1,
-        socket.assigns.station_count
-      )
+      add_stations_to_grid(%{}, true, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
 
     socket =
       socket
@@ -245,14 +238,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def handle_event("reset_grid_row_major", _params, socket) do
     grid =
-      add_stations_to_grid(
-        %{},
-        false,
-        socket.assigns.columns,
-        socket.assigns.rows,
-        1,
-        socket.assigns.station_count
-      )
+      add_stations_to_grid(%{}, false, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
 
     socket =
       socket
@@ -298,10 +284,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             Logger.error("#{inspect(changes_so_far)}")
 
             socket
-            |> put_flash(
-              :error,
-              "Transaction error\noperation: #{failed_operation}\nfailed value: #{failed_value}\n#{inspect(changes_so_far)}"
-            )
+            |> put_flash(:error, "Transaction error\noperation: #{failed_operation}\nfailed value: #{failed_value}\n#{inspect(changes_so_far)}")
         end
       rescue
         e ->

@@ -7,11 +7,9 @@ defmodule LanpartyseatingWeb.Nav do
       |> assign(
         nav_menu: [
           {"Live Display", ~p"/"},
-          # {"Auto assign", ~p"/autoassign"},
           {"Self Sign", ~p"/selfsign"},
-          {"Cancellation", ~p"/cancellation"}
-
-          # ADMIN PAGE - DO NOT DISPLAY
+          {"Cancellation", ~p"/cancellation"},
+          # ADMIN PAGES - DO NOT DISPLAY IN NAV
           # {"Tournaments", ~p"/tournaments"},
           # {"Settings", ~p"/settings"},
           # {"Log", ~p"/logs"}

@@ -1,6 +1,5 @@
 defmodule Lanpartyseating.TournamentsLogic do
   import Ecto.Query
-  alias Lanpartyseating.SettingsLogic
   alias Lanpartyseating.PubSub
   alias Lanpartyseating.StationLogic
   alias Lanpartyseating.Tournament
@@ -113,13 +112,13 @@ defmodule Lanpartyseating.TournamentsLogic do
 
   def create_tournament_reservations_by_range(start_station, end_station, tournament_id) do
     # Input validation
-    {:ok, settings} = SettingsLogic.get_settings()
+    max_station = StationLogic.number_stations()
 
     cond do
-      start_station < 1 or start_station > settings.columns * settings.rows ->
+      start_station < 1 or start_station > max_station ->
         {:error, "Start station is out of bounds"}
 
-      end_station < 1 or end_station > settings.columns * settings.rows ->
+      end_station < 1 or end_station > max_station ->
         {:error, "End station is out of bounds"}
 
       start_station > end_station ->
@@ -129,16 +128,13 @@ defmodule Lanpartyseating.TournamentsLogic do
         now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
 
         reservations =
-          StationLogic.get_stations_by_range(
-            start_station,
-            end_station
-          )
+          StationLogic.get_stations_by_range(start_station, end_station)
           |> Enum.map(fn station ->
             %{
               tournament_id: tournament_id,
               station_id: station.station_number,
               inserted_at: now,
-              updated_at: now
+              updated_at: now,
             }
           end)
 

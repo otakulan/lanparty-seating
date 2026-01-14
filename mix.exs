@@ -11,7 +11,7 @@ defmodule Lanpartyseating.Mixfile do
       start_permanent: Mix.env() == :prod,
       listeners: [Phoenix.CodeReloader],
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
     ]
   end
 
@@ -21,7 +21,7 @@ defmodule Lanpartyseating.Mixfile do
   def application do
     [
       mod: {Lanpartyseating.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools],
     ]
   end
 
@@ -60,7 +60,8 @@ defmodule Lanpartyseating.Mixfile do
       {:opentelemetry_bandit, "~> 0.3"},
       {:heartcheck, "~> 0.4"},
       {:prom_ex, "~> 1.11"},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:freedom_formatter, ">= 2.0.0", only: :dev},
     ]
   end
 
@@ -75,11 +76,11 @@ defmodule Lanpartyseating.Mixfile do
       "assets.deploy": [
         "cmd --cd assets npm run deploy",
         "esbuild default --minify",
-        "phx.digest"
+        "phx.digest",
       ],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate", "test"]
+      test: ["ecto.create --quiet", "ecto.migrate", "test"],
     ]
   end
 end

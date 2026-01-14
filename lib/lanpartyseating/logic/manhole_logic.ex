@@ -27,7 +27,7 @@ defmodule Lanpartyseating.ManholeLogic do
             "desktop:all",
             "tournament_start",
             %{
-              station_number: station_num
+              station_number: station_num,
             }
           )
 
@@ -63,7 +63,7 @@ defmodule Lanpartyseating.ManholeLogic do
             "desktop:all",
             "cancel_reservation",
             %{
-              station_number: station_num
+              station_number: station_num,
             }
           )
 
@@ -71,9 +71,7 @@ defmodule Lanpartyseating.ManholeLogic do
           {:ok, station_num}
         rescue
           error ->
-            Logger.error(
-              "Failed to broadcast cancel reservation to station #{station_num}: #{inspect(error)}"
-            )
+            Logger.error("Failed to broadcast cancel reservation to station #{station_num}: #{inspect(error)}")
 
             {:error, "Failed to broadcast cancel reservation command"}
         end
@@ -94,8 +92,7 @@ defmodule Lanpartyseating.ManholeLogic do
   - {:ok, start_num, end_num} on success
   - {:error, message} on validation failure or broadcast error
   """
-  @spec cancel_station_range(String.t() | integer(), String.t() | integer()) ::
-          {:ok, integer(), integer()} | {:error, String.t()}
+  @spec cancel_station_range(String.t() | integer(), String.t() | integer()) :: {:ok, integer(), integer()} | {:error, String.t()}
   def cancel_station_range(range_start, range_end) do
     case validate_range(range_start, range_end) do
       {:ok, start_num, end_num} ->
@@ -105,7 +102,7 @@ defmodule Lanpartyseating.ManholeLogic do
               "desktop:all",
               "cancel_reservation",
               %{
-                station_number: station_num
+                station_number: station_num,
               }
             )
           end)
@@ -114,9 +111,7 @@ defmodule Lanpartyseating.ManholeLogic do
           {:ok, start_num, end_num}
         rescue
           error ->
-            Logger.error(
-              "Failed to broadcast cancel reservation to station range #{start_num}-#{end_num}: #{inspect(error)}"
-            )
+            Logger.error("Failed to broadcast cancel reservation to station range #{start_num}-#{end_num}: #{inspect(error)}")
 
             {:error, "Failed to broadcast cancel reservation commands"}
         end
@@ -137,8 +132,7 @@ defmodule Lanpartyseating.ManholeLogic do
   - {:ok, start_num, end_num} on success
   - {:error, message} on validation failure or broadcast error
   """
-  @spec broadcast_station_range(String.t() | integer(), String.t() | integer()) ::
-          {:ok, integer(), integer()} | {:error, String.t()}
+  @spec broadcast_station_range(String.t() | integer(), String.t() | integer()) :: {:ok, integer(), integer()} | {:error, String.t()}
   def broadcast_station_range(range_start, range_end) do
     case validate_range(range_start, range_end) do
       {:ok, start_num, end_num} ->
@@ -148,7 +142,7 @@ defmodule Lanpartyseating.ManholeLogic do
               "desktop:all",
               "tournament_start",
               %{
-                station_number: station_num
+                station_number: station_num,
               }
             )
           end)
@@ -157,9 +151,7 @@ defmodule Lanpartyseating.ManholeLogic do
           {:ok, start_num, end_num}
         rescue
           error ->
-            Logger.error(
-              "Failed to broadcast to station range #{start_num}-#{end_num}: #{inspect(error)}"
-            )
+            Logger.error("Failed to broadcast to station range #{start_num}-#{end_num}: #{inspect(error)}")
 
             {:error, "Failed to broadcast tournament start commands"}
         end
@@ -195,8 +187,7 @@ defmodule Lanpartyseating.ManholeLogic do
 
   defp validate_single_station(_), do: {:error, "Station number is required"}
 
-  @spec validate_range(String.t() | integer(), String.t() | integer()) ::
-          {:ok, integer(), integer()} | {:error, String.t()}
+  @spec validate_range(String.t() | integer(), String.t() | integer()) :: {:ok, integer(), integer()} | {:error, String.t()}
   defp validate_range(range_start, range_end)
        when is_binary(range_start) and is_binary(range_end) do
     with {:ok, start_num} <- validate_single_station(range_start),

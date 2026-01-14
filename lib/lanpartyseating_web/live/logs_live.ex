@@ -1,68 +1,91 @@
 defmodule LanpartyseatingWeb.LogsLive do
   use LanpartyseatingWeb, :live_view
+  import Ecto.Query
+  alias Lanpartyseating.Reservation
+  alias Lanpartyseating.Repo
 
   def mount(_params, _session, socket) do
-    # BadgeScanLogsLogic.get_all_participants()
-    participants = []
+    reservations = get_reservations()
 
     socket =
       socket
-      |> assign(:participants, Enum.reverse(participants))
-      |> assign(:participantsCount, length(participants))
+      |> assign(:reservations, reservations)
 
     {:ok, socket}
+  end
+
+  defp get_reservations do
+    from(r in Reservation,
+      order_by: [desc: r.inserted_at],
+      limit: 100
+    )
+    |> Repo.all()
+  end
+
+  defp format_datetime(nil), do: "-"
+
+  defp format_datetime(dt) do
+    dt
+    |> Timex.to_datetime("America/Montreal")
+    |> Calendar.strftime("%Y-%m-%d %H:%M")
+  end
+
+  defp reservation_status(reservation) do
+    now = DateTime.utc_now()
+
+    cond do
+      reservation.deleted_at != nil -> "Cancelled"
+      DateTime.compare(reservation.end_date, now) == :lt -> "Expired"
+      DateTime.compare(reservation.start_date, now) == :gt -> "Upcoming"
+      true -> "Active"
+    end
+  end
+
+  defp status_class(reservation) do
+    case reservation_status(reservation) do
+      "Active" -> "badge badge-success"
+      "Expired" -> "badge badge-ghost"
+      "Cancelled" -> "badge badge-error"
+      "Upcoming" -> "badge badge-info"
+    end
   end
 
   def render(assigns) do
     ~H"""
     <div class="jumbotron">
-      <h1 style="font-size:30px">Seats</h1>
+      <h1 style="font-size:30px">Reservation History</h1>
+      <p class="text-base-content/70 mb-4">Showing the last 100 reservations</p>
 
       <div class="overflow-x-auto">
-        <table class="table">
+        <table class="table table-zebra">
           <thead>
             <tr>
-              <th>badge id</th>
-              <!-- badge uid -->
-              <th>last scan</th>
-              <!-- scan date that triggered the creation of the user in the AD -->
-
-              <th>minutes left</th>
-              <!-- minutes left until the user can't login or is logged off -->
-
-              <th>expiry</th>
-
-              <th>station number</th>
-
-              <th>deactivated</th>
-              <!-- a boolean that's true once the user has been successfully deleted from the AD -->
-              <th>username</th>
-              <!-- username as the temporary login credential -->
+              <th>ID</th>
+              <th>Station</th>
+              <th>Badge</th>
+              <th>Duration</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Status</th>
+              <th>Incident</th>
+              <th>Created</th>
             </tr>
           </thead>
-          <tr :for={participant <- @participants} :key={participant.badge_number}>
-            <th>{participant.badge_number}</th>
-            <!-- badge uid -->
-            <th>{participant.date_scanned}</th>
-            <!-- scan date that triggered the creation of the user in the AD -->
-
-            <th>
-              {case DateTime.diff(participant.session_expiry, DateTime.utc_now(), :minute) do
-                x when x < 0 -> 0
-                x -> x
-              end}
-            </th>
-            <!-- minutes left until the user can't login or is logged off -->
-
-            <th>{participant.session_expiry}</th>
-
-            <th>{participant.assigned_station_number}</th>
-
-            <th>?</th>
-            <!-- a boolean that's true once the user has been successfully deleted from the AD -->
-            <th>?</th>
-            <!-- username as the temporary login credential -->
-          </tr>
+          <tbody>
+            <tr :for={reservation <- @reservations} :key={reservation.id}>
+              <td>{reservation.id}</td>
+              <td class="font-mono">{reservation.station_id}</td>
+              <td class="font-mono">{reservation.badge || "-"}</td>
+              <td>{reservation.duration} min</td>
+              <td>{format_datetime(reservation.start_date)}</td>
+              <td>{format_datetime(reservation.end_date)}</td>
+              <td>
+                <span class={status_class(reservation)}>{reservation_status(reservation)}</span>
+              </td>
+              <td>{reservation.incident || "-"}</td>
+              <td>{format_datetime(reservation.inserted_at)}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>

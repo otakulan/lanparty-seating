@@ -12,12 +12,11 @@ if config_env() == :prod do
   config :lanpartyseating, LanpartyseatingWeb.Endpoint,
     http: [
       ip: {0, 0, 0, 0, 0, 0, 0, 0},
-      port: port
+      port: port,
     ],
     url: [host: System.get_env("PHX_HOST") || "localhost", port: port]
 else
-  config :lanpartyseating, LanpartyseatingWeb.Endpoint,
-    url: [host: System.get_env("PHX_HOST") || "localhost", port: 4000]
+  config :lanpartyseating, LanpartyseatingWeb.Endpoint, url: [host: System.get_env("PHX_HOST") || "localhost", port: 4000]
 end
 
 config :lanpartyseating, Lanpartyseating.PromEx,
@@ -28,7 +27,7 @@ config :lanpartyseating, Lanpartyseating.PromEx,
         auth_token: System.get_env("GRAFANA_AUTH_TOKEN", ""),
         upload_dashboards_on_start: true,
         folder_name: "Lanparty Seating",
-        annotate_app_lifecycle: true
+        annotate_app_lifecycle: true,
       ],
       else: :disabled
     )

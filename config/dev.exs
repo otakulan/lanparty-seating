@@ -23,12 +23,10 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
       "--input=css/app.css",
       "--output=../priv/static/css/app.css",
       "--watch",
-      cd: Path.expand("../assets", __DIR__)
+      cd: Path.expand("../assets", __DIR__),
     ],
     # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
-    esbuild:
-      {Esbuild, :install_and_run,
-       [:default, ~w(--sourcemap=inline --watch --loader:.woff=file --loader:.woff2=file)]}
+    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch --loader:.woff=file --loader:.woff2=file)]},
   ]
 
 # ## SSL Support
@@ -53,8 +51,8 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
     patterns: [
       ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
-      ~r"lib/lanpartyseating_web/(controllers|live|components)/.*(ex|heex)$"
-    ]
+      ~r"lib/lanpartyseating_web/(controllers|live|components)/.*(ex|heex)$",
+    ],
   ]
 
 # Do not include metadata nor timestamps in development logs

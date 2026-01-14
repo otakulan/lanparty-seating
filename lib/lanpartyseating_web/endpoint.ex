@@ -7,7 +7,7 @@ defmodule LanpartyseatingWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_lanpartyseating_key",
-    signing_salt: "F6uh1uE5"
+    signing_salt: "F6uh1uE5",
   ]
 
   socket "/desktop", LanpartyseatingWeb.DesktopClientSocket,

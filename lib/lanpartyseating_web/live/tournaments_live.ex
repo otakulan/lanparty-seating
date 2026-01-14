@@ -20,17 +20,11 @@ defmodule LanpartyseatingWeb.TournamentsLive do
       ) do
     id = String.to_integer(tournament_id)
 
-    :ok = TournamentsLogic.delete_tournament(id)
-
-    tournaments =
-      socket.assigns.tournaments
-      |> Enum.filter(fn tournament ->
-        tournament.id != id
-      end)
+    TournamentsLogic.delete_tournament(id)
 
     socket =
       socket
-      |> assign(:tournaments, tournaments)
+      |> assign(:tournaments, TournamentsLogic.get_all_tournaments())
 
     {:noreply, socket}
   end
@@ -42,7 +36,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
           "start_time" => start_time,
           "duration" => duration,
           "start_station" => start_station,
-          "end_station" => end_station
+          "end_station" => end_station,
         },
         socket
       ) do

@@ -12,7 +12,7 @@ defmodule Lanpartyseating.PromEx do
       {Plugins.Phoenix, router: LanpartyseatingWeb.Router, endpoint: LanpartyseatingWeb.Endpoint},
       Plugins.Ecto,
       # Plugins.Oban,
-      Plugins.PhoenixLiveView
+      Plugins.PhoenixLiveView,
       # Plugins.Absinthe,
       # Plugins.Broadway,
 
@@ -25,7 +25,7 @@ defmodule Lanpartyseating.PromEx do
   def dashboard_assigns do
     [
       datasource_id: System.get_env("GRAFANA_DATASOURCE_ID") || "prometheus",
-      default_selected_interval: "30s"
+      default_selected_interval: "30s",
     ]
   end
 
@@ -38,7 +38,7 @@ defmodule Lanpartyseating.PromEx do
       {:prom_ex, "phoenix.json"},
       {:prom_ex, "ecto.json"},
       # {:prom_ex, "oban.json"},
-      {:prom_ex, "phoenix_live_view.json"}
+      {:prom_ex, "phoenix_live_view.json"},
       # {:prom_ex, "absinthe.json"},
       # {:prom_ex, "broadway.json"},
 

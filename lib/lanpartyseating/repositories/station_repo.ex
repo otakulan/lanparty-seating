@@ -8,21 +8,11 @@ defmodule Lanpartyseating.Station do
   @foreign_key_type :integer
 
   schema "stations" do
-    field(:deleted_at, :utc_datetime)
-
-    belongs_to(:station_layout, Lanpartyseating.StationLayout,
-      foreign_key: :station_number,
-      references: :station_number,
-      define_field: false
-    )
-
-    has_one(:stations_status, Lanpartyseating.StationStatus,
-      foreign_key: :station_id,
-      references: :station_number
-    )
-
-    has_many(:reservations, Reservation, foreign_key: :station_id)
-    has_many(:tournament_reservations, TournamentReservation, foreign_key: :station_id)
+    field :deleted_at, :utc_datetime
+    belongs_to :station_layout, Lanpartyseating.StationLayout, foreign_key: :station_number, references: :station_number, define_field: false
+    has_one :stations_status, Lanpartyseating.StationStatus, foreign_key: :station_id, references: :station_number
+    has_many :reservations, Reservation, foreign_key: :station_id
+    has_many :tournament_reservations, TournamentReservation, foreign_key: :station_id
     timestamps()
   end
 

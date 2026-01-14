@@ -23,10 +23,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
       {:ok, station_num} ->
         socket =
           socket
-          |> assign(
-            :success_message,
-            "Successfully broadcasted tournament start for station #{station_num}"
-          )
+          |> assign(:success_message, "Successfully broadcasted tournament start for station #{station_num}")
           |> assign(:error_message, nil)
           |> assign(:single_station_number, "")
 
@@ -42,19 +39,12 @@ defmodule LanpartyseatingWeb.ManholeLive do
     end
   end
 
-  def handle_event(
-        "range_broadcast",
-        %{"range_start" => range_start, "range_end" => range_end},
-        socket
-      ) do
+  def handle_event("range_broadcast", %{"range_start" => range_start, "range_end" => range_end}, socket) do
     case ManholeLogic.broadcast_station_range(range_start, range_end) do
       {:ok, start_num, end_num} ->
         socket =
           socket
-          |> assign(
-            :success_message,
-            "Successfully broadcasted tournament start for stations #{start_num} to #{end_num}"
-          )
+          |> assign(:success_message, "Successfully broadcasted tournament start for stations #{start_num} to #{end_num}")
           |> assign(:error_message, nil)
           |> assign(:range_start, "")
           |> assign(:range_end, "")
@@ -88,10 +78,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
       {:ok, station_num} ->
         socket =
           socket
-          |> assign(
-            :success_message,
-            "Successfully cancelled reservation for station #{station_num}"
-          )
+          |> assign(:success_message, "Successfully cancelled reservation for station #{station_num}")
           |> assign(:error_message, nil)
           |> assign(:cancel_single_station_number, "")
 
@@ -107,19 +94,12 @@ defmodule LanpartyseatingWeb.ManholeLive do
     end
   end
 
-  def handle_event(
-        "cancel_range",
-        %{"range_start" => range_start, "range_end" => range_end},
-        socket
-      ) do
+  def handle_event("cancel_range", %{"range_start" => range_start, "range_end" => range_end}, socket) do
     case ManholeLogic.cancel_station_range(range_start, range_end) do
       {:ok, start_num, end_num} ->
         socket =
           socket
-          |> assign(
-            :success_message,
-            "Successfully cancelled reservations for stations #{start_num} to #{end_num}"
-          )
+          |> assign(:success_message, "Successfully cancelled reservations for stations #{start_num} to #{end_num}")
           |> assign(:error_message, nil)
           |> assign(:cancel_range_start, "")
           |> assign(:cancel_range_end, "")

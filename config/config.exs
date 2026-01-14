@@ -11,7 +11,7 @@ config :esbuild,
   default: [
     args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/js --external:/images/*),
     cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)},
   ]
 
 # General application configuration
@@ -25,7 +25,7 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
   secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
   render_errors: [
     formats: [html: LanpartyseatingWeb.ErrorHTML, json: LanpartyseatingWeb.ErrorJSON],
-    layout: false
+    layout: false,
   ],
   pubsub_server: Lanpartyseating.PubSub,
   live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"],

@@ -27,7 +27,7 @@ defmodule Lanpartyseating.ReservationLogic do
                  badge: badge.serial_key,
                  station_id: station.station_number,
                  start_date: now,
-                 end_date: end_time
+                 end_date: end_time,
                }) do
             {:ok, updated} ->
               {:ok, stations} = StationLogic.get_all_stations(now)
@@ -44,7 +44,7 @@ defmodule Lanpartyseating.ReservationLogic do
                 %{
                   station_number: station_number,
                   start_date: updated.start_date |> DateTime.to_iso8601(),
-                  end_date: updated.end_date |> DateTime.to_iso8601()
+                  end_date: updated.end_date |> DateTime.to_iso8601(),
                 }
               )
 
@@ -107,7 +107,7 @@ defmodule Lanpartyseating.ReservationLogic do
           %{
             station_number: reservation.station.station_number,
             start_date: reservation.start_date |> DateTime.to_iso8601(),
-            end_date: reservation.end_date |> DateTime.to_iso8601()
+            end_date: reservation.end_date |> DateTime.to_iso8601(),
           }
         )
 
@@ -153,7 +153,7 @@ defmodule Lanpartyseating.ReservationLogic do
             "desktop:all",
             "cancel_reservation",
             %{
-              station_number: reservation.station.station_number
+              station_number: reservation.station.station_number,
               # reservation: updated
             }
           )

@@ -32,7 +32,7 @@ defmodule Lanpartyseating.Tasks.StartTournament do
 
   @impl true
   def handle_info(:start_tournament, tournament_id) do
-    Logger.debug("Starting tournament #{tournament_id}")
+    Logger.info("Starting tournament #{tournament_id}")
 
     {:ok, stations} = StationLogic.get_all_stations()
 
@@ -42,18 +42,24 @@ defmodule Lanpartyseating.Tasks.StartTournament do
       {:stations, stations}
     )
 
-    from(r in TournamentReservation,
-      where: r.tournament_id == ^tournament_id,
-      join: s in assoc(r, :station),
-      preload: [station: s]
-    )
-    |> Repo.all()
-    |> Enum.each(fn res ->
+    reservations =
+      from(r in TournamentReservation,
+        where: r.tournament_id == ^tournament_id,
+        join: s in assoc(r, :station),
+        preload: [station: s]
+      )
+      |> Repo.all()
+
+    Logger.info("Found #{length(reservations)} tournament reservations for tournament #{tournament_id}")
+
+    Enum.each(reservations, fn res ->
+      Logger.info("Broadcasting tournament_start to station #{res.station.station_number}")
+
       Endpoint.broadcast(
         "desktop:all",
         "tournament_start",
         %{
-          station_number: res.station.station_number
+          station_number: res.station.station_number,
         }
       )
     end)

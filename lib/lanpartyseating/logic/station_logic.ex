@@ -18,7 +18,6 @@ defmodule Lanpartyseating.StationLogic do
     tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
 
     from(s in Station,
-      # only needed by autoassign
       order_by: [asc: s.station_number],
       where: is_nil(s.deleted_at),
       preload: [
@@ -40,7 +39,7 @@ defmodule Lanpartyseating.StationLogic do
             where: t.end_date > ^now,
             where: is_nil(t.deleted_at),
             preload: [tournament: t]
-          )
+          ),
       ]
     )
   end
@@ -108,7 +107,9 @@ defmodule Lanpartyseating.StationLogic do
 
   def get_station(station_number, now \\ DateTime.utc_now()) do
     station =
-      get_station_query(now) |> where([s], s.station_number == ^station_number) |> Repo.one()
+      get_station_query(now)
+      |> where([s], s.station_number == ^station_number)
+      |> Repo.one()
 
     case station do
       nil -> {:error, :station_not_found}
@@ -117,8 +118,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def save_stations(grid) do
-    now_naive =
-      NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+    now_naive = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
 
     stations =
       grid

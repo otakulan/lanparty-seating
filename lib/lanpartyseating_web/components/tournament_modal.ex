@@ -50,7 +50,13 @@ defmodule TournamentModalComponent do
             <input id="end_station" name="end_station" class="input" type="number" />
 
             <div class="modal-action">
-              <button for="tournament-modal" class="btn" type="submit">Create</button>
+              <button
+                class="btn"
+                type="submit"
+                x-on:click="$refs.new_tournament_modal.close()"
+              >
+                Create
+              </button>
             </div>
           </form>
         </div>

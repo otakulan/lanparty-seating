@@ -19,13 +19,11 @@ defmodule LanpartyseatingWeb.DesktopChannel do
   end
 
   def handle_info(:after_join, socket) do
-    Logger.debug(
-      "Handling after_join for desktop channel with hostname: #{socket.assigns.hostname}"
-    )
+    Logger.debug("Handling after_join for desktop channel with hostname: #{socket.assigns.hostname}")
 
     {:ok, _} =
       Presence.track(socket, socket.assigns.hostname, %{
-        online_at: inspect(System.system_time(:second))
+        online_at: inspect(System.system_time(:second)),
       })
 
     push(socket, "presence_state", Presence.list(socket))
