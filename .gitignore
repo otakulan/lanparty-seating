@@ -26,3 +26,5 @@ assets/node_modules
 
 # macos
 .DS_STORE
+
+.env
