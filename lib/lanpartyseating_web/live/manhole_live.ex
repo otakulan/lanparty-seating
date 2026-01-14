@@ -142,47 +142,57 @@ defmodule LanpartyseatingWeb.ManholeLive do
     ~H"""
     <div class="container mx-auto px-4 py-4">
       <h1 class="text-3xl font-bold mb-6">Manhole - Tournament & Station Control</h1>
-
-      <!-- Warning Notice -->
+      
+    <!-- Warning Notice -->
       <div class="alert alert-warning mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="stroke-current shrink-0 h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"
+          />
         </svg>
-        <span>This is an administrative tool. Use with caution as it directly controls tournament and reservation states on desktop clients.</span>
+        <span>
+          This is an administrative tool. Use with caution as it directly controls tournament and reservation states on desktop clients.
+        </span>
       </div>
 
       <%= if @error_message do %>
         <div class="alert alert-error mb-4">
-          <span><%= @error_message %></span>
+          <span>{@error_message}</span>
         </div>
       <% end %>
 
       <%= if @success_message do %>
         <div class="alert alert-success mb-4">
-          <span><%= @success_message %></span>
+          <span>{@success_message}</span>
         </div>
       <% end %>
-
-      <!-- Tournament Start Controls -->
+      
+    <!-- Tournament Start Controls -->
       <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4 text-error">Tournament Start Controls</h2>
-
-        <!-- Single Station Tournament Start -->
+        
+    <!-- Single Station Tournament Start -->
         <div class="card bg-base-100 shadow-xl mb-6">
           <div class="card-body">
             <h3 class="card-title text-error">Single Station Tournament Start</h3>
             <p class="text-base-content/70">Broadcast tournament start command to a single station</p>
 
-            <form phx-submit="single_station_broadcast" class="form-control w-full max-w-xs">
-              <label class="label">
-                <span class="label-text">Station Number</span>
-              </label>
+            <form phx-submit="single_station_broadcast" class="w-full max-w-xs">
+              <label class="label" for="station_number">Station Number</label>
               <input
                 type="number"
                 min="1"
                 step="1"
                 placeholder="Enter station number"
-                class="input input-bordered w-full max-w-xs"
+                class="input w-full max-w-xs"
                 name="station_number"
                 value={@single_station_number}
                 phx-change="update_single_station"
@@ -197,25 +207,25 @@ defmodule LanpartyseatingWeb.ManholeLive do
             </form>
           </div>
         </div>
-
-        <!-- Range Tournament Start -->
+        
+    <!-- Range Tournament Start -->
         <div class="card bg-base-100 shadow-xl mb-6">
           <div class="card-body">
             <h3 class="card-title text-error">Station Range Tournament Start</h3>
-            <p class="text-base-content/70">Broadcast tournament start command to a range of stations</p>
+            <p class="text-base-content/70">
+              Broadcast tournament start command to a range of stations
+            </p>
 
-            <form phx-submit="range_broadcast" class="form-control">
+            <form phx-submit="range_broadcast">
               <div class="flex gap-4 items-end">
-                <div class="form-control w-full max-w-xs">
-                  <label class="label">
-                    <span class="label-text">Start Station</span>
-                  </label>
+                <div class="w-full max-w-xs">
+                  <label class="label" for="range_start">Start Station</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     placeholder="Start station"
-                    class="input input-bordered w-full max-w-xs"
+                    class="input w-full max-w-xs"
                     name="range_start"
                     value={@range_start}
                     phx-change="update_range_start"
@@ -224,16 +234,14 @@ defmodule LanpartyseatingWeb.ManholeLive do
                   />
                 </div>
 
-                <div class="form-control w-full max-w-xs">
-                  <label class="label">
-                    <span class="label-text">End Station</span>
-                  </label>
+                <div class="w-full max-w-xs">
+                  <label class="label" for="range_end">End Station</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     placeholder="End station"
-                    class="input input-bordered w-full max-w-xs"
+                    class="input w-full max-w-xs"
                     name="range_end"
                     value={@range_end}
                     phx-change="update_range_end"
@@ -252,27 +260,25 @@ defmodule LanpartyseatingWeb.ManholeLive do
           </div>
         </div>
       </div>
-
-      <!-- Cancel Reservation Controls -->
+      
+    <!-- Cancel Reservation Controls -->
       <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4 text-error">Cancel Reservation Controls</h2>
-
-        <!-- Single Station Cancel -->
+        
+    <!-- Single Station Cancel -->
         <div class="card bg-base-100 shadow-xl mb-6">
           <div class="card-body">
             <h3 class="card-title text-error">Single Station Logout</h3>
             <p class="text-base-content/70">Cancel reservation and log out a single station</p>
 
-            <form phx-submit="cancel_single_station" class="form-control w-full max-w-xs">
-              <label class="label">
-                <span class="label-text">Station Number</span>
-              </label>
+            <form phx-submit="cancel_single_station" class="w-full max-w-xs">
+              <label class="label" for="station_number">Station Number</label>
               <input
                 type="number"
                 min="1"
                 step="1"
                 placeholder="Enter station number"
-                class="input input-bordered w-full max-w-xs"
+                class="input w-full max-w-xs"
                 name="station_number"
                 value={@cancel_single_station_number}
                 phx-change="update_cancel_single_station"
@@ -287,25 +293,23 @@ defmodule LanpartyseatingWeb.ManholeLive do
             </form>
           </div>
         </div>
-
-        <!-- Range Cancel -->
+        
+    <!-- Range Cancel -->
         <div class="card bg-base-100 shadow-xl mb-6">
           <div class="card-body">
             <h3 class="card-title text-error">Station Range Logout</h3>
             <p class="text-base-content/70">Cancel reservations and log out a range of stations</p>
 
-            <form phx-submit="cancel_range" class="form-control">
+            <form phx-submit="cancel_range">
               <div class="flex gap-4 items-end">
-                <div class="form-control w-full max-w-xs">
-                  <label class="label">
-                    <span class="label-text">Start Station</span>
-                  </label>
+                <div class="w-full max-w-xs">
+                  <label class="label" for="range_start">Start Station</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     placeholder="Start station"
-                    class="input input-bordered w-full max-w-xs"
+                    class="input w-full max-w-xs"
                     name="range_start"
                     value={@cancel_range_start}
                     phx-change="update_cancel_range_start"
@@ -314,16 +318,14 @@ defmodule LanpartyseatingWeb.ManholeLive do
                   />
                 </div>
 
-                <div class="form-control w-full max-w-xs">
-                  <label class="label">
-                    <span class="label-text">End Station</span>
-                  </label>
+                <div class="w-full max-w-xs">
+                  <label class="label" for="range_end">End Station</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     placeholder="End station"
-                    class="input input-bordered w-full max-w-xs"
+                    class="input w-full max-w-xs"
                     name="range_end"
                     value={@cancel_range_end}
                     phx-change="update_cancel_range_end"

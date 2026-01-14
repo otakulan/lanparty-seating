@@ -4,10 +4,9 @@ defmodule Lanpartyseating.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
-    # :opentelemetry_cowboy.setup()
-    # OpentelemetryPhoenix.setup(adapter: :cowboy2)
-    # OpentelemetryLiveView.setup()
-    # OpentelemetryEcto.setup([:lanpartyseating, :repo])
+    OpentelemetryBandit.setup()
+    OpentelemetryPhoenix.setup(adapter: :bandit, liveview: true)
+    OpentelemetryEcto.setup([:lanpartyseating, :repo])
 
     # Define workers and child supervisors to be supervised
     children = [
@@ -21,6 +20,8 @@ defmodule Lanpartyseating.Application do
       LanpartyseatingWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, [name: Lanpartyseating.PubSub, adapter: Phoenix.PubSub.PG2]},
+      # Start the Presence supervisor, after its PubSub dependency
+      LanpartyseatingWeb.Presence,
       # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
       # {Lanpartyseating.Worker, arg}
       {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},

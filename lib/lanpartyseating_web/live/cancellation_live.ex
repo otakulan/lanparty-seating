@@ -7,10 +7,11 @@ defmodule LanpartyseatingWeb.CancellationLive do
 
   def assign_stations(socket, station_list) do
     {stations, {columns, rows}} = StationLogic.stations_by_xy(station_list)
+
     socket
-      |> assign(:columns, columns)
-      |> assign(:rows, rows)
-      |> assign(:stations, stations)
+    |> assign(:columns, columns)
+    |> assign(:rows, rows)
+    |> assign(:stations, stations)
   end
 
   def mount(_params, _session, socket) do
@@ -38,17 +39,18 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{
           "station_number" => station_number,
           "duration" => duration,
-          "badge_number" => badge_number
+          "badge_number" => badge_number,
         },
         socket
       ) do
     registration_error = nil
 
-    {:ok, _} = ReservationLogic.create_reservation(
-      String.to_integer(station_number),
-      String.to_integer(duration),
-      badge_number
-    )
+    {:ok, _} =
+      ReservationLogic.create_reservation(
+        String.to_integer(station_number),
+        String.to_integer(duration),
+        badge_number
+      )
 
     socket =
       socket
@@ -62,10 +64,11 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{"station_number" => id, "minutes_increment" => minutes},
         socket
       ) do
-    {:ok, _} = ReservationLogic.extend_reservation(
-      String.to_integer(id),
-      String.to_integer(minutes)
-    )
+    {:ok, _} =
+      ReservationLogic.extend_reservation(
+        String.to_integer(id),
+        String.to_integer(minutes)
+      )
 
     {:noreply, socket}
   end
@@ -75,10 +78,11 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{"station_number" => id, "cancel_reason" => reason},
         socket
       ) do
-    {:ok, _} = ReservationLogic.cancel_reservation(
-      String.to_integer(id),
-      reason
-    )
+    {:ok, _} =
+      ReservationLogic.cancel_reservation(
+        String.to_integer(id),
+        reason
+      )
 
     {:noreply, socket}
   end
@@ -88,7 +92,8 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{"station_number" => station_number},
         socket
       ) do
-    {:ok, _} = StationLogic.set_station_broken(
+    {:ok, _} =
+      StationLogic.set_station_broken(
         String.to_integer(station_number),
         true
       )
@@ -101,10 +106,11 @@ defmodule LanpartyseatingWeb.CancellationLive do
         %{"station_number" => station_number},
         socket
       ) do
-    {:ok, _} = StationLogic.set_station_broken(
-      String.to_integer(station_number),
-      false
-    )
+    {:ok, _} =
+      StationLogic.set_station_broken(
+        String.to_integer(station_number),
+        false
+      )
 
     {:noreply, socket}
   end
@@ -139,15 +145,14 @@ defmodule LanpartyseatingWeb.CancellationLive do
       </div>
       <h1 style="font-size:20px">Legend / Légende:</h1>
       <div class="mb-4 flex flex-row w-full ">
-      <label class="btn btn-info mr-4">
+        <label class="btn btn-info mr-4">
           Available / Disponible
         </label>
         <label class="btn btn-warning mr-4">
           Occupied / Occupée
         </label>
-
-        </div>
-        <div class="mb-4 flex flex-row w-full ">
+      </div>
+      <div class="mb-4 flex flex-row w-full ">
         <label class="btn btn-error mr-4">
           Broken / Brisée
         </label>

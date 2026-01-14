@@ -10,7 +10,9 @@ defmodule Lanpartyseating.Reservation do
     field :badge, :string
     field :incident, :string
     field :deleted_at, :utc_datetime
+
     belongs_to :station, Lanpartyseating.Station, foreign_key: :station_id, references: :station_number
+
     field :start_date, :utc_datetime
     field :end_date, :utc_datetime
     timestamps()

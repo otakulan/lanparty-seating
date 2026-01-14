@@ -25,7 +25,7 @@ defmodule Lanpartyseating.PromEx do
   def dashboard_assigns do
     [
       datasource_id: System.get_env("GRAFANA_DATASOURCE_ID") || "prometheus",
-      default_selected_interval: "30s"
+      default_selected_interval: "30s",
     ]
   end
 

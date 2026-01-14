@@ -15,7 +15,10 @@ defmodule Lanpartyseating.Tasks.ExpireReservation do
 
   @impl true
   def init({end_date, reservation_id}) do
-    delay = DateTime.diff(end_date, DateTime.truncate(DateTime.utc_now(), :second), :millisecond) |> max(0)
+    delay =
+      DateTime.diff(end_date, DateTime.truncate(DateTime.utc_now(), :second), :millisecond)
+      |> max(0)
+
     Logger.debug("Expiring reservation #{reservation_id} in #{delay} milliseconds")
     Process.send_after(self(), :expire_reservation, delay)
     {:ok, reservation_id}
@@ -50,12 +53,14 @@ defmodule Lanpartyseating.Tasks.ExpireReservation do
         Logger.debug("Reservation #{reservation_id} expired")
 
         {:ok, stations} = StationLogic.get_all_stations()
+
         Phoenix.PubSub.broadcast(
           PubSub,
           "station_update",
           {:stations, stations}
         )
     end
+
     {:stop, :normal, reservation_id}
   end
 end

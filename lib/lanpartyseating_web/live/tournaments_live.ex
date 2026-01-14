@@ -20,17 +20,11 @@ defmodule LanpartyseatingWeb.TournamentsLive do
       ) do
     id = String.to_integer(tournament_id)
 
-    :ok = TournamentsLogic.delete_tournament(id)
-
-    tournaments =
-      socket.assigns.tournaments
-      |> Enum.filter(fn tournament ->
-        tournament.id != id
-      end)
+    TournamentsLogic.delete_tournament(id)
 
     socket =
       socket
-      |> assign(:tournaments, tournaments)
+      |> assign(:tournaments, TournamentsLogic.get_all_tournaments())
 
     {:noreply, socket}
   end
@@ -42,7 +36,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
           "start_time" => start_time,
           "duration" => duration,
           "start_station" => start_station,
-          "end_station" => end_station
+          "end_station" => end_station,
         },
         socket
       ) do
@@ -95,33 +89,28 @@ defmodule LanpartyseatingWeb.TournamentsLive do
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h2><u>End Time</u></h2>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-
-          </div>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow"></div>
         </div>
-        <%= for tournament <- @tournaments do %>
-        <div class="flex flex-row w-full">
+        <div :for={tournament <- @tournaments} :key={tournament.id} class="flex flex-row w-full">
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
-              <%= tournament.name %>
+              {tournament.name}
             </h3>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
-              <%=
-
-              Calendar.strftime(
+              {Calendar.strftime(
                 tournament.start_date |> Timex.to_datetime("America/Montreal"),
                 "%A %d %b - %H:%M"
-              ) %>
+              )}
             </h3>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
-              <%= Calendar.strftime(
+              {Calendar.strftime(
                 tournament.end_date |> Timex.to_datetime("America/Montreal"),
                 "%A %d %b - %H:%M"
-              ) %>
+              )}
             </h3>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
@@ -131,7 +120,6 @@ defmodule LanpartyseatingWeb.TournamentsLive do
             </form>
           </div>
         </div>
-        <% end %>
       </div>
     </div>
     """

@@ -23,15 +23,17 @@ defmodule Lanpartyseating.Repo.Migrations.SquashMigrations do
     end
 
     create table(:station_layout, primary_key: false) do
-      add(:station_number, :integer, primary_key: true)
-      add(:x, :integer, null: false)
-      add(:y, :integer, null: false)
+      add :station_number, :integer, primary_key: true
+      add :x, :integer, null: false
+      add :y, :integer, null: false
     end
+
     create unique_index(:station_layout, [:x, :y])
 
     create table(:stations, primary_key: false) do
       # Don't allow a station to exist if we don't know where it belongs
       add :station_number, references(:station_layout, column: :station_number), primary_key: true
+
       add :is_closed, :boolean
       add :deleted_at, :utc_datetime
       timestamps()
@@ -54,8 +56,8 @@ defmodule Lanpartyseating.Repo.Migrations.SquashMigrations do
 
     create table(:last_assigned_station) do
       # ID of the last assigned gaming station
-      add(:last_assigned_station, :integer)
-      add(:last_assigned_station_date, :utc_datetime)
+      add :last_assigned_station, :integer
+      add :last_assigned_station_date, :utc_datetime
       timestamps()
     end
 
@@ -64,18 +66,17 @@ defmodule Lanpartyseating.Repo.Migrations.SquashMigrations do
       # We can quickly retrive them to see which stations are occupied (e.g. to show all of them on a page)
       # or to quickly find the next available seat to assign a new participant.
       # A station can be set out of order if it stops working during the event.
-      add(:station_id, :integer, primary_key: true)
-      add(:is_assigned, :boolean)
-      add(:is_broken, :boolean)
+      add :station_id, :integer, primary_key: true
+      add :is_assigned, :boolean
+      add :is_broken, :boolean
       timestamps()
     end
 
     create table(:badges) do
-      add(:serial_key, :string)
-      add(:uid, :string)
-      add(:is_banned, :boolean, default: false)
+      add :serial_key, :string
+      add :uid, :string
+      add :is_banned, :boolean, default: false
       timestamps()
     end
-
   end
 end

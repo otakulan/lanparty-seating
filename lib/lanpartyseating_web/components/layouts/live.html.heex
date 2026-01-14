@@ -1,22 +1,47 @@
 <!-- Navigation -->
 <NavComponent.nav nav_menu={@nav_menu} nav_menu_active_path={@nav_menu_active_path} />
 <!-- Page Content -->
-<div class="container mx-auto px-500">
-    <%= if Phoenix.Flash.get(@flash, :info) do %>
-      <div class="shadow-lg alert alert-info">
-        <div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0 w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <div style="white-space: pre-wrap;"><%= Phoenix.Flash.get(@flash, :info) %></div>
-        </div>
+<div class="px-4">
+  <%= if Phoenix.Flash.get(@flash, :info) do %>
+    <div class="shadow-lg alert alert-info">
+      <div>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="flex-shrink-0 w-6 h-6 stroke-current"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <div style="white-space: pre-wrap;">{Phoenix.Flash.get(@flash, :info)}</div>
       </div>
-    <% end %>
-    <%= if Phoenix.Flash.get(@flash, :error) do %>
-      <div class="shadow-lg alert alert-error">
-        <div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0 w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <div style="white-space: pre-wrap;"><%= Phoenix.Flash.get(@flash, :error) %></div>
-        </div>
+    </div>
+  <% end %>
+  <%= if Phoenix.Flash.get(@flash, :error) do %>
+    <div class="shadow-lg alert alert-error">
+      <div>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="flex-shrink-0 w-6 h-6 stroke-current"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <div style="white-space: pre-wrap;">{Phoenix.Flash.get(@flash, :error)}</div>
       </div>
-    <% end %>
-    <%= @inner_content %>
-</div> <!-- /container -->
+    </div>
+  <% end %>
+  {@inner_content}
+</div>
+<!-- /container -->
