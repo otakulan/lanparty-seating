@@ -17,8 +17,7 @@ defmodule Lanpartyseating.ManholeLogic do
   - {:ok, station_num} on success
   - {:error, message} on validation failure or broadcast error
   """
-  @spec broadcast_single_station(String.t() | integer()) ::
-          {:ok, integer()} | {:error, String.t()}
+  @spec broadcast_single_station(String.t() | integer()) :: {:ok, integer()} | {:error, String.t()}
   def broadcast_single_station(station_number) do
     case validate_single_station(station_number) do
       {:ok, station_num} ->
