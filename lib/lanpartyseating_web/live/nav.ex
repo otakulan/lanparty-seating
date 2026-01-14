@@ -27,7 +27,6 @@ defmodule LanpartyseatingWeb.Nav do
 
   def render(assigns) do
     ~H"""
-
     """
   end
 end

@@ -21,10 +21,12 @@ defmodule Lanpartyseating.Application do
       LanpartyseatingWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, [name: Lanpartyseating.PubSub, adapter: Phoenix.PubSub.PG2]},
+      # Start the Presence supervisor, after its PubSub dependency
+      LanpartyseatingWeb.Presence,
       # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
       # {Lanpartyseating.Worker, arg}
       {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},
-      Lanpartyseating.ExpirationKickstarter,
+      Lanpartyseating.ExpirationKickstarter
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

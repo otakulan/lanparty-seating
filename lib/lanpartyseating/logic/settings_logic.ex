@@ -17,10 +17,10 @@ defmodule Lanpartyseating.SettingsLogic do
     end
   end
 
- @doc """
- Creates an Ecto.Multi that updates the settings table and last_assigned_station table.
- The object returned from this function needs to be written to the database by the caller.
- """
+  @doc """
+  Creates an Ecto.Multi that updates the settings table and last_assigned_station table.
+  The object returned from this function needs to be written to the database by the caller.
+  """
   def settings_db_changes(
         row_padding,
         column_padding,
@@ -51,7 +51,7 @@ defmodule Lanpartyseating.SettingsLogic do
       )
 
     Ecto.Multi.new()
-      |> Ecto.Multi.insert_or_update(:set_last_assigned_station, las)
-      |> Ecto.Multi.insert_or_update(:insert_settings, settings)
+    |> Ecto.Multi.insert_or_update(:set_last_assigned_station, las)
+    |> Ecto.Multi.insert_or_update(:insert_settings, settings)
   end
 end

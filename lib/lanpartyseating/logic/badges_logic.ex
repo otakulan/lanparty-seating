@@ -6,7 +6,8 @@ defmodule Lanpartyseating.BadgesLogic do
   def get_badge(uid) do
     min_uid = String.upcase(uid)
 
-    badge = from(s in Badge,
+    badge =
+      from(s in Badge,
         where: s.uid == ^min_uid
       )
       |> Repo.one()

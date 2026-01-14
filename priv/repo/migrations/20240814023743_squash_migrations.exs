@@ -3,22 +3,22 @@ defmodule Lanpartyseating.Repo.Migrations.SquashMigrations do
 
   def change do
     create table(:reservations) do
-      add :duration, :integer
-      add :badge, :string
-      add :incident, :string
-      add :deleted_at, :utc_datetime
-      add :station_id, :id
-      add :start_date, :utc_datetime
-      add :end_date, :utc_datetime
+      add(:duration, :integer)
+      add(:badge, :string)
+      add(:incident, :string)
+      add(:deleted_at, :utc_datetime)
+      add(:station_id, :id)
+      add(:start_date, :utc_datetime)
+      add(:end_date, :utc_datetime)
       timestamps()
     end
 
     create table(:settings) do
-      add :row_padding, :integer
-      add :column_padding, :integer
-      add :horizontal_trailing, :integer
-      add :vertical_trailing, :integer
-      add :deleted_at, :utc_datetime
+      add(:row_padding, :integer)
+      add(:column_padding, :integer)
+      add(:horizontal_trailing, :integer)
+      add(:vertical_trailing, :integer)
+      add(:deleted_at, :utc_datetime)
       timestamps()
     end
 
@@ -27,28 +27,32 @@ defmodule Lanpartyseating.Repo.Migrations.SquashMigrations do
       add(:x, :integer, null: false)
       add(:y, :integer, null: false)
     end
-    create unique_index(:station_layout, [:x, :y])
+
+    create(unique_index(:station_layout, [:x, :y]))
 
     create table(:stations, primary_key: false) do
       # Don't allow a station to exist if we don't know where it belongs
-      add :station_number, references(:station_layout, column: :station_number), primary_key: true
-      add :is_closed, :boolean
-      add :deleted_at, :utc_datetime
+      add(:station_number, references(:station_layout, column: :station_number),
+        primary_key: true
+      )
+
+      add(:is_closed, :boolean)
+      add(:deleted_at, :utc_datetime)
       timestamps()
     end
 
     create table(:tournaments) do
-      add :start_date, :utc_datetime
-      add :end_date, :utc_datetime
-      add :name, :string
-      add :deleted_at, :utc_datetime
+      add(:start_date, :utc_datetime)
+      add(:end_date, :utc_datetime)
+      add(:name, :string)
+      add(:deleted_at, :utc_datetime)
       timestamps()
     end
 
     create table(:tournament_reservations) do
-      add :station_id, references(:stations, column: :station_number, on_delete: :delete_all)
-      add :tournament_id, references(:tournaments, on_delete: :delete_all)
-      add :deleted_at, :utc_datetime
+      add(:station_id, references(:stations, column: :station_number, on_delete: :delete_all))
+      add(:tournament_id, references(:tournaments, on_delete: :delete_all))
+      add(:deleted_at, :utc_datetime)
       timestamps()
     end
 
@@ -76,6 +80,5 @@ defmodule Lanpartyseating.Repo.Migrations.SquashMigrations do
       add(:is_banned, :boolean, default: false)
       timestamps()
     end
-
   end
 end

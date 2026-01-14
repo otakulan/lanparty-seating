@@ -40,29 +40,29 @@ defmodule LanpartyseatingWeb.LogsLive do
               <!-- username as the temporary login credential -->
             </tr>
           </thead>
-        <%= for participant <- @participants do %>
-          <tr>
-            <th><%= participant.badge_number %></th>
+          <tr :for={participant <- @participants} :key={participant.badge_number}>
+            <th>{participant.badge_number}</th>
             <!-- badge uid -->
-            <th><%= participant.date_scanned %></th>
+            <th>{participant.date_scanned}</th>
             <!-- scan date that triggered the creation of the user in the AD -->
 
-            <th><%=case DateTime.diff(participant.session_expiry, DateTime.utc_now(), :minute) do
-              x when x < 0 -> 0
-              x -> x
-            end %></th>
+            <th>
+              {case DateTime.diff(participant.session_expiry, DateTime.utc_now(), :minute) do
+                x when x < 0 -> 0
+                x -> x
+              end}
+            </th>
             <!-- minutes left until the user can't login or is logged off -->
 
-            <th><%= participant.session_expiry %></th>
+            <th>{participant.session_expiry}</th>
 
-            <th><%= participant.assigned_station_number %></th>
+            <th>{participant.assigned_station_number}</th>
 
             <th>?</th>
             <!-- a boolean that's true once the user has been successfully deleted from the AD -->
             <th>?</th>
             <!-- username as the temporary login credential -->
           </tr>
-          <% end %>
         </table>
       </div>
     </div>

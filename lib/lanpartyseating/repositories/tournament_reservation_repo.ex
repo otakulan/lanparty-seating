@@ -6,9 +6,13 @@ defmodule Lanpartyseating.TournamentReservation do
   @foreign_key_type :id
 
   schema "tournament_reservations" do
-    belongs_to :station, Lanpartyseating.Station, foreign_key: :station_id, references: :station_number
-    belongs_to :tournament, Lanpartyseating.Tournament
-    field :deleted_at, :utc_datetime
+    belongs_to(:station, Lanpartyseating.Station,
+      foreign_key: :station_id,
+      references: :station_number
+    )
+
+    belongs_to(:tournament, Lanpartyseating.Tournament)
+    field(:deleted_at, :utc_datetime)
     timestamps()
   end
 

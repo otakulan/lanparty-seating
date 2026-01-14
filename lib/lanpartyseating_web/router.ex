@@ -29,7 +29,8 @@ defmodule LanpartyseatingWeb.Router do
     live_session :nav,
       on_mount: [
         LanpartyseatingWeb.Nav
-      ] do
+      ],
+      layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/", DisplayLive, :index)
       live("/autoassign", AutoAssignLive, :index)
       live("/selfsign", SelfSignLive, :index)

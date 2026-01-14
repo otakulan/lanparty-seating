@@ -33,7 +33,8 @@ defmodule Lanpartyseating.AutoAssignLogic do
       )
 
     case valid_stations do
-      nil -> {:error, "No available stations"}
+      nil ->
+        {:error, "No available stations"}
 
       station ->
         next_station_number = station.station.station_number

@@ -80,11 +80,11 @@ Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
 
 # Default layout which closely matches what we had for 2024
 for val <- 1..70 do
-      Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
-        station_number: val,
-        x: div(val - 1, 10),
-        y: rem(val - 1, 10)
-    })
+  Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
+    station_number: val,
+    x: div(val - 1, 10),
+    y: rem(val - 1, 10)
+  })
 end
 
 # In 2024 we had 70 PCs

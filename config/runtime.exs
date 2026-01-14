@@ -5,17 +5,33 @@ config :tzdata,
        :data_dir,
        System.get_env("STORAGE_DIR")
 
-config :lanpartyseating, LanpartyseatingWeb.Endpoint,
-  url: [host: System.get_env("PHX_HOST") || "localhost", port: 4000]
+# Dynamic port configuration for production
+if config_env() == :prod do
+  port = String.to_integer(System.get_env("PORT") || "4000")
+
+  config :lanpartyseating, LanpartyseatingWeb.Endpoint,
+    http: [
+      ip: {0, 0, 0, 0, 0, 0, 0, 0},
+      port: port
+    ],
+    url: [host: System.get_env("PHX_HOST") || "localhost", port: port]
+else
+  config :lanpartyseating, LanpartyseatingWeb.Endpoint,
+    url: [host: System.get_env("PHX_HOST") || "localhost", port: 4000]
+end
 
 config :lanpartyseating, Lanpartyseating.PromEx,
-  grafana: if System.get_env("GRAFANA_ENABLE"), do: [
-    host: System.get_env("GRAFANA_HOST", "http://localhost:3000"),
-    auth_token: System.get_env("GRAFANA_AUTH_TOKEN", ""),
-    upload_dashboards_on_start: true,
-    folder_name: "Lanparty Seating",
-    annotate_app_lifecycle: true
-  ], else: :disabled
+  grafana:
+    if(System.get_env("GRAFANA_ENABLE"),
+      do: [
+        host: System.get_env("GRAFANA_HOST", "http://localhost:3000"),
+        auth_token: System.get_env("GRAFANA_AUTH_TOKEN", ""),
+        upload_dashboards_on_start: true,
+        folder_name: "Lanparty Seating",
+        annotate_app_lifecycle: true
+      ],
+      else: :disabled
+    )
 
 config :opentelemetry,
   span_processor: :batch,

@@ -6,8 +6,8 @@ defmodule Lanpartyseating.StationStatus do
   @foreign_key_type :integer
 
   schema "stations_status" do
-    field :is_assigned, :boolean, default: false
-    field :is_broken, :boolean, default: false
+    field(:is_assigned, :boolean, default: false)
+    field(:is_broken, :boolean, default: false)
     timestamps()
   end
 

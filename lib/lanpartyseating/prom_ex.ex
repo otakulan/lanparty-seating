@@ -12,7 +12,7 @@ defmodule Lanpartyseating.PromEx do
       {Plugins.Phoenix, router: LanpartyseatingWeb.Router, endpoint: LanpartyseatingWeb.Endpoint},
       Plugins.Ecto,
       # Plugins.Oban,
-      Plugins.PhoenixLiveView,
+      Plugins.PhoenixLiveView
       # Plugins.Absinthe,
       # Plugins.Broadway,
 
@@ -38,7 +38,7 @@ defmodule Lanpartyseating.PromEx do
       {:prom_ex, "phoenix.json"},
       {:prom_ex, "ecto.json"},
       # {:prom_ex, "oban.json"},
-      {:prom_ex, "phoenix_live_view.json"},
+      {:prom_ex, "phoenix_live_view.json"}
       # {:prom_ex, "absinthe.json"},
       # {:prom_ex, "broadway.json"},
 

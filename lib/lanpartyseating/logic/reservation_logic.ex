@@ -23,12 +23,12 @@ defmodule Lanpartyseating.ReservationLogic do
           end_time = DateTime.add(now, duration, :minute)
 
           case Repo.insert(%Reservation{
-                  duration: duration,
-                  badge: badge.serial_key,
-                  station_id: station.station_number,
-                  start_date: now,
-                  end_date: end_time
-                }) do
+                 duration: duration,
+                 badge: badge.serial_key,
+                 station_id: station.station_number,
+                 start_date: now,
+                 end_date: end_time
+               }) do
             {:ok, updated} ->
               {:ok, stations} = StationLogic.get_all_stations(now)
 
@@ -44,7 +44,7 @@ defmodule Lanpartyseating.ReservationLogic do
                 %{
                   station_number: station_number,
                   start_date: updated.start_date |> DateTime.to_iso8601(),
-                  end_date: updated.end_date |> DateTime.to_iso8601(),
+                  end_date: updated.end_date |> DateTime.to_iso8601()
                 }
               )
 
@@ -61,6 +61,7 @@ defmodule Lanpartyseating.ReservationLogic do
             {:error, err} ->
               {:error, {:reservation_failed, err}}
           end
+
         false ->
           Logger.debug("Station is not available")
           {:error, :station_unavailable}
@@ -83,44 +84,46 @@ defmodule Lanpartyseating.ReservationLogic do
       |> Repo.one()
 
     new_end_date = DateTime.add(existing_reservation.end_date, minutes, :minute)
+
     updated_reservation =
       Ecto.Changeset.change(existing_reservation,
         end_date: new_end_date
       )
 
-    reservation = with {:ok, reservation} <- Repo.update(updated_reservation) do
-      # Terminate the reservation expiration task with the old end date
-      GenServer.cast(:"expire_reservation_#{reservation.id}", :terminate)
+    reservation =
+      with {:ok, reservation} <- Repo.update(updated_reservation) do
+        # Terminate the reservation expiration task with the old end date
+        GenServer.cast(:"expire_reservation_#{reservation.id}", :terminate)
 
-      # Start a new reservation expiration task with the new end date
-      DynamicSupervisor.start_child(
-        Lanpartyseating.ExpirationTaskSupervisor,
-        {Lanpartyseating.Tasks.ExpireReservation, {new_end_date, reservation.id}}
-      )
+        # Start a new reservation expiration task with the new end date
+        DynamicSupervisor.start_child(
+          Lanpartyseating.ExpirationTaskSupervisor,
+          {Lanpartyseating.Tasks.ExpireReservation, {new_end_date, reservation.id}}
+        )
 
-      Endpoint.broadcast!(
-        "desktop:all",
-        "extend_reservation",
-        %{
-          station_number: reservation.station.station_number,
-          start_date: reservation.start_date |> DateTime.to_iso8601(),
-          end_date: reservation.end_date |> DateTime.to_iso8601(),
-        }
-      )
+        Endpoint.broadcast!(
+          "desktop:all",
+          "extend_reservation",
+          %{
+            station_number: reservation.station.station_number,
+            start_date: reservation.start_date |> DateTime.to_iso8601(),
+            end_date: reservation.end_date |> DateTime.to_iso8601()
+          }
+        )
 
-      {:ok, stations} = StationLogic.get_all_stations()
+        {:ok, stations} = StationLogic.get_all_stations()
 
-      Phoenix.PubSub.broadcast(
-        PubSub,
-        "station_update",
-        {:stations, stations}
-      )
+        Phoenix.PubSub.broadcast(
+          PubSub,
+          "station_update",
+          {:stations, stations}
+        )
 
-      reservation
-    else
-      {:error, err} ->
-        {:error, {:reservation_failed, err}}
-    end
+        reservation
+      else
+        {:error, err} ->
+          {:error, {:reservation_failed, err}}
+      end
 
     {:ok, reservation}
   end
@@ -150,7 +153,7 @@ defmodule Lanpartyseating.ReservationLogic do
             "desktop:all",
             "cancel_reservation",
             %{
-              station_number: reservation.station.station_number,
+              station_number: reservation.station.station_number
               # reservation: updated
             }
           )

@@ -95,33 +95,28 @@ defmodule LanpartyseatingWeb.TournamentsLive do
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h2><u>End Time</u></h2>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-
-          </div>
+          <div class="flex flex-col flex-1 mx-1 h-14 grow"></div>
         </div>
-        <%= for tournament <- @tournaments do %>
-        <div class="flex flex-row w-full">
+        <div :for={tournament <- @tournaments} :key={tournament.id} class="flex flex-row w-full">
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
-              <%= tournament.name %>
+              {tournament.name}
             </h3>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
-              <%=
-
-              Calendar.strftime(
+              {Calendar.strftime(
                 tournament.start_date |> Timex.to_datetime("America/Montreal"),
                 "%A %d %b - %H:%M"
-              ) %>
+              )}
             </h3>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
             <h3>
-              <%= Calendar.strftime(
+              {Calendar.strftime(
                 tournament.end_date |> Timex.to_datetime("America/Montreal"),
                 "%A %d %b - %H:%M"
-              ) %>
+              )}
             </h3>
           </div>
           <div class="flex flex-col flex-1 mx-1 h-14 grow">
@@ -131,7 +126,6 @@ defmodule LanpartyseatingWeb.TournamentsLive do
             </form>
           </div>
         </div>
-        <% end %>
       </div>
     </div>
     """

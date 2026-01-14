@@ -6,11 +6,11 @@ defmodule Lanpartyseating.Tournament do
   @foreign_key_type :id
 
   schema "tournaments" do
-    field :start_date, :utc_datetime
-    field :end_date, :utc_datetime
-    field :name, :string
-    field :deleted_at, :utc_datetime
-    has_many :tournament_reservations, Lanpartyseating.TournamentReservation
+    field(:start_date, :utc_datetime)
+    field(:end_date, :utc_datetime)
+    field(:name, :string)
+    field(:deleted_at, :utc_datetime)
+    has_many(:tournament_reservations, Lanpartyseating.TournamentReservation)
     timestamps()
   end
 

@@ -12,7 +12,10 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
 
   @impl true
   def init({end_date, tournament_id}) do
-    delay = DateTime.diff(end_date, DateTime.truncate(DateTime.utc_now(), :second), :millisecond) |> max(0)
+    delay =
+      DateTime.diff(end_date, DateTime.truncate(DateTime.utc_now(), :second), :millisecond)
+      |> max(0)
+
     Logger.debug("Expiring tournament #{tournament_id} in #{delay} milliseconds")
     Process.send_after(self(), :expire_tournament, delay)
     {:ok, tournament_id}
@@ -29,6 +32,7 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
     Logger.debug("Expiring tournament #{tournament_id}")
 
     {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
+
     Phoenix.PubSub.broadcast(
       PubSub,
       "tournament_update",
@@ -36,6 +40,7 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
     )
 
     {:ok, stations} = StationLogic.get_all_stations()
+
     Phoenix.PubSub.broadcast(
       PubSub,
       "station_update",

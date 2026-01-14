@@ -23,7 +23,10 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
   http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
   url: [host: "localhost"],
   secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
-  render_errors: [view: LanpartyseatingWeb.ErrorView, accepts: ~w(html json)],
+  render_errors: [
+    formats: [html: LanpartyseatingWeb.ErrorHTML, json: LanpartyseatingWeb.ErrorJSON],
+    layout: false
+  ],
   pubsub_server: Lanpartyseating.PubSub,
   live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"]
 
@@ -44,4 +47,4 @@ config :phoenix, :json_library, Jason
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
-import_config "#{Mix.env}.exs"
+import_config "#{Mix.env()}.exs"

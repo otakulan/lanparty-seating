@@ -1,24 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-
   <head>
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
 
     <title>LAN Party Seating</title>
 
-    <%= csrf_meta_tag() %>
+    <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
     <.live_title suffix=" - Lan Party Seating">
-      <%= assigns[:page_title] || "Main" %>
+      {assigns[:page_title] || "Main"}
     </.live_title>
-    <link phx-track-static rel="stylesheet" href={~p"/css/app.css"}/>
-    <script phx-track-static defer type="text/javascript" src={~p"/js/app.js"}></script>
+    <link phx-track-static rel="stylesheet" href={~p"/css/app.css"} />
+    <script phx-track-static defer type="text/javascript" src={~p"/js/app.js"}>
+    </script>
   </head>
 
   <body>
-    <%= @inner_content %>
+    {@inner_content}
   </body>
 </html>

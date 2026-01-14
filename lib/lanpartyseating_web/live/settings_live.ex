@@ -7,29 +7,29 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def minmax_row(grid, y_in) do
     grid
-      |> Enum.reject(fn {{x, y}, _} -> y != y_in end)
-      |> Enum.map(fn {{x, _}, _} -> x end)
-      |> Enum.min_max()
+    |> Enum.reject(fn {{_x, y}, _} -> y != y_in end)
+    |> Enum.map(fn {{x, _}, _} -> x end)
+    |> Enum.min_max()
   end
 
   def minmax_column(grid, x_in) do
     grid
-      |> Enum.reject(fn {{x, y}, _} -> x != x_in end)
-      |> Enum.map(fn {{_, y}, _} -> y end)
-      |> Enum.min_max()
+    |> Enum.reject(fn {{x, _y}, _} -> x != x_in end)
+    |> Enum.map(fn {{_, y}, _} -> y end)
+    |> Enum.min_max()
   end
 
   def reverse_rows(grid, rem) do
     grid
-      |> Enum.map(fn {{x, y}, num} ->
-        if rem(y, 2) == rem do
-          {min_x, max_x} = minmax_row(grid, y)
-          {{(max_x - x) + min_x, y}, num}
-        else
-          {{x, y}, num}
-        end
-      end)
-      |> Enum.into(%{})
+    |> Enum.map(fn {{x, y}, num} ->
+      if rem(y, 2) == rem do
+        {min_x, max_x} = minmax_row(grid, y)
+        {{max_x - x + min_x, y}, num}
+      else
+        {{x, y}, num}
+      end
+    end)
+    |> Enum.into(%{})
   end
 
   def reverse_even_rows(grid) do
@@ -42,15 +42,15 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def reverse_columns(grid, rem) do
     grid
-      |> Enum.map(fn {{x, y}, num} ->
-        if rem(x, 2) == rem do
-          {min_y, max_y} = minmax_column(grid, x)
-          {{x, (max_y - y) + min_y}, num}
-        else
-          {{x, y}, num}
-        end
-      end)
-      |> Enum.into(%{})
+    |> Enum.map(fn {{x, y}, num} ->
+      if rem(x, 2) == rem do
+        {min_y, max_y} = minmax_column(grid, x)
+        {{x, max_y - y + min_y}, num}
+      else
+        {{x, y}, num}
+      end
+    end)
+    |> Enum.into(%{})
   end
 
   def reverse_even_columns(grid) do
@@ -63,40 +63,44 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def transpose(grid) do
     grid
-      |> Enum.map(fn {{x, y}, num} -> {{y, x}, num} end)
-      |> Enum.into(%{})
+    |> Enum.map(fn {{x, y}, num} -> {{y, x}, num} end)
+    |> Enum.into(%{})
   end
 
   @doc """
   returns {columns, rows}
   """
   def grid_dimensions(grid) do
-    {max_x, max_y} = Map.keys(grid)
+    {max_x, max_y} =
+      Map.keys(grid)
       |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+
     {max_x + 1, max_y + 1}
   end
 
   def socket_assign_grid(socket, grid) do
     {columns, rows} = grid_dimensions(grid)
+
     socket
-      |> assign(:grid_width, columns)
-      |> assign(:grid_height, rows)
-      |> assign(:grid, grid)
+    |> assign(:grid_width, columns)
+    |> assign(:grid_height, rows)
+    |> assign(:grid, grid)
   end
 
   def add_stations_to_grid(grid, column_major?, columns, rows, first_num, count) do
-    order = if column_major? do
-      for c <- 0..(columns - 1), r <- 0..(rows - 1), do: {c, r}
-    else
-      for r <- 0..(rows - 1), c <- 0..(columns - 1), do: {c, r}
-    end
+    order =
+      if column_major? do
+        for c <- 0..(columns - 1), r <- 0..(rows - 1), do: {c, r}
+      else
+        for r <- 0..(rows - 1), c <- 0..(columns - 1), do: {c, r}
+      end
 
     order
-      |> Stream.reject(fn pos -> Map.has_key?(grid, pos) end)
-      |> Enum.take(count)
-      |> Enum.with_index()
-      |> Enum.map(fn {pos, index} -> {pos, index + first_num} end)
-      |> Enum.into(grid)
+    |> Stream.reject(fn pos -> Map.has_key?(grid, pos) end)
+    |> Enum.take(count)
+    |> Enum.with_index()
+    |> Enum.map(fn {pos, index} -> {pos, index + first_num} end)
+    |> Enum.into(grid)
   end
 
   def truncate_grid(grid, max) do
@@ -116,7 +120,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     layout = Lanpartyseating.StationLogic.get_station_layout()
     {columns, rows} = grid_dimensions(layout)
     # number of rows in layout table might not the number of rows in the stations table
-    station_count = Repo.one(Ecto.Query.from s in Lanpartyseating.Station, select: count("*"))
+    station_count = Repo.one(Ecto.Query.from(s in Lanpartyseating.Station, select: count("*")))
     layout = resize_grid(layout, columns, rows, station_count)
     {columns, rows} = grid_dimensions(layout)
 
@@ -211,6 +215,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("diagonal_mirror", _params, socket) do
     grid = transpose(socket.assigns.grid)
     {columns, rows} = grid_dimensions(grid)
+
     socket =
       socket
       |> assign(:columns, columns)
@@ -221,7 +226,16 @@ defmodule LanpartyseatingWeb.SettingsLive do
   end
 
   def handle_event("reset_grid_column_major", _params, socket) do
-    grid = add_stations_to_grid(%{}, true, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
+    grid =
+      add_stations_to_grid(
+        %{},
+        true,
+        socket.assigns.columns,
+        socket.assigns.rows,
+        1,
+        socket.assigns.station_count
+      )
+
     socket =
       socket
       |> socket_assign_grid(grid)
@@ -230,7 +244,16 @@ defmodule LanpartyseatingWeb.SettingsLive do
   end
 
   def handle_event("reset_grid_row_major", _params, socket) do
-    grid = add_stations_to_grid(%{}, false, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
+    grid =
+      add_stations_to_grid(
+        %{},
+        false,
+        socket.assigns.columns,
+        socket.assigns.rows,
+        1,
+        socket.assigns.station_count
+      )
+
     socket =
       socket
       |> socket_assign_grid(grid)
@@ -243,37 +266,49 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
     save_stations = Lanpartyseating.StationLogic.save_stations(s.grid)
 
-    save_settings = Lanpartyseating.SettingsLogic.settings_db_changes(
-      s.rowpad,
-      s.colpad,
-      s.row_trailing,
-      s.col_trailing
-    )
+    save_settings =
+      Lanpartyseating.SettingsLogic.settings_db_changes(
+        s.rowpad,
+        s.colpad,
+        s.row_trailing,
+        s.col_trailing
+      )
 
-    multi = Ecto.Multi.new()
+    multi =
+      Ecto.Multi.new()
       |> Ecto.Multi.append(save_settings)
       |> Ecto.Multi.append(save_stations)
 
-    socket = try do
-      case Repo.transaction(multi) do
-        {:ok, _result} ->
-          {columns, rows} = grid_dimensions(s.grid)
-          publish_station_update()
+    socket =
+      try do
+        case Repo.transaction(multi) do
+          {:ok, _result} ->
+            {columns, rows} = grid_dimensions(s.grid)
+            publish_station_update()
+
+            socket
+            |> assign(:columns, columns)
+            |> assign(:rows, rows)
+            |> put_flash(:info, "Saved successfully")
+
+          {:error, failed_operation, failed_value, changes_so_far} ->
+            Logger.error("Transaction error")
+            Logger.error("operation: #{failed_operation}")
+            Logger.error("failed value: #{failed_value}")
+            Logger.error("#{inspect(changes_so_far)}")
+
+            socket
+            |> put_flash(
+              :error,
+              "Transaction error\noperation: #{failed_operation}\nfailed value: #{failed_value}\n#{inspect(changes_so_far)}"
+            )
+        end
+      rescue
+        e ->
+          Logger.error("Postgres exception trying to commit transaction: #{inspect(e)}")
+
           socket
-          |> assign(:columns, columns)
-          |> assign(:rows, rows)
-          |> put_flash(:info, "Saved successfully")
-        {:error, failed_operation, failed_value, changes_so_far} ->
-          Logger.error("Transaction error")
-          Logger.error("operation: #{failed_operation}")
-          Logger.error("failed value: #{failed_value}")
-          Logger.error("#{inspect(changes_so_far)}")
-          socket |> put_flash(:error, "Transaction error\noperation: #{failed_operation}\nfailed value: #{failed_value}\n#{inspect(changes_so_far)}")
-      end
-    rescue
-      e ->
-        Logger.error("Postgres exception trying to commit transaction: #{inspect(e)}")
-        socket |> put_flash(:error, "Postgres exception trying to commit transaction:\n#{inspect(e)}")
+          |> put_flash(:error, "Postgres exception trying to commit transaction:\n#{inspect(e)}")
       end
 
     {:noreply, socket}
@@ -281,6 +316,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
   def publish_station_update() do
     {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
+
     Phoenix.PubSub.broadcast(
       PubSub,
       "station_update",
@@ -288,21 +324,26 @@ defmodule LanpartyseatingWeb.SettingsLive do
     )
   end
 
+  # Note: This handle_event clause is separated from others above by the
+  # helper function publish_station_update/0. This is intentional for code organization.
   def handle_event("move", params, socket) do
     grid = socket.assigns.grid
     %{"from" => %{"x" => x1, "y" => y1}, "to" => %{"x" => x2, "y" => y2}} = params
-    from_num = Map.get(grid, {x1, y1}) # should never be nil
-    to_num = Map.get(grid, {x2, y2}) # nil if empty slot
+    # should never be nil
+    from_num = Map.get(grid, {x1, y1})
+    # nil if empty slot
+    to_num = Map.get(grid, {x2, y2})
+
     grid =
-    if to_num != nil do
-      grid
+      if to_num != nil do
+        grid
         |> Map.put({x1, y1}, to_num)
         |> Map.put({x2, y2}, from_num)
-    else
-      grid
+      else
+        grid
         |> Map.delete({x1, y1})
         |> Map.put({x2, y2}, from_num)
-    end
+      end
 
     socket =
       socket
@@ -338,8 +379,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           class="w-16 max-w-xs input input-bordered input-xs"
           name="columns"
           value={@columns}
-        />
-        rows:
+        /> rows:
         <input
           type="number"
           placeholder="Y"
@@ -426,9 +466,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
               <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
                 <% station_num = assigns.grid |> Map.get({c, r}) %>
                 <%= if !is_nil(station_num) do %>
-                <div class="btn btn-warning" station-x={"#{c}"} station-y={"#{r}"} draggable="true"><%= Map.get(@grid, {c, r}) %></div>
+                  <div class="btn btn-warning" station-x={"#{c}"} station-y={"#{r}"} draggable="true">
+                    {Map.get(@grid, {c, r})}
+                  </div>
                 <% else %>
-                <div class="btn btn-outline" station-x={"#{c}"} station-y={"#{r}"}></div>
+                  <div class="btn btn-outline" station-x={"#{c}"} station-y={"#{r}"}></div>
                 <% end %>
               </div>
             <% end %>

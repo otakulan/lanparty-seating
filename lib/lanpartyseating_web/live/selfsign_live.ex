@@ -7,10 +7,11 @@ defmodule LanpartyseatingWeb.SelfSignLive do
 
   def assign_stations(socket, station_list) do
     {stations, {columns, rows}} = StationLogic.stations_by_xy(station_list)
+
     socket
-      |> assign(:columns, columns)
-      |> assign(:rows, rows)
-      |> assign(:stations, stations)
+    |> assign(:columns, columns)
+    |> assign(:rows, rows)
+    |> assign(:stations, stations)
   end
 
   def mount(_params, _session, socket) do
@@ -39,17 +40,16 @@ defmodule LanpartyseatingWeb.SelfSignLive do
         %{"station_number" => station_number, "uid" => uid},
         socket
       ) do
-
-    socket = case ReservationLogic.create_reservation(
-      String.to_integer(station_number),
-      String.to_integer("45"),
-      uid
-    )
-    do
-      # TODO: fix modal closing when registration_error is assigned
-      {:error, error} -> socket |> put_flash(:error, error)
-      {:ok, _updated} -> socket |> assign(:registration_error, nil) |> clear_flash(:error)
-    end
+    socket =
+      case ReservationLogic.create_reservation(
+             String.to_integer(station_number),
+             String.to_integer("45"),
+             uid
+           ) do
+        # TODO: fix modal closing when registration_error is assigned
+        {:error, error} -> socket |> put_flash(:error, error)
+        {:ok, _updated} -> socket |> assign(:registration_error, nil) |> clear_flash(:error)
+      end
 
     {:noreply, socket}
   end
@@ -63,8 +63,9 @@ defmodule LanpartyseatingWeb.SelfSignLive do
     <div class="jumbotron">
       <h1 style="font-size:30px">Stations</h1>
       <div class="flex flex-wrap w-full">
-
-        <h1 style="font-size:20px">Please select an available station / Veuillez sélectionner une station disponible:</h1>
+        <h1 style="font-size:20px">
+          Please select an available station / Veuillez sélectionner une station disponible:
+        </h1>
         <%= for r <- 0..(@rows-1) do %>
           <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full"}>
             <%= for c <- 0..(@columns-1) do %>
@@ -84,15 +85,14 @@ defmodule LanpartyseatingWeb.SelfSignLive do
         <% end %>
         <h1 style="font-size:20px">Legend / Légende:</h1>
         <div class="mb-4 flex flex-row w-full ">
-        <label class="btn btn-info mr-4">
+          <label class="btn btn-info mr-4">
             Available / Disponible
           </label>
           <label class="btn btn-warning mr-4">
             Occupied / Occupée
           </label>
-
-          </div>
-          <div class="mb-4 flex flex-row w-full ">
+        </div>
+        <div class="mb-4 flex flex-row w-full ">
           <label class="btn btn-error mr-4">
             Broken / Brisée
           </label>

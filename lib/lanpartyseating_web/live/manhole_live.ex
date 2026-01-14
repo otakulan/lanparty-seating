@@ -23,7 +23,10 @@ defmodule LanpartyseatingWeb.ManholeLive do
       {:ok, station_num} ->
         socket =
           socket
-          |> assign(:success_message, "Successfully broadcasted tournament start for station #{station_num}")
+          |> assign(
+            :success_message,
+            "Successfully broadcasted tournament start for station #{station_num}"
+          )
           |> assign(:error_message, nil)
           |> assign(:single_station_number, "")
 
@@ -39,12 +42,19 @@ defmodule LanpartyseatingWeb.ManholeLive do
     end
   end
 
-  def handle_event("range_broadcast", %{"range_start" => range_start, "range_end" => range_end}, socket) do
+  def handle_event(
+        "range_broadcast",
+        %{"range_start" => range_start, "range_end" => range_end},
+        socket
+      ) do
     case ManholeLogic.broadcast_station_range(range_start, range_end) do
       {:ok, start_num, end_num} ->
         socket =
           socket
-          |> assign(:success_message, "Successfully broadcasted tournament start for stations #{start_num} to #{end_num}")
+          |> assign(
+            :success_message,
+            "Successfully broadcasted tournament start for stations #{start_num} to #{end_num}"
+          )
           |> assign(:error_message, nil)
           |> assign(:range_start, "")
           |> assign(:range_end, "")
@@ -78,7 +88,10 @@ defmodule LanpartyseatingWeb.ManholeLive do
       {:ok, station_num} ->
         socket =
           socket
-          |> assign(:success_message, "Successfully cancelled reservation for station #{station_num}")
+          |> assign(
+            :success_message,
+            "Successfully cancelled reservation for station #{station_num}"
+          )
           |> assign(:error_message, nil)
           |> assign(:cancel_single_station_number, "")
 
@@ -94,12 +107,19 @@ defmodule LanpartyseatingWeb.ManholeLive do
     end
   end
 
-  def handle_event("cancel_range", %{"range_start" => range_start, "range_end" => range_end}, socket) do
+  def handle_event(
+        "cancel_range",
+        %{"range_start" => range_start, "range_end" => range_end},
+        socket
+      ) do
     case ManholeLogic.cancel_station_range(range_start, range_end) do
       {:ok, start_num, end_num} ->
         socket =
           socket
-          |> assign(:success_message, "Successfully cancelled reservations for stations #{start_num} to #{end_num}")
+          |> assign(
+            :success_message,
+            "Successfully cancelled reservations for stations #{start_num} to #{end_num}"
+          )
           |> assign(:error_message, nil)
           |> assign(:cancel_range_start, "")
           |> assign(:cancel_range_end, "")
@@ -142,32 +162,44 @@ defmodule LanpartyseatingWeb.ManholeLive do
     ~H"""
     <div class="container mx-auto px-4 py-4">
       <h1 class="text-3xl font-bold mb-6">Manhole - Tournament & Station Control</h1>
-
-      <!-- Warning Notice -->
+      
+    <!-- Warning Notice -->
       <div class="alert alert-warning mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="stroke-current shrink-0 h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"
+          />
         </svg>
-        <span>This is an administrative tool. Use with caution as it directly controls tournament and reservation states on desktop clients.</span>
+        <span>
+          This is an administrative tool. Use with caution as it directly controls tournament and reservation states on desktop clients.
+        </span>
       </div>
 
       <%= if @error_message do %>
         <div class="alert alert-error mb-4">
-          <span><%= @error_message %></span>
+          <span>{@error_message}</span>
         </div>
       <% end %>
 
       <%= if @success_message do %>
         <div class="alert alert-success mb-4">
-          <span><%= @success_message %></span>
+          <span>{@success_message}</span>
         </div>
       <% end %>
-
-      <!-- Tournament Start Controls -->
+      
+    <!-- Tournament Start Controls -->
       <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4 text-error">Tournament Start Controls</h2>
-
-        <!-- Single Station Tournament Start -->
+        
+    <!-- Single Station Tournament Start -->
         <div class="card bg-base-100 shadow-xl mb-6">
           <div class="card-body">
             <h3 class="card-title text-error">Single Station Tournament Start</h3>
@@ -197,12 +229,14 @@ defmodule LanpartyseatingWeb.ManholeLive do
             </form>
           </div>
         </div>
-
-        <!-- Range Tournament Start -->
+        
+    <!-- Range Tournament Start -->
         <div class="card bg-base-100 shadow-xl mb-6">
           <div class="card-body">
             <h3 class="card-title text-error">Station Range Tournament Start</h3>
-            <p class="text-base-content/70">Broadcast tournament start command to a range of stations</p>
+            <p class="text-base-content/70">
+              Broadcast tournament start command to a range of stations
+            </p>
 
             <form phx-submit="range_broadcast" class="form-control">
               <div class="flex gap-4 items-end">
@@ -252,12 +286,12 @@ defmodule LanpartyseatingWeb.ManholeLive do
           </div>
         </div>
       </div>
-
-      <!-- Cancel Reservation Controls -->
+      
+    <!-- Cancel Reservation Controls -->
       <div class="mb-8">
         <h2 class="text-2xl font-semibold mb-4 text-error">Cancel Reservation Controls</h2>
-
-        <!-- Single Station Cancel -->
+        
+    <!-- Single Station Cancel -->
         <div class="card bg-base-100 shadow-xl mb-6">
           <div class="card-body">
             <h3 class="card-title text-error">Single Station Logout</h3>
@@ -287,8 +321,8 @@ defmodule LanpartyseatingWeb.ManholeLive do
             </form>
           </div>
         </div>
-
-        <!-- Range Cancel -->
+        
+    <!-- Range Cancel -->
         <div class="card bg-base-100 shadow-xl mb-6">
           <div class="card-body">
             <h3 class="card-title text-error">Station Range Logout</h3>

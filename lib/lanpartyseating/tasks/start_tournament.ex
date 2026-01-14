@@ -15,7 +15,10 @@ defmodule Lanpartyseating.Tasks.StartTournament do
 
   @impl true
   def init({start_date, tournament_id}) do
-    delay = DateTime.diff(start_date, DateTime.truncate(DateTime.utc_now(), :second), :millisecond) |> max(0)
+    delay =
+      DateTime.diff(start_date, DateTime.truncate(DateTime.utc_now(), :second), :millisecond)
+      |> max(0)
+
     Logger.debug("Starting tournament #{tournament_id} in #{delay} milliseconds")
     Process.send_after(self(), :start_tournament, delay)
     {:ok, tournament_id}
@@ -32,6 +35,7 @@ defmodule Lanpartyseating.Tasks.StartTournament do
     Logger.debug("Starting tournament #{tournament_id}")
 
     {:ok, stations} = StationLogic.get_all_stations()
+
     Phoenix.PubSub.broadcast(
       PubSub,
       "station_update",
@@ -49,11 +53,10 @@ defmodule Lanpartyseating.Tasks.StartTournament do
         "desktop:all",
         "tournament_start",
         %{
-          station_number: res.station.station_number,
+          station_number: res.station.station_number
         }
       )
     end)
-
 
     {:stop, :normal, tournament_id}
   end

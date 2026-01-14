@@ -66,9 +66,9 @@
 
         devenv.shells.default = {
           languages.elixir.enable = true;
-          languages.elixir.package = pkgs.beam.packages.erlang_26.elixir_1_16;
+          languages.elixir.package = pkgs.beam.packages.erlang_28.elixir_1_19;
           languages.erlang.enable = true;
-          languages.erlang.package = pkgs.beam.interpreters.erlang_26;
+          languages.erlang.package = pkgs.beam.interpreters.erlang_28;
           languages.javascript.enable = true;
           languages.javascript.yarn.enable = true;
           services.postgres = {

@@ -64,7 +64,7 @@ defmodule LanpartyseatingWeb.AutoAssignLive do
       <br />
       <br />
 
-      <h2 style="font-size:30px"><%= assigns.message %></h2>
+      <h2 style="font-size:30px">{assigns.message}</h2>
     </div>
     """
   end
