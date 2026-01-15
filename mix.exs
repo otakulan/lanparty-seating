@@ -34,6 +34,8 @@ defmodule Lanpartyseating.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:bcrypt_elixir, "~> 3.0"},
+      {:swoosh, "~> 1.4"},
       {:phoenix, "~> 1.8.3"},
       {:phoenix_ecto, "~> 4.6"},
       {:ecto_sql, "~> 3.13"},

@@ -1,0 +1,73 @@
+<div class="min-h-screen flex items-center justify-center bg-base-200">
+  <div class="card w-96 bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title justify-center text-2xl mb-4">
+        Admin Login / Connexion admin
+      </h2>
+
+      <%= if Phoenix.Flash.get(@flash, :error) do %>
+        <div class="alert alert-error mb-4">
+          <span>{Phoenix.Flash.get(@flash, :error)}</span>
+        </div>
+      <% end %>
+
+      <%= if Phoenix.Flash.get(@flash, :info) do %>
+        <div class="alert alert-info mb-4">
+          <span>{Phoenix.Flash.get(@flash, :info)}</span>
+        </div>
+      <% end %>
+
+      <.form :let={f} for={@form} as={:user} action={~p"/login"} class="space-y-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Email / Courriel</span>
+          </label>
+          <input
+            type="email"
+            name={f[:email].name}
+            value={f[:email].value}
+            class="input input-bordered w-full"
+            autocomplete="email"
+            required
+            autofocus
+          />
+        </div>
+
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Password / Mot de passe</span>
+          </label>
+          <input
+            type="password"
+            name={f[:password].name}
+            class="input input-bordered w-full"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <div class="form-control">
+          <label class="label cursor-pointer justify-start gap-2">
+            <input
+              type="checkbox"
+              name={f[:remember_me].name}
+              value="true"
+              class="checkbox checkbox-sm"
+            />
+            <span class="label-text">Remember me / Se souvenir de moi</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full">
+          Log in / Connexion
+        </button>
+      </.form>
+
+      <div class="divider">or / ou</div>
+
+      <a href={~p"/login/badge"} class="btn btn-outline w-full">
+        Scan Admin Badge / Scanner un badge admin
+      </a>
+    </div>
+  </div>
+</div>

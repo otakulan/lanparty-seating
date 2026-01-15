@@ -5,6 +5,19 @@
 # is restricted to this project.
 import Config
 
+config :lanpartyseating, :scopes,
+  user: [
+    default: true,
+    module: Lanpartyseating.Accounts.Scope,
+    assign_key: :current_scope,
+    access_path: [:user, :id],
+    schema_key: :user_id,
+    schema_type: :id,
+    schema_table: :users,
+    test_data_fixture: Lanpartyseating.AccountsFixtures,
+    test_setup_helper: :register_and_log_in_user
+  ]
+
 # esbuild config
 config :esbuild,
   path: System.get_env("MIX_ESBUILD_PATH"),
@@ -45,6 +58,9 @@ config :logger, :console,
   metadata: [:user_id]
 
 config :phoenix, :json_library, Jason
+
+# Mailer configuration (emails not used, but required by phx.gen.auth)
+config :lanpartyseating, Lanpartyseating.Mailer, adapter: Swoosh.Adapters.Local
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
