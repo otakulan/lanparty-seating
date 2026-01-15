@@ -88,6 +88,7 @@ defmodule LanpartyseatingWeb do
       # UI Components
       alias NavComponent
       alias IconComponent
+      import LanpartyseatingWeb.Components.UI
 
       # Shared helper functions
       import LanpartyseatingWeb.Helpers

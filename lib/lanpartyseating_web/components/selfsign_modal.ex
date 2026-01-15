@@ -1,8 +1,6 @@
 defmodule SelfSignModalComponent do
   use Phoenix.Component
-
-  # Optionally also bring the HTML helpers
-  # use Phoenix.HTML
+  import LanpartyseatingWeb.Components.UI, only: [station_button: 1]
 
   attr(:error, :string, required: false)
   attr(:station, :any, required: true)
@@ -71,51 +69,25 @@ defmodule SelfSignModalComponent do
 
       :occupied ->
         assigns =
-          assign(
-            assigns,
-            :end_date_iso,
-            List.first(assigns.station.reservations).end_date
-            |> DateTime.to_iso8601()
-          )
+          assign(assigns, :end_date, List.first(assigns.station.reservations).end_date)
 
         ~H"""
-        <div x-data class="h-full">
-          <div
-            class="btn btn-warning rounded-lg station-card flex flex-col h-full py-1 w-full"
-            x-data={"{ endTime: new Date('#{@end_date_iso}'), remaining: '' }"}
-            x-init="
-              const update = () => {
-                const now = new Date();
-                const diff = Math.max(0, endTime - now);
-                const mins = Math.floor(diff / 60000);
-                const secs = Math.floor((diff % 60000) / 1000);
-                remaining = mins + ':' + secs.toString().padStart(2, '0');
-              };
-              update();
-              setInterval(update, 1000);
-            "
-          >
-            <div class="font-bold">{@station.station_number}</div>
-            <div class="text-xs" x-text="remaining"></div>
-          </div>
+        <div class="h-full">
+          <.station_button status={:occupied} station_number={@station.station_number} end_date={@end_date} class="w-full" />
         </div>
         """
 
       :broken ->
         ~H"""
-        <div x-data class="h-full">
-          <label class="btn btn-error rounded-lg station-card w-full h-full">
-            {@station.station_number}
-          </label>
+        <div class="h-full">
+          <.station_button status={:broken} station_number={@station.station_number} class="w-full" />
         </div>
         """
 
       :reserved ->
         ~H"""
-        <div x-data class="h-full">
-          <label class="btn btn-neutral rounded-lg station-card w-full h-full">
-            {@station.station_number}
-          </label>
+        <div class="h-full">
+          <.station_button status={:reserved} station_number={@station.station_number} class="w-full" />
         </div>
         """
     end

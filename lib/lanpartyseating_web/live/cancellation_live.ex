@@ -128,68 +128,26 @@ defmodule LanpartyseatingWeb.CancellationLive do
       </p>
 
       <%!-- LEGEND --%>
-      <div class="flex flex-wrap gap-4 mb-6 p-3 bg-base-200 rounded-lg">
-        <div class="flex items-center gap-2 text-sm">
-          <span class="w-4 h-4 rounded-full bg-success inline-block"></span>
-          <span>Available / Disponible</span>
-        </div>
-        <div class="flex items-center gap-2 text-sm">
-          <span class="w-4 h-4 rounded-full bg-warning inline-block"></span>
-          <span>Occupied / Occupée</span>
-        </div>
-        <div class="flex items-center gap-2 text-sm">
-          <span class="w-4 h-4 rounded-full bg-error inline-block"></span>
-          <span>Broken / Brisée</span>
-        </div>
-        <div class="flex items-center gap-2 text-sm">
-          <span class="w-4 h-4 rounded-full bg-neutral inline-block"></span>
-          <span>Tournament / Tournoi</span>
-        </div>
-      </div>
+      <.station_legend class="mb-6" />
 
-      <div class="flex flex-col gap-4 w-full">
-        <%!-- Group rows into table rows (separated by rowpad) --%>
-        <% row_groups = group_by_padding(0..(@rows - 1), @rowpad, @row_trailing) %>
-        <% rows_per_table = if @rowpad > 1, do: @rowpad, else: @rows %>
-        <% cols_per_table = if @colpad > 1, do: @colpad, else: @columns %>
-        <%= for row_group <- row_groups do %>
-          <%!-- Calculate how many rows to render (pad partial tables) --%>
-          <% actual_rows = length(row_group) %>
-          <% render_rows = max(actual_rows, rows_per_table) %>
-          <div class="flex flex-row gap-4">
-            <%!-- Group columns into tables (separated by colpad) --%>
-            <% col_groups = group_by_padding(0..(@columns - 1), @colpad, @col_trailing) %>
-            <%= for col_group <- col_groups do %>
-              <% actual_cols = length(col_group) %>
-              <% render_cols = max(actual_cols, cols_per_table) %>
-              <div class="flex-1 bg-base-200 border-2 border-base-300 rounded-xl p-2 flex flex-col gap-1">
-                <%!-- Render rows, padding partial tables to full height --%>
-                <%= for row_idx <- 0..(render_rows - 1) do %>
-                  <% r = Enum.at(row_group, row_idx) %>
-                  <div class="flex flex-row h-11">
-                    <%= for col_idx <- 0..(render_cols - 1) do %>
-                      <% c = Enum.at(col_group, col_idx) %>
-                      <div class="flex flex-col flex-1 grow mx-0.5">
-                        <%= if r != nil and c != nil do %>
-                          <% station_data = @stations |> Map.get({c, r}) %>
-                          <%= if !is_nil(station_data) do %>
-                            <CancellationModalComponent.modal
-                              error={@registration_error}
-                              reservation={station_data.reservation}
-                              station={station_data.station}
-                              status={station_data.status}
-                            />
-                          <% end %>
-                        <% end %>
-                      </div>
-                    <% end %>
-                  </div>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
+      <.station_grid
+        stations={@stations}
+        rows={@rows}
+        columns={@columns}
+        rowpad={@rowpad}
+        colpad={@colpad}
+        row_trailing={@row_trailing}
+        col_trailing={@col_trailing}
+      >
+        <:cell :let={station_data}>
+          <CancellationModalComponent.modal
+            error={@registration_error}
+            reservation={station_data.reservation}
+            station={station_data.station}
+            status={station_data.status}
+          />
+        </:cell>
+      </.station_grid>
     </div>
     """
   end

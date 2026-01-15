@@ -352,37 +352,29 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-6xl">
-      <h1 class="text-3xl font-bold mb-2">Station Layout Settings</h1>
-      <p class="text-base-content/60 mb-8">Configure the station grid layout displayed on signage</p>
+      <.page_header title="Station Layout Settings" subtitle="Configure the station grid layout displayed on signage" />
       
     <!-- Grid Configuration Section -->
-      <section class="mb-10">
-        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2">Grid Configuration</h2>
+      <.admin_section title="Grid Configuration">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <!-- Grid Dimensions -->
           <div>
             <h3 class="font-medium mb-3">Dimensions</h3>
             <form phx-change="change_dimensions" class="space-y-3">
-              <label class="flex items-center gap-3">
-                <span class="w-20 text-sm text-base-content/70">Columns</span>
-                <input
-                  type="number"
-                  min={@grid_width}
-                  class="input input-bordered input-sm w-24"
-                  name="columns"
-                  value={@columns}
-                />
-              </label>
-              <label class="flex items-center gap-3">
-                <span class="w-20 text-sm text-base-content/70">Rows</span>
-                <input
-                  type="number"
-                  min={@grid_height}
-                  class="input input-bordered input-sm w-24"
-                  name="rows"
-                  value={@rows}
-                />
-              </label>
+              <.labeled_input
+                label="Columns"
+                type="number"
+                name="columns"
+                value={@columns}
+                min={@grid_width}
+              />
+              <.labeled_input
+                label="Rows"
+                type="number"
+                name="rows"
+                value={@rows}
+                min={@grid_height}
+              />
             </form>
           </div>
           
@@ -390,17 +382,14 @@ defmodule LanpartyseatingWeb.SettingsLive do
           <div>
             <h3 class="font-medium mb-3">Station Count</h3>
             <form phx-change="change_station_count">
-              <label class="flex items-center gap-3">
-                <span class="w-20 text-sm text-base-content/70">Stations</span>
-                <input
-                  type="number"
-                  min="1"
-                  max={"#{@rows * @columns}"}
-                  class="input input-bordered input-sm w-24"
-                  name="station_count"
-                  value={@station_count}
-                />
-              </label>
+              <.labeled_input
+                label="Stations"
+                type="number"
+                name="station_count"
+                value={@station_count}
+                min={1}
+                max={"#{@rows * @columns}"}
+              />
             </form>
             <p class="text-xs text-base-content/50 mt-2">Max: {@rows * @columns}</p>
           </div>
@@ -409,28 +398,22 @@ defmodule LanpartyseatingWeb.SettingsLive do
           <div>
             <h3 class="font-medium mb-3">Aisle Gaps</h3>
             <form phx-change="change_padding" class="space-y-3">
-              <label class="flex items-center gap-3">
-                <span class="w-20 text-sm text-base-content/70">Col gap</span>
-                <input
-                  type="number"
-                  min="1"
-                  max="15"
-                  class="input input-bordered input-sm w-24"
-                  name="colpad"
-                  value={@colpad}
-                />
-              </label>
-              <label class="flex items-center gap-3">
-                <span class="w-20 text-sm text-base-content/70">Row gap</span>
-                <input
-                  type="number"
-                  min="1"
-                  max="15"
-                  class="input input-bordered input-sm w-24"
-                  name="rowpad"
-                  value={@rowpad}
-                />
-              </label>
+              <.labeled_input
+                label="Col gap"
+                type="number"
+                name="colpad"
+                value={@colpad}
+                min={1}
+                max={15}
+              />
+              <.labeled_input
+                label="Row gap"
+                type="number"
+                name="rowpad"
+                value={@rowpad}
+                min={1}
+                max={15}
+              />
             </form>
             <div class="flex gap-2 mt-3">
               <button class="btn btn-xs btn-outline" phx-click="col_trailing">
@@ -442,11 +425,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
             </div>
           </div>
         </div>
-      </section>
+      </.admin_section>
       
     <!-- Layout Tools Section -->
-      <section class="mb-10">
-        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2">Layout Tools</h2>
+      <.admin_section title="Layout Tools">
         <p class="text-sm text-base-content/60 mb-4">Transform station numbering or drag stations in the preview to manually reorder.</p>
 
         <div class="flex flex-wrap gap-6 items-end">
@@ -495,7 +477,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             </div>
           </div>
         </div>
-      </section>
+      </.admin_section>
       
     <!-- Layout Preview Section -->
       <section class="mb-10">

@@ -141,8 +141,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-4xl">
-      <h1 class="text-3xl font-bold mb-2">Manhole - Station Control</h1>
-      <p class="text-base-content/60 mb-6">Administrative tool for tournament and reservation management</p>
+      <.page_header title="Manhole - Station Control" subtitle="Administrative tool for tournament and reservation management" />
       
     <!-- Warning Notice -->
       <div class="alert alert-warning mb-8">
@@ -175,29 +174,24 @@ defmodule LanpartyseatingWeb.ManholeLive do
       <% end %>
       
     <!-- Tournament Start Controls -->
-      <section class="mb-10">
-        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2 text-error">Tournament Start Controls</h2>
-
+      <.admin_section title="Tournament Start Controls" title_class="text-error">
         <div class="space-y-6">
           <!-- Single Station -->
           <div>
             <h3 class="font-medium mb-2">Single Station</h3>
             <form phx-submit="single_station_broadcast" class="flex items-end gap-4">
-              <label class="flex items-center gap-3">
-                <span class="text-sm text-base-content/70">Station #</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="e.g. 15"
-                  class="input input-bordered input-sm w-24"
-                  name="station_number"
-                  value={@single_station_number}
-                  phx-change="update_single_station"
-                  phx-focus="clear_messages"
-                  required
-                />
-              </label>
+              <.labeled_input
+                label="Station #"
+                type="number"
+                name="station_number"
+                value={@single_station_number}
+                min={1}
+                step={1}
+                placeholder="e.g. 15"
+                phx-change="update_single_station"
+                phx-focus="clear_messages"
+                required
+              />
               <button type="submit" class="btn btn-error btn-sm">Start Tournament</button>
             </form>
           </div>
@@ -206,66 +200,55 @@ defmodule LanpartyseatingWeb.ManholeLive do
           <div>
             <h3 class="font-medium mb-2">Station Range</h3>
             <form phx-submit="range_broadcast" class="flex items-end gap-4">
-              <label class="flex items-center gap-3">
-                <span class="text-sm text-base-content/70">From</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="Start"
-                  class="input input-bordered input-sm w-24"
-                  name="range_start"
-                  value={@range_start}
-                  phx-change="update_range_start"
-                  phx-focus="clear_messages"
-                  required
-                />
-              </label>
-              <label class="flex items-center gap-3">
-                <span class="text-sm text-base-content/70">To</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="End"
-                  class="input input-bordered input-sm w-24"
-                  name="range_end"
-                  value={@range_end}
-                  phx-change="update_range_end"
-                  phx-focus="clear_messages"
-                  required
-                />
-              </label>
+              <.labeled_input
+                label="From"
+                type="number"
+                name="range_start"
+                value={@range_start}
+                min={1}
+                step={1}
+                placeholder="Start"
+                phx-change="update_range_start"
+                phx-focus="clear_messages"
+                required
+              />
+              <.labeled_input
+                label="To"
+                type="number"
+                name="range_end"
+                value={@range_end}
+                min={1}
+                step={1}
+                placeholder="End"
+                phx-change="update_range_end"
+                phx-focus="clear_messages"
+                required
+              />
               <button type="submit" class="btn btn-error btn-sm">Start Tournament Range</button>
             </form>
           </div>
         </div>
-      </section>
+      </.admin_section>
       
     <!-- Cancel Reservation Controls -->
-      <section class="mb-10">
-        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2 text-error">Cancel Reservation Controls</h2>
-
+      <.admin_section title="Cancel Reservation Controls" title_class="text-error">
         <div class="space-y-6">
           <!-- Single Station Logout -->
           <div>
             <h3 class="font-medium mb-2">Single Station Logout</h3>
             <form phx-submit="cancel_single_station" class="flex items-end gap-4">
-              <label class="flex items-center gap-3">
-                <span class="text-sm text-base-content/70">Station #</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="e.g. 15"
-                  class="input input-bordered input-sm w-24"
-                  name="station_number"
-                  value={@cancel_single_station_number}
-                  phx-change="update_cancel_single_station"
-                  phx-focus="clear_messages"
-                  required
-                />
-              </label>
+              <.labeled_input
+                label="Station #"
+                type="number"
+                name="station_number"
+                value={@cancel_single_station_number}
+                min={1}
+                step={1}
+                placeholder="e.g. 15"
+                phx-change="update_cancel_single_station"
+                phx-focus="clear_messages"
+                required
+              />
               <button type="submit" class="btn btn-error btn-sm">Cancel Reservation</button>
             </form>
           </div>
@@ -274,41 +257,35 @@ defmodule LanpartyseatingWeb.ManholeLive do
           <div>
             <h3 class="font-medium mb-2">Station Range Logout</h3>
             <form phx-submit="cancel_range" class="flex items-end gap-4">
-              <label class="flex items-center gap-3">
-                <span class="text-sm text-base-content/70">From</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="Start"
-                  class="input input-bordered input-sm w-24"
-                  name="range_start"
-                  value={@cancel_range_start}
-                  phx-change="update_cancel_range_start"
-                  phx-focus="clear_messages"
-                  required
-                />
-              </label>
-              <label class="flex items-center gap-3">
-                <span class="text-sm text-base-content/70">To</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="End"
-                  class="input input-bordered input-sm w-24"
-                  name="range_end"
-                  value={@cancel_range_end}
-                  phx-change="update_cancel_range_end"
-                  phx-focus="clear_messages"
-                  required
-                />
-              </label>
+              <.labeled_input
+                label="From"
+                type="number"
+                name="range_start"
+                value={@cancel_range_start}
+                min={1}
+                step={1}
+                placeholder="Start"
+                phx-change="update_cancel_range_start"
+                phx-focus="clear_messages"
+                required
+              />
+              <.labeled_input
+                label="To"
+                type="number"
+                name="range_end"
+                value={@cancel_range_end}
+                min={1}
+                step={1}
+                placeholder="End"
+                phx-change="update_cancel_range_end"
+                phx-focus="clear_messages"
+                required
+              />
               <button type="submit" class="btn btn-error btn-sm">Cancel Range</button>
             </form>
           </div>
         </div>
-      </section>
+      </.admin_section>
     </div>
     """
   end

@@ -1,5 +1,6 @@
 defmodule CancellationModalComponent do
   use Phoenix.Component
+  import LanpartyseatingWeb.Components.UI, only: [countdown: 1, station_button: 1]
 
   attr(:error, :string, required: false)
   attr(:station, :any, required: true)
@@ -51,33 +52,16 @@ defmodule CancellationModalComponent do
 
       :occupied ->
         assigns =
-          assign(
-            assigns,
-            :end_date_iso,
-            List.first(assigns.station.reservations).end_date
-            |> DateTime.to_iso8601()
-          )
+          assign(assigns, :end_date, List.first(assigns.station.reservations).end_date)
 
         ~H"""
         <div x-data class="h-full">
           <label
             class="btn btn-warning rounded-lg station-card flex flex-col h-full py-1 w-full"
             x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
-            x-data={"{ endTime: new Date('#{@end_date_iso}'), remaining: '' }"}
-            x-init="
-              const update = () => {
-                const now = new Date();
-                const diff = Math.max(0, endTime - now);
-                const mins = Math.floor(diff / 60000);
-                const secs = Math.floor((diff % 60000) / 1000);
-                remaining = mins + ':' + secs.toString().padStart(2, '0');
-              };
-              update();
-              setInterval(update, 1000);
-            "
           >
             <div class="font-bold">{@station.station_number}</div>
-            <div class="text-xs" x-text="remaining"></div>
+            <.countdown end_date={@end_date} class="text-xs" />
           </label>
 
           <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
@@ -92,23 +76,9 @@ defmodule CancellationModalComponent do
                   <span class="text-base-content/70">Badge:</span>
                   <span class="font-bold">{@reservation.badge}</span>
                 </div>
-                <div
-                  class="flex justify-between items-center mt-2"
-                  x-data={"{ endTime: new Date('#{@end_date_iso}'), remaining: '' }"}
-                  x-init="
-                    const update = () => {
-                      const now = new Date();
-                      const diff = Math.max(0, endTime - now);
-                      const mins = Math.floor(diff / 60000);
-                      const secs = Math.floor((diff % 60000) / 1000);
-                      remaining = mins + ':' + secs.toString().padStart(2, '0');
-                    };
-                    update();
-                    setInterval(update, 1000);
-                  "
-                >
+                <div class="flex justify-between items-center mt-2">
                   <span class="text-base-content/70">Time remaining:</span>
-                  <span class="font-mono font-bold text-lg" x-text="remaining"></span>
+                  <.countdown end_date={@end_date} class="font-mono font-bold text-lg" />
                 </div>
               </div>
 
@@ -213,10 +183,8 @@ defmodule CancellationModalComponent do
 
       :reserved ->
         ~H"""
-        <div x-data class="h-full">
-          <label class="btn btn-neutral rounded-lg station-card w-full h-full">
-            {@station.station_number}
-          </label>
+        <div class="h-full">
+          <.station_button status={:reserved} station_number={@station.station_number} class="w-full" />
         </div>
         """
     end

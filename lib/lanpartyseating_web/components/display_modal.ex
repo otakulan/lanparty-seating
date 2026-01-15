@@ -1,8 +1,6 @@
 defmodule DisplayModalComponent do
   use Phoenix.Component
-
-  # Optionally also bring the HTML helpers
-  # use Phoenix.HTML
+  import LanpartyseatingWeb.Components.UI, only: [station_button: 1]
 
   attr(:station, :any, required: true)
   attr(:status, :any, required: true)
@@ -18,54 +16,25 @@ defmodule DisplayModalComponent do
     case assigns.status do
       :available ->
         ~H"""
-        <label class="btn btn-success rounded-lg station-card station-available h-full">
-          {assigns.station.station_number}
-        </label>
+        <.station_button status={:available} station_number={@station.station_number} class="w-full" />
         """
 
       :occupied ->
-        # Get the end_date as ISO8601 for Alpine.js countdown
         assigns =
-          assign(
-            assigns,
-            :end_date_iso,
-            List.first(assigns.station.reservations).end_date
-            |> DateTime.to_iso8601()
-          )
+          assign(assigns, :end_date, List.first(assigns.station.reservations).end_date)
 
         ~H"""
-        <label
-          class="btn btn-warning rounded-lg station-card flex flex-col h-full py-1"
-          x-data={"{ endTime: new Date('#{assigns.end_date_iso}'), remaining: '' }"}
-          x-init="
-            const update = () => {
-              const now = new Date();
-              const diff = Math.max(0, endTime - now);
-              const mins = Math.floor(diff / 60000);
-              const secs = Math.floor((diff % 60000) / 1000);
-              remaining = mins + ':' + secs.toString().padStart(2, '0');
-            };
-            update();
-            setInterval(update, 1000);
-          "
-        >
-          <div class="font-bold">{assigns.station.station_number}</div>
-          <div class="text-xs" x-text="remaining"></div>
-        </label>
+        <.station_button status={:occupied} station_number={@station.station_number} end_date={@end_date} class="w-full" />
         """
 
       :broken ->
         ~H"""
-        <label class="btn btn-error rounded-lg station-card h-full">
-          {assigns.station.station_number}
-        </label>
+        <.station_button status={:broken} station_number={@station.station_number} class="w-full" />
         """
 
       :reserved ->
         ~H"""
-        <label class="btn btn-neutral rounded-lg station-card h-full">
-          {assigns.station.station_number}
-        </label>
+        <.station_button status={:reserved} station_number={@station.station_number} class="w-full" />
         """
     end
   end

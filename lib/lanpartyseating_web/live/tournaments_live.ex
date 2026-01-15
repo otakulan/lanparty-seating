@@ -75,19 +75,15 @@ defmodule LanpartyseatingWeb.TournamentsLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-5xl">
-      <h1 class="text-3xl font-bold mb-2">Tournament Management</h1>
-      <p class="text-base-content/60 mb-8">Schedule tournaments and reserve stations</p>
+      <.page_header title="Tournament Management" subtitle="Schedule tournaments and reserve stations" />
       
     <!-- Create Tournament Section -->
-      <section class="mb-10">
-        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2">Create New Tournament</h2>
+      <.admin_section title="Create New Tournament">
         <TournamentModalComponent.tournament_modal />
-      </section>
+      </.admin_section>
       
     <!-- Tournaments List Section -->
-      <section>
-        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2">Scheduled Tournaments</h2>
-
+      <.admin_section title="Scheduled Tournaments" class="">
         <%= if Enum.empty?(@tournaments) do %>
           <p class="text-base-content/50 py-4">No tournaments scheduled yet.</p>
         <% else %>
@@ -127,7 +123,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
             </table>
           </div>
         <% end %>
-      </section>
+      </.admin_section>
     </div>
     """
   end
