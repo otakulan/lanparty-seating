@@ -1,9 +1,9 @@
 <!-- Navigation -->
 <NavComponent.nav nav_menu={@nav_menu} nav_menu_active_path={@nav_menu_active_path} />
 <!-- Page Content -->
-<div class="px-4">
+<div class="px-6 py-6 lg:px-8">
   <%= if Phoenix.Flash.get(@flash, :info) do %>
-    <div class="shadow-lg alert alert-info">
+    <div class="shadow-lg alert alert-info mb-6">
       <div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -23,7 +23,7 @@
     </div>
   <% end %>
   <%= if Phoenix.Flash.get(@flash, :error) do %>
-    <div class="shadow-lg alert alert-error">
+    <div class="shadow-lg alert alert-error mb-6">
       <div>
         <svg
           xmlns="http://www.w3.org/2000/svg"

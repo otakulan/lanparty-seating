@@ -351,116 +351,202 @@ defmodule LanpartyseatingWeb.SettingsLive do
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-    <div class="jumbotron">
-      <h1 style="font-size:30px">Grid Size Configuration</h1>
-      <form phx-change="change_dimensions">
-        columns:
-        <input
-          type="number"
-          placeholder="X"
-          min={@grid_width}
-          class="w-16 max-w-xs input input-xs"
-          name="columns"
-          value={@columns}
-        /> rows:
-        <input
-          type="number"
-          placeholder="Y"
-          min={@grid_height}
-          class="w-16 max-w-xs input input-xs"
-          name="rows"
-          value={@rows}
-        />
-      </form>
-
-      <h1 style="font-size:30px">Number Of Stations</h1>
-      <form phx-change="change_station_count">
-        <input
-          type="number"
-          placeholder="X"
-          min="1"
-          max={"#{@rows * @columns}"}
-          class="w-16 max-w-xs input input-xs"
-          name="station_count"
-          value={@station_count}
-        />
-      </form>
-
-      <h1 style="font-size:30px">Cell Padding Configuration</h1>
-      <form phx-change="change_padding">
-        <input
-          type="number"
-          placeholder="X"
-          min="1"
-          max="15"
-          class="w-16 max-w-xs input input-xs"
-          name="colpad"
-          value={@colpad}
-        />
-        <input
-          type="number"
-          placeholder="Y"
-          min="1"
-          max="15"
-          class="w-16 max-w-xs input input-xs"
-          name="rowpad"
-          value={@rowpad}
-        />
-      </form>
-
-      <button class="btn btn-sm" phx-click="col_trailing">
-        <IconComponent.double_sided_arrow_horizontal /> trailing
-      </button>
-      <button class="btn btn-sm" phx-click="row_trailing">
-        <IconComponent.double_sided_arrow_vertical /> trailing
-      </button>
-
-      <h1 style="font-size:30px">Layout Configuration</h1>
-
-      <button class="btn btn-sm" phx-click="horizontal_mirror_even">
-        <IconComponent.double_sided_arrow_horizontal /> even
-      </button>
-      <button class="btn btn-sm" phx-click="horizontal_mirror_odd">
-        <IconComponent.double_sided_arrow_horizontal /> odd
-      </button>
-      <button class="btn btn-sm" phx-click="vertical_mirror_even">
-        <IconComponent.double_sided_arrow_vertical /> even
-      </button>
-      <button class="btn btn-sm" phx-click="vertical_mirror_odd">
-        <IconComponent.double_sided_arrow_vertical /> odd
-      </button>
-      <button class="btn btn-sm" phx-click="diagonal_mirror">
-        <IconComponent.refresh /> orientation
-      </button>
-      <h1 style="font-size:30px">Reset</h1>
-      <button class="btn btn-sm" phx-click="reset_grid_column_major">
-        <IconComponent.x /> column major
-      </button>
-      <button class="btn btn-sm" phx-click="reset_grid_row_major">
-        <IconComponent.x /> row major
-      </button>
-
-      <h1 style="font-size:30px">Layout Preview</h1>
-
-      <div id="staton-grid" phx-hook="ButtonGridHook" class="flex flex-wrap w-full">
-        <%= for r <- 0..(@rows-1) do %>
-          <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
-            <%= for c <- 0..(@columns-1) do %>
-              <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
-                <% station_num = assigns.grid |> Map.get({c, r}) %>
-                <%= if !is_nil(station_num) do %>
-                  <div class="btn btn-warning" station-x={"#{c}"} station-y={"#{r}"} draggable="true">
-                    {Map.get(@grid, {c, r})}
-                  </div>
-                <% else %>
-                  <div class="btn btn-outline" station-x={"#{c}"} station-y={"#{r}"}></div>
-                <% end %>
-              </div>
-            <% end %>
+    <div class="container mx-auto max-w-6xl">
+      <h1 class="text-3xl font-bold mb-2">Station Layout Settings</h1>
+      <p class="text-base-content/60 mb-8">Configure the station grid layout displayed on signage</p>
+      
+    <!-- Grid Configuration Section -->
+      <section class="mb-10">
+        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2">Grid Configuration</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Grid Dimensions -->
+          <div>
+            <h3 class="font-medium mb-3">Dimensions</h3>
+            <form phx-change="change_dimensions" class="space-y-3">
+              <label class="flex items-center gap-3">
+                <span class="w-20 text-sm text-base-content/70">Columns</span>
+                <input
+                  type="number"
+                  min={@grid_width}
+                  class="input input-bordered input-sm w-24"
+                  name="columns"
+                  value={@columns}
+                />
+              </label>
+              <label class="flex items-center gap-3">
+                <span class="w-20 text-sm text-base-content/70">Rows</span>
+                <input
+                  type="number"
+                  min={@grid_height}
+                  class="input input-bordered input-sm w-24"
+                  name="rows"
+                  value={@rows}
+                />
+              </label>
+            </form>
           </div>
-        <% end %>
-      </div>
-      <button class="btn btn-wide" phx-click="save">Save layout</button>
+          
+    <!-- Station Count -->
+          <div>
+            <h3 class="font-medium mb-3">Station Count</h3>
+            <form phx-change="change_station_count">
+              <label class="flex items-center gap-3">
+                <span class="w-20 text-sm text-base-content/70">Stations</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={"#{@rows * @columns}"}
+                  class="input input-bordered input-sm w-24"
+                  name="station_count"
+                  value={@station_count}
+                />
+              </label>
+            </form>
+            <p class="text-xs text-base-content/50 mt-2">Max: {@rows * @columns}</p>
+          </div>
+          
+    <!-- Aisle Gaps -->
+          <div>
+            <h3 class="font-medium mb-3">Aisle Gaps</h3>
+            <form phx-change="change_padding" class="space-y-3">
+              <label class="flex items-center gap-3">
+                <span class="w-20 text-sm text-base-content/70">Col gap</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="15"
+                  class="input input-bordered input-sm w-24"
+                  name="colpad"
+                  value={@colpad}
+                />
+              </label>
+              <label class="flex items-center gap-3">
+                <span class="w-20 text-sm text-base-content/70">Row gap</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="15"
+                  class="input input-bordered input-sm w-24"
+                  name="rowpad"
+                  value={@rowpad}
+                />
+              </label>
+            </form>
+            <div class="flex gap-2 mt-3">
+              <button class="btn btn-xs btn-outline" phx-click="col_trailing">
+                <IconComponent.double_sided_arrow_horizontal /> Shift H
+              </button>
+              <button class="btn btn-xs btn-outline" phx-click="row_trailing">
+                <IconComponent.double_sided_arrow_vertical /> Shift V
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+    <!-- Layout Tools Section -->
+      <section class="mb-10">
+        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2">Layout Tools</h2>
+        <p class="text-sm text-base-content/60 mb-4">Transform station numbering or drag stations in the preview to manually reorder.</p>
+
+        <div class="flex flex-wrap gap-6 items-end">
+          <div>
+            <span class="text-xs text-base-content/50 uppercase tracking-wide">Mirror Rows</span>
+            <div class="flex gap-2 mt-1">
+              <button class="btn btn-sm" phx-click="horizontal_mirror_even">
+                <IconComponent.double_sided_arrow_horizontal /> Even
+              </button>
+              <button class="btn btn-sm" phx-click="horizontal_mirror_odd">
+                <IconComponent.double_sided_arrow_horizontal /> Odd
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <span class="text-xs text-base-content/50 uppercase tracking-wide">Mirror Columns</span>
+            <div class="flex gap-2 mt-1">
+              <button class="btn btn-sm" phx-click="vertical_mirror_even">
+                <IconComponent.double_sided_arrow_vertical /> Even
+              </button>
+              <button class="btn btn-sm" phx-click="vertical_mirror_odd">
+                <IconComponent.double_sided_arrow_vertical /> Odd
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <span class="text-xs text-base-content/50 uppercase tracking-wide">Rotate</span>
+            <div class="mt-1">
+              <button class="btn btn-sm" phx-click="diagonal_mirror">
+                <IconComponent.refresh /> Transpose
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <span class="text-xs text-base-content/50 uppercase tracking-wide">Reset</span>
+            <div class="flex gap-2 mt-1">
+              <button class="btn btn-sm btn-warning" phx-click="reset_grid_column_major">
+                <IconComponent.x /> Column Major
+              </button>
+              <button class="btn btn-sm btn-warning" phx-click="reset_grid_row_major">
+                <IconComponent.x /> Row Major
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+    <!-- Layout Preview Section -->
+      <section class="mb-10">
+        <div class="flex justify-between items-center mb-4 border-b border-base-300 pb-2">
+          <h2 class="text-xl font-semibold">Layout Preview</h2>
+          <button class="btn btn-primary" phx-click="save">Save Layout</button>
+        </div>
+
+        <div id="staton-grid" phx-hook="ButtonGridHook" class="flex flex-col gap-4 w-full p-4">
+          <%!-- Group rows into table rows (separated by rowpad) --%>
+          <% row_groups = group_by_padding(0..(@rows - 1), @rowpad, @row_trailing) %>
+          <% rows_per_table = if @rowpad > 1, do: @rowpad, else: @rows %>
+          <% cols_per_table = if @colpad > 1, do: @colpad, else: @columns %>
+          <%= for row_group <- row_groups do %>
+            <div class="flex flex-row gap-4">
+              <%!-- Group columns into tables (separated by colpad) --%>
+              <% col_groups = group_by_padding(0..(@columns - 1), @colpad, @col_trailing) %>
+              <%= for col_group <- col_groups do %>
+                <%!-- Calculate how many rows to render (pad partial tables) --%>
+                <% actual_rows = length(row_group) %>
+                <% render_rows = max(actual_rows, rows_per_table) %>
+                <% actual_cols = length(col_group) %>
+                <% render_cols = max(actual_cols, cols_per_table) %>
+                <div class="flex-1 bg-base-200 border-2 border-base-300 rounded-xl p-2 flex flex-col gap-1">
+                  <%!-- Render rows, padding partial tables to full height --%>
+                  <%= for row_idx <- 0..(render_rows - 1) do %>
+                    <% r = Enum.at(row_group, row_idx) %>
+                    <div class="flex flex-row h-11">
+                      <%= for col_idx <- 0..(render_cols - 1) do %>
+                        <% c = Enum.at(col_group, col_idx) %>
+                        <div class="flex flex-col flex-1 grow mx-0.5">
+                          <%= if r != nil and c != nil do %>
+                            <% station_num = assigns.grid |> Map.get({c, r}) %>
+                            <%= if !is_nil(station_num) do %>
+                              <div class="btn btn-warning h-full" station-x={"#{c}"} station-y={"#{r}"} draggable="true">
+                                {Map.get(@grid, {c, r})}
+                              </div>
+                            <% else %>
+                              <div class="btn btn-outline btn-ghost h-full" station-x={"#{c}"} station-y={"#{r}"}></div>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </section>
     </div>
     <script>
       let hooks = {};

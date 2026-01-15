@@ -9,10 +9,10 @@ defmodule NavComponent do
 
   def nav(assigns) do
     ~H"""
-    <nav class="navbar bg-base-300">
+    <nav class="navbar bg-neutral text-neutral-content shadow-lg px-4 lg:px-8">
       <div class="navbar-start">
         <div class="flex-1">
-          <.link patch="/" class="text-xl normal-case btn btn-ghost primary-content">
+          <.link patch="/" class="text-xl normal-case btn btn-ghost hover:bg-neutral-focus">
             PC Gaming / Jeux PC
           </.link>
         </div>
@@ -20,8 +20,10 @@ defmodule NavComponent do
       <div class="navbar-end">
         <ul class="p-0 menu menu-horizontal">
           <%= for {menu_txt, path} <- assigns.nav_menu do %>
-            <li class={"nav-item min-w-fit #{if path == assigns.nav_menu_active_path, do: "font-bold"}"}>
-              <.link patch={path} class="nav-link">{menu_txt}</.link>
+            <li class="nav-item min-w-fit">
+              <.link patch={path} class={"nav-link hover:bg-neutral-focus rounded-lg #{if path == assigns.nav_menu_active_path, do: "bg-neutral-focus font-semibold", else: ""}"}>
+                {menu_txt}
+              </.link>
             </li>
           <% end %>
         </ul>

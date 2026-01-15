@@ -10,10 +10,9 @@ defmodule CancellationModalComponent do
     case assigns.status do
       :available ->
         ~H"""
-        <div class="flex flex-col h-14 flex-1 grow mx-1 " x-data>
-          <!-- The button to open modal -->
+        <div x-data class="h-full">
           <label
-            class="btn btn-info"
+            class="btn btn-success rounded-lg station-card station-available w-full h-full"
             x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
           >
             {@station.station_number}
@@ -21,26 +20,27 @@ defmodule CancellationModalComponent do
 
           <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
             <div class="modal-box">
-              <h3 class="text-lg font-bold">You have selected station {@station.station_number}</h3>
-              <p class="py-4">Do you want to close this station?</p>
               <form method="dialog">
                 <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
               </form>
-              <form phx-submit="close_station">
+              <h3 class="text-xl font-bold mb-4">Station {@station.station_number}</h3>
+              <p class="text-base-content/80">Do you want to mark this station as broken/closed?</p>
+
+              <%= if !is_nil(@error) do %>
+                <div class="alert alert-error mt-4">
+                  <span>{@error}</span>
+                </div>
+              <% end %>
+
+              <form phx-submit="close_station" class="mt-6">
                 <input type="hidden" name="station_number" value={"#{@station.station_number}"} />
-
-                <%= if !is_nil(@error) do %>
-                  <p class="text-error">{@error}</p>
-                <% end %>
-                <br /><br />
-
                 <div class="modal-action">
                   <button
-                    class="btn btn-success"
+                    class="btn btn-error"
                     x-on:click={"$refs.station_modal_#{@station.station_number}.close()"}
                     type="submit"
                   >
-                    ✓
+                    Mark as Broken
                   </button>
                 </div>
               </form>
@@ -50,82 +50,118 @@ defmodule CancellationModalComponent do
         """
 
       :occupied ->
+        assigns =
+          assign(
+            assigns,
+            :end_date_iso,
+            List.first(assigns.station.reservations).end_date
+            |> DateTime.to_iso8601()
+          )
+
         ~H"""
-        <div class="flex flex-col h-14 flex-1 grow mx-1 " x-data>
-          <!-- The button to open modal -->
+        <div x-data class="h-full">
           <label
-            class="btn btn-warning flex flex-col"
+            class="btn btn-warning rounded-lg station-card flex flex-col h-full py-1 w-full"
             x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
+            x-data={"{ endTime: new Date('#{@end_date_iso}'), remaining: '' }"}
+            x-init="
+              const update = () => {
+                const now = new Date();
+                const diff = Math.max(0, endTime - now);
+                const mins = Math.floor(diff / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                remaining = mins + ':' + secs.toString().padStart(2, '0');
+              };
+              update();
+              setInterval(update, 1000);
+            "
           >
-            <div>
-              {@station.station_number}
-            </div>
-            Until {Calendar.strftime(
-              List.first(@station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
-              "%H:%M"
-            )}
+            <div class="font-bold">{@station.station_number}</div>
+            <div class="text-xs" x-text="remaining"></div>
           </label>
-          
-        <!-- Put this part before </body> tag -->
+
           <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
             <div class="modal-box">
-              <h3 class="text-lg font-bold">You have selected station {@station.station_number}</h3>
-              <p class="py-4">Occupied by badge <b>#{@reservation.badge}</b> *REPLACE WITH NAME*</p>
-              <p>
-                The reservation will end at
-                <b>
-                  {Calendar.strftime(
-                    @reservation.end_date |> Timex.to_datetime("America/Montreal"),
-                    "%H:%M"
-                  )} *REPLACE WITH COUNTDOWN*
-                </b>
-              </p>
               <form method="dialog">
                 <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
               </form>
+              <h3 class="text-xl font-bold mb-4">Station {@station.station_number}</h3>
 
-              <p class="py-4">Enter an amount of minutes to extend the reservation by</p>
+              <div class="bg-base-200 p-4 rounded-lg mb-4">
+                <div class="flex justify-between items-center">
+                  <span class="text-base-content/70">Badge:</span>
+                  <span class="font-bold">{@reservation.badge}</span>
+                </div>
+                <div
+                  class="flex justify-between items-center mt-2"
+                  x-data={"{ endTime: new Date('#{@end_date_iso}'), remaining: '' }"}
+                  x-init="
+                    const update = () => {
+                      const now = new Date();
+                      const diff = Math.max(0, endTime - now);
+                      const mins = Math.floor(diff / 60000);
+                      const secs = Math.floor((diff % 60000) / 1000);
+                      remaining = mins + ':' + secs.toString().padStart(2, '0');
+                    };
+                    update();
+                    setInterval(update, 1000);
+                  "
+                >
+                  <span class="text-base-content/70">Time remaining:</span>
+                  <span class="font-mono font-bold text-lg" x-text="remaining"></span>
+                </div>
+              </div>
+
+              <div class="divider">Extend Reservation</div>
 
               <form phx-submit="extend_reservation">
                 <input type="hidden" name="station_number" value={"#{@station.station_number}"} />
-                <input
-                  type="text"
-                  placeholder="Minutes to add"
-                  value="5"
-                  class="w-full max-w-xs input"
-                  name="minutes_increment"
-                />
-
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text">Minutes to add</span>
+                  </label>
+                  <input
+                    type="number"
+                    value="5"
+                    min="1"
+                    class="input input-bordered w-full"
+                    name="minutes_increment"
+                  />
+                </div>
                 <div class="modal-action">
                   <button
                     class="btn btn-success"
                     x-on:click={"$refs.station_modal_#{@station.station_number}.close()"}
                     type="submit"
                   >
-                    Add time to reservation
+                    Extend Time
                   </button>
                 </div>
               </form>
 
-              <p class="py-4">Enter a reason for canceling the reservation</p>
+              <div class="divider">Cancel Reservation</div>
 
               <form phx-submit="cancel_station">
                 <input type="hidden" name="station_number" value={"#{@station.station_number}"} />
-                <input
-                  type="text"
-                  placeholder="Reason"
-                  value="Leaving early"
-                  class="w-full max-w-xs input"
-                  name="cancel_reason"
-                />
-
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text">Reason for cancellation</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Reason"
+                    value="Leaving early"
+                    class="input input-bordered w-full"
+                    name="cancel_reason"
+                  />
+                </div>
                 <div class="modal-action">
                   <button
-                    class="btn btn-success"
+                    class="btn btn-error"
                     x-on:click={"$refs.station_modal_#{@station.station_number}.close()"}
                     type="submit"
                   >
-                    Confirm cancellation
+                    Cancel Reservation
                   </button>
                 </div>
               </form>
@@ -136,10 +172,9 @@ defmodule CancellationModalComponent do
 
       :broken ->
         ~H"""
-        <div class="flex flex-col h-14 flex-1 grow mx-1 " x-data>
-          <!-- The button to open modal -->
+        <div x-data class="h-full">
           <label
-            class="btn btn-error"
+            class="btn btn-error rounded-lg station-card w-full h-full"
             x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
           >
             {@station.station_number}
@@ -147,26 +182,27 @@ defmodule CancellationModalComponent do
 
           <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
             <div class="modal-box">
-              <h3 class="text-lg font-bold">You have selected station {@station.station_number}</h3>
-              <p class="py-4">Do you want to open this station?</p>
               <form method="dialog">
                 <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
               </form>
-              <form phx-submit="open_station">
+              <h3 class="text-xl font-bold mb-4">Station {@station.station_number}</h3>
+              <p class="text-base-content/80">This station is currently marked as broken. Do you want to re-open it?</p>
+
+              <%= if !is_nil(@error) do %>
+                <div class="alert alert-error mt-4">
+                  <span>{@error}</span>
+                </div>
+              <% end %>
+
+              <form phx-submit="open_station" class="mt-6">
                 <input type="hidden" name="station_number" value={"#{@station.station_number}"} />
-
-                <%= if !is_nil(@error) do %>
-                  <p class="text-error">{@error}</p>
-                <% end %>
-                <br /><br />
-
                 <div class="modal-action">
                   <button
                     class="btn btn-success"
                     x-on:click={"$refs.station_modal_#{@station.station_number}.close()"}
                     type="submit"
                   >
-                    ✓
+                    Re-open Station
                   </button>
                 </div>
               </form>
@@ -177,9 +213,8 @@ defmodule CancellationModalComponent do
 
       :reserved ->
         ~H"""
-        <div class="flex flex-col h-14 flex-1 grow mx-1 " x-data>
-          <!-- The button to open modal -->
-          <label class="btn btn-active">
+        <div x-data class="h-full">
+          <label class="btn btn-neutral rounded-lg station-card w-full h-full">
             {@station.station_number}
           </label>
         </div>

@@ -140,11 +140,12 @@ defmodule LanpartyseatingWeb.ManholeLive do
 
   def render(assigns) do
     ~H"""
-    <div class="container mx-auto px-4 py-4">
-      <h1 class="text-3xl font-bold mb-6">Manhole - Tournament & Station Control</h1>
+    <div class="container mx-auto max-w-4xl">
+      <h1 class="text-3xl font-bold mb-2">Manhole - Station Control</h1>
+      <p class="text-base-content/60 mb-6">Administrative tool for tournament and reservation management</p>
       
     <!-- Warning Notice -->
-      <div class="alert alert-warning mb-6">
+      <div class="alert alert-warning mb-8">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="stroke-current shrink-0 h-6 w-6"
@@ -158,9 +159,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"
           />
         </svg>
-        <span>
-          This is an administrative tool. Use with caution as it directly controls tournament and reservation states on desktop clients.
-        </span>
+        <span>Use with caution. This directly controls tournament and reservation states on desktop clients.</span>
       </div>
 
       <%= if @error_message do %>
@@ -176,174 +175,140 @@ defmodule LanpartyseatingWeb.ManholeLive do
       <% end %>
       
     <!-- Tournament Start Controls -->
-      <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4 text-error">Tournament Start Controls</h2>
-        
-    <!-- Single Station Tournament Start -->
-        <div class="card bg-base-100 shadow-xl mb-6">
-          <div class="card-body">
-            <h3 class="card-title text-error">Single Station Tournament Start</h3>
-            <p class="text-base-content/70">Broadcast tournament start command to a single station</p>
+      <section class="mb-10">
+        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2 text-error">Tournament Start Controls</h2>
 
-            <form phx-submit="single_station_broadcast" class="w-full max-w-xs">
-              <label class="label" for="station_number">Station Number</label>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                placeholder="Enter station number"
-                class="input w-full max-w-xs"
-                name="station_number"
-                value={@single_station_number}
-                phx-change="update_single_station"
-                phx-focus="clear_messages"
-                required
-              />
-              <div class="card-actions justify-end mt-4">
-                <button type="submit" class="btn btn-error">
-                  Start Tournament
-                </button>
-              </div>
+        <div class="space-y-6">
+          <!-- Single Station -->
+          <div>
+            <h3 class="font-medium mb-2">Single Station</h3>
+            <form phx-submit="single_station_broadcast" class="flex items-end gap-4">
+              <label class="flex items-center gap-3">
+                <span class="text-sm text-base-content/70">Station #</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 15"
+                  class="input input-bordered input-sm w-24"
+                  name="station_number"
+                  value={@single_station_number}
+                  phx-change="update_single_station"
+                  phx-focus="clear_messages"
+                  required
+                />
+              </label>
+              <button type="submit" class="btn btn-error btn-sm">Start Tournament</button>
+            </form>
+          </div>
+          
+    <!-- Station Range -->
+          <div>
+            <h3 class="font-medium mb-2">Station Range</h3>
+            <form phx-submit="range_broadcast" class="flex items-end gap-4">
+              <label class="flex items-center gap-3">
+                <span class="text-sm text-base-content/70">From</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="Start"
+                  class="input input-bordered input-sm w-24"
+                  name="range_start"
+                  value={@range_start}
+                  phx-change="update_range_start"
+                  phx-focus="clear_messages"
+                  required
+                />
+              </label>
+              <label class="flex items-center gap-3">
+                <span class="text-sm text-base-content/70">To</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="End"
+                  class="input input-bordered input-sm w-24"
+                  name="range_end"
+                  value={@range_end}
+                  phx-change="update_range_end"
+                  phx-focus="clear_messages"
+                  required
+                />
+              </label>
+              <button type="submit" class="btn btn-error btn-sm">Start Tournament Range</button>
             </form>
           </div>
         </div>
-        
-    <!-- Range Tournament Start -->
-        <div class="card bg-base-100 shadow-xl mb-6">
-          <div class="card-body">
-            <h3 class="card-title text-error">Station Range Tournament Start</h3>
-            <p class="text-base-content/70">
-              Broadcast tournament start command to a range of stations
-            </p>
-
-            <form phx-submit="range_broadcast">
-              <div class="flex gap-4 items-end">
-                <div class="w-full max-w-xs">
-                  <label class="label" for="range_start">Start Station</label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="Start station"
-                    class="input w-full max-w-xs"
-                    name="range_start"
-                    value={@range_start}
-                    phx-change="update_range_start"
-                    phx-focus="clear_messages"
-                    required
-                  />
-                </div>
-
-                <div class="w-full max-w-xs">
-                  <label class="label" for="range_end">End Station</label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="End station"
-                    class="input w-full max-w-xs"
-                    name="range_end"
-                    value={@range_end}
-                    phx-change="update_range_end"
-                    phx-focus="clear_messages"
-                    required
-                  />
-                </div>
-
-                <div class="card-actions">
-                  <button type="submit" class="btn btn-error">
-                    Start Tournament Range
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+      </section>
       
     <!-- Cancel Reservation Controls -->
-      <div class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4 text-error">Cancel Reservation Controls</h2>
-        
-    <!-- Single Station Cancel -->
-        <div class="card bg-base-100 shadow-xl mb-6">
-          <div class="card-body">
-            <h3 class="card-title text-error">Single Station Logout</h3>
-            <p class="text-base-content/70">Cancel reservation and log out a single station</p>
+      <section class="mb-10">
+        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2 text-error">Cancel Reservation Controls</h2>
 
-            <form phx-submit="cancel_single_station" class="w-full max-w-xs">
-              <label class="label" for="station_number">Station Number</label>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                placeholder="Enter station number"
-                class="input w-full max-w-xs"
-                name="station_number"
-                value={@cancel_single_station_number}
-                phx-change="update_cancel_single_station"
-                phx-focus="clear_messages"
-                required
-              />
-              <div class="card-actions justify-end mt-4">
-                <button type="submit" class="btn btn-error">
-                  Cancel Reservation
-                </button>
-              </div>
+        <div class="space-y-6">
+          <!-- Single Station Logout -->
+          <div>
+            <h3 class="font-medium mb-2">Single Station Logout</h3>
+            <form phx-submit="cancel_single_station" class="flex items-end gap-4">
+              <label class="flex items-center gap-3">
+                <span class="text-sm text-base-content/70">Station #</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 15"
+                  class="input input-bordered input-sm w-24"
+                  name="station_number"
+                  value={@cancel_single_station_number}
+                  phx-change="update_cancel_single_station"
+                  phx-focus="clear_messages"
+                  required
+                />
+              </label>
+              <button type="submit" class="btn btn-error btn-sm">Cancel Reservation</button>
+            </form>
+          </div>
+          
+    <!-- Range Logout -->
+          <div>
+            <h3 class="font-medium mb-2">Station Range Logout</h3>
+            <form phx-submit="cancel_range" class="flex items-end gap-4">
+              <label class="flex items-center gap-3">
+                <span class="text-sm text-base-content/70">From</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="Start"
+                  class="input input-bordered input-sm w-24"
+                  name="range_start"
+                  value={@cancel_range_start}
+                  phx-change="update_cancel_range_start"
+                  phx-focus="clear_messages"
+                  required
+                />
+              </label>
+              <label class="flex items-center gap-3">
+                <span class="text-sm text-base-content/70">To</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="End"
+                  class="input input-bordered input-sm w-24"
+                  name="range_end"
+                  value={@cancel_range_end}
+                  phx-change="update_cancel_range_end"
+                  phx-focus="clear_messages"
+                  required
+                />
+              </label>
+              <button type="submit" class="btn btn-error btn-sm">Cancel Range</button>
             </form>
           </div>
         </div>
-        
-    <!-- Range Cancel -->
-        <div class="card bg-base-100 shadow-xl mb-6">
-          <div class="card-body">
-            <h3 class="card-title text-error">Station Range Logout</h3>
-            <p class="text-base-content/70">Cancel reservations and log out a range of stations</p>
-
-            <form phx-submit="cancel_range">
-              <div class="flex gap-4 items-end">
-                <div class="w-full max-w-xs">
-                  <label class="label" for="range_start">Start Station</label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="Start station"
-                    class="input w-full max-w-xs"
-                    name="range_start"
-                    value={@cancel_range_start}
-                    phx-change="update_cancel_range_start"
-                    phx-focus="clear_messages"
-                    required
-                  />
-                </div>
-
-                <div class="w-full max-w-xs">
-                  <label class="label" for="range_end">End Station</label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="End station"
-                    class="input w-full max-w-xs"
-                    name="range_end"
-                    value={@cancel_range_end}
-                    phx-change="update_cancel_range_end"
-                    phx-focus="clear_messages"
-                    required
-                  />
-                </div>
-
-                <div class="card-actions">
-                  <button type="submit" class="btn btn-error">
-                    Cancel Range
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
     """
   end

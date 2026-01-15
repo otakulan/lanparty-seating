@@ -89,6 +89,9 @@ defmodule LanpartyseatingWeb do
       alias NavComponent
       alias IconComponent
 
+      # Shared helper functions
+      import LanpartyseatingWeb.Helpers
+
       # Common modules used in templates
       alias Phoenix.LiveView.JS
       alias LanpartyseatingWeb.Layouts

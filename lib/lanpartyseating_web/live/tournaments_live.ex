@@ -74,53 +74,60 @@ defmodule LanpartyseatingWeb.TournamentsLive do
 
   def render(assigns) do
     ~H"""
-    <div class="jumbotron">
-      <h1 style="font-size:30px">Tournaments</h1>
-      <TournamentModalComponent.tournament_modal />
+    <div class="container mx-auto max-w-5xl">
+      <h1 class="text-3xl font-bold mb-2">Tournament Management</h1>
+      <p class="text-base-content/60 mb-8">Schedule tournaments and reserve stations</p>
+      
+    <!-- Create Tournament Section -->
+      <section class="mb-10">
+        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2">Create New Tournament</h2>
+        <TournamentModalComponent.tournament_modal />
+      </section>
+      
+    <!-- Tournaments List Section -->
+      <section>
+        <h2 class="text-xl font-semibold mb-4 border-b border-base-300 pb-2">Scheduled Tournaments</h2>
 
-      <div class="flex flex-wrap w-full mt-3">
-        <div class="flex flex-row w-full">
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-            <h2><u>Name</u></h2>
+        <%= if Enum.empty?(@tournaments) do %>
+          <p class="text-base-content/50 py-4">No tournaments scheduled yet.</p>
+        <% else %>
+          <div class="overflow-x-auto">
+            <table class="table">
+              <thead>
+                <tr class="border-b-2 border-base-300">
+                  <th class="text-base-content">Name</th>
+                  <th class="text-base-content">Start Time</th>
+                  <th class="text-base-content">End Time</th>
+                  <th class="text-base-content">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr :for={tournament <- @tournaments} :key={tournament.id} class="hover:bg-base-200">
+                  <td class="font-semibold">{tournament.name}</td>
+                  <td>
+                    {Calendar.strftime(
+                      tournament.start_date |> Timex.to_datetime("America/Montreal"),
+                      "%A %d %b - %H:%M"
+                    )}
+                  </td>
+                  <td>
+                    {Calendar.strftime(
+                      tournament.end_date |> Timex.to_datetime("America/Montreal"),
+                      "%A %d %b - %H:%M"
+                    )}
+                  </td>
+                  <td>
+                    <form phx-submit="delete_tournament">
+                      <input type="hidden" name="tournament_id" value={tournament.id} />
+                      <button class="btn btn-error btn-sm" type="submit">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-            <h2><u>Start Time</u></h2>
-          </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-            <h2><u>End Time</u></h2>
-          </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow"></div>
-        </div>
-        <div :for={tournament <- @tournaments} :key={tournament.id} class="flex flex-row w-full">
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-            <h3>
-              {tournament.name}
-            </h3>
-          </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-            <h3>
-              {Calendar.strftime(
-                tournament.start_date |> Timex.to_datetime("America/Montreal"),
-                "%A %d %b - %H:%M"
-              )}
-            </h3>
-          </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-            <h3>
-              {Calendar.strftime(
-                tournament.end_date |> Timex.to_datetime("America/Montreal"),
-                "%A %d %b - %H:%M"
-              )}
-            </h3>
-          </div>
-          <div class="flex flex-col flex-1 mx-1 h-14 grow">
-            <form phx-submit="delete_tournament">
-              <input type="hidden" name="tournament_id" value={tournament.id} />
-              <button class="btn" type="submit" onclick={}>Delete</button>
-            </form>
-          </div>
-        </div>
-      </div>
+        <% end %>
+      </section>
     </div>
     """
   end

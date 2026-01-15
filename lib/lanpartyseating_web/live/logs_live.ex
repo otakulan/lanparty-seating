@@ -52,38 +52,41 @@ defmodule LanpartyseatingWeb.LogsLive do
 
   def render(assigns) do
     ~H"""
-    <div class="jumbotron">
-      <h1 style="font-size:30px">Reservation History</h1>
-      <p class="text-base-content/70 mb-4">Showing the last 100 reservations</p>
+    <div class="container mx-auto max-w-7xl">
+      <div class="flex justify-between items-center mb-2">
+        <h1 class="text-3xl font-bold">Reservation History</h1>
+        <span class="text-base-content/60">{length(@reservations)} records</span>
+      </div>
+      <p class="text-base-content/60 mb-6">Showing the last 100 reservations</p>
 
-      <div class="overflow-x-auto">
-        <table class="table table-zebra">
+      <div class="overflow-x-auto border border-base-300 rounded-lg">
+        <table class="table">
           <thead>
-            <tr>
-              <th>ID</th>
-              <th>Station</th>
-              <th>Badge</th>
-              <th>Duration</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Status</th>
-              <th>Incident</th>
-              <th>Created</th>
+            <tr class="border-b-2 border-base-300 bg-base-200">
+              <th class="text-base-content">ID</th>
+              <th class="text-base-content">Station</th>
+              <th class="text-base-content">Badge</th>
+              <th class="text-base-content">Duration</th>
+              <th class="text-base-content">Start</th>
+              <th class="text-base-content">End</th>
+              <th class="text-base-content">Status</th>
+              <th class="text-base-content">Incident</th>
+              <th class="text-base-content">Created</th>
             </tr>
           </thead>
           <tbody>
-            <tr :for={reservation <- @reservations} :key={reservation.id}>
-              <td>{reservation.id}</td>
-              <td class="font-mono">{reservation.station_id}</td>
+            <tr :for={reservation <- @reservations} :key={reservation.id} class="hover:bg-base-200">
+              <td class="text-base-content/50">{reservation.id}</td>
+              <td class="font-mono font-semibold">{reservation.station_id}</td>
               <td class="font-mono">{reservation.badge || "-"}</td>
               <td>{reservation.duration} min</td>
-              <td>{format_datetime(reservation.start_date)}</td>
-              <td>{format_datetime(reservation.end_date)}</td>
+              <td class="text-sm">{format_datetime(reservation.start_date)}</td>
+              <td class="text-sm">{format_datetime(reservation.end_date)}</td>
               <td>
                 <span class={status_class(reservation)}>{reservation_status(reservation)}</span>
               </td>
-              <td>{reservation.incident || "-"}</td>
-              <td>{format_datetime(reservation.inserted_at)}</td>
+              <td class="max-w-xs truncate">{reservation.incident || "-"}</td>
+              <td class="text-sm text-base-content/70">{format_datetime(reservation.inserted_at)}</td>
             </tr>
           </tbody>
         </table>
