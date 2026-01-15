@@ -1,0 +1,43 @@
+name: Update deps hash
+
+on:
+  pull_request:
+    paths:
+      - 'mix.lock'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ github.token }}
+
+      - uses: DeterminateSystems/nix-installer-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Check if deps hash needs update
+        id: check
+        run: |
+          # Try to build - if it fails with hash mismatch, we need to update
+          if nix build .#lanparty-seating 2>&1 | tee build.log | grep -q "hash mismatch"; then
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            new_hash=$(grep -oP 'got:\s+\K\S+' build.log)
+            echo "new_hash=$new_hash" >> $GITHUB_OUTPUT
+          else
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update deps hash
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          sed -i 's|hash = "sha256-[^"]*"|hash = "${{ steps.check.outputs.new_hash }}"|' default.nix
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add default.nix
+          git commit -m "chore: update mixFodDeps hash"
+          git push

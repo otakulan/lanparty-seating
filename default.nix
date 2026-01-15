@@ -1,9 +1,10 @@
-{ lib
-, stdenv
-, beamPackages
-, mkYarnModules
-, nodejs
-, esbuild
+{
+  lib,
+  stdenv,
+  beamPackages,
+  mkYarnModules,
+  nodejs,
+  esbuild,
 }:
 
 let
@@ -12,7 +13,6 @@ let
 
   src = ./.;
 
-  # TODO consider using `mix2nix` as soon as it supports git dependencies.
   mixFodDeps = beamPackages.fetchMixDeps {
     pname = "${pname}-deps";
     inherit src version;
@@ -32,7 +32,12 @@ let
   };
 in
 beamPackages.mixRelease {
-  inherit pname version src mixFodDeps;
+  inherit
+    pname
+    version
+    src
+    mixFodDeps
+    ;
 
   nativeBuildInputs = [ nodejs ];
 
