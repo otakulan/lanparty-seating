@@ -2,11 +2,11 @@
   <div class="card w-96 bg-base-100 shadow-xl">
     <div class="card-body">
       <h2 class="card-title justify-center text-2xl mb-4">
-        Badge Login / Connexion par badge
+        Badge Login
       </h2>
 
       <p class="text-sm text-base-content/70 text-center mb-4">
-        Scan your admin badge or enter the badge number. <br /> Scannez votre badge admin ou entrez le numéro de badge.
+        Scan your admin badge or enter the badge number.
       </p>
 
       <%= if @error do %>
@@ -33,7 +33,7 @@
 
         <div class="form-control">
           <label class="label">
-            <span class="label-text">Badge Number / Numéro de badge</span>
+            <span class="label-text">Badge Number</span>
           </label>
           <input
             type="text"
@@ -46,20 +46,18 @@
         </div>
 
         <button type="submit" class="btn btn-primary w-full">
-          Log in with Badge / Connexion par badge
+          Log in with Badge
         </button>
       </form>
 
-      <div class="divider">or / ou</div>
+      <div class="divider">or</div>
 
       <a href={~p"/login"} class="btn btn-outline w-full">
-        Use Email & Password / Utiliser courriel et mot de passe
+        Use Email & Password
       </a>
 
       <div class="mt-4 text-xs text-base-content/50 text-center">
-        <p>
-          Badge login has limited permissions. <br /> La connexion par badge a des permissions limitées.
-        </p>
+        <p>Badge login has limited permissions.</p>
       </div>
     </div>
   </div>

@@ -17,7 +17,7 @@ defmodule LanpartyseatingWeb.UserSessionController do
       form = Phoenix.Component.to_form(user_params, as: "user")
 
       conn
-      |> put_flash(:error, "Invalid email or password / Courriel ou mot de passe invalide")
+      |> put_flash(:error, "Invalid email or password")
       |> render(:new, form: form)
     end
   end

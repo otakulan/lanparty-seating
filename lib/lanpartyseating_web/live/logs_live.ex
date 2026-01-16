@@ -53,12 +53,11 @@ defmodule LanpartyseatingWeb.LogsLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-7xl">
-      <.page_header title="Reservation History">
+      <.page_header title="Reservation History" subtitle="Showing the last 100 reservations">
         <:trailing>
           <span class="text-base-content/60">{length(@reservations)} records</span>
         </:trailing>
       </.page_header>
-      <p class="text-base-content/60 mb-6 -mt-6">Showing the last 100 reservations</p>
 
       <.data_table>
         <:header>

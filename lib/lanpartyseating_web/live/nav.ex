@@ -5,23 +5,23 @@ defmodule LanpartyseatingWeb.Nav do
 
   defp public_menu do
     [
-      {"Live Display / Affichage en direct", ~p"/"},
-      {"Self Sign / Auto-inscription", ~p"/selfsign"},
-      {"Cancellation / Annulation", ~p"/cancellation"},
+      {"Live Display", ~p"/"},
+      {"Self Sign", ~p"/selfsign"},
+      {"Cancellation", ~p"/cancellation"},
     ]
   end
 
   defp admin_menu do
     [
-      {"Tournaments / Tournois", ~p"/tournaments"},
-      {"Settings / Paramètres", ~p"/settings"},
-      {"Log / Journal", ~p"/logs"},
+      {"Tournaments", ~p"/tournaments"},
+      {"Settings", ~p"/settings"},
+      {"Logs", ~p"/logs"},
     ]
   end
 
   defp admin_management_menu do
     [
-      {"Users / Utilisateurs", ~p"/admin/users"},
+      {"Users", ~p"/admin/users"},
       {"Badges", ~p"/admin/badges"},
     ]
   end
@@ -31,24 +31,29 @@ defmodule LanpartyseatingWeb.Nav do
     is_authenticated = current_scope && current_scope.user
     is_user_auth = Scope.user_auth?(current_scope)
 
-    nav_menu =
+    # Public nav items always visible
+    nav_menu = public_menu()
+
+    # Admin dropdown items based on auth level
+    admin_dropdown =
       cond do
         is_user_auth ->
-          # Full user auth: show all menus including admin management
-          public_menu() ++ admin_menu() ++ admin_management_menu()
+          # Full user auth: all admin items including user/badge management
+          admin_menu() ++ admin_management_menu()
 
         is_authenticated ->
-          # Badge auth: show admin menu but not admin management
-          public_menu() ++ admin_menu()
+          # Badge auth: admin menu but not user/badge management
+          admin_menu()
 
         true ->
-          # Not authenticated: public only
-          public_menu()
+          # Not authenticated: no admin dropdown
+          []
       end
 
     socket =
       socket
       |> assign(nav_menu: nav_menu)
+      |> assign(admin_menu: admin_dropdown)
       |> assign(is_authenticated: is_authenticated)
       |> assign(is_user_auth: is_user_auth)
       |> attach_hook(:set_nav_menu_active_path, :handle_params, fn

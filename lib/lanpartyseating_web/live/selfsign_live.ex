@@ -63,15 +63,11 @@ defmodule LanpartyseatingWeb.SelfSignLive do
   def render(assigns) do
     ~H"""
     <div>
-      <div class="flex items-center justify-between mb-4">
-        <h1 class="text-3xl font-bold">Stations</h1>
-      </div>
+      <.page_header
+        title="Stations"
+        subtitle="Please select an available station / Veuillez sélectionner une station disponible"
+      />
 
-      <p class="text-lg mb-4 text-base-content/80">
-        Please select an available station / Veuillez sélectionner une station disponible:
-      </p>
-
-      <%!-- LEGEND --%>
       <.station_legend class="mb-6" />
 
       <.station_grid

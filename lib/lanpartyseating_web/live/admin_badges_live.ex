@@ -40,7 +40,7 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
          |> assign(:show_create_form, false)
          |> assign(:form, to_form(%{"badge_number" => "", "label" => "", "enabled" => "true"}, as: "badge"))
          |> assign(:form_error, nil)
-         |> put_flash(:info, "Admin badge created successfully. / Badge admin créé avec succès.")}
+         |> put_flash(:info, "Admin badge created successfully.")}
 
       {:error, changeset} ->
         errors =
@@ -70,10 +70,10 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
         {:noreply,
          socket
          |> assign(:badges, Accounts.list_admin_badges())
-         |> put_flash(:info, "Badge #{if badge.enabled, do: "disabled", else: "enabled"}. / Badge #{if badge.enabled, do: "désactivé", else: "activé"}.")}
+         |> put_flash(:info, "Badge #{if badge.enabled, do: "disabled", else: "enabled"}.")}
 
       {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to update badge. / Échec de la mise à jour du badge.")}
+        {:noreply, put_flash(socket, :error, "Failed to update badge.")}
     end
   end
 
@@ -85,10 +85,10 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
         {:noreply,
          socket
          |> assign(:badges, Accounts.list_admin_badges())
-         |> put_flash(:info, "Badge deleted. / Badge supprimé.")}
+         |> put_flash(:info, "Badge deleted.")}
 
       {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to delete badge. / Échec de la suppression du badge.")}
+        {:noreply, put_flash(socket, :error, "Failed to delete badge.")}
     end
   end
 
@@ -104,17 +104,13 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-4xl">
-      <.page_header title="Admin Badges / Badges admin">
+      <.page_header title="Admin Badges" subtitle="Manage admin badges for emergency backdoor access. Badge authentication has limited permissions.">
         <:trailing>
           <span class="text-base-content/60">{length(@badges)} badges</span>
         </:trailing>
       </.page_header>
-      <p class="text-base-content/60 mb-6 -mt-6">
-        Manage admin badges for emergency backdoor access. Badge authentication has limited permissions. <br />
-        Gérer les badges admin pour l'accès d'urgence. L'authentification par badge a des permissions limitées.
-      </p>
 
-      <.admin_section title="Create New Badge / Créer un nouveau badge">
+      <.admin_section title="Create New Badge">
         <%= if @show_create_form do %>
           <.form for={@form} phx-submit="create_badge" class="space-y-4">
             <%= if @form_error do %>
@@ -128,7 +124,7 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
 
             <div class="form-control">
               <label class="label">
-                <span class="label-text">Badge Number / Numéro de badge</span>
+                <span class="label-text">Badge Number</span>
               </label>
               <input
                 type="text"
@@ -140,24 +136,24 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
                 autocomplete="off"
               />
               <label class="label">
-                <span class="label-text-alt">This is what gets scanned or entered at login / C'est ce qui est scanné ou entré à la connexion</span>
+                <span class="label-text-alt">This is what gets scanned or entered at login</span>
               </label>
             </div>
 
             <div class="form-control">
               <label class="label">
-                <span class="label-text">Label / Étiquette (bilingual / bilingue)</span>
+                <span class="label-text">Label</span>
               </label>
               <input
                 type="text"
                 name="badge[label]"
                 value={@form[:label].value}
                 class="input input-bordered w-full max-w-md"
-                placeholder="e.g. Tech Support / Support technique"
+                placeholder="e.g. Tech Support"
                 required
               />
               <label class="label">
-                <span class="label-text-alt">Displayed in the nav when logged in / Affiché dans la nav une fois connecté</span>
+                <span class="label-text-alt">Displayed in the nav when logged in</span>
               </label>
             </div>
 
@@ -170,37 +166,37 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
                   checked={@form[:enabled].value == "true"}
                   class="checkbox"
                 />
-                <span class="label-text">Enabled / Activé</span>
+                <span class="label-text">Enabled</span>
               </label>
             </div>
 
             <div class="flex gap-2">
               <button type="submit" class="btn btn-primary">
-                Create Badge / Créer le badge
+                Create Badge
               </button>
               <button type="button" class="btn btn-ghost" phx-click="toggle_create_form">
-                Cancel / Annuler
+                Cancel
               </button>
             </div>
           </.form>
         <% else %>
           <button class="btn btn-primary" phx-click="toggle_create_form">
-            + Add Badge / Ajouter un badge
+            + Add Badge
           </button>
         <% end %>
       </.admin_section>
 
-      <.admin_section title="Existing Badges / Badges existants">
+      <.admin_section title="Existing Badges">
         <%= if Enum.empty?(@badges) do %>
-          <p class="text-base-content/60">No badges configured. / Aucun badge configuré.</p>
+          <p class="text-base-content/60">No badges configured.</p>
         <% else %>
           <.data_table>
             <:header>
               <th class="text-base-content">ID</th>
-              <th class="text-base-content">Badge Number / Numéro</th>
-              <th class="text-base-content">Label / Étiquette</th>
-              <th class="text-base-content">Status / État</th>
-              <th class="text-base-content">Created / Créé</th>
+              <th class="text-base-content">Badge Number</th>
+              <th class="text-base-content">Label</th>
+              <th class="text-base-content">Status</th>
+              <th class="text-base-content">Created</th>
               <th class="text-base-content">Actions</th>
             </:header>
             <:row :for={badge <- @badges}>
@@ -210,9 +206,9 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
                 <td>{badge.label}</td>
                 <td>
                   <%= if badge.enabled do %>
-                    <span class="badge badge-success">Enabled / Activé</span>
+                    <span class="badge badge-success">Enabled</span>
                   <% else %>
-                    <span class="badge badge-error">Disabled / Désactivé</span>
+                    <span class="badge badge-error">Disabled</span>
                   <% end %>
                 </td>
                 <td class="text-sm">{format_datetime(badge.inserted_at)}</td>
@@ -222,19 +218,15 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
                     phx-click="toggle_badge"
                     phx-value-id={badge.id}
                   >
-                    <%= if badge.enabled do %>
-                      Disable / Désactiver
-                    <% else %>
-                      Enable / Activer
-                    <% end %>
+                    {if badge.enabled, do: "Disable", else: "Enable"}
                   </button>
                   <button
                     class="btn btn-error btn-sm"
                     phx-click="delete_badge"
                     phx-value-id={badge.id}
-                    data-confirm="Are you sure you want to delete this badge? / Êtes-vous sûr de vouloir supprimer ce badge?"
+                    data-confirm="Are you sure you want to delete this badge?"
                   >
-                    Delete / Supprimer
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -243,7 +235,7 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
         <% end %>
       </.admin_section>
 
-      <.admin_section title="Badge Permissions / Permissions des badges" title_class="text-warning">
+      <.admin_section title="Badge Permissions" title_class="text-warning">
         <div class="alert alert-warning">
           <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path
@@ -259,12 +251,6 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
               <li>Can access admin pages (Tournaments, Settings, Logs)</li>
               <li>Cannot manage users or badges (this page)</li>
               <li>Sessions are browser-only (no persistent login)</li>
-            </ul>
-            <p class="font-bold mt-4">L'authentification par badge a des permissions limitées:</p>
-            <ul class="list-disc list-inside mt-2">
-              <li>Peut accéder aux pages admin (Tournois, Paramètres, Journal)</li>
-              <li>Ne peut pas gérer les utilisateurs ou badges (cette page)</li>
-              <li>Sessions navigateur uniquement (pas de connexion persistante)</li>
             </ul>
           </div>
         </div>

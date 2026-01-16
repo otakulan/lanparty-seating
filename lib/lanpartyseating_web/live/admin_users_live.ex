@@ -37,7 +37,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
          |> assign(:show_create_form, false)
          |> assign(:form, to_form(%{"email" => "", "password" => ""}, as: "user"))
          |> assign(:form_error, nil)
-         |> put_flash(:info, "User created successfully. / Utilisateur créé avec succès.")}
+         |> put_flash(:info, "User created successfully.")}
 
       {:error, changeset} ->
         errors =
@@ -64,17 +64,17 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
 
     # Prevent self-deletion
     if user.id == socket.assigns.current_scope.user.id do
-      {:noreply, put_flash(socket, :error, "You cannot delete your own account. / Vous ne pouvez pas supprimer votre propre compte.")}
+      {:noreply, put_flash(socket, :error, "You cannot delete your own account.")}
     else
       case Accounts.delete_user(user) do
         {:ok, _} ->
           {:noreply,
            socket
            |> assign(:users, Accounts.list_users())
-           |> put_flash(:info, "User deleted. / Utilisateur supprimé.")}
+           |> put_flash(:info, "User deleted.")}
 
         {:error, _} ->
-          {:noreply, put_flash(socket, :error, "Failed to delete user. / Échec de la suppression de l'utilisateur.")}
+          {:noreply, put_flash(socket, :error, "Failed to delete user.")}
       end
     end
   end
@@ -91,16 +91,13 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-4xl">
-      <.page_header title="Admin Users / Utilisateurs admin">
+      <.page_header title="Admin Users" subtitle="Manage admin user accounts with full access permissions.">
         <:trailing>
           <span class="text-base-content/60">{length(@users)} users</span>
         </:trailing>
       </.page_header>
-      <p class="text-base-content/60 mb-6 -mt-6">
-        Manage admin user accounts with full access permissions. <br /> Gérer les comptes utilisateurs admin avec accès complet.
-      </p>
 
-      <.admin_section title="Create New User / Créer un nouvel utilisateur">
+      <.admin_section title="Create New User">
         <%= if @show_create_form do %>
           <.form for={@form} phx-submit="create_user" class="space-y-4">
             <%= if @form_error do %>
@@ -114,7 +111,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
 
             <div class="form-control">
               <label class="label">
-                <span class="label-text">Email / Courriel</span>
+                <span class="label-text">Email</span>
               </label>
               <input
                 type="email"
@@ -128,7 +125,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
 
             <div class="form-control">
               <label class="label">
-                <span class="label-text">Password / Mot de passe (min 12 characters)</span>
+                <span class="label-text">Password (min 12 characters)</span>
               </label>
               <input
                 type="password"
@@ -142,26 +139,26 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
 
             <div class="flex gap-2">
               <button type="submit" class="btn btn-primary">
-                Create User / Créer l'utilisateur
+                Create User
               </button>
               <button type="button" class="btn btn-ghost" phx-click="toggle_create_form">
-                Cancel / Annuler
+                Cancel
               </button>
             </div>
           </.form>
         <% else %>
           <button class="btn btn-primary" phx-click="toggle_create_form">
-            + Add User / Ajouter un utilisateur
+            + Add User
           </button>
         <% end %>
       </.admin_section>
 
-      <.admin_section title="Existing Users / Utilisateurs existants">
+      <.admin_section title="Existing Users">
         <.data_table>
           <:header>
             <th class="text-base-content">ID</th>
-            <th class="text-base-content">Email / Courriel</th>
-            <th class="text-base-content">Created / Créé</th>
+            <th class="text-base-content">Email</th>
+            <th class="text-base-content">Created</th>
             <th class="text-base-content">Actions</th>
           </:header>
           <:row :for={user <- @users}>
@@ -170,7 +167,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
               <td class="font-mono">
                 {user.email}
                 <%= if user.id == @current_scope.user.id do %>
-                  <span class="badge badge-info badge-sm ml-2">You / Vous</span>
+                  <span class="badge badge-info badge-sm ml-2">You</span>
                 <% end %>
               </td>
               <td class="text-sm">{format_datetime(user.inserted_at)}</td>
@@ -180,9 +177,9 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
                     class="btn btn-error btn-sm"
                     phx-click="delete_user"
                     phx-value-id={user.id}
-                    data-confirm="Are you sure you want to delete this user? / Êtes-vous sûr de vouloir supprimer cet utilisateur?"
+                    data-confirm="Are you sure you want to delete this user?"
                   >
-                    Delete / Supprimer
+                    Delete
                   </button>
                 <% else %>
                   <span class="text-base-content/50 text-sm">-</span>

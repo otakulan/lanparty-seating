@@ -74,7 +74,7 @@ defmodule LanpartyseatingWeb.UserAuth do
     conn
     |> renew_session(nil)
     |> delete_resp_cookie(@remember_me_cookie)
-    |> put_flash(:info, "Logged out successfully. / Déconnexion réussie.")
+    |> put_flash(:info, "Logged out successfully.")
     |> redirect(to: ~p"/")
   end
 
@@ -226,7 +226,7 @@ defmodule LanpartyseatingWeb.UserAuth do
       conn
     else
       conn
-      |> put_flash(:error, "You must log in to access this page. / Vous devez vous connecter pour accéder à cette page.")
+      |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
       |> redirect(to: ~p"/login")
       |> halt()
@@ -253,7 +253,7 @@ defmodule LanpartyseatingWeb.UserAuth do
         socket
         |> Phoenix.LiveView.put_flash(
           :error,
-          "This page requires full admin access. Badge authentication is not sufficient. / Cette page nécessite un accès admin complet. L'authentification par badge n'est pas suffisante."
+          "This page requires full admin access. Badge authentication is not sufficient."
         )
         |> Phoenix.LiveView.redirect(to: ~p"/")
 
@@ -269,7 +269,7 @@ defmodule LanpartyseatingWeb.UserAuth do
     else
       socket =
         socket
-        |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page. / Vous devez vous connecter pour accéder à cette page.")
+        |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
         |> Phoenix.LiveView.redirect(to: ~p"/login")
 
       {:halt, socket}

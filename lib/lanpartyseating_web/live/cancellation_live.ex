@@ -122,12 +122,11 @@ defmodule LanpartyseatingWeb.CancellationLive do
   def render(assigns) do
     ~H"""
     <div>
-      <h1 class="text-3xl font-bold mb-4">Station Management</h1>
-      <p class="text-base-content/70 mb-4">
-        Click on a station to manage reservations, extend time, or mark as broken.
-      </p>
+      <.page_header
+        title="Station Management"
+        subtitle="Click on a station to manage reservations, extend time, or mark as broken."
+      />
 
-      <%!-- LEGEND --%>
       <.station_legend class="mb-6" />
 
       <.station_grid

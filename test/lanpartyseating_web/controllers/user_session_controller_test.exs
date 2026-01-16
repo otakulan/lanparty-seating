@@ -13,7 +13,6 @@ defmodule LanpartyseatingWeb.UserSessionControllerTest do
       conn = get(conn, ~p"/login")
       response = html_response(conn, 200)
       assert response =~ "Admin Login"
-      assert response =~ "Connexion admin"
     end
 
     test "redirects if already logged in", %{conn: conn, user: user} do
@@ -69,7 +68,6 @@ defmodule LanpartyseatingWeb.UserSessionControllerTest do
 
       response = html_response(conn, 200)
       assert response =~ "Invalid email or password"
-      assert response =~ "Courriel ou mot de passe invalide"
     end
 
     test "shows error with non-existent email", %{conn: conn} do
