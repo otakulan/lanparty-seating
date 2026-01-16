@@ -69,36 +69,40 @@ defmodule LanpartyseatingWeb.DisplayLive do
         <%!-- STATION MAP --%>
         <div class="flex items-center justify-between mb-2">
           <h1 class="text-3xl font-bold">Stations</h1>
-          <div class="text-sm text-base-content/70">
-            {@available_count} / {@total_stations} available
-          </div>
+          <%= if @available_count > 0 do %>
+            <div class="text-sm text-base-content/70">
+              {@available_count} / {@total_stations} available
+            </div>
+          <% else %>
+            <%= if @next_available do %>
+              <div
+                class="text-sm text-base-content/70"
+                x-data={"{ endTime: new Date('#{DateTime.to_iso8601(@next_available.end_date)}'), remaining: '' }"}
+                x-init="
+                  const update = () => {
+                    const now = new Date();
+                    const diff = Math.max(0, endTime - now);
+                    const mins = Math.floor(diff / 60000);
+                    const secs = Math.floor((diff % 60000) / 1000);
+                    if (mins > 0) {
+                      remaining = mins + 'm' + secs + 's';
+                    } else {
+                      remaining = secs + 's';
+                    }
+                  };
+                  update();
+                  setInterval(update, 1000);
+                "
+              >
+                Next available: <span class="font-bold">Station {@next_available.station_number}</span> in <span class="font-mono font-bold" x-text="remaining"></span>
+              </div>
+            <% else %>
+              <div class="text-sm text-base-content/70">
+                No stations available
+              </div>
+            <% end %>
+          <% end %>
         </div>
-
-        <%!-- NEXT AVAILABLE INDICATOR (only when full) --%>
-        <%= if @available_count == 0 and @next_available do %>
-          <div
-            class="next-available-banner"
-            x-data={"{ endTime: new Date('#{DateTime.to_iso8601(@next_available.end_date)}'), remaining: '' }"}
-            x-init="
-              const update = () => {
-                const now = new Date();
-                const diff = Math.max(0, endTime - now);
-                const mins = Math.floor(diff / 60000);
-                const secs = Math.floor((diff % 60000) / 1000);
-                remaining = mins + ':' + secs.toString().padStart(2, '0');
-              };
-              update();
-              setInterval(update, 1000);
-            "
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>
-              Next available: <b>Station {@next_available.station_number}</b> in <span class="font-mono font-bold" x-text="remaining"></span>
-            </span>
-          </div>
-        <% end %>
 
         <%!-- LEGEND --%>
         <.station_legend />
