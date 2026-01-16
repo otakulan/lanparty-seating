@@ -13,11 +13,37 @@
       {assigns[:page_title] || "Main"}
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/css/app.css"} />
+    
+<!--
+      FOUC (Flash of Unstyled Content) Prevention
+      ============================================
+      When navigating between different LiveView sessions (e.g., public pages to admin pages),
+      Phoenix performs a full page reload. This can cause a brief flash where unstyled HTML
+      is visible before CSS is applied.
+
+      Solution:
+      1. Hide the body immediately with inline CSS (parsed before external CSS loads)
+      2. Reveal the body after the DOM is fully parsed (inline script at end of body)
+      3. Use a CSS transition for a smooth fade-in effect
+
+      The inline <style> must be in <head> to take effect before any content renders.
+      The reveal <script> must be at the end of <body> to run after all HTML is parsed.
+    -->
+    <style>
+      body { opacity: 0; }
+      body.ready { opacity: 1; transition: opacity 150ms ease-in; }
+    </style>
+
     <script phx-track-static defer type="text/javascript" src={~p"/js/app.js"}>
     </script>
   </head>
 
   <body class="bg-base-100 text-base-content min-h-screen">
     {@inner_content}
+    
+<!-- Reveal body after DOM is parsed and CSS is applied -->
+    <script>
+      document.body.classList.add('ready');
+    </script>
   </body>
 </html>
