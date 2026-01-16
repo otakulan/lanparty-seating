@@ -12,12 +12,12 @@ defmodule CancellationModalComponent do
       :available ->
         ~H"""
         <div x-data class="h-full">
-          <label
-            class="btn btn-success rounded-lg station-card station-available w-full h-full"
-            x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
-          >
-            {@station.station_number}
-          </label>
+          <.station_button
+            status={:available}
+            station_number={@station.station_number}
+            on_click={"$refs.station_modal_#{@station.station_number}.showModal()"}
+            class="w-full"
+          />
 
           <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
             <div class="modal-box">
@@ -56,13 +56,13 @@ defmodule CancellationModalComponent do
 
         ~H"""
         <div x-data class="h-full">
-          <label
-            class="btn btn-warning rounded-lg station-card flex flex-col h-full py-1 w-full"
-            x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
-          >
-            <div class="font-bold">{@station.station_number}</div>
-            <.countdown end_date={@end_date} class="text-xs" />
-          </label>
+          <.station_button
+            status={:occupied}
+            station_number={@station.station_number}
+            end_date={@end_date}
+            on_click={"$refs.station_modal_#{@station.station_number}.showModal()"}
+            class="w-full"
+          />
 
           <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
             <div class="modal-box">
@@ -143,12 +143,12 @@ defmodule CancellationModalComponent do
       :broken ->
         ~H"""
         <div x-data class="h-full">
-          <label
-            class="btn btn-error rounded-lg station-card w-full h-full"
-            x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
-          >
-            {@station.station_number}
-          </label>
+          <.station_button
+            status={:broken}
+            station_number={@station.station_number}
+            on_click={"$refs.station_modal_#{@station.station_number}.showModal()"}
+            class="w-full"
+          />
 
           <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
             <div class="modal-box">

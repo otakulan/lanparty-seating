@@ -141,7 +141,8 @@ defmodule LanpartyseatingWeb.Components.UI do
   @doc """
   Renders a countdown timer using Alpine.js that counts down to a given end time.
 
-  The timer automatically updates every second and displays in MM:SS format.
+  The timer automatically updates every second and displays in "XmYs" format
+  (e.g., "32m14s" or "45s" when under a minute).
 
   ## Examples
 
@@ -166,7 +167,11 @@ defmodule LanpartyseatingWeb.Components.UI do
           const diff = Math.max(0, endTime - now);
           const mins = Math.floor(diff / 60000);
           const secs = Math.floor((diff % 60000) / 1000);
-          remaining = mins + ':' + secs.toString().padStart(2, '0');
+          if (mins > 0) {
+            remaining = mins + 'm' + secs + 's';
+          } else {
+            remaining = secs + 's';
+          }
         };
         update();
         setInterval(update, 1000);
@@ -180,7 +185,7 @@ defmodule LanpartyseatingWeb.Components.UI do
   @doc """
   Renders a countdown timer with hours support for longer durations.
 
-  Displays in "Xh Ym" format when hours > 0, otherwise "MM:SS".
+  Displays in "Xh Ym Zs" format (omitting zero-value leading units).
   Shows "Started!" when the countdown reaches zero.
 
   ## Examples
@@ -210,9 +215,11 @@ defmodule LanpartyseatingWeb.Components.UI do
             const mins = Math.floor((diff % 3600000) / 60000);
             const secs = Math.floor((diff % 60000) / 1000);
             if (hours > 0) {
-              remaining = hours + 'h ' + mins + 'm';
+              remaining = hours + 'h' + mins + 'm' + secs + 's';
+            } else if (mins > 0) {
+              remaining = mins + 'm' + secs + 's';
             } else {
-              remaining = mins + ':' + secs.toString().padStart(2, '0');
+              remaining = secs + 's';
             }
           }
         };
@@ -336,7 +343,7 @@ defmodule LanpartyseatingWeb.Components.UI do
     status_classes =
       case assigns.status do
         :available -> "btn-success station-available"
-        :occupied -> "btn-warning flex flex-col py-1"
+        :occupied -> "btn-warning flex flex-col justify-center gap-0"
         :broken -> "btn-error"
         :reserved -> "btn-neutral"
       end
@@ -360,7 +367,11 @@ defmodule LanpartyseatingWeb.Components.UI do
           const diff = Math.max(0, endTime - now);
           const mins = Math.floor(diff / 60000);
           const secs = Math.floor((diff % 60000) / 1000);
-          remaining = mins + ':' + secs.toString().padStart(2, '0');
+          if (mins > 0) {
+            remaining = mins + 'm' + secs + 's';
+          } else {
+            remaining = secs + 's';
+          }
         };
         update();
         setInterval(update, 1000);

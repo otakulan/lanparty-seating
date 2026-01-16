@@ -17,12 +17,12 @@ defmodule SelfSignModalComponent do
       :available ->
         ~H"""
         <div x-data class="h-full">
-          <label
-            x-on:click={"$refs.station_modal_#{@station.station_number}.showModal()"}
-            class="btn btn-success rounded-lg station-card station-available w-full h-full"
-          >
-            {@station.station_number}
-          </label>
+          <.station_button
+            status={:available}
+            station_number={@station.station_number}
+            on_click={"$refs.station_modal_#{@station.station_number}.showModal()"}
+            class="w-full"
+          />
           <dialog class="modal" x-ref={"station_modal_#{@station.station_number}"}>
             <div class="modal-box">
               <form method="dialog">
