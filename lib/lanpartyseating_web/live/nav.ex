@@ -16,6 +16,7 @@ defmodule LanpartyseatingWeb.Nav do
       {"Tournaments", ~p"/tournaments"},
       {"Settings", ~p"/settings"},
       {"Logs", ~p"/logs"},
+      {"Maintenance", ~p"/maintenance"},
     ]
   end
 

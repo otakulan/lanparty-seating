@@ -1,11 +1,11 @@
-defmodule LanpartyseatingWeb.ManholeLive do
+defmodule LanpartyseatingWeb.MaintenanceLive do
   use LanpartyseatingWeb, :live_view
-  alias Lanpartyseating.ManholeLogic
+  alias Lanpartyseating.MaintenanceLogic
 
   def mount(_params, _session, socket) do
     socket =
       socket
-      |> assign(:page_title, "Manhole")
+      |> assign(:page_title, "Maintenance")
       |> assign(:single_station_number, "")
       |> assign(:range_start, "")
       |> assign(:range_end, "")
@@ -19,7 +19,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
   end
 
   def handle_event("single_station_broadcast", %{"station_number" => station_number}, socket) do
-    case ManholeLogic.broadcast_single_station(station_number) do
+    case MaintenanceLogic.broadcast_single_station(station_number) do
       {:ok, station_num} ->
         socket =
           socket
@@ -40,7 +40,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
   end
 
   def handle_event("range_broadcast", %{"range_start" => range_start, "range_end" => range_end}, socket) do
-    case ManholeLogic.broadcast_station_range(range_start, range_end) do
+    case MaintenanceLogic.broadcast_station_range(range_start, range_end) do
       {:ok, start_num, end_num} ->
         socket =
           socket
@@ -74,7 +74,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
   end
 
   def handle_event("cancel_single_station", %{"station_number" => station_number}, socket) do
-    case ManholeLogic.cancel_single_station(station_number) do
+    case MaintenanceLogic.cancel_single_station(station_number) do
       {:ok, station_num} ->
         socket =
           socket
@@ -95,7 +95,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
   end
 
   def handle_event("cancel_range", %{"range_start" => range_start, "range_end" => range_end}, socket) do
-    case ManholeLogic.cancel_station_range(range_start, range_end) do
+    case MaintenanceLogic.cancel_station_range(range_start, range_end) do
       {:ok, start_num, end_num} ->
         socket =
           socket
@@ -141,7 +141,7 @@ defmodule LanpartyseatingWeb.ManholeLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-4xl">
-      <.page_header title="Manhole - Station Control" subtitle="Administrative tool for tournament and reservation management" />
+      <.page_header title="Maintenance" subtitle="Administrative tool for tournament and reservation management" />
       
     <!-- Warning Notice -->
       <div class="alert alert-warning mb-8">
