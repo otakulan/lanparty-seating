@@ -168,7 +168,7 @@ defmodule LanpartyseatingWeb.UserAuthTest do
       conn =
         conn |> put_session(:badge_id, badge.id) |> UserAuth.fetch_current_scope_for_user([])
 
-      assert conn.assigns.current_scope.user.email == "badge:#{badge.label}"
+      assert conn.assigns.current_scope.user.email == badge.label
       assert Scope.badge_auth?(conn.assigns.current_scope)
     end
 

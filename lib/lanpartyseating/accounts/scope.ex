@@ -43,7 +43,7 @@ defmodule Lanpartyseating.Accounts.Scope do
     # Create a virtual user with badge info for display purposes
     virtual_user = %User{
       id: -badge.id,
-      email: "badge:#{badge.label}",
+      email: badge.label,
     }
 
     %__MODULE__{user: virtual_user, auth_type: :badge, badge: badge}

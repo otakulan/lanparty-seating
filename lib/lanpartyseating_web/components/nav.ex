@@ -44,27 +44,33 @@ defmodule NavComponent do
               </details>
             </li>
           <% end %>
+          <%= if @is_authenticated do %>
+            <li>
+              <span class="hover:bg-transparent cursor-default opacity-80 gap-1">
+                <IconComponent.user class="w-4 h-4" />
+                {@current_scope.user.email}
+                <%= if not @is_user_auth do %>
+                  <span class="badge badge-warning badge-sm">Badge</span>
+                <% end %>
+              </span>
+            </li>
+            <li>
+              <form action={~p"/logout"} method="post">
+                <input type="hidden" name="_method" value="delete" />
+                <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                <button type="submit" class="hover:bg-neutral-focus rounded-lg">
+                  Logout
+                </button>
+              </form>
+            </li>
+          <% else %>
+            <li>
+              <.link href={~p"/login"} class="hover:bg-neutral-focus rounded-lg">
+                Admin Login
+              </.link>
+            </li>
+          <% end %>
         </ul>
-        <span class="text-neutral-content/40 px-2">|</span>
-        <%= if @is_authenticated do %>
-          <span class="text-sm opacity-80">
-            {@current_scope.user.email}
-            <%= if not @is_user_auth do %>
-              <span class="badge badge-warning badge-sm ml-1">Badge</span>
-            <% end %>
-          </span>
-          <form action={~p"/logout"} method="post" class="inline">
-            <input type="hidden" name="_method" value="delete" />
-            <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
-            <button type="submit" class="btn btn-ghost btn-sm hover:bg-neutral-focus">
-              Logout
-            </button>
-          </form>
-        <% else %>
-          <.link href={~p"/login"} class="btn btn-ghost btn-sm hover:bg-neutral-focus">
-            Admin Login
-          </.link>
-        <% end %>
       </div>
     </nav>
     """
