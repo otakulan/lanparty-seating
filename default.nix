@@ -16,7 +16,7 @@ let
   mixFodDeps = beamPackages.fetchMixDeps {
     pname = "${pname}-deps";
     inherit src version;
-    hash = "sha256-ZbE3eXyyY/XYM45fNSXWTQXBx1b42LbTMnugUm1bep8=";
+    hash = "sha256-kG+LTWl5Y9sU4D4OC/Nn0JlKfFpaeOCQ2CHdfoHsHMk=";
   };
 
   yarnDeps = mkYarnModules {
