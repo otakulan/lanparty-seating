@@ -14,81 +14,118 @@
         inputs.devenv.flakeModule
       ];
 
-      perSystem = { config, self', inputs', pkgs, system, ... }: rec {
-        _module.args.pkgs = import inputs.nixpkgs {
-          inherit system;
-          overlays = [
-            (final: prev: {
-              nix2container = nix2container.packages.${system}.nix2container;
-            })
-          ];
-        };
-        # Per-system attributes can be defined here. The self' and inputs'
-        # module parameters provide easy access to attributes of the same
-        # system.
-
-        packages.default = pkgs.callPackage ./default.nix { };
-        packages.lanparty-seating = pkgs.callPackage ./default.nix { };
-        packages.container = let
-          # temp path to store tzdata information
-          tmp = pkgs.runCommand "tmp" {} ''
-            mkdir -p $out/tmp/tzdata
-          '';
-          utils = pkgs.buildEnv {
-            name = "root";
-            paths = with pkgs; [ bashInteractive coreutils gnused gnugrep packages.lanparty-seating ];
-            pathsToLink = [ "/bin" ];
-          };
-        in pkgs.nix2container.buildImage {
-          name = "lanparty-seating";
-          tag = packages.lanparty-seating.version;
-          copyToRoot = [ tmp utils ];
-          perms = [{
-            path = tmp;
-            regex = ".*";
-            mode = "0777";
-          }];
-          config = {
-            entrypoint = ["${packages.lanparty-seating}/bin/server"];
-            env = [
-              "RELEASE_COOKIE=changeme213482308949234"
-              "PORT=4000"
-              "STORAGE_DIR=/tmp/tzdata"
-              "TZ=America/Toronto"
-              "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-              "LOCALE_ARCHIVE=${pkgs.glibcLocales}/lib/locale/locale-archive"
-              "LANG=en_US.UTF-8"
-              "LC_ALL=en_US.UTF-8"
+      perSystem = { config, self', inputs', pkgs, system, ... }:
+        let
+          beamPackages = pkgs.beam.packages.erlang_28.extend (
+            final: prev: { elixir = pkgs.beam.packages.erlang_28.elixir_1_19; }
+          );
+        in
+        rec {
+          _module.args.pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = [
+              (final: prev: {
+                nix2container = nix2container.packages.${system}.nix2container;
+              })
             ];
-            user = "1000";
           };
-        };
+          # Per-system attributes can be defined here. The self' and inputs'
+          # module parameters provide easy access to attributes of the same
+          # system.
 
-        devenv.shells.default = {
-          languages.elixir.enable = true;
-          languages.elixir.package = pkgs.beam.packages.erlang_28.elixir_1_19;
-          languages.erlang.enable = true;
-          languages.erlang.package = pkgs.beam.interpreters.erlang_28;
-          languages.javascript.enable = true;
-          languages.javascript.yarn.enable = true;
-          services.postgres = {
-            enable = true;
-            initialDatabases = [ { name = "lanpartyseating_dev"; } ];
-            initialScript = ''
-              CREATE USER postgres WITH SUPERUSER PASSWORD 'password';
+          packages.default = pkgs.callPackage ./default.nix { inherit beamPackages; };
+          packages.lanparty-seating = pkgs.callPackage ./default.nix { inherit beamPackages; };
+          apps.update-deps-hash =
+            let
+              script = pkgs.writeShellApplication {
+                name = "update-deps-hash";
+                runtimeInputs = with pkgs; [
+                  git
+                  gnugrep
+                  gnused
+                  nix
+                ];
+                text = builtins.readFile ./scripts/update-deps-hash.sh;
+              };
+            in
+            {
+              type = "app";
+              program = "${script}/bin/update-deps-hash";
+            };
+
+          packages.container =
+            let
+              # temp path to store tzdata information
+              tmp = pkgs.runCommand "tmp" { } ''
+                mkdir -p $out/tmp/tzdata
+              '';
+              utils = pkgs.buildEnv {
+                name = "root";
+                paths = with pkgs; [
+                  bashInteractive
+                  coreutils
+                  gnused
+                  gnugrep
+                  packages.lanparty-seating
+                ];
+                pathsToLink = [ "/bin" ];
+              };
+            in
+            pkgs.nix2container.buildImage {
+              name = "lanparty-seating";
+              tag = packages.lanparty-seating.version;
+              copyToRoot = [
+                tmp
+                utils
+              ];
+              perms = [
+                {
+                  path = tmp;
+                  regex = ".*";
+                  mode = "0777";
+                }
+              ];
+              config = {
+                entrypoint = [ "${packages.lanparty-seating}/bin/server" ];
+                env = [
+                  "RELEASE_COOKIE=changeme213482308949234"
+                  "PORT=4000"
+                  "STORAGE_DIR=/tmp/tzdata"
+                  "TZ=America/Toronto"
+                  "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+                  "LOCALE_ARCHIVE=${pkgs.glibcLocales}/lib/locale/locale-archive"
+                  "LANG=en_US.UTF-8"
+                  "LC_ALL=en_US.UTF-8"
+                ];
+                user = "1000";
+              };
+            };
+
+          devenv.shells.default = {
+            languages.elixir.enable = true;
+            languages.elixir.package = pkgs.beam.packages.erlang_28.elixir_1_19;
+            languages.erlang.enable = true;
+            languages.erlang.package = pkgs.beam.interpreters.erlang_28;
+            languages.javascript.enable = true;
+            languages.javascript.yarn.enable = true;
+            services.postgres = {
+              enable = true;
+              initialDatabases = [ { name = "lanpartyseating_dev"; } ];
+              initialScript = ''
+                CREATE USER postgres WITH SUPERUSER PASSWORD 'password';
+              '';
+              listen_addresses = "::1,127.0.0.1";
+            };
+            env.MIX_REBAR3 = "${pkgs.rebar3}/bin/rebar3";
+            env.MIX_ESBUILD_PATH = "${pkgs.esbuild}/bin/esbuild";
+            enterShell = ''
+              alias mdg="mix deps.get"
+              alias mps="mix phx.server"
+              alias test="mix test"
+              alias c="iex -S mix"
             '';
-            listen_addresses = "::1,127.0.0.1";
           };
-          env.MIX_REBAR3 = "${pkgs.rebar3}/bin/rebar3";
-          env.MIX_ESBUILD_PATH = "${pkgs.esbuild}/bin/esbuild";
-          enterShell = ''
-            alias mdg="mix deps.get"
-            alias mps="mix phx.server"
-            alias test="mix test"
-            alias c="iex -S mix"
-          '';
         };
-      };
       flake = {
         # Put your original flake attributes here.
       };

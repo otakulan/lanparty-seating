@@ -72,37 +72,79 @@
 #   tournament_id: 5,
 # })
 
-# Create only data required in this table: The last assigned seat ID.
-Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
-  last_assigned_station: 0,
-  last_assigned_station_date: ~U[2022-08-05 15:30:00Z],
-})
+# NOTE: The following seed data uses legacy module names that no longer exist.
+# Database is now seeded via migrations. These are commented out for reference.
+#
+# # Create only data required in this table: The last assigned seat ID.
+# Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
+#   last_assigned_station: 0,
+#   last_assigned_station_date: ~U[2022-08-05 15:30:00Z],
+# })
+#
+# # Default layout which closely matches what we had for 2024
+# for val <- 1..70 do
+#   Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
+#     station_number: val,
+#     x: div(val - 1, 10),
+#     y: rem(val - 1, 10),
+#   })
+# end
+#
+# # In 2024 we had 70 PCs
+# for val <- 1..70,
+#     do:
+#       Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+#         station_number: val,
+#       })
+#
+# Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
+#   row_padding: 2,
+#   column_padding: 1,
+#   horizontal_trailing: 1,
+#   vertical_trailing: 0,
+# })
+#
+# Lanpartyseating.Repo.insert!(%Lanpartyseating.Badge{
+#   uid: "1",
+#   serial_key: "1",
+#   is_banned: false,
+# })
 
-# Default layout which closely matches what we had for 2024
-for val <- 1..70 do
-  Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
-    station_number: val,
-    x: div(val - 1, 10),
-    y: rem(val - 1, 10),
-  })
+# Initial admin user (change password on first login!)
+# Email: admin@otakuthon.com
+# Password: change-me-on-first-login
+case Lanpartyseating.Accounts.get_user_by_email("admin@otakuthon.com") do
+  nil ->
+    Lanpartyseating.Accounts.create_user(%{
+      email: "admin@otakuthon.com",
+      password: "change-me-on-first-login",
+    })
+    |> case do
+      {:ok, user} ->
+        IO.puts("Created initial admin user: admin@otakuthon.com")
+        # Mark user as confirmed
+        Lanpartyseating.Repo.update!(Ecto.Changeset.change(user, confirmed_at: NaiveDateTime.utc_now(:second)))
+
+      {:error, changeset} ->
+        IO.puts("Failed to create admin user: #{inspect(changeset.errors)}")
+    end
+
+  _user ->
+    IO.puts("Admin user already exists: admin@otakuthon.com")
 end
 
-# In 2024 we had 70 PCs
-for val <- 1..70,
-    do:
-      Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-        station_number: val,
-      })
+# Sample admin badge for testing (disabled by default in production)
+# Badge number: ADMIN-001
+case Lanpartyseating.Repo.get_by(Lanpartyseating.Accounts.AdminBadge, badge_number: "ADMIN-001") do
+  nil ->
+    Lanpartyseating.Repo.insert!(%Lanpartyseating.Accounts.AdminBadge{
+      badge_number: "ADMIN-001",
+      label: "Emergency Admin / Admin d'urgence",
+      enabled: true,
+    })
 
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
-  row_padding: 2,
-  column_padding: 1,
-  horizontal_trailing: 1,
-  vertical_trailing: 0,
-})
+    IO.puts("Created sample admin badge: ADMIN-001")
 
-Lanpartyseating.Repo.insert!(%Lanpartyseating.Badge{
-  uid: "1",
-  serial_key: "1",
-  is_banned: false,
-})
+  _badge ->
+    IO.puts("Admin badge already exists: ADMIN-001")
+end

@@ -1,8 +1,6 @@
 defmodule DisplayModalComponent do
   use Phoenix.Component
-
-  # Optionally also bring the HTML helpers
-  # use Phoenix.HTML
+  import LanpartyseatingWeb.Components.UI, only: [station_button: 1]
 
   attr(:station, :any, required: true)
   attr(:status, :any, required: true)
@@ -10,42 +8,33 @@ defmodule DisplayModalComponent do
 
   def modal(assigns) do
     # status:
-    # 1 - libre / available  (blue: btn-info)
-    # 2 - occupé / occupied (yellow: btn-warning)
+    # 1 - libre / available  (green: btn-success)
+    # 2 - occupé / occupied (amber: btn-warning)
     # 3 - brisé / broken  (red: btn-error)
-    # 4 - réserver pour un tournois / reserved for a tournament  (black: btn-active)
+    # 4 - réserver pour un tournois / reserved for a tournament  (dark: btn-neutral)
 
     case assigns.status do
       :available ->
         ~H"""
-        <!-- The button to open modal -->
-        <label class="btn btn-info">{assigns.station.station_number}</label>
+        <.station_button status={:available} station_number={@station.station_number} class="w-full" />
         """
 
       :occupied ->
+        assigns =
+          assign(assigns, :end_date, List.first(assigns.station.reservations).end_date)
+
         ~H"""
-        <!-- The button to open modal -->
-        <label class="btn btn-warning flex flex-col">
-          <div>
-            {assigns.station.station_number}
-          </div>
-          Until {Calendar.strftime(
-            List.first(assigns.station.reservations).end_date |> Timex.to_datetime("America/Montreal"),
-            "%H:%M"
-          )}
-        </label>
+        <.station_button status={:occupied} station_number={@station.station_number} end_date={@end_date} class="w-full" />
         """
 
       :broken ->
         ~H"""
-        <!-- The button to open modal -->
-        <label class="btn btn-error">{assigns.station.station_number}</label>
+        <.station_button status={:broken} station_number={@station.station_number} class="w-full" />
         """
 
       :reserved ->
         ~H"""
-        <!-- The button to open modal -->
-        <label class="btn btn-active">{assigns.station.station_number}</label>
+        <.station_button status={:reserved} station_number={@station.station_number} class="w-full" />
         """
     end
   end

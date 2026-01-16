@@ -1,0 +1,64 @@
+<div class="min-h-screen flex items-center justify-center bg-base-200">
+  <div class="card w-96 bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title justify-center text-2xl mb-4">
+        Badge Login
+      </h2>
+
+      <p class="text-sm text-base-content/70 text-center mb-4">
+        Scan your admin badge or enter the badge number.
+      </p>
+
+      <%= if @error do %>
+        <div class="alert alert-error mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="stroke-current shrink-0 h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>{@error}</span>
+        </div>
+      <% end %>
+
+      <form action={~p"/login/badge"} method="post" class="space-y-4">
+        <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Badge Number</span>
+          </label>
+          <input
+            type="text"
+            name="badge[badge_number]"
+            class="input input-bordered w-full"
+            autocomplete="off"
+            required
+            autofocus
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full">
+          Log in with Badge
+        </button>
+      </form>
+
+      <div class="divider">or</div>
+
+      <a href={~p"/login"} class="btn btn-outline w-full">
+        Use Email & Password
+      </a>
+
+      <div class="mt-4 text-xs text-base-content/50 text-center">
+        <p>Badge login has limited permissions.</p>
+      </div>
+    </div>
+  </div>
+</div>
