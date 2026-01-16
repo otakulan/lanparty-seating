@@ -155,12 +155,16 @@ defmodule LanpartyseatingWeb.Components.UI do
   attr :class, :string, default: "font-mono font-bold"
 
   def countdown(assigns) do
-    assigns = assign(assigns, :end_date_iso, DateTime.to_iso8601(assigns.end_date))
+    assigns =
+      assigns
+      |> assign(:end_date_iso, DateTime.to_iso8601(assigns.end_date))
+      |> assign(:end_date_unix, DateTime.to_unix(assigns.end_date))
 
     ~H"""
     <span
+      id={"countdown-#{@end_date_unix}"}
       class={@class}
-      x-data={"{ endTime: new Date('#{@end_date_iso}'), remaining: '' }"}
+      x-data={"{ endTime: new Date('#{@end_date_iso}'), remaining: '', intervalId: null }"}
       x-init="
         const update = () => {
           const now = new Date();
@@ -174,7 +178,8 @@ defmodule LanpartyseatingWeb.Components.UI do
           }
         };
         update();
-        setInterval(update, 1000);
+        intervalId = setInterval(update, 1000);
+        $cleanup(() => clearInterval(intervalId));
       "
       x-text="remaining"
     >
@@ -197,12 +202,16 @@ defmodule LanpartyseatingWeb.Components.UI do
   attr :class, :string, default: "font-mono font-bold"
 
   def countdown_long(assigns) do
-    assigns = assign(assigns, :start_date_iso, DateTime.to_iso8601(assigns.start_date))
+    assigns =
+      assigns
+      |> assign(:start_date_iso, DateTime.to_iso8601(assigns.start_date))
+      |> assign(:start_date_unix, DateTime.to_unix(assigns.start_date))
 
     ~H"""
     <span
+      id={"countdown-long-#{@start_date_unix}"}
       class={@class}
-      x-data={"{ startTime: new Date('#{@start_date_iso}'), remaining: '', started: false }"}
+      x-data={"{ startTime: new Date('#{@start_date_iso}'), remaining: '', started: false, intervalId: null }"}
       x-init="
         const update = () => {
           const now = new Date();
@@ -224,7 +233,8 @@ defmodule LanpartyseatingWeb.Components.UI do
           }
         };
         update();
-        setInterval(update, 1000);
+        intervalId = setInterval(update, 1000);
+        $cleanup(() => clearInterval(intervalId));
       "
       x-text="remaining"
     >
@@ -356,33 +366,44 @@ defmodule LanpartyseatingWeb.Components.UI do
         :end_date_iso,
         if(assigns.end_date, do: DateTime.to_iso8601(assigns.end_date), else: nil)
       )
+      |> assign(
+        :end_date_unix,
+        if(assigns.end_date, do: DateTime.to_unix(assigns.end_date), else: nil)
+      )
 
     ~H"""
     <label
       class={[@base_classes, @status_classes, @class]}
       x-on:click={@on_click}
-      {if @status == :occupied && @end_date_iso, do: [{"x-data", "{ endTime: new Date('#{@end_date_iso}'), remaining: '' }"}, {"x-init", "
-        const update = () => {
-          const now = new Date();
-          const diff = Math.max(0, endTime - now);
-          const mins = Math.floor(diff / 60000);
-          const secs = Math.floor((diff % 60000) / 1000);
-          if (mins > 0) {
-            remaining = mins + 'm' + secs + 's';
-          } else {
-            remaining = secs + 's';
-          }
-        };
-        update();
-        setInterval(update, 1000);
-      "}], else: []}
     >
       <%= if @status == :occupied do %>
         <div class="font-bold">{@station_number}</div>
         <%= if @extra != [] do %>
           {render_slot(@extra)}
         <% else %>
-          <div class="text-xs" x-text="remaining"></div>
+          <div
+            id={"station-countdown-#{@station_number}-#{@end_date_unix}"}
+            class="text-xs"
+            x-data={"{ endTime: new Date('#{@end_date_iso}'), remaining: '', intervalId: null }"}
+            x-init="
+              const update = () => {
+                const now = new Date();
+                const diff = Math.max(0, endTime - now);
+                const mins = Math.floor(diff / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                if (mins > 0) {
+                  remaining = mins + 'm' + secs + 's';
+                } else {
+                  remaining = secs + 's';
+                }
+              };
+              update();
+              intervalId = setInterval(update, 1000);
+              $cleanup(() => clearInterval(intervalId));
+            "
+            x-text="remaining"
+          >
+          </div>
         <% end %>
       <% else %>
         {@station_number}

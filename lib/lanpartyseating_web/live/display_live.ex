@@ -76,8 +76,9 @@ defmodule LanpartyseatingWeb.DisplayLive do
           <% else %>
             <%= if @next_available do %>
               <div
+                id={"next-available-#{DateTime.to_unix(@next_available.end_date)}"}
                 class="text-sm text-base-content/70"
-                x-data={"{ endTime: new Date('#{DateTime.to_iso8601(@next_available.end_date)}'), remaining: '' }"}
+                x-data={"{ endTime: new Date('#{DateTime.to_iso8601(@next_available.end_date)}'), remaining: '', intervalId: null }"}
                 x-init="
                   const update = () => {
                     const now = new Date();
@@ -91,7 +92,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
                     }
                   };
                   update();
-                  setInterval(update, 1000);
+                  intervalId = setInterval(update, 1000);
+                  $cleanup(() => clearInterval(intervalId));
                 "
               >
                 Next available: <span class="font-bold">Station {@next_available.station_number}</span> in <span class="font-mono font-bold" x-text="remaining"></span>
