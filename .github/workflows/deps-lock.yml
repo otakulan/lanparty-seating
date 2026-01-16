@@ -20,24 +20,17 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v14
       - uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Check if deps hash needs update
-        id: check
-        run: |
-          # Try to build - if it fails with hash mismatch, we need to update
-          if nix build .#lanparty-seating 2>&1 | tee build.log | grep -q "hash mismatch"; then
-            echo "needs_update=true" >> $GITHUB_OUTPUT
-            new_hash=$(grep -oP 'got:\s+\K\S+' build.log)
-            echo "new_hash=$new_hash" >> $GITHUB_OUTPUT
-          else
-            echo "needs_update=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Update deps hash
-        if: steps.check.outputs.needs_update == 'true'
+        run: nix run .#update-deps-hash
+
+      - name: Commit and push if changed
         run: |
-          sed -i 's|hash = "sha256-[^"]*"|hash = "${{ steps.check.outputs.new_hash }}"|' default.nix
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add default.nix
-          git commit -m "chore: update mixFodDeps hash"
-          git push
+          if git diff --quiet default.nix; then
+            echo "No changes to default.nix"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add default.nix
+            git commit -m "chore: update mixFodDeps hash"
+            git push
+          fi
