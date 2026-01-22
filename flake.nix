@@ -77,6 +77,7 @@
             initialScript = ''
               CREATE USER postgres WITH SUPERUSER PASSWORD 'password';
             '';
+            port = 5021;
             listen_addresses = "::1,127.0.0.1";
           };
           env.MIX_REBAR3 = "${pkgs.rebar3}/bin/rebar3";
