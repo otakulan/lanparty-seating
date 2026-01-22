@@ -68,4 +68,5 @@ config :lanpartyseating, Lanpartyseating.Repo,
   password: "postgres",
   database: "lanpartyseating_dev",
   hostname: "localhost",
-  pool_size: 10
+  pool_size: 10,
+  port: 5021
