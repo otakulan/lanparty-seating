@@ -116,7 +116,18 @@ defmodule LanpartyseatingWeb.CancellationLive do
   end
 
   def handle_info({:stations, stations}, socket) do
-    {:noreply, assign_stations(socket, stations)}
+    # Reload settings in case padding/gaps changed
+    {:ok, settings} = SettingsLogic.get_settings()
+
+    socket =
+      socket
+      |> assign(:col_trailing, settings.vertical_trailing)
+      |> assign(:row_trailing, settings.horizontal_trailing)
+      |> assign(:colpad, settings.column_padding)
+      |> assign(:rowpad, settings.row_padding)
+      |> assign_stations(stations)
+
+    {:noreply, socket}
   end
 
   def render(assigns) do
