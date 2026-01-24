@@ -132,12 +132,26 @@ defmodule LanpartyseatingWeb.Components.UI do
     <div class={["flex flex-col gap-4 w-full", @class]}>
       <%= for row_group <- @row_groups do %>
         <div class="flex flex-row gap-4">
+          <%!--
+            Table container sizing:
+            - flex-grow is set to the number of columns in this table group
+            - This ensures tables with more columns are proportionally wider
+            - Combined with the parent's flex-row, all tables fill the available width
+            - Example: a 2-column table gets flex-grow:2, a 1-column table gets flex-grow:1
+              → the 2-column table is twice as wide
+
+            Cell min-width (min-w-10):
+            - Empty cells must have a minimum width to maintain grid alignment
+            - Without this, empty cells collapse to 0 width breaking the layout
+            - This is crucial for vertical orientation where rows may have stations
+              in different columns
+          --%>
           <%= for col_group <- @col_groups do %>
-            <div class="flex-1 bg-base-200 border-2 border-base-300 rounded-xl p-2 flex flex-col gap-1">
+            <div style={"flex-grow: #{length(col_group)}"} class="bg-base-200 border-2 border-base-300 rounded-xl p-2 flex flex-col gap-1">
               <%= for r <- row_group do %>
                 <div class="flex flex-row h-11">
                   <%= for c <- col_group do %>
-                    <div class="flex flex-col flex-1 grow mx-0.5">
+                    <div class="flex flex-col flex-1 grow mx-0.5 min-w-10">
                       <% station_data = Map.get(@stations, {c, r}) %>
                       <%= if !is_nil(station_data) do %>
                         {render_slot(@cell, station_data)}
