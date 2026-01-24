@@ -88,39 +88,59 @@ defmodule LanpartyseatingWeb.Components.UI do
   slot :cell, required: true
 
   def station_grid(assigns) do
-    row_groups = group_by_padding(0..(assigns.rows - 1), assigns.rowpad, assigns.row_trailing)
-    rows_per_table = if assigns.rowpad > 1, do: assigns.rowpad, else: assigns.rows
-    cols_per_table = if assigns.colpad > 1, do: assigns.colpad, else: assigns.columns
-    col_groups = group_by_padding(0..(assigns.columns - 1), assigns.colpad, assigns.col_trailing)
+    stations = assigns.stations
+
+    # Find globally active rows and columns (those with at least one station)
+    station_coords = Map.keys(stations)
+    # Extract x coordinate (column) from each {x, y} tuple
+    active_cols =
+      station_coords
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    # Extract y coordinate (row) from each {x, y} tuple
+    active_rows =
+      station_coords
+      |> Enum.map(&elem(&1, 1))
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    # Group into table chunks, but only include active indices
+    # Filter each group to only rows that have stations, remove empty groups
+    row_groups =
+      group_by_padding(0..(assigns.rows - 1), assigns.rowpad, assigns.row_trailing)
+      |> Enum.map(fn group ->
+        Enum.filter(group, &(&1 in active_rows))
+      end)
+      |> Enum.reject(&(&1 == []))
+
+    # Filter each group to only columns that have stations, remove empty groups
+    col_groups =
+      group_by_padding(0..(assigns.columns - 1), assigns.colpad, assigns.col_trailing)
+      |> Enum.map(fn group ->
+        Enum.filter(group, &(&1 in active_cols))
+      end)
+      |> Enum.reject(&(&1 == []))
 
     assigns =
       assigns
       |> assign(:row_groups, row_groups)
-      |> assign(:rows_per_table, rows_per_table)
-      |> assign(:cols_per_table, cols_per_table)
       |> assign(:col_groups, col_groups)
 
     ~H"""
     <div class={["flex flex-col gap-4 w-full", @class]}>
       <%= for row_group <- @row_groups do %>
-        <% actual_rows = length(row_group) %>
-        <% render_rows = max(actual_rows, @rows_per_table) %>
         <div class="flex flex-row gap-4">
           <%= for col_group <- @col_groups do %>
-            <% actual_cols = length(col_group) %>
-            <% render_cols = max(actual_cols, @cols_per_table) %>
             <div class="flex-1 bg-base-200 border-2 border-base-300 rounded-xl p-2 flex flex-col gap-1">
-              <%= for row_idx <- 0..(render_rows - 1) do %>
-                <% r = Enum.at(row_group, row_idx) %>
+              <%= for r <- row_group do %>
                 <div class="flex flex-row h-11">
-                  <%= for col_idx <- 0..(render_cols - 1) do %>
-                    <% c = Enum.at(col_group, col_idx) %>
+                  <%= for c <- col_group do %>
                     <div class="flex flex-col flex-1 grow mx-0.5">
-                      <%= if r != nil and c != nil do %>
-                        <% station_data = Map.get(@stations, {c, r}) %>
-                        <%= if !is_nil(station_data) do %>
-                          {render_slot(@cell, station_data)}
-                        <% end %>
+                      <% station_data = Map.get(@stations, {c, r}) %>
+                      <%= if !is_nil(station_data) do %>
+                        {render_slot(@cell, station_data)}
                       <% end %>
                     </div>
                   <% end %>
