@@ -15,7 +15,7 @@ config :lanpartyseating, :scopes,
     schema_type: :id,
     schema_table: :users,
     test_data_fixture: Lanpartyseating.AccountsFixtures,
-    test_setup_helper: :register_and_log_in_user
+    test_setup_helper: :register_and_log_in_user,
   ]
 
 # esbuild config

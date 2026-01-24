@@ -91,7 +91,7 @@ defmodule Lanpartyseating.Accounts.UserToken do
        token: hashed_token,
        context: context,
        sent_to: sent_to,
-       user_id: user.id
+       user_id: user.id,
      }}
   end
 
