@@ -116,50 +116,48 @@ defmodule LanpartyseatingWeb.CancellationLive do
   end
 
   def handle_info({:stations, stations}, socket) do
-    {:noreply, assign_stations(socket, stations)}
+    # Reload settings in case padding/gaps changed
+    {:ok, settings} = SettingsLogic.get_settings()
+
+    socket =
+      socket
+      |> assign(:col_trailing, settings.vertical_trailing)
+      |> assign(:row_trailing, settings.horizontal_trailing)
+      |> assign(:colpad, settings.column_padding)
+      |> assign(:rowpad, settings.row_padding)
+      |> assign_stations(stations)
+
+    {:noreply, socket}
   end
 
   def render(assigns) do
     ~H"""
-    <div class="jumbotron">
-      <h1 style="font-size:30px">Stations Management</h1>
+    <div>
+      <.page_header
+        title="Station Management"
+        subtitle="Click on a station to manage reservations, extend time, or mark as broken."
+      />
 
-      <div class="flex flex-wrap w-full">
-        <%= for r <- 0..(@rows-1) do %>
-          <div class={"#{if rem(r,@rowpad) == rem(@row_trailing, @rowpad) and @rowpad != 1, do: "mb-4", else: ""} flex flex-row w-full "}>
-            <%= for c <- 0..(@columns-1) do %>
-              <div class={"#{if rem(c,@colpad) == rem(@col_trailing, @colpad) and @colpad != 1, do: "mr-4", else: ""} flex flex-col h-14 flex-1 grow mx-1 "}>
-                <% station_data = @stations |> Map.get({c, r}) %>
-                <%= if !is_nil(station_data) do %>
-                  <CancellationModalComponent.modal
-                    error={@registration_error}
-                    reservation={station_data.reservation}
-                    station={station_data.station}
-                    status={station_data.status}
-                  />
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-      <h1 style="font-size:20px">Legend / Légende:</h1>
-      <div class="mb-4 flex flex-row w-full ">
-        <label class="btn btn-info mr-4">
-          Available / Disponible
-        </label>
-        <label class="btn btn-warning mr-4">
-          Occupied / Occupée
-        </label>
-      </div>
-      <div class="mb-4 flex flex-row w-full ">
-        <label class="btn btn-error mr-4">
-          Broken / Brisée
-        </label>
-        <label class="btn btn-active mr-4">
-          Reserved for tournament / Réservée pour un tournois
-        </label>
-      </div>
+      <.station_legend class="mb-6" />
+
+      <.station_grid
+        stations={@stations}
+        rows={@rows}
+        columns={@columns}
+        rowpad={@rowpad}
+        colpad={@colpad}
+        row_trailing={@row_trailing}
+        col_trailing={@col_trailing}
+      >
+        <:cell :let={station_data}>
+          <CancellationModalComponent.modal
+            error={@registration_error}
+            reservation={station_data.reservation}
+            station={station_data.station}
+            status={station_data.status}
+          />
+        </:cell>
+      </.station_grid>
     </div>
     """
   end

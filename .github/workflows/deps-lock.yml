@@ -1,0 +1,36 @@
+name: Update deps hash
+
+on:
+  pull_request:
+    paths:
+      - 'mix.lock'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ github.token }}
+
+      - uses: DeterminateSystems/nix-installer-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Update deps hash
+        run: nix run .#update-deps-hash
+
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet default.nix; then
+            echo "No changes to default.nix"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add default.nix
+            git commit -m "chore: update mixFodDeps hash"
+            git push
+          fi

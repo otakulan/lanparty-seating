@@ -1,6 +1,6 @@
-defmodule Lanpartyseating.ManholeLogic do
+defmodule Lanpartyseating.MaintenanceLogic do
   @moduledoc """
-  Logic module for manhole broadcasting functionality.
+  Logic module for maintenance broadcasting functionality.
   Handles tournament start broadcasts to desktop clients.
   """
 
