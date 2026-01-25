@@ -28,6 +28,26 @@ To start lanparty-seating:
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
+### Default Seed Data
+
+After running `mix ecto.reset`, the following test data is created:
+
+**Admin User:**
+- Email: `admin@otakuthon.com`
+- Password: `change-me-on-first-login`
+- Name: `Admin`
+
+**Admin Badge** (for badge-based admin access):
+- Badge Number: `ADMIN-001`
+
+**Test Badge** (for testing reservations):
+- Badge Number: `1`
+
+**Sample Tournaments:**
+- 3 tournaments with stations 1-10 locked for the first one
+
+The seed configuration (grid size, timing offset) can be adjusted at the top of `priv/repo/seeds.exs`.
+
 ## Environment Variables
 
 Copy `.env.sample` to `.env` for local development:
