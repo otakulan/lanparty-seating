@@ -353,7 +353,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     ~H"""
     <div class="container mx-auto max-w-6xl">
       <.page_header title="Station Layout Settings" subtitle="Configure the station grid layout displayed on signage" />
-      
+
     <!-- Grid Configuration Section -->
       <.admin_section title="Grid Configuration">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -377,7 +377,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
               />
             </form>
           </div>
-          
+
     <!-- Station Count -->
           <div>
             <h3 class="font-medium mb-3">Station Count</h3>
@@ -393,7 +393,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             </form>
             <p class="text-xs text-base-content/50 mt-2">Max: {@rows * @columns}</p>
           </div>
-          
+
     <!-- Aisle Gaps -->
           <div>
             <h3 class="font-medium mb-3">Aisle Gaps</h3>
@@ -426,7 +426,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           </div>
         </div>
       </.admin_section>
-      
+
     <!-- Layout Tools Section -->
       <.admin_section title="Layout Tools">
         <p class="text-sm text-base-content/60 mb-4">Transform station numbering or drag stations in the preview to manually reorder.</p>
@@ -478,7 +478,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           </div>
         </div>
       </.admin_section>
-      
+
     <!-- Layout Preview Section -->
       <section class="mb-10">
         <div class="flex justify-between items-center mb-4 border-b border-base-300 pb-2">
@@ -486,7 +486,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           <button class="btn btn-primary" phx-click="save">Save Layout</button>
         </div>
 
-        <div id="staton-grid" phx-hook="ButtonGridHook" class="flex flex-col gap-4 w-full p-4">
+        <div id="station-grid" phx-hook="ButtonGridHook" class="flex flex-col gap-4 w-full p-4">
           <%!-- Group rows into table rows (separated by rowpad) --%>
           <% row_groups = group_by_padding(0..(@rows - 1), @rowpad, @row_trailing) %>
           <% rows_per_table = if @rowpad > 1, do: @rowpad, else: @rows %>
@@ -536,7 +536,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
       hooks.ButtonGridHook = {
         mounted() {
-          const container = document.getElementById('staton-grid');
+          const container = document.getElementById('station-grid');
           container.addEventListener('dragstart', event => {
             if (!event.target.matches('[station-x]')) return;
             draggedElement = event.target;
