@@ -1,193 +1,159 @@
-# Script for populating the database. You can run it as:
+# Seeds for LAN Party Seating
 #
-#     mix run priv/repo/seeds.exs
+# Run with: mix ecto.reset
 #
-# Inside the script, you can read and write to any of your
-# repositories directly:
-#
-#     Lanpartyseating.Repo.insert!(%Lanpartyseating.SomeSchema{})
-#
-# We recommend using the bang functions (`insert!`, `update!`
-# and so on) as they will fail if something goes wrong.
+# This file assumes a fresh database.
 
-# A few regular reservations
+alias Lanpartyseating.Repo
 
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-#   start_date: ~U[2023-08-11 17:30:00Z],
-#   end_date: ~U[2023-08-11 20:30:00Z],
-#   name: "League of Legends"
-# })
+# =============================================================================
+# CONFIGURATION - Adjust these values for your event
+# =============================================================================
 
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-#   start_date: ~U[2023-08-12 17:30:00Z],
-#   end_date: ~U[2023-08-12 20:30:00Z],
-#   name: "League of Legends"
-# })
+# Grid dimensions (total stations = columns × rows)
+station_columns = 10
+station_rows = 7
 
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-#   start_date: ~U[2023-08-13 17:30:00Z],
-#   end_date: ~U[2023-08-13 20:30:00Z],
-#   name: "League of Legends"
-# })
+# Sample data timing - days offset from today
+# 0 = today, 1 = tomorrow, etc.
+event_start_offset_days = 0
 
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-#   start_date: ~U[2023-08-11 22:30:00Z],
-#   end_date: ~U[2023-08-12 01:30:00Z],
-#   name: "Rainbow Six Siege"
-# })
+# =============================================================================
+# SETTINGS
+# =============================================================================
 
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.Tournament{
-#   start_date: ~U[2023-08-12 22:30:00Z],
-#   end_date: ~U[2023-08-13 01:30:00Z],
-#   name: "Rainbow Six Siege"
-# })
+Repo.insert!(%Lanpartyseating.Setting{
+  row_padding: 2,
+  column_padding: 1,
+  horizontal_trailing: 1,
+  vertical_trailing: 0,
+})
 
-# for val <- 1..225, do:
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-#   station_id: val,
-#   tournament_id: 1,
-# })
+IO.puts("Created default settings")
 
-# for val <- 1..225, do:
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-#   station_id: val,
-#   tournament_id: 2,
-# })
+# =============================================================================
+# STATIONS
+# =============================================================================
 
-# for val <- 1..225, do:
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-#   station_id: val,
-#   tournament_id: 3,
-# })
-
-# for val <- 1..225, do:
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-#   station_id: val,
-#   tournament_id: 4,
-# })
-
-# for val <- 1..225, do:
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.TournamentReservation{
-#   station_id: val,
-#   tournament_id: 5,
-# })
-
-# NOTE: The following seed data uses legacy module names that no longer exist.
-# Database is now seeded via migrations. These are commented out for reference.
-#
-# # Create only data required in this table: The last assigned seat ID.
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.LastAssignedSeat{
-#   last_assigned_station: 0,
-#   last_assigned_station_date: ~U[2022-08-05 15:30:00Z],
-# })
-#
-# # Default layout which closely matches what we had for 2024
-# for val <- 1..70 do
-#   Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
-#     station_number: val,
-#     x: div(val - 1, 10),
-#     y: rem(val - 1, 10),
-#   })
-# end
-#
-# # In 2024 we had 70 PCs
-# for val <- 1..70,
-#     do:
-#       Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-#         station_number: val,
-#       })
-#
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
-#   row_padding: 2,
-#   column_padding: 1,
-#   horizontal_trailing: 1,
-#   vertical_trailing: 0,
-# })
-#
-# Lanpartyseating.Repo.insert!(%Lanpartyseating.Badge{
-#   uid: "1",
-#   serial_key: "1",
-#   is_banned: false,
-# })
-
-# Initial admin user (change password on first login!)
-# Email: admin@otakuthon.com
-# Password: change-me-on-first-login
-case Lanpartyseating.Accounts.get_user_by_email("admin@otakuthon.com") do
-  nil ->
-    Lanpartyseating.Accounts.create_user(%{
-      name: "Admin",
-      email: "admin@otakuthon.com",
-      password: "change-me-on-first-login",
-    })
-    |> case do
-      {:ok, user} ->
-        IO.puts("Created initial admin user: admin@otakuthon.com")
-        # Mark user as confirmed
-        Lanpartyseating.Repo.update!(Ecto.Changeset.change(user, confirmed_at: NaiveDateTime.utc_now(:second)))
-
-      {:error, changeset} ->
-        IO.puts("Failed to create admin user: #{inspect(changeset.errors)}")
-    end
-
-  _user ->
-    IO.puts("Admin user already exists: admin@otakuthon.com")
-end
-
-# Sample admin badge for testing (disabled by default in production)
-# Badge number: ADMIN-001
-case Lanpartyseating.Repo.get_by(Lanpartyseating.Accounts.AdminBadge, badge_number: "ADMIN-001") do
-  nil ->
-    Lanpartyseating.Repo.insert!(%Lanpartyseating.Accounts.AdminBadge{
-      badge_number: "ADMIN-001",
-      label: "Emergency Admin / Admin d'urgence",
-      enabled: true,
-    })
-
-    IO.puts("Created sample admin badge: ADMIN-001")
-
-  _badge ->
-    IO.puts("Admin badge already exists: ADMIN-001")
-end
-
-# Default settings (required for the app to function)
-case Lanpartyseating.Repo.one(Lanpartyseating.Setting) do
-  nil ->
-    Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
-      row_padding: 2,
-      column_padding: 1,
-      horizontal_trailing: 1,
-      vertical_trailing: 0,
-    })
-
-    IO.puts("Created default settings")
-
-  _settings ->
-    IO.puts("Settings already exist")
-end
-
-# Default stations and layout (70 stations in a 7x10 grid)
 # Layout must be created before stations due to foreign key constraint
-existing_stations = Lanpartyseating.Repo.aggregate(Lanpartyseating.Station, :count)
+total_stations = station_columns * station_rows
 
-if existing_stations == 0 do
-  # First create all layouts
-  for val <- 1..70 do
-    Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
-      station_number: val,
-      x: rem(val - 1, 10),
-      y: div(val - 1, 10),
-    })
-  end
-
-  # Then create stations
-  for val <- 1..70 do
-    Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
-      station_number: val,
-    })
-  end
-
-  IO.puts("Created 70 stations with layout")
-else
-  IO.puts("Stations already exist (#{existing_stations} stations)")
+for station_number <- 1..total_stations do
+  Repo.insert!(%Lanpartyseating.StationLayout{
+    station_number: station_number,
+    x: rem(station_number - 1, station_columns),
+    y: div(station_number - 1, station_columns),
+  })
 end
+
+for station_number <- 1..total_stations do
+  Repo.insert!(%Lanpartyseating.Station{
+    station_number: station_number,
+  })
+end
+
+IO.puts("Created #{total_stations} stations (#{station_columns} cols x #{station_rows} rows)")
+
+# =============================================================================
+# ADMIN USER
+# =============================================================================
+
+{:ok, admin} =
+  Lanpartyseating.Accounts.create_user(%{
+    name: "Admin",
+    email: "admin@otakuthon.com",
+    password: "change-me-on-first-login",
+  })
+
+Repo.update!(Ecto.Changeset.change(admin, confirmed_at: NaiveDateTime.utc_now(:second)))
+
+IO.puts("Created admin user: admin@otakuthon.com (password: change-me-on-first-login)")
+
+# =============================================================================
+# ADMIN BADGE
+# =============================================================================
+
+Repo.insert!(%Lanpartyseating.Accounts.AdminBadge{
+  badge_number: "ADMIN-001",
+  label: "Emergency Admin / Admin d'urgence",
+  enabled: true,
+})
+
+IO.puts("Created admin badge: ADMIN-001")
+
+# =============================================================================
+# SAMPLE BADGE
+# =============================================================================
+
+Repo.insert!(%Lanpartyseating.Badge{
+  uid: "1",
+  serial_key: "1",
+})
+
+IO.puts("Created sample badge: 1")
+
+# =============================================================================
+# SAMPLE TOURNAMENTS
+# =============================================================================
+
+now = DateTime.utc_now() |> DateTime.truncate(:second)
+event_base = DateTime.add(now, event_start_offset_days * 24 * 60 * 60, :second)
+
+# Tournament 1: Starts in 2 hours, runs 3 hours
+tournament1_start = DateTime.add(event_base, 2 * 60 * 60, :second)
+tournament1_end = DateTime.add(tournament1_start, 3 * 60 * 60, :second)
+
+tournament1 =
+  Repo.insert!(%Lanpartyseating.Tournament{
+    name: "League of Legends",
+    start_date: tournament1_start,
+    end_date: tournament1_end,
+  })
+
+# Tournament 2: Tomorrow at 2pm, runs 3 hours
+tomorrow_2pm =
+  event_base
+  |> DateTime.add(24 * 60 * 60, :second)
+  |> Map.put(:hour, 14)
+  |> Map.put(:minute, 0)
+  |> Map.put(:second, 0)
+
+tournament2_end = DateTime.add(tomorrow_2pm, 3 * 60 * 60, :second)
+
+Repo.insert!(%Lanpartyseating.Tournament{
+  name: "Valorant",
+  start_date: tomorrow_2pm,
+  end_date: tournament2_end,
+})
+
+# Tournament 3: Day after tomorrow at 6pm, runs 2 hours
+day_after_6pm =
+  event_base
+  |> DateTime.add(2 * 24 * 60 * 60, :second)
+  |> Map.put(:hour, 18)
+  |> Map.put(:minute, 0)
+  |> Map.put(:second, 0)
+
+tournament3_end = DateTime.add(day_after_6pm, 2 * 60 * 60, :second)
+
+Repo.insert!(%Lanpartyseating.Tournament{
+  name: "Rocket League",
+  start_date: day_after_6pm,
+  end_date: tournament3_end,
+})
+
+IO.puts("Created 3 sample tournaments")
+
+# =============================================================================
+# TOURNAMENT RESERVATIONS
+# =============================================================================
+
+# Lock stations 1-10 for the first tournament (League of Legends)
+for station_number <- 1..10 do
+  Repo.insert!(%Lanpartyseating.TournamentReservation{
+    station_id: station_number,
+    tournament_id: tournament1.id,
+  })
+end
+
+IO.puts("Locked stations 1-10 for League of Legends tournament")
