@@ -14,7 +14,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
       socket
       |> assign(:users, users)
       |> assign(:show_create_form, false)
-      |> assign(:form, to_form(%{"email" => "", "password" => ""}, as: "user"))
+      |> assign(:form, to_form(%{"name" => "", "email" => "", "password" => ""}, as: "user"))
       |> assign(:form_error, nil)
 
     {:ok, socket}
@@ -24,7 +24,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
     {:noreply,
      socket
      |> assign(:show_create_form, !socket.assigns.show_create_form)
-     |> assign(:form, to_form(%{"email" => "", "password" => ""}, as: "user"))
+     |> assign(:form, to_form(%{"name" => "", "email" => "", "password" => ""}, as: "user"))
      |> assign(:form_error, nil)}
   end
 
@@ -35,7 +35,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
          socket
          |> assign(:users, Accounts.list_users())
          |> assign(:show_create_form, false)
-         |> assign(:form, to_form(%{"email" => "", "password" => ""}, as: "user"))
+         |> assign(:form, to_form(%{"name" => "", "email" => "", "password" => ""}, as: "user"))
          |> assign(:form_error, nil)
          |> put_flash(:info, "User created successfully.")}
 
@@ -111,6 +111,20 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
 
             <div class="form-control">
               <label class="label">
+                <span class="label-text">Name / Nom</span>
+              </label>
+              <input
+                type="text"
+                name="user[name]"
+                value={@form[:name].value}
+                class="input input-bordered w-full max-w-md"
+                required
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label">
                 <span class="label-text">Email</span>
               </label>
               <input
@@ -125,7 +139,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
 
             <div class="form-control">
               <label class="label">
-                <span class="label-text">Password (min 12 characters)</span>
+                <span class="label-text">Password / Mot de passe (min 12 characters)</span>
               </label>
               <input
                 type="password"
@@ -157,6 +171,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
         <.data_table>
           <:header>
             <th class="text-base-content">ID</th>
+            <th class="text-base-content">Name / Nom</th>
             <th class="text-base-content">Email</th>
             <th class="text-base-content">Created</th>
             <th class="text-base-content">Actions</th>
@@ -164,12 +179,13 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
           <:row :for={user <- @users}>
             <tr class="hover:bg-base-200">
               <td class="text-base-content/50">{user.id}</td>
-              <td class="font-mono">
-                {user.email}
+              <td>
+                {user.name}
                 <%= if user.id == @current_scope.user.id do %>
                   <span class="badge badge-info badge-sm ml-2">You</span>
                 <% end %>
               </td>
+              <td class="font-mono text-sm">{user.email}</td>
               <td class="text-sm">{format_datetime(user.inserted_at)}</td>
               <td>
                 <%= if user.id != @current_scope.user.id do %>

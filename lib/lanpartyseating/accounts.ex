@@ -367,13 +367,44 @@ defmodule Lanpartyseating.Accounts do
   end
 
   @doc """
-  Creates a user with email and password (for admin creation).
+  Creates a user with name, email and password (for admin creation).
   """
   def create_user(attrs) do
     %User{}
-    |> User.email_changeset(attrs)
+    |> User.registration_changeset(attrs)
     |> User.password_changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user name.
+
+  ## Examples
+
+      iex> change_user_name(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_name(user, attrs \\ %{}) do
+    User.name_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user name.
+
+  ## Examples
+
+      iex> update_user_name(user, %{name: "New Name"})
+      {:ok, %User{}}
+
+      iex> update_user_name(user, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user_name(user, attrs) do
+    user
+    |> User.name_changeset(attrs)
+    |> Repo.update()
   end
 
   @doc """

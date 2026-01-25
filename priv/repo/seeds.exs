@@ -116,6 +116,7 @@
 case Lanpartyseating.Accounts.get_user_by_email("admin@otakuthon.com") do
   nil ->
     Lanpartyseating.Accounts.create_user(%{
+      name: "Admin",
       email: "admin@otakuthon.com",
       password: "change-me-on-first-login",
     })
@@ -147,4 +148,46 @@ case Lanpartyseating.Repo.get_by(Lanpartyseating.Accounts.AdminBadge, badge_numb
 
   _badge ->
     IO.puts("Admin badge already exists: ADMIN-001")
+end
+
+# Default settings (required for the app to function)
+case Lanpartyseating.Repo.one(Lanpartyseating.Setting) do
+  nil ->
+    Lanpartyseating.Repo.insert!(%Lanpartyseating.Setting{
+      row_padding: 2,
+      column_padding: 1,
+      horizontal_trailing: 1,
+      vertical_trailing: 0,
+    })
+
+    IO.puts("Created default settings")
+
+  _settings ->
+    IO.puts("Settings already exist")
+end
+
+# Default stations and layout (70 stations in a 7x10 grid)
+# Layout must be created before stations due to foreign key constraint
+existing_stations = Lanpartyseating.Repo.aggregate(Lanpartyseating.Station, :count)
+
+if existing_stations == 0 do
+  # First create all layouts
+  for val <- 1..70 do
+    Lanpartyseating.Repo.insert!(%Lanpartyseating.StationLayout{
+      station_number: val,
+      x: rem(val - 1, 10),
+      y: div(val - 1, 10),
+    })
+  end
+
+  # Then create stations
+  for val <- 1..70 do
+    Lanpartyseating.Repo.insert!(%Lanpartyseating.Station{
+      station_number: val,
+    })
+  end
+
+  IO.puts("Created 70 stations with layout")
+else
+  IO.puts("Stations already exist (#{existing_stations} stations)")
 end

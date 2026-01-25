@@ -3,6 +3,7 @@ defmodule Lanpartyseating.Accounts.User do
   import Ecto.Changeset
 
   schema "users" do
+    field :name, :string
     field :email, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
@@ -10,6 +11,16 @@ defmodule Lanpartyseating.Accounts.User do
     field :authenticated_at, :naive_datetime, virtual: true
 
     timestamps()
+  end
+
+  @doc """
+  A user changeset for changing the name.
+  """
+  def name_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name])
+    |> validate_required([:name])
+    |> validate_length(:name, min: 1, max: 100)
   end
 
   @doc """
@@ -27,6 +38,17 @@ defmodule Lanpartyseating.Accounts.User do
     user
     |> cast(attrs, [:email])
     |> validate_email(opts)
+  end
+
+  @doc """
+  A user changeset for registration with name, email, and password.
+  """
+  def registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:name, :email])
+    |> validate_required([:name])
+    |> validate_length(:name, min: 1, max: 100)
+    |> validate_email(Keyword.put(opts, :validate_unique, Keyword.get(opts, :validate_unique, true)))
   end
 
   defp validate_email(changeset, opts) do

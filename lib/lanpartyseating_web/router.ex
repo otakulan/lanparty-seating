@@ -75,6 +75,21 @@ defmodule LanpartyseatingWeb.Router do
     end
   end
 
+  # User profile routes (require FULL user authentication - not badge)
+  scope "/", LanpartyseatingWeb do
+    pipe_through([:browser, :require_authenticated_user])
+
+    live_session :user_profile,
+      on_mount: [
+        {LanpartyseatingWeb.UserAuth, :mount_current_scope},
+        LanpartyseatingWeb.Nav,
+        {LanpartyseatingWeb.UserAuth, :ensure_user_authenticated},
+      ],
+      layout: {LanpartyseatingWeb.Layouts, :live} do
+      live("/profile", ProfileLive, :index)
+    end
+  end
+
   # Admin management routes (require FULL user authentication - not badge)
   scope "/admin", LanpartyseatingWeb do
     pipe_through([:browser, :require_authenticated_user])

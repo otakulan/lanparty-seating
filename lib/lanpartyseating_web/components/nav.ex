@@ -46,13 +46,18 @@ defmodule NavComponent do
           <% end %>
           <%= if @is_authenticated do %>
             <li>
-              <span class="hover:bg-transparent cursor-default opacity-80 gap-1">
-                <IconComponent.user class="w-4 h-4" />
-                {@current_scope.user.email}
-                <%= if not @is_user_auth do %>
+              <%= if @is_user_auth do %>
+                <.link patch={~p"/profile"} class="hover:bg-neutral-focus rounded-lg gap-1">
+                  <IconComponent.user class="w-4 h-4" />
+                  {@current_scope.user.name}
+                </.link>
+              <% else %>
+                <span class="hover:bg-transparent cursor-default opacity-80 gap-1">
+                  <IconComponent.user class="w-4 h-4" />
+                  {@current_scope.user.name}
                   <span class="badge badge-warning badge-sm">Badge</span>
-                <% end %>
-              </span>
+                </span>
+              <% end %>
             </li>
             <li>
               <form action={~p"/logout"} method="post">
@@ -104,12 +109,19 @@ defmodule NavComponent do
               <li class="menu-title">
                 <span class="flex items-center gap-1">
                   <IconComponent.user class="w-4 h-4" />
-                  {@current_scope.user.email}
+                  {@current_scope.user.name}
                   <%= if not @is_user_auth do %>
                     <span class="badge badge-warning badge-sm">Badge</span>
                   <% end %>
                 </span>
               </li>
+              <%= if @is_user_auth do %>
+                <li>
+                  <.link patch={~p"/profile"} class="hover:bg-neutral-focus">
+                    Profile / Profil
+                  </.link>
+                </li>
+              <% end %>
               <li>
                 <form action={~p"/logout"} method="post">
                   <input type="hidden" name="_method" value="delete" />
