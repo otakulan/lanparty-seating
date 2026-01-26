@@ -104,8 +104,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
                   };
                   update();
                   intervalId = setInterval(update, 1000);
-                  $cleanup(() => clearInterval(intervalId));
                 "
+                @destroy="clearInterval(intervalId)"
               >
                 Next available: <span class="font-bold">Station {@next_available.station_number}</span> in <span class="font-mono font-bold" x-text="remaining"></span>
               </div>

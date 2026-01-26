@@ -35,8 +35,7 @@ defmodule LanpartyseatingWeb.Router do
       ],
       layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/", DisplayLive, :index)
-      live("/selfsign", SelfSignLive, :index)
-      live("/cancellation", CancellationLive, :index)
+      live("/stations", StationsLive, :index)
     end
   end
 
