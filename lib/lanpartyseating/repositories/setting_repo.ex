@@ -15,10 +15,12 @@ defmodule Lanpartyseating.Setting do
   end
 
   @doc false
-  def changeset(reservation, attrs) do
-    reservation
+  def changeset(setting, attrs) do
+    setting
     |> cast(attrs, [:row_padding, :column_padding, :horizontal_trailing, :vertical_trailing, :deleted_at])
-    |> validate_number(:row_padding, greater_than: -1)
-    |> validate_number(:column_padding, greater_than: -1)
+    |> validate_number(:row_padding, greater_than_or_equal_to: 0)
+    |> validate_number(:column_padding, greater_than_or_equal_to: 0)
+    |> validate_number(:horizontal_trailing, greater_than_or_equal_to: 0)
+    |> validate_number(:vertical_trailing, greater_than_or_equal_to: 0)
   end
 end

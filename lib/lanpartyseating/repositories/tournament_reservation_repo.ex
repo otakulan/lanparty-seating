@@ -13,9 +13,11 @@ defmodule Lanpartyseating.TournamentReservation do
   end
 
   @doc false
-  def changeset(reservation, attrs) do
-    reservation
-    |> cast(attrs, [:station_id, :tournament_id])
+  def changeset(tournament_reservation, attrs) do
+    tournament_reservation
+    |> cast(attrs, [:station_id, :tournament_id, :deleted_at])
     |> validate_required([:station_id, :tournament_id])
+    |> validate_number(:station_id, greater_than: 0)
+    |> validate_number(:tournament_id, greater_than: 0)
   end
 end

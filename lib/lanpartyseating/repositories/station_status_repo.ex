@@ -12,9 +12,10 @@ defmodule Lanpartyseating.StationStatus do
   end
 
   @doc false
-  def changeset(reservation, attrs) do
-    reservation
+  def changeset(station_status, attrs) do
+    station_status
     |> cast(attrs, [:station_id, :is_assigned, :is_broken])
     |> validate_required([:station_id])
+    |> validate_number(:station_id, greater_than: 0)
   end
 end

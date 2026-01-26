@@ -15,9 +15,22 @@ defmodule Lanpartyseating.Tournament do
   end
 
   @doc false
-  def changeset(reservation, attrs) do
-    reservation
-    |> cast(attrs, [:start_date, :end_date, :name])
+  def changeset(tournament, attrs) do
+    tournament
+    |> cast(attrs, [:start_date, :end_date, :name, :deleted_at])
     |> validate_required([:start_date, :end_date, :name])
+    |> validate_length(:name, min: 1, max: 255)
+    |> validate_end_date_after_start_date()
+  end
+
+  defp validate_end_date_after_start_date(changeset) do
+    start_date = get_field(changeset, :start_date)
+    end_date = get_field(changeset, :end_date)
+
+    if start_date && end_date && DateTime.compare(end_date, start_date) != :gt do
+      add_error(changeset, :end_date, "must be after start date")
+    else
+      changeset
+    end
   end
 end
