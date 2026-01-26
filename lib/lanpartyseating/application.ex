@@ -8,24 +8,20 @@ defmodule Lanpartyseating.Application do
     OpentelemetryPhoenix.setup(adapter: :bandit, liveview: true)
     OpentelemetryEcto.setup([:lanpartyseating, :repo])
 
-    # Define workers and child supervisors to be supervised
     children = [
-      # Start the Endpoint (http/https)
-      LanpartyseatingWeb.Endpoint,
-      # Start prometheus metrics
-      Lanpartyseating.PromEx,
-      # Start the Ecto repository
+      # Database must be ready before anything queries it
       Lanpartyseating.Repo,
-      # Start the Telemetry supervisor
+      # Telemetry and metrics
       LanpartyseatingWeb.Telemetry,
-      # Start the PubSub system
-      {Phoenix.PubSub, [name: Lanpartyseating.PubSub, adapter: Phoenix.PubSub.PG2]},
-      # Start the Presence supervisor, after its PubSub dependency
+      Lanpartyseating.PromEx,
+      # PubSub system (Presence depends on this)
+      {Phoenix.PubSub, name: Lanpartyseating.PubSub},
       LanpartyseatingWeb.Presence,
-      # Start a worker by calling: Lanpartyseating.Worker.start_link(arg)
-      # {Lanpartyseating.Worker, arg}
+      # Expiration task infrastructure
       {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},
       Lanpartyseating.ExpirationKickstarter,
+      # Endpoint starts last - accept connections only when ready
+      LanpartyseatingWeb.Endpoint,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
