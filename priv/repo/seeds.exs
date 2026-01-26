@@ -5,6 +5,12 @@
 # This file assumes a fresh database.
 
 alias Lanpartyseating.Repo
+alias Lanpartyseating.Setting
+alias Lanpartyseating.StationLayout
+alias Lanpartyseating.Station
+alias Lanpartyseating.Badge
+alias Lanpartyseating.Tournament
+alias Lanpartyseating.TournamentReservation
 
 # =============================================================================
 # CONFIGURATION - Adjust these values for your event
@@ -22,12 +28,14 @@ event_start_offset_days = 0
 # SETTINGS
 # =============================================================================
 
-Repo.insert!(%Lanpartyseating.Setting{
+%Setting{}
+|> Setting.changeset(%{
   row_padding: 2,
   column_padding: 1,
   horizontal_trailing: 1,
   vertical_trailing: 0,
 })
+|> Repo.insert!()
 
 IO.puts("Created default settings")
 
@@ -39,17 +47,19 @@ IO.puts("Created default settings")
 total_stations = station_columns * station_rows
 
 for station_number <- 1..total_stations do
-  Repo.insert!(%Lanpartyseating.StationLayout{
+  %StationLayout{}
+  |> StationLayout.changeset(%{
     station_number: station_number,
     x: rem(station_number - 1, station_columns),
     y: div(station_number - 1, station_columns),
   })
+  |> Repo.insert!()
 end
 
 for station_number <- 1..total_stations do
-  Repo.insert!(%Lanpartyseating.Station{
-    station_number: station_number,
-  })
+  %Station{}
+  |> Station.changeset(%{station_number: station_number})
+  |> Repo.insert!()
 end
 
 IO.puts("Created #{total_stations} stations (#{station_columns} cols x #{station_rows} rows)")
@@ -73,7 +83,7 @@ IO.puts("Created admin user: admin@otakuthon.com (password: change-me-on-first-l
 # ADMIN BADGE
 # =============================================================================
 
-Repo.insert!(%Lanpartyseating.Accounts.AdminBadge{
+Lanpartyseating.Accounts.create_admin_badge(%{
   badge_number: "ADMIN-001",
   label: "Emergency Admin / Admin d'urgence",
   enabled: true,
@@ -85,10 +95,9 @@ IO.puts("Created admin badge: ADMIN-001")
 # SAMPLE BADGE
 # =============================================================================
 
-Repo.insert!(%Lanpartyseating.Badge{
-  uid: "1",
-  serial_key: "1",
-})
+%Badge{}
+|> Badge.changeset(%{uid: "1", serial_key: "1"})
+|> Repo.insert!()
 
 IO.puts("Created sample badge: 1")
 
@@ -104,11 +113,13 @@ tournament1_start = DateTime.add(event_base, 2 * 60 * 60, :second)
 tournament1_end = DateTime.add(tournament1_start, 3 * 60 * 60, :second)
 
 tournament1 =
-  Repo.insert!(%Lanpartyseating.Tournament{
+  %Tournament{}
+  |> Tournament.changeset(%{
     name: "League of Legends",
     start_date: tournament1_start,
     end_date: tournament1_end,
   })
+  |> Repo.insert!()
 
 # Tournament 2: Tomorrow at 2pm, runs 3 hours
 tomorrow_2pm =
@@ -120,11 +131,13 @@ tomorrow_2pm =
 
 tournament2_end = DateTime.add(tomorrow_2pm, 3 * 60 * 60, :second)
 
-Repo.insert!(%Lanpartyseating.Tournament{
+%Tournament{}
+|> Tournament.changeset(%{
   name: "Valorant",
   start_date: tomorrow_2pm,
   end_date: tournament2_end,
 })
+|> Repo.insert!()
 
 # Tournament 3: Day after tomorrow at 6pm, runs 2 hours
 day_after_6pm =
@@ -136,11 +149,13 @@ day_after_6pm =
 
 tournament3_end = DateTime.add(day_after_6pm, 2 * 60 * 60, :second)
 
-Repo.insert!(%Lanpartyseating.Tournament{
+%Tournament{}
+|> Tournament.changeset(%{
   name: "Rocket League",
   start_date: day_after_6pm,
   end_date: tournament3_end,
 })
+|> Repo.insert!()
 
 IO.puts("Created 3 sample tournaments")
 
@@ -150,10 +165,12 @@ IO.puts("Created 3 sample tournaments")
 
 # Lock stations 1-10 for the first tournament (League of Legends)
 for station_number <- 1..10 do
-  Repo.insert!(%Lanpartyseating.TournamentReservation{
+  %TournamentReservation{}
+  |> TournamentReservation.changeset(%{
     station_id: station_number,
     tournament_id: tournament1.id,
   })
+  |> Repo.insert!()
 end
 
 IO.puts("Locked stations 1-10 for League of Legends tournament")
