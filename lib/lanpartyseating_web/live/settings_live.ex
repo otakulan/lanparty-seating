@@ -320,7 +320,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
     )
   end
 
-  @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-6xl">
@@ -400,10 +399,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <span class="text-xs text-base-content/50 uppercase tracking-wide">Mirror Rows</span>
             <div class="flex gap-2 mt-1">
               <button class="btn btn-sm" phx-click="horizontal_mirror_even">
-                <IconComponent.double_sided_arrow_horizontal /> Even
+                <Icons.double_sided_arrow_horizontal /> Even
               </button>
               <button class="btn btn-sm" phx-click="horizontal_mirror_odd">
-                <IconComponent.double_sided_arrow_horizontal /> Odd
+                <Icons.double_sided_arrow_horizontal /> Odd
               </button>
             </div>
           </div>
@@ -412,10 +411,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <span class="text-xs text-base-content/50 uppercase tracking-wide">Mirror Columns</span>
             <div class="flex gap-2 mt-1">
               <button class="btn btn-sm" phx-click="vertical_mirror_even">
-                <IconComponent.double_sided_arrow_vertical /> Even
+                <Icons.double_sided_arrow_vertical /> Even
               </button>
               <button class="btn btn-sm" phx-click="vertical_mirror_odd">
-                <IconComponent.double_sided_arrow_vertical /> Odd
+                <Icons.double_sided_arrow_vertical /> Odd
               </button>
             </div>
           </div>
@@ -424,7 +423,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <span class="text-xs text-base-content/50 uppercase tracking-wide">Rotate</span>
             <div class="mt-1">
               <button class="btn btn-sm" phx-click="diagonal_mirror">
-                <IconComponent.refresh /> Transpose
+                <Icons.refresh /> Transpose
               </button>
             </div>
           </div>
@@ -433,10 +432,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <span class="text-xs text-base-content/50 uppercase tracking-wide">Reset</span>
             <div class="flex gap-2 mt-1">
               <button class="btn btn-sm btn-warning" phx-click="reset_grid_column_major">
-                <IconComponent.x /> Column Major
+                <Icons.x /> Column Major
               </button>
               <button class="btn btn-sm btn-warning" phx-click="reset_grid_row_major">
-                <IconComponent.x /> Row Major
+                <Icons.x /> Row Major
               </button>
             </div>
           </div>

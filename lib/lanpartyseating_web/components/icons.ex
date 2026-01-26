@@ -1,4 +1,4 @@
-defmodule IconComponent do
+defmodule LanpartyseatingWeb.Components.Icons do
   @moduledoc """
   Icon components - Heroicons (outline style, 24px).
   SVGs sourced from heroicons.com v2.1

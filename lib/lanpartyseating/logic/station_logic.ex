@@ -3,10 +3,10 @@ defmodule Lanpartyseating.StationLogic do
   alias Lanpartyseating.PubSub
   alias Lanpartyseating.Reservation
   alias Lanpartyseating.Station
+  alias Lanpartyseating.StationLayout
+  alias Lanpartyseating.StationStatus
   alias Lanpartyseating.TournamentReservation
   alias Lanpartyseating.Repo
-  alias Lanpartyseating.StationLayout, as: Layout
-  alias Lanpartyseating.StationStatus, as: Status
 
   def number_stations do
     Repo.aggregate(Station, :count)
@@ -20,8 +20,8 @@ defmodule Lanpartyseating.StationLogic do
       where: is_nil(s.deleted_at),
       preload: [
         # may return nil
-        stations_status: ^from(Status),
-        station_layout: ^from(Layout),
+        stations_status: ^from(StationStatus),
+        station_layout: ^from(StationLayout),
         reservations:
           ^from(
             r in Reservation,
@@ -62,7 +62,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_station_layout() do
-    rows = Repo.all(from(Layout))
+    rows = Repo.all(from(StationLayout))
 
     Enum.map(rows, fn r -> {{r.x, r.y}, r.station_number} end)
     |> Enum.into(%{})
@@ -84,7 +84,7 @@ defmodule Lanpartyseating.StationLogic do
 
   def set_station_broken(station_number, is_broken) do
     changeset =
-      Status.changeset(%Status{}, %{station_id: station_number, is_broken: is_broken})
+      StationStatus.changeset(%StationStatus{}, %{station_id: station_number, is_broken: is_broken})
 
     result =
       Repo.insert(

@@ -86,8 +86,8 @@ defmodule LanpartyseatingWeb do
       import Phoenix.HTML
 
       # UI Components
-      alias NavComponent
-      alias IconComponent
+      alias LanpartyseatingWeb.Components.Nav
+      alias LanpartyseatingWeb.Components.Icons
       import LanpartyseatingWeb.Components.UI
 
       # Shared helper functions

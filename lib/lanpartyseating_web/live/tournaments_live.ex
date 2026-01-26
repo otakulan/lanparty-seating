@@ -84,7 +84,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
       
     <!-- Create Tournament Section -->
       <.admin_section title="Create New Tournament">
-        <TournamentModalComponent.tournament_modal />
+        <LanpartyseatingWeb.Components.TournamentModal.tournament_modal />
       </.admin_section>
       
     <!-- Tournaments List Section -->
