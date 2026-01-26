@@ -156,8 +156,8 @@ TZ=America/Toronto
 ### Database Setup
 
 ```bash
-bin/server eval "Lanpartyseating.Release.migrate()"
-bin/server eval "Lanpartyseating.Release.seed()"
+bin/lanpartyseating eval "Lanpartyseating.Release.migrate()"
+bin/lanpartyseating eval "Lanpartyseating.Release.seed()"
 ```
 
 ### Manual Release Build
