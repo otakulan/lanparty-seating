@@ -20,7 +20,7 @@ defmodule LanpartyseatingWeb.StationsLive do
   - Avoids browser top-layer corruption issues
   - Integrates properly with LiveView's DOM patching
   - Maintains DaisyUI styling
-  - Supports focus trapping via the FocusWrap hook
+  - Supports focus trapping via the focus_wrap hook
   """
   use LanpartyseatingWeb, :live_view
 

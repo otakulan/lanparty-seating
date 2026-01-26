@@ -27,7 +27,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
       }
     }
   },
-  hooks: Hooks
+  hooks: { ...Hooks, ...(window.customHooks || {}) }
 })
 
 // Connect if there are any LiveViews on the page
