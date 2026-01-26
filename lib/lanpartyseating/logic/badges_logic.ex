@@ -1,14 +1,14 @@
 defmodule Lanpartyseating.BadgesLogic do
   import Ecto.Query
-  alias Lanpartyseating.Badge, as: Badge
-  alias Lanpartyseating.Repo, as: Repo
+  alias Lanpartyseating.Badge
+  alias Lanpartyseating.Repo
 
   def get_badge(uid) do
-    min_uid = String.upcase(uid)
+    upper_uid = String.upcase(uid)
 
     badge =
-      from(s in Badge,
-        where: s.uid == ^min_uid
+      from(b in Badge,
+        where: b.uid == ^upper_uid
       )
       |> Repo.one()
 

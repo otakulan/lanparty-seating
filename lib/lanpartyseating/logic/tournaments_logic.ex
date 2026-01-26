@@ -6,7 +6,6 @@ defmodule Lanpartyseating.TournamentsLogic do
   alias Lanpartyseating.TournamentReservation
   alias Lanpartyseating.Repo
 
-  @spec get_all_tournaments :: any
   def get_all_tournaments do
     from(t in Tournament,
       where: is_nil(t.deleted_at),
@@ -15,13 +14,11 @@ defmodule Lanpartyseating.TournamentsLogic do
     |> Repo.all()
   end
 
-  @spec get_all_daily_tournaments :: any
   def get_all_daily_tournaments do
-    now = DateTime.truncate(DateTime.utc_now(), :second)
-
-    date = elem(Date.new(now.year, now.month, now.day + 1), 1)
-    time = elem(Time.new(4, 0, 0, 0), 1)
-    tomorrow = elem(DateTime.new(date, time, "Etc/UTC"), 1)
+    tomorrow =
+      Date.utc_today()
+      |> Date.add(1)
+      |> DateTime.new!(~T[04:00:00], "Etc/UTC")
 
     from(t in Tournament,
       where: t.end_date > from_now(0, "second"),
@@ -148,11 +145,8 @@ defmodule Lanpartyseating.TournamentsLogic do
 
         Repo.insert_all(TournamentReservation, reservations)
 
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "station_update",
-          {:stations, StationLogic.get_all_stations()}
-        )
+        {:ok, stations} = StationLogic.get_all_stations()
+        Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
 
         {:ok, reservations}
     end

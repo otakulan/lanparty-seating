@@ -238,29 +238,29 @@ defmodule LanpartyseatingWeb.StationsLive do
   defp execute_action("open_station", params, socket), do: do_open_station(params, socket)
 
   defp do_extend_reservation(%{"station_number" => id, "minutes_increment" => minutes}, socket) do
-    {:ok, _} =
-      ReservationLogic.extend_reservation(
-        String.to_integer(id),
-        String.to_integer(minutes)
-      )
+    case ReservationLogic.extend_reservation(String.to_integer(id), String.to_integer(minutes)) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(:show_station_modal, false)
+         |> assign(:selected_station, nil)}
 
-    {:noreply,
-     socket
-     |> assign(:show_station_modal, false)
-     |> assign(:selected_station, nil)}
+      {:error, :not_found} ->
+        {:noreply, assign(socket, :registration_error, "Reservation not found")}
+    end
   end
 
   defp do_cancel_station(%{"station_number" => id, "cancel_reason" => reason}, socket) do
-    {:ok, _} =
-      ReservationLogic.cancel_reservation(
-        String.to_integer(id),
-        reason
-      )
+    case ReservationLogic.cancel_reservation(String.to_integer(id), reason) do
+      :ok ->
+        {:noreply,
+         socket
+         |> assign(:show_station_modal, false)
+         |> assign(:selected_station, nil)}
 
-    {:noreply,
-     socket
-     |> assign(:show_station_modal, false)
-     |> assign(:selected_station, nil)}
+      {:error, :not_found} ->
+        {:noreply, assign(socket, :registration_error, "No active reservation found")}
+    end
   end
 
   defp do_close_station(%{"station_number" => station_number}, socket) do

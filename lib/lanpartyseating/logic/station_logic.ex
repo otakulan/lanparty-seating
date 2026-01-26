@@ -1,12 +1,10 @@
 defmodule Lanpartyseating.StationLogic do
   import Ecto.Query
-  use Timex
-  alias Lanpartyseating.PubSub, as: PubSub
-  alias Lanpartyseating.StationLogic, as: StationLogic
-  alias Lanpartyseating.Reservation, as: Reservation
-  alias Lanpartyseating.Station, as: Station
-  alias Lanpartyseating.TournamentReservation, as: TournamentReservation
-  alias Lanpartyseating.Repo, as: Repo
+  alias Lanpartyseating.PubSub
+  alias Lanpartyseating.Reservation
+  alias Lanpartyseating.Station
+  alias Lanpartyseating.TournamentReservation
+  alias Lanpartyseating.Repo
   alias Lanpartyseating.StationLayout, as: Layout
   alias Lanpartyseating.StationStatus, as: Status
 
@@ -15,7 +13,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_station_query(now \\ DateTime.utc_now()) do
-    tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
+    tournament_buffer = DateTime.add(now, 45, :minute)
 
     from(s in Station,
       order_by: [asc: s.station_number],
@@ -45,7 +43,9 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations(now \\ DateTime.utc_now()) do
-    stations = get_station_query(now) |> Repo.all()
+    stations =
+      get_station_query(now)
+      |> Repo.all()
 
     case stations do
       [] ->
@@ -91,7 +91,7 @@ defmodule Lanpartyseating.StationLogic do
       )
 
     with {:ok, update} <- result,
-         {:ok, stations} <- StationLogic.get_all_stations() do
+         {:ok, stations} <- get_all_stations() do
       Phoenix.PubSub.broadcast(
         PubSub,
         "station_update",
@@ -156,15 +156,9 @@ defmodule Lanpartyseating.StationLogic do
     end
   end
 
-  def is_station_available(station) do
-    %{status: status} = StationLogic.get_station_status(station)
-
-    case status do
-      :reserved -> false
-      :occupied -> false
-      :broken -> false
-      :available -> true
-    end
+  def station_available?(station) do
+    %{status: status} = get_station_status(station)
+    status == :available
   end
 
   def get_stations_by_range(start_number, end_number) do

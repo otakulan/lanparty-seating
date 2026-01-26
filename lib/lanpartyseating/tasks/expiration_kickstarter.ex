@@ -11,6 +11,13 @@ defmodule Lanpartyseating.ExpirationKickstarter do
   end
 
   def run(_arg) do
+    if sandbox_mode?(), do: :ok, else: do_run()
+  end
+
+  # Don't run during tests because the SQL sandbox is not compatible with what this module does
+  defp sandbox_mode?, do: Repo.config()[:pool] == Ecto.Adapters.SQL.Sandbox
+
+  defp do_run do
     now = DateTime.truncate(DateTime.utc_now(), :second)
 
     Logger.debug("Starting reservation expiration tasks")
