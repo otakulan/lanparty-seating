@@ -63,8 +63,6 @@ defmodule LanpartyseatingWeb.Components.UI do
         columns={@columns}
         rowpad={@rowpad}
         colpad={@colpad}
-        row_trailing={@row_trailing}
-        col_trailing={@col_trailing}
       >
         <:cell :let={station_data}>
           <DisplayModalComponent.modal
@@ -81,8 +79,6 @@ defmodule LanpartyseatingWeb.Components.UI do
   attr :columns, :integer, required: true
   attr :rowpad, :integer, required: true
   attr :colpad, :integer, required: true
-  attr :row_trailing, :integer, required: true
-  attr :col_trailing, :integer, required: true
   attr :class, :string, default: nil
 
   slot :cell, required: true
@@ -109,7 +105,7 @@ defmodule LanpartyseatingWeb.Components.UI do
     # Group into table chunks, but only include active indices
     # Filter each group to only rows that have stations, remove empty groups
     row_groups =
-      group_by_padding(0..(assigns.rows - 1), assigns.rowpad, assigns.row_trailing)
+      group_by_padding(0..(assigns.rows - 1), assigns.rowpad)
       |> Enum.map(fn group ->
         Enum.filter(group, &(&1 in active_rows))
       end)
@@ -117,7 +113,7 @@ defmodule LanpartyseatingWeb.Components.UI do
 
     # Filter each group to only columns that have stations, remove empty groups
     col_groups =
-      group_by_padding(0..(assigns.columns - 1), assigns.colpad, assigns.col_trailing)
+      group_by_padding(0..(assigns.columns - 1), assigns.colpad)
       |> Enum.map(fn group ->
         Enum.filter(group, &(&1 in active_cols))
       end)

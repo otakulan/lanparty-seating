@@ -46,8 +46,6 @@ defmodule LanpartyseatingWeb.StationsLive do
 
     socket =
       socket
-      |> assign(:col_trailing, settings.vertical_trailing)
-      |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign_stations(station_list)
@@ -309,8 +307,6 @@ defmodule LanpartyseatingWeb.StationsLive do
 
     socket =
       socket
-      |> assign(:col_trailing, settings.vertical_trailing)
-      |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign_stations(station_list)
@@ -339,8 +335,6 @@ defmodule LanpartyseatingWeb.StationsLive do
         columns={@columns}
         rowpad={@rowpad}
         colpad={@colpad}
-        row_trailing={@row_trailing}
-        col_trailing={@col_trailing}
       >
         <:cell :let={station_data}>
           <StationModal.station_button

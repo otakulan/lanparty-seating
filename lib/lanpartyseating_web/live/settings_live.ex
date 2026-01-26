@@ -1,9 +1,9 @@
 defmodule LanpartyseatingWeb.SettingsLive do
   require Logger
   use LanpartyseatingWeb, :live_view
-  alias Lanpartyseating.Repo, as: Repo
+  alias Lanpartyseating.Repo
   require Ecto.Query
-  alias Lanpartyseating.PubSub, as: PubSub
+  alias Lanpartyseating.PubSub
 
   def minmax_row(grid, y_in) do
     grid
@@ -486,13 +486,13 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
         <div id="station-grid" phx-hook="ButtonGridHook" class="flex flex-col gap-4 w-full p-4">
           <%!-- Group rows into table rows (separated by rowpad) --%>
-          <% row_groups = group_by_padding(0..(@rows - 1), @rowpad, @row_trailing) %>
+          <% row_groups = group_by_padding(0..(@rows - 1), @rowpad) %>
           <% rows_per_table = if @rowpad > 1, do: @rowpad, else: @rows %>
           <% cols_per_table = if @colpad > 1, do: @colpad, else: @columns %>
           <%= for row_group <- row_groups do %>
             <div class="flex flex-row gap-4">
               <%!-- Group columns into tables (separated by colpad) --%>
-              <% col_groups = group_by_padding(0..(@columns - 1), @colpad, @col_trailing) %>
+              <% col_groups = group_by_padding(0..(@columns - 1), @colpad) %>
               <%= for col_group <- col_groups do %>
                 <%!-- Calculate how many rows to render (pad partial tables) --%>
                 <% actual_rows = length(row_group) %>

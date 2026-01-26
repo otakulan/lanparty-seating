@@ -11,17 +11,17 @@ defmodule LanpartyseatingWeb.Helpers do
 
   ## Examples
 
-      iex> group_by_padding(0..6, 2, 0)
+      iex> group_by_padding(0..6, 2)
       [[0, 1], [2, 3], [4, 5], [6]]
 
-      iex> group_by_padding(0..9, 1, 0)
+      iex> group_by_padding(0..9, 1)
       [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]]
   """
-  def group_by_padding(range, pad, _trailing) when pad <= 1 do
+  def group_by_padding(range, pad) when pad <= 1 do
     [Enum.to_list(range)]
   end
 
-  def group_by_padding(range, pad, _trailing) do
+  def group_by_padding(range, pad) do
     range
     |> Enum.to_list()
     |> Enum.chunk_every(pad)

@@ -1,9 +1,9 @@
 defmodule LanpartyseatingWeb.DisplayLive do
   use LanpartyseatingWeb, :live_view
-  alias Lanpartyseating.PubSub, as: PubSub
-  alias Lanpartyseating.TournamentsLogic, as: TournamentsLogic
-  alias Lanpartyseating.SettingsLogic, as: SettingsLogic
-  alias Lanpartyseating.StationLogic, as: StationLogic
+  alias Lanpartyseating.PubSub
+  alias Lanpartyseating.TournamentsLogic
+  alias Lanpartyseating.SettingsLogic
+  alias Lanpartyseating.StationLogic
 
   def assign_stations(socket, station_list) do
     {stations, {columns, rows}} = StationLogic.stations_by_xy(station_list)
@@ -44,8 +44,6 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
     socket =
       socket
-      |> assign(:col_trailing, settings.vertical_trailing)
-      |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign_stations(station_list)
@@ -64,8 +62,6 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
     socket =
       socket
-      |> assign(:col_trailing, settings.vertical_trailing)
-      |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign_stations(station_list)
@@ -126,8 +122,6 @@ defmodule LanpartyseatingWeb.DisplayLive do
           columns={@columns}
           rowpad={@rowpad}
           colpad={@colpad}
-          row_trailing={@row_trailing}
-          col_trailing={@col_trailing}
         >
           <:cell :let={station_data}>
             <DisplayModalComponent.modal
