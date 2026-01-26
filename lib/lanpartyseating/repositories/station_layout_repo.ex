@@ -1,7 +1,7 @@
 defmodule Lanpartyseating.StationLayout do
-  alias Lanpartyseating.Station
   use Ecto.Schema
   import Ecto.Changeset
+  alias Lanpartyseating.Station
 
   @primary_key {:station_number, :integer, autogenerate: false}
   @foreign_key_type :integer

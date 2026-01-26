@@ -1,6 +1,6 @@
 defmodule LanpartyseatingWeb.TournamentsLive do
-  require Logger
   use LanpartyseatingWeb, :live_view
+  require Logger
   alias Lanpartyseating.PubSub
   alias Lanpartyseating.TournamentsLogic
 
@@ -107,13 +107,13 @@ defmodule LanpartyseatingWeb.TournamentsLive do
                   <td class="font-semibold">{tournament.name}</td>
                   <td>
                     {Calendar.strftime(
-                      tournament.start_date |> Timex.to_datetime("America/Montreal"),
+                      tournament.start_date |> Timex.to_datetime("America/Toronto"),
                       "%A %d %b - %H:%M"
                     )}
                   </td>
                   <td>
                     {Calendar.strftime(
-                      tournament.end_date |> Timex.to_datetime("America/Montreal"),
+                      tournament.end_date |> Timex.to_datetime("America/Toronto"),
                       "%A %d %b - %H:%M"
                     )}
                   </td>

@@ -14,20 +14,6 @@ defmodule Lanpartyseating.TournamentsLogic do
     |> Repo.all()
   end
 
-  def get_all_daily_tournaments do
-    tomorrow =
-      Date.utc_today()
-      |> Date.add(1)
-      |> DateTime.new!(~T[04:00:00], "Etc/UTC")
-
-    from(t in Tournament,
-      where: t.end_date > from_now(0, "second"),
-      where: t.end_date < ^tomorrow,
-      where: is_nil(t.deleted_at)
-    )
-    |> Repo.all()
-  end
-
   def get_upcoming_tournaments do
     tournaments =
       from(t in Tournament,

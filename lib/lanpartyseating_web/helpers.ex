@@ -4,6 +4,27 @@ defmodule LanpartyseatingWeb.Helpers do
   """
 
   @doc """
+  Formats a datetime for display in America/Toronto timezone.
+
+  Returns "-" for nil values.
+
+  ## Examples
+
+      iex> format_datetime(~U[2024-01-15 14:30:00Z])
+      "2024-01-15 09:30"
+
+      iex> format_datetime(nil)
+      "-"
+  """
+  def format_datetime(nil), do: "-"
+
+  def format_datetime(dt) do
+    dt
+    |> Timex.to_datetime("America/Toronto")
+    |> Calendar.strftime("%Y-%m-%d %H:%M")
+  end
+
+  @doc """
   Groups a range of indices by padding value for physical table layout.
 
   When `pad` is 1 or less, returns the range as a single group (no grouping).

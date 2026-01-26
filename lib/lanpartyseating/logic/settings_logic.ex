@@ -1,6 +1,5 @@
 defmodule Lanpartyseating.SettingsLogic do
   import Ecto.Query
-  require Logger
   alias Lanpartyseating.Setting
   alias Lanpartyseating.Repo
 

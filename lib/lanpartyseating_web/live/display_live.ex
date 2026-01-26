@@ -5,7 +5,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
   alias Lanpartyseating.SettingsLogic
   alias Lanpartyseating.StationLogic
 
-  def assign_stations(socket, station_list) do
+  defp assign_stations(socket, station_list) do
     {stations, {columns, rows}} = StationLogic.stations_by_xy(station_list)
 
     # Calculate stats for "next available" indicator
@@ -169,19 +169,19 @@ defmodule LanpartyseatingWeb.DisplayLive do
                     <td class="font-medium">{tournament.name}</td>
                     <td>
                       {Calendar.strftime(
-                        tournament.start_date |> Timex.to_datetime("America/Montreal"),
+                        tournament.start_date |> Timex.to_datetime("America/Toronto"),
                         "%A"
                       )}
                     </td>
                     <td class="font-mono">
                       {Calendar.strftime(
-                        tournament.start_date |> Timex.to_datetime("America/Montreal"),
+                        tournament.start_date |> Timex.to_datetime("America/Toronto"),
                         "%H:%M"
                       )}
                     </td>
                     <td class="font-mono">
                       {Calendar.strftime(
-                        tournament.end_date |> Timex.to_datetime("America/Montreal"),
+                        tournament.end_date |> Timex.to_datetime("America/Toronto"),
                         "%H:%M"
                       )}
                     </td>
