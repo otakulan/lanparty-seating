@@ -42,8 +42,14 @@ defmodule Lanpartyseating.TournamentsLogic do
   def create_tournament(name, start_time, duration) do
     end_time = DateTime.add(start_time, duration, :hour, Tzdata.TimeZoneDatabase)
 
-    with {:ok, tournament} <-
-           Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name}) do
+    changeset =
+      Tournament.changeset(%Tournament{}, %{
+        start_date: start_time,
+        end_date: end_time,
+        name: name,
+      })
+
+    with {:ok, tournament} <- Repo.insert(changeset) do
       DynamicSupervisor.start_child(
         Lanpartyseating.ExpirationTaskSupervisor,
         {Lanpartyseating.Tasks.StartTournament, {tournament.start_date, tournament.id}}
@@ -102,7 +108,7 @@ defmodule Lanpartyseating.TournamentsLogic do
 
       %Tournament{} = tournament ->
         tournament
-        |> Ecto.Changeset.change(deleted_at: DateTime.truncate(DateTime.utc_now(), :second))
+        |> Tournament.changeset(%{deleted_at: DateTime.truncate(DateTime.utc_now(), :second)})
         |> Repo.update!()
 
         {:ok, stations} = StationLogic.get_all_stations()

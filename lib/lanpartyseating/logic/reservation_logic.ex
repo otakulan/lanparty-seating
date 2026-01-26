@@ -20,13 +20,16 @@ defmodule Lanpartyseating.ReservationLogic do
       now = DateTime.truncate(DateTime.utc_now(), :second)
       end_time = DateTime.add(now, duration, :minute)
 
-      case Repo.insert(%Reservation{
-             duration: duration,
-             badge: badge.serial_key,
-             station_id: station.station_number,
-             start_date: now,
-             end_date: end_time,
-           }) do
+      changeset =
+        Reservation.changeset(%Reservation{}, %{
+          duration: duration,
+          badge: badge.serial_key,
+          station_id: station.station_number,
+          start_date: now,
+          end_date: end_time,
+        })
+
+      case Repo.insert(changeset) do
         {:ok, reservation} ->
           {:ok, stations} = StationLogic.get_all_stations(now)
 
@@ -79,7 +82,7 @@ defmodule Lanpartyseating.ReservationLogic do
 
         updated =
           reservation
-          |> Ecto.Changeset.change(end_date: new_end_date)
+          |> Reservation.changeset(%{end_date: new_end_date})
           |> Repo.update!()
 
         # Terminate the old expiration task and start a new one with updated end date
@@ -124,7 +127,7 @@ defmodule Lanpartyseating.ReservationLogic do
 
         Enum.each(reservations, fn res ->
           res
-          |> Ecto.Changeset.change(incident: reason, deleted_at: now)
+          |> Reservation.changeset(%{incident: reason, deleted_at: now})
           |> Repo.update!()
 
           GenServer.cast(:"expire_reservation_#{res.id}", :terminate)
@@ -157,7 +160,7 @@ defmodule Lanpartyseating.ReservationLogic do
 
       %Reservation{} = reservation ->
         reservation
-        |> Ecto.Changeset.change(deleted_at: DateTime.truncate(DateTime.utc_now(), :second))
+        |> Reservation.changeset(%{deleted_at: DateTime.truncate(DateTime.utc_now(), :second)})
         |> Repo.update!()
 
         {:ok, stations} = StationLogic.get_all_stations()

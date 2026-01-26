@@ -83,9 +83,12 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def set_station_broken(station_number, is_broken) do
+    changeset =
+      Status.changeset(%Status{}, %{station_id: station_number, is_broken: is_broken})
+
     result =
       Repo.insert(
-        %Lanpartyseating.StationStatus{station_id: station_number, is_broken: is_broken},
+        changeset,
         on_conflict: [set: [is_broken: is_broken]],
         conflict_target: :station_id
       )

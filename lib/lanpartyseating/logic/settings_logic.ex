@@ -32,12 +32,12 @@ defmodule Lanpartyseating.SettingsLogic do
       end
 
     changeset =
-      Ecto.Changeset.change(settings,
+      Setting.changeset(settings, %{
         row_padding: row_padding,
         column_padding: column_padding,
         horizontal_trailing: horizontal_trailing,
-        vertical_trailing: vertical_trailing
-      )
+        vertical_trailing: vertical_trailing,
+      })
 
     Ecto.Multi.new()
     |> Ecto.Multi.insert_or_update(:insert_settings, changeset)
