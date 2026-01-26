@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Real-time web application for managing gaming station reservations at LAN party events. Handles badge scanning, auto-assignment, tournaments, and live station availability displays.
+Real-time web application for managing gaming station reservations at LAN party events. Handles badge scanning, tournaments, and live station availability displays.
 
 **Stack:** Elixir 1.16+ / Phoenix 1.7 / LiveView / Alpine.js / Tailwind CSS / DaisyUI / PostgreSQL
 
@@ -20,29 +20,18 @@ mix phx.server                             # Start server at localhost:4000
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Web Layer (LiveView, Controllers, Channels)           │
-│  lib/lanpartyseating_web/                               │
-└─────────────────────┬───────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────────┐
-│  Business Logic Layer (Pure Functions)                  │
-│  lib/lanpartyseating/logic/                             │
-└─────────────────────┬───────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────────┐
-│  Data Access Layer (Repository Pattern)                 │
-│  lib/lanpartyseating/repositories/                      │
-└─────────────────────┬───────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────────┐
-│  Database (PostgreSQL via Ecto)                         │
-└─────────────────────────────────────────────────────────┘
+Web Layer (LiveView, Controllers, Channels) → lib/lanpartyseating_web/
+    ↓
+Business Logic Layer (Pure Functions) → lib/lanpartyseating/logic/
+    ↓
+Data Access Layer (Ecto Schemas) → lib/lanpartyseating/repositories/
+    ↓
+Database (PostgreSQL via Ecto)
 ```
 
 ### Key Decisions
 
-- **Repository Pattern**: All database access through dedicated repository modules
+- **Ecto Schemas**: Schema definitions in `repositories/` (logic modules access `Repo` directly)
 - **Business Logic Separation**: Pure functions in `logic/` modules
 - **PubSub Broadcasting**: Real-time updates across all connected clients
 - **OTP Tasks**: GenServer-based expiration tasks for time-based reservations
@@ -51,44 +40,12 @@ mix phx.server                             # Start server at localhost:4000
 
 ## Directory Structure
 
-```
-lib/
-├── lanpartyseating/
-│   ├── logic/                         # Business logic (PURE FUNCTIONS)
-│   │   ├── autoassign_logic.ex        # Station auto-assignment algorithm
-│   │   ├── reservation_logic.ex       # Reservation CRUD
-│   │   ├── station_logic.ex           # Station availability
-│   │   └── tournaments_logic.ex       # Tournament scheduling
-│   │
-│   ├── repositories/                  # Data access (ECTO SCHEMAS)
-│   │   ├── reservation_repo.ex
-│   │   ├── station_repo.ex
-│   │   ├── tournament_repo.ex
-│   │   └── ...
-│   │
-│   └── tasks/                         # Background tasks (GENSERVER)
-│       ├── expire_reservation.ex
-│       └── expire_tournament.ex
-│
-└── lanpartyseating_web/
-    ├── router.ex                      # Route definitions
-    │
-    ├── components/                    # Reusable components
-    │   ├── ui.ex                      # Shared UI components
-    │   ├── icons.ex
-    │   ├── layouts.ex
-    │   └── *_modal.ex                 # Station modal components
-    │
-    └── live/                          # LiveView pages
-        ├── display_live.ex            # Public display (station map)
-        ├── autoassign_live.ex         # Badge scanning
-        ├── selfsign_live.ex           # Self-service signup
-        ├── cancellation_live.ex       # Cancel reservations
-        ├── tournaments_live.ex        # Tournament management
-        ├── settings_live.ex           # Layout settings
-        ├── logs_live.ex               # Activity logs
-        └── manhole_live.ex            # Debug console
-```
+- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, settings, station, tournaments)
+- `lib/lanpartyseating/repositories/` - Ecto schema definitions (not a repository pattern - just schemas)
+- `lib/lanpartyseating/tasks/` - GenServer background tasks (expiration_kickstarter, expire_reservation, expire_tournament, start_tournament)
+- `lib/lanpartyseating/accounts/` - User authentication (phx.gen.auth generated)
+- `lib/lanpartyseating_web/live/` - LiveView pages (admin_badges, admin_users, display, logs, maintenance, profile, settings, stations, tournaments)
+- `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, station_modal, tournament_modal, ui)
 
 ## Development Best Practices
 
@@ -118,6 +75,16 @@ lib/
 - Use `btn btn-success` not `bg-green-500 text-white px-4 py-2`
 - Use `alert alert-error` not custom error styling
 - Use `modal modal-box` for dialogs
+
+### Elixir Code Style
+
+**Write assertive, not defensive code:**
+- Pattern match on what you expect, let it crash if wrong
+- Avoid Ruby-style `if/then/else` chains and excessive nil-checking
+- Use `with` for chaining fallible operations, not nested `case`
+- Process restarts in a good state - trust the supervision tree
+
+**AI agents tend to write defensive/imperative code by default.** Be strict about enforcing idiomatic Elixir patterns. The codebase should use pattern matching on function heads, guard clauses, and `{:ok, _}`/`{:error, _}` tuples consistently.
 
 ### Layer Separation
 
@@ -197,6 +164,8 @@ All user-facing text must be in both French and English. Use inline bilingual te
 8. **Task Restoration**: `ExpirationKickstarter` restarts pending tasks on app boot
 9. **Grid Coordinates**: Station layout uses (x, y) grid system
 10. **Bilingual**: All user-facing text needs French + English
+11. **OTP/Async Debugging**: AI agents struggle with OTP, Task, and async issues. They don't understand process lifecycles, the actor model, or GenServer interactions. Step in early when debugging concurrency.
+12. **Ecto Sandbox Isolation**: Each test runs in a transaction that rolls back. AI may query dev DB thinking it's test DB. Tests can't see each other's data due to transaction isolation.
 
 
 <!-- phoenix-gen-auth-start -->
