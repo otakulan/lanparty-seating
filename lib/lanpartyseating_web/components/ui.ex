@@ -213,8 +213,8 @@ defmodule LanpartyseatingWeb.Components.UI do
         };
         update();
         intervalId = setInterval(update, 1000);
-        $cleanup(() => clearInterval(intervalId));
       "
+      @destroy="clearInterval(intervalId)"
       x-text="remaining"
     >
     </span>
@@ -268,8 +268,8 @@ defmodule LanpartyseatingWeb.Components.UI do
         };
         update();
         intervalId = setInterval(update, 1000);
-        $cleanup(() => clearInterval(intervalId));
       "
+      @destroy="clearInterval(intervalId)"
       x-text="remaining"
     >
     </span>
@@ -433,8 +433,8 @@ defmodule LanpartyseatingWeb.Components.UI do
               };
               update();
               intervalId = setInterval(update, 1000);
-              $cleanup(() => clearInterval(intervalId));
             "
+            @destroy="clearInterval(intervalId)"
             x-text="remaining"
           >
           </div>

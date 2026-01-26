@@ -7,6 +7,16 @@ window.Alpine = Alpine
 Alpine.plugin(focus)
 Alpine.start()
 
+// LiveView Hooks
+let Hooks = {}
+
+// Auto-focus input when mounted (used for modal badge inputs)
+Hooks.AutoFocus = {
+  mounted() {
+    this.el.focus()
+  }
+}
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken },
@@ -17,7 +27,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
       }
     }
   },
-  hooks: window.customHooks
+  hooks: { ...Hooks, ...(window.customHooks || {}) }
 })
 
 // Connect if there are any LiveViews on the page
