@@ -64,6 +64,7 @@ defmodule Lanpartyseating.Mixfile do
       {:prom_ex, "~> 1.11"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:freedom_formatter, ">= 2.0.0", only: :dev},
+      {:usage_rules, "~> 0.1"},
     ]
   end
 
