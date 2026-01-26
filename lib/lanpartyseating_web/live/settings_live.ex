@@ -1,8 +1,8 @@
 defmodule LanpartyseatingWeb.SettingsLive do
   require Logger
   use LanpartyseatingWeb, :live_view
+  import Ecto.Query
   alias Lanpartyseating.Repo
-  require Ecto.Query
   alias Lanpartyseating.PubSub
 
   def minmax_row(grid, y_in) do
@@ -120,7 +120,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     layout = Lanpartyseating.StationLogic.get_station_layout()
     {columns, rows} = grid_dimensions(layout)
     # number of rows in layout table might not the number of rows in the stations table
-    station_count = Repo.one(Ecto.Query.from(s in Lanpartyseating.Station, select: count("*")))
+    station_count = Repo.one(from(s in Lanpartyseating.Station, select: count("*")))
     layout = resize_grid(layout, columns, rows, station_count)
     {columns, rows} = grid_dimensions(layout)
 
@@ -332,7 +332,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           <!-- Grid Dimensions -->
           <div>
             <h3 class="font-medium mb-3">Dimensions</h3>
-            <form phx-change="change_dimensions" class="space-y-3">
+            <form id="dimensions-form" phx-change="change_dimensions" class="space-y-3">
               <.labeled_input
                 label="Columns"
                 type="number"
@@ -353,7 +353,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     <!-- Station Count -->
           <div>
             <h3 class="font-medium mb-3">Station Count</h3>
-            <form phx-change="change_station_count">
+            <form id="station-count-form" phx-change="change_station_count">
               <.labeled_input
                 label="Stations"
                 type="number"
@@ -369,7 +369,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     <!-- Aisle Gaps -->
           <div>
             <h3 class="font-medium mb-3">Aisle Gaps</h3>
-            <form phx-change="change_padding" class="space-y-3">
+            <form id="padding-form" phx-change="change_padding" class="space-y-3">
               <.labeled_input
                 label="Col gap"
                 type="number"

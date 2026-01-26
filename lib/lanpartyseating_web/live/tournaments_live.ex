@@ -118,7 +118,7 @@ defmodule LanpartyseatingWeb.TournamentsLive do
                     )}
                   </td>
                   <td>
-                    <form phx-submit="delete_tournament">
+                    <form id={"delete-tournament-#{tournament.id}"} phx-submit="delete_tournament">
                       <input type="hidden" name="tournament_id" value={tournament.id} />
                       <button class="btn btn-error btn-sm" type="submit">Delete</button>
                     </form>

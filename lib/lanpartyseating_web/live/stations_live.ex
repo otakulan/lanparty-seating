@@ -411,7 +411,7 @@ defmodule LanpartyseatingWeb.StationsLive do
             </div>
           <% end %>
 
-          <form phx-submit="verify_sudo">
+          <form id="sudo-verify-form" phx-submit="verify_sudo">
             <div class="form-control">
               <label class="label">
                 <span class="label-text">Admin badge / Badge admin</span>

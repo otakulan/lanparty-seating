@@ -124,7 +124,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
           colpad={@colpad}
         >
           <:cell :let={station_data}>
-            <DisplayModalComponent.modal
+            <LanpartyseatingWeb.Components.DisplayModal.modal
               reservation={station_data.reservation}
               station={station_data.station}
               status={station_data.status}

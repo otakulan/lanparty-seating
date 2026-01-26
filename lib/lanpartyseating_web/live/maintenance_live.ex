@@ -179,7 +179,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
           <!-- Single Station -->
           <div>
             <h3 class="font-medium mb-2">Single Station</h3>
-            <form phx-submit="single_station_broadcast" class="flex items-end gap-4">
+            <form id="single-station-broadcast-form" phx-submit="single_station_broadcast" class="flex items-end gap-4">
               <.labeled_input
                 label="Station #"
                 type="number"
@@ -199,7 +199,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
     <!-- Station Range -->
           <div>
             <h3 class="font-medium mb-2">Station Range</h3>
-            <form phx-submit="range_broadcast" class="flex items-end gap-4">
+            <form id="range-broadcast-form" phx-submit="range_broadcast" class="flex items-end gap-4">
               <.labeled_input
                 label="From"
                 type="number"
@@ -236,7 +236,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
           <!-- Single Station Logout -->
           <div>
             <h3 class="font-medium mb-2">Single Station Logout</h3>
-            <form phx-submit="cancel_single_station" class="flex items-end gap-4">
+            <form id="cancel-single-station-form" phx-submit="cancel_single_station" class="flex items-end gap-4">
               <.labeled_input
                 label="Station #"
                 type="number"
@@ -256,7 +256,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
     <!-- Range Logout -->
           <div>
             <h3 class="font-medium mb-2">Station Range Logout</h3>
-            <form phx-submit="cancel_range" class="flex items-end gap-4">
+            <form id="cancel-range-form" phx-submit="cancel_range" class="flex items-end gap-4">
               <.labeled_input
                 label="From"
                 type="number"

@@ -96,8 +96,7 @@ defmodule LanpartyseatingWeb.AdminBadgesLive do
 
   defp format_datetime(dt) do
     dt
-    |> DateTime.from_naive!("Etc/UTC")
-    |> DateTime.shift_zone!("America/Montreal")
+    |> Timex.to_datetime("America/Montreal")
     |> Calendar.strftime("%Y-%m-%d %H:%M")
   end
 
