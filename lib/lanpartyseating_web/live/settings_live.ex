@@ -73,7 +73,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def grid_dimensions(grid) do
     {max_x, max_y} =
       Map.keys(grid)
-      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+      |> Enum.reduce({0, 0}, fn {x, y}, {max_x, max_y} -> {max(x, max_x), max(y, max_y)} end)
 
     {max_x + 1, max_y + 1}
   end
@@ -297,18 +297,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {:noreply, socket}
   end
 
-  def publish_station_update() do
-    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
-
-    Phoenix.PubSub.broadcast(
-      PubSub,
-      "station_update",
-      {:stations, stations}
-    )
-  end
-
-  # Note: This handle_event clause is separated from others above by the
-  # helper function publish_station_update/0. This is intentional for code organization.
   def handle_event("move", params, socket) do
     grid = socket.assigns.grid
     %{"from" => %{"x" => x1, "y" => y1}, "to" => %{"x" => x2, "y" => y2}} = params
@@ -348,12 +336,22 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {:noreply, socket}
   end
 
+  defp publish_station_update do
+    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
+
+    Phoenix.PubSub.broadcast(
+      PubSub,
+      "station_update",
+      {:stations, stations}
+    )
+  end
+
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-6xl">
       <.page_header title="Station Layout Settings" subtitle="Configure the station grid layout displayed on signage" />
-
+      
     <!-- Grid Configuration Section -->
       <.admin_section title="Grid Configuration">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -377,7 +375,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
               />
             </form>
           </div>
-
+          
     <!-- Station Count -->
           <div>
             <h3 class="font-medium mb-3">Station Count</h3>
@@ -393,7 +391,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             </form>
             <p class="text-xs text-base-content/50 mt-2">Max: {@rows * @columns}</p>
           </div>
-
+          
     <!-- Aisle Gaps -->
           <div>
             <h3 class="font-medium mb-3">Aisle Gaps</h3>
@@ -426,7 +424,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           </div>
         </div>
       </.admin_section>
-
+      
     <!-- Layout Tools Section -->
       <.admin_section title="Layout Tools">
         <p class="text-sm text-base-content/60 mb-4">Transform station numbering or drag stations in the preview to manually reorder.</p>
@@ -478,7 +476,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           </div>
         </div>
       </.admin_section>
-
+      
     <!-- Layout Preview Section -->
       <section class="mb-10">
         <div class="flex justify-between items-center mb-4 border-b border-base-300 pb-2">

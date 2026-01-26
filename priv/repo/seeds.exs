@@ -11,6 +11,7 @@ alias Lanpartyseating.Station
 alias Lanpartyseating.Badge
 alias Lanpartyseating.Tournament
 alias Lanpartyseating.TournamentReservation
+alias Lanpartyseating.Accounts.User
 
 # =============================================================================
 # CONFIGURATION - Adjust these values for your event
@@ -75,7 +76,7 @@ IO.puts("Created #{total_stations} stations (#{station_columns} cols x #{station
     password: "change-me-on-first-login",
   })
 
-Repo.update!(Ecto.Changeset.change(admin, confirmed_at: NaiveDateTime.utc_now(:second)))
+admin |> User.confirm_changeset() |> Repo.update!()
 
 IO.puts("Created admin user: admin@otakuthon.com (password: change-me-on-first-login)")
 

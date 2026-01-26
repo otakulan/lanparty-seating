@@ -9,6 +9,7 @@ alias Lanpartyseating.Repo
 alias Lanpartyseating.Setting
 alias Lanpartyseating.StationLayout
 alias Lanpartyseating.Station
+alias Lanpartyseating.Accounts.User
 
 # =============================================================================
 # CONFIGURATION
@@ -67,6 +68,6 @@ IO.puts("Created #{total_stations} stations (#{station_columns} cols x #{station
     password: "change-me-on-first-login",
   })
 
-Repo.update!(Ecto.Changeset.change(admin, confirmed_at: NaiveDateTime.utc_now(:second)))
+admin |> User.confirm_changeset() |> Repo.update!()
 
 IO.puts("Created admin user: admin@otakuthon.com (password: change-me-on-first-login)")
