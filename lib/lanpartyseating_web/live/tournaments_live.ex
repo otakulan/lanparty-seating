@@ -1,16 +1,21 @@
 defmodule LanpartyseatingWeb.TournamentsLive do
   require Logger
   use LanpartyseatingWeb, :live_view
+  alias Lanpartyseating.PubSub
   alias Lanpartyseating.TournamentsLogic
 
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(PubSub, "tournament_update")
+    end
+
     tournaments = TournamentsLogic.get_all_tournaments()
 
-    socket =
-      socket
-      |> assign(:tournaments, tournaments)
+    {:ok, assign(socket, :tournaments, tournaments)}
+  end
 
-    {:ok, socket}
+  def handle_info({:tournaments, _tournaments}, socket) do
+    {:noreply, assign(socket, :tournaments, TournamentsLogic.get_all_tournaments())}
   end
 
   def handle_event(
@@ -40,36 +45,36 @@ defmodule LanpartyseatingWeb.TournamentsLive do
         },
         socket
       ) do
-    # Convering time string to UTC shifted TimeDate
-    {:ok, naive_start_time} = Timex.parse(start_time, "{ISO:Extended:Z}")
+    # Converting time string to UTC shifted DateTime
+    with {:ok, naive_start_time} <- Timex.parse(start_time, "{ISO:Extended:Z}"),
+         {:ok, local_start_time} <-
+           DateTime.from_naive(naive_start_time, "America/Toronto", Tzdata.TimeZoneDatabase),
+         {:ok, utc_start_time} <-
+           DateTime.shift_zone(local_start_time, "Etc/UTC", Tzdata.TimeZoneDatabase),
+         {:ok, tournament} <-
+           TournamentsLogic.create_tournament(
+             name,
+             utc_start_time,
+             String.to_integer(duration, 10)
+           ),
+         {:ok, _reservations} <-
+           TournamentsLogic.create_tournament_reservations_by_range(
+             String.to_integer(start_station, 10),
+             String.to_integer(end_station, 10),
+             tournament.id
+           ) do
+      socket =
+        socket
+        |> assign(:tournaments, TournamentsLogic.get_all_tournaments())
+        |> put_flash(:info, "Tournament created successfully. / Tournoi créé avec succès.")
 
-    {:ok, local_start_time} =
-      DateTime.from_naive(naive_start_time, "America/Toronto", Tzdata.TimeZoneDatabase)
+      {:noreply, socket}
+    else
+      {:error, reason} ->
+        Logger.error("Failed to create tournament: #{inspect(reason)}")
 
-    {:ok, utc_start_time} =
-      DateTime.shift_zone(local_start_time, "Etc/UTC", Tzdata.TimeZoneDatabase)
-
-    # Creating tournament
-    {:ok, tournament} =
-      TournamentsLogic.create_tournament(
-        name,
-        utc_start_time,
-        String.to_integer(duration, 10)
-      )
-
-    # Creating station reservations for the tournament
-    {:ok, _reservations} =
-      TournamentsLogic.create_tournament_reservations_by_range(
-        String.to_integer(start_station, 10),
-        String.to_integer(end_station, 10),
-        tournament.id
-      )
-
-    socket =
-      socket
-      |> assign(:tournaments, TournamentsLogic.get_all_tournaments())
-
-    {:noreply, socket}
+        {:noreply, put_flash(socket, :error, "Failed to create tournament. / Échec de la création du tournoi.")}
+    end
   end
 
   def render(assigns) do
