@@ -6,7 +6,6 @@ defmodule Lanpartyseating.StationStatus do
   @foreign_key_type :integer
 
   schema "stations_status" do
-    field :is_assigned, :boolean, default: false
     field :is_broken, :boolean, default: false
     timestamps()
   end
@@ -14,7 +13,7 @@ defmodule Lanpartyseating.StationStatus do
   @doc false
   def changeset(station_status, attrs) do
     station_status
-    |> cast(attrs, [:station_id, :is_assigned, :is_broken])
+    |> cast(attrs, [:station_id, :is_broken])
     |> validate_required([:station_id])
     |> validate_number(:station_id, greater_than: 0)
   end

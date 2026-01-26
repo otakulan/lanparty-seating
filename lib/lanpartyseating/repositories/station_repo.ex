@@ -1,14 +1,13 @@
 defmodule Lanpartyseating.Station do
   use Ecto.Schema
   import Ecto.Changeset
-  alias Lanpartyseating.Reservation, as: Reservation
-  alias Lanpartyseating.TournamentReservation, as: TournamentReservation
+  alias Lanpartyseating.Reservation
+  alias Lanpartyseating.TournamentReservation
 
   @primary_key {:station_number, :integer, autogenerate: false}
   @foreign_key_type :integer
 
   schema "stations" do
-    field :is_closed, :boolean, default: false
     field :deleted_at, :utc_datetime
     belongs_to :station_layout, Lanpartyseating.StationLayout, foreign_key: :station_number, references: :station_number, define_field: false
     has_one :stations_status, Lanpartyseating.StationStatus, foreign_key: :station_id, references: :station_number
@@ -20,7 +19,7 @@ defmodule Lanpartyseating.Station do
   @doc false
   def changeset(station, attrs) do
     station
-    |> cast(attrs, [:station_number, :is_closed, :deleted_at])
+    |> cast(attrs, [:station_number, :deleted_at])
     |> validate_required([:station_number])
     |> validate_number(:station_number, greater_than: 0)
   end
