@@ -30,7 +30,9 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 ### Default Seed Data
 
-After running `mix ecto.reset`, the following test data is created:
+#### Development (`mix ecto.reset`)
+
+After running `mix ecto.reset`, the following test data is created from `priv/repo/seeds.exs`:
 
 **Admin User:**
 - Email: `admin@otakuthon.com`
@@ -47,6 +49,16 @@ After running `mix ecto.reset`, the following test data is created:
 - 3 tournaments with stations 1-10 locked for the first one
 
 The seed configuration (grid size, timing offset) can be adjusted at the top of `priv/repo/seeds.exs`.
+
+#### Production (`Lanpartyseating.Release.seed()`)
+
+Production seeds (`priv/repo/seeds_prod.exs`) create only the minimal required data:
+
+- Default settings
+- 70 stations (10x7 grid)
+- Admin user (`admin@otakuthon.com` / `change-me-on-first-login`)
+
+No test badges or sample tournaments are created.
 
 ## Environment Variables
 

@@ -17,12 +17,10 @@ defmodule Lanpartyseating.Release do
     load_app()
 
     for repo <- repos() do
-      {:ok, _, _} = Ecto.Migrator.with_repo(repo, fn _repo ->
-        seed_path = Application.app_dir(@app, "priv/repo/seeds.exs")
-        Code.eval_file(seed_path)
-      end)
-    end
-  end
+      {:ok, _, _} =
+        Ecto.Migrator.with_repo(repo, fn _repo ->
+          seed_path = Application.app_dir(@app, "priv/repo/seeds_prod.exs")
+          Code.eval_file(seed_path)
         end)
     end
   end
