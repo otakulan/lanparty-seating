@@ -76,7 +76,7 @@ defmodule Lanpartyseating.StationLogic do
 
     {max_x, max_y} =
       Map.keys(by_pos)
-      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+      |> Enum.reduce({0, 0}, fn {x, y}, {max_x, max_y} -> {max(x, max_x), max(y, max_y)} end)
 
     # {columns, rows}
     {by_pos, {max_x + 1, max_y + 1}}
