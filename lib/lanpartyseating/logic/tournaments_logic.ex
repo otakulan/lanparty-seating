@@ -72,42 +72,50 @@ defmodule Lanpartyseating.TournamentsLogic do
     end
   end
 
+  @doc """
+  Manually deletes a tournament. Cancels any scheduled start/expire tasks.
+  """
   def delete_tournament(id) do
-    from(t in Tournament,
-      where: t.id == ^id,
-      where: is_nil(t.deleted_at)
-    )
-    |> Repo.all()
-    |> Enum.map(fn res ->
-      tournament =
-        Ecto.Changeset.change(res,
-          deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
-        )
-
-      with {:ok, _updated} <- Repo.update(tournament),
-           {:ok, stations} <- StationLogic.get_all_stations(),
-           {:ok, tournaments} <- get_upcoming_tournaments() do
+    case do_soft_delete_tournament(id) do
+      :ok ->
         GenServer.cast(:"expire_tournament_#{id}", :terminate)
         GenServer.cast(:"start_tournament_#{id}", :terminate)
+        :ok
 
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "station_update",
-          {:stations, stations}
-        )
+      error ->
+        error
+    end
+  end
 
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "tournament_update",
-          {:tournaments, tournaments}
-        )
+  @doc """
+  Soft-deletes a tournament that has naturally expired.
+  Called by ExpireTournament task. Does NOT cancel scheduled tasks.
+  """
+  def expire_tournament(id) do
+    do_soft_delete_tournament(id)
+  end
+
+  defp do_soft_delete_tournament(id) do
+    case Repo.get(Tournament, id) do
+      nil ->
+        {:error, :not_found}
+
+      %Tournament{deleted_at: deleted_at} when not is_nil(deleted_at) ->
+        {:error, :already_deleted}
+
+      %Tournament{} = tournament ->
+        tournament
+        |> Ecto.Changeset.change(deleted_at: DateTime.truncate(DateTime.utc_now(), :second))
+        |> Repo.update!()
+
+        {:ok, stations} = StationLogic.get_all_stations()
+        {:ok, tournaments} = get_upcoming_tournaments()
+
+        Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
+        Phoenix.PubSub.broadcast(PubSub, "tournament_update", {:tournaments, tournaments})
 
         :ok
-      else
-        {:error, err} ->
-          {:error, {:delete_failed, err}}
-      end
-    end)
+    end
   end
 
   def create_tournament_reservations_by_range(start_station, end_station, tournament_id) do

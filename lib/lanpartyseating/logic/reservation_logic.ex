@@ -1,12 +1,12 @@
 defmodule Lanpartyseating.ReservationLogic do
   import Ecto.Query
   require Logger
-  alias Lanpartyseating.Reservation, as: Reservation
-  alias Lanpartyseating.Repo, as: Repo
-  alias Lanpartyseating.StationLogic, as: StationLogic
-  alias Lanpartyseating.BadgesLogic, as: BadgesLogic
-  alias Lanpartyseating.PubSub, as: PubSub
-  alias LanpartyseatingWeb.Endpoint, as: Endpoint
+  alias Lanpartyseating.Reservation
+  alias Lanpartyseating.Repo
+  alias Lanpartyseating.StationLogic
+  alias Lanpartyseating.BadgesLogic
+  alias Lanpartyseating.PubSub
+  alias LanpartyseatingWeb.Endpoint
 
   def create_reservation(_station_number, _duration, "") do
     {:error, "Please fill all the fields"}
@@ -174,5 +174,30 @@ defmodule Lanpartyseating.ReservationLogic do
       end)
 
     {:ok, List.last(cancelled)}
+  end
+
+  @doc """
+  Soft-deletes a reservation that has naturally expired.
+  Called by ExpireReservation task. Does not broadcast to desktop clients
+  in case the app has been down for some time and new non-tournament reservations have been made since.
+  """
+  def expire_reservation(reservation_id) do
+    case Repo.get(Reservation, reservation_id) do
+      nil ->
+        {:error, :not_found}
+
+      %Reservation{deleted_at: deleted_at} when not is_nil(deleted_at) ->
+        {:error, :already_deleted}
+
+      %Reservation{} = reservation ->
+        reservation
+        |> Ecto.Changeset.change(deleted_at: DateTime.truncate(DateTime.utc_now(), :second))
+        |> Repo.update!()
+
+        {:ok, stations} = StationLogic.get_all_stations()
+        Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
+
+        :ok
+    end
   end
 end

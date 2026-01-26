@@ -4,12 +4,11 @@ defmodule Lanpartyseating.Tasks.StartTournament do
   require Logger
   alias Lanpartyseating.Repo
   alias Lanpartyseating.TournamentReservation
-  alias LanpartyseatingWeb.Endpoint
   alias Lanpartyseating.StationLogic
   alias Lanpartyseating.PubSub
+  alias LanpartyseatingWeb.Endpoint
 
-  def start_link(arg) do
-    {_, tournament_id} = arg
+  def start_link({_start_date, tournament_id} = arg) do
     GenServer.start_link(__MODULE__, arg, name: :"start_tournament_#{tournament_id}")
   end
 
@@ -26,7 +25,7 @@ defmodule Lanpartyseating.Tasks.StartTournament do
 
   @impl true
   def handle_cast(:terminate, state) do
-    Logger.debug("Terminating reservation start task for #{state}")
+    Logger.debug("Terminating tournament start task for #{state}")
     {:stop, :normal, state}
   end
 
