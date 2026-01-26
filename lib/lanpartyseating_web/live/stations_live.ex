@@ -40,7 +40,6 @@ defmodule LanpartyseatingWeb.StationsLive do
     {:ok, station_list} = StationLogic.get_all_stations()
 
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(PubSub, "station_status")
       Phoenix.PubSub.subscribe(PubSub, "station_update")
     end
 

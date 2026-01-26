@@ -21,7 +21,7 @@ defmodule Lanpartyseating.SettingsLogic do
   The object returned from this function needs to be written to the database by the caller.
   If no settings exist, creates a new record with schema defaults.
   """
-  def settings_db_changes(row_padding, column_padding, horizontal_trailing, vertical_trailing) do
+  def settings_db_changes(row_padding, column_padding) do
     settings =
       Setting
       |> last(:inserted_at)
@@ -35,8 +35,6 @@ defmodule Lanpartyseating.SettingsLogic do
       Setting.changeset(settings, %{
         row_padding: row_padding,
         column_padding: column_padding,
-        horizontal_trailing: horizontal_trailing,
-        vertical_trailing: vertical_trailing,
       })
 
     Ecto.Multi.new()

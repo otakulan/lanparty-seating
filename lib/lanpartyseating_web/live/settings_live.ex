@@ -129,35 +129,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> assign(:columns, columns)
       |> assign(:rows, rows)
       |> assign(:station_count, station_count)
-      |> assign(:col_trailing, settings.vertical_trailing)
-      |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> socket_assign_grid(layout)
 
     {:ok, socket}
-  end
-
-  def handle_event("number", _params, socket) do
-    {:noreply, assign(socket, :temperature, 2666)}
-  end
-
-  def handle_event("col_trailing", _params, socket) do
-    socket =
-      socket
-      # fixme: integer overflow warning
-      |> update(:col_trailing, &(&1 + 1))
-
-    {:noreply, socket}
-  end
-
-  def handle_event("row_trailing", _params, socket) do
-    socket =
-      socket
-      # fixme: integer overflow warning
-      |> update(:row_trailing, &(&1 + 1))
-
-    {:noreply, socket}
   end
 
   def handle_event("change_dimensions", %{"rows" => rows, "columns" => columns}, socket) do
@@ -255,9 +231,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     save_settings =
       Lanpartyseating.SettingsLogic.settings_db_changes(
         s.rowpad,
-        s.colpad,
-        s.row_trailing,
-        s.col_trailing
+        s.colpad
       )
 
     multi =
@@ -413,14 +387,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
                 max={15}
               />
             </form>
-            <div class="flex gap-2 mt-3">
-              <button class="btn btn-xs btn-outline" phx-click="col_trailing">
-                <IconComponent.double_sided_arrow_horizontal /> Shift H
-              </button>
-              <button class="btn btn-xs btn-outline" phx-click="row_trailing">
-                <IconComponent.double_sided_arrow_vertical /> Shift V
-              </button>
-            </div>
           </div>
         </div>
       </.admin_section>

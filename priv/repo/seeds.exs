@@ -33,8 +33,6 @@ event_start_offset_days = 0
 |> Setting.changeset(%{
   row_padding: 2,
   column_padding: 1,
-  horizontal_trailing: 1,
-  vertical_trailing: 0,
 })
 |> Repo.insert!()
 

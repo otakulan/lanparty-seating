@@ -1,7 +1,7 @@
 defmodule LanpartyseatingWeb.HealthCheck do
   use HeartCheck
   import Ecto.Adapters.SQL
-  alias Lanpartyseating.Repo, as: Repo
+  alias Lanpartyseating.Repo
 
   add :database do
     try do
