@@ -81,12 +81,12 @@ defmodule LanpartyseatingWeb.TournamentsLive do
     ~H"""
     <div class="container mx-auto max-w-5xl">
       <.page_header title="Tournament Management" subtitle="Schedule tournaments and reserve stations" />
-      
+
     <!-- Create Tournament Section -->
       <.admin_section title="Create New Tournament">
         <LanpartyseatingWeb.Components.TournamentModal.tournament_modal />
       </.admin_section>
-      
+
     <!-- Tournaments List Section -->
       <.admin_section title="Scheduled Tournaments" class="">
         <%= if Enum.empty?(@tournaments) do %>

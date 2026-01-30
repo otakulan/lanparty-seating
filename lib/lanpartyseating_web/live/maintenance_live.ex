@@ -142,7 +142,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
     ~H"""
     <div class="container mx-auto max-w-4xl">
       <.page_header title="Maintenance" subtitle="Administrative tool for tournament and reservation management" />
-      
+
     <!-- Warning Notice -->
       <div class="alert alert-warning mb-8">
         <svg
@@ -172,7 +172,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
           <span>{@success_message}</span>
         </div>
       <% end %>
-      
+
     <!-- Tournament Start Controls -->
       <.admin_section title="Tournament Start Controls" title_class="text-error">
         <div class="space-y-6">
@@ -195,7 +195,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
               <button type="submit" class="btn btn-error btn-sm">Start Tournament</button>
             </form>
           </div>
-          
+
     <!-- Station Range -->
           <div>
             <h3 class="font-medium mb-2">Station Range</h3>
@@ -229,7 +229,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
           </div>
         </div>
       </.admin_section>
-      
+
     <!-- Cancel Reservation Controls -->
       <.admin_section title="Cancel Reservation Controls" title_class="text-error">
         <div class="space-y-6">
@@ -252,7 +252,7 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
               <button type="submit" class="btn btn-error btn-sm">Cancel Reservation</button>
             </form>
           </div>
-          
+
     <!-- Range Logout -->
           <div>
             <h3 class="font-medium mb-2">Station Range Logout</h3>
