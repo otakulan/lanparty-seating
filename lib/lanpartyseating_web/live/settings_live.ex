@@ -1,25 +1,25 @@
 defmodule LanpartyseatingWeb.SettingsLive do
-  require Logger
   use LanpartyseatingWeb, :live_view
+  require Logger
   import Ecto.Query
   alias Lanpartyseating.Repo
   alias Lanpartyseating.PubSub
 
-  def minmax_row(grid, y_in) do
+  defp minmax_row(grid, y_in) do
     grid
     |> Enum.reject(fn {{_x, y}, _} -> y != y_in end)
     |> Enum.map(fn {{x, _}, _} -> x end)
     |> Enum.min_max()
   end
 
-  def minmax_column(grid, x_in) do
+  defp minmax_column(grid, x_in) do
     grid
     |> Enum.reject(fn {{x, _y}, _} -> x != x_in end)
     |> Enum.map(fn {{_, y}, _} -> y end)
     |> Enum.min_max()
   end
 
-  def reverse_rows(grid, rem) do
+  defp reverse_rows(grid, rem) do
     grid
     |> Enum.map(fn {{x, y}, num} ->
       if rem(y, 2) == rem do
@@ -32,15 +32,15 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(%{})
   end
 
-  def reverse_even_rows(grid) do
+  defp reverse_even_rows(grid) do
     reverse_rows(grid, 0)
   end
 
-  def reverse_odd_rows(grid) do
+  defp reverse_odd_rows(grid) do
     reverse_rows(grid, 1)
   end
 
-  def reverse_columns(grid, rem) do
+  defp reverse_columns(grid, rem) do
     grid
     |> Enum.map(fn {{x, y}, num} ->
       if rem(x, 2) == rem do
@@ -53,24 +53,22 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(%{})
   end
 
-  def reverse_even_columns(grid) do
+  defp reverse_even_columns(grid) do
     reverse_columns(grid, 0)
   end
 
-  def reverse_odd_columns(grid) do
+  defp reverse_odd_columns(grid) do
     reverse_columns(grid, 1)
   end
 
-  def transpose(grid) do
+  defp transpose(grid) do
     grid
     |> Enum.map(fn {{x, y}, num} -> {{y, x}, num} end)
     |> Enum.into(%{})
   end
 
-  @doc """
-  returns {columns, rows}
-  """
-  def grid_dimensions(grid) do
+  # Returns {columns, rows}
+  defp grid_dimensions(grid) do
     {max_x, max_y} =
       Map.keys(grid)
       |> Enum.reduce({0, 0}, fn {x, y}, {max_x, max_y} -> {max(x, max_x), max(y, max_y)} end)
@@ -78,7 +76,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {max_x + 1, max_y + 1}
   end
 
-  def socket_assign_grid(socket, grid) do
+  defp socket_assign_grid(socket, grid) do
     {columns, rows} = grid_dimensions(grid)
 
     socket
@@ -87,7 +85,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> assign(:grid, grid)
   end
 
-  def add_stations_to_grid(grid, column_major?, columns, rows, first_num, count) do
+  defp add_stations_to_grid(grid, column_major?, columns, rows, first_num, count) do
     order =
       if column_major? do
         for c <- 0..(columns - 1), r <- 0..(rows - 1), do: {c, r}
@@ -103,11 +101,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(grid)
   end
 
-  def truncate_grid(grid, max) do
+  defp truncate_grid(grid, max) do
     grid |> Enum.reject(fn {_, num} -> num > max end) |> Enum.into(%{})
   end
 
-  def resize_grid(grid, columns, rows, count) do
+  defp resize_grid(grid, columns, rows, count) do
     if map_size(grid) > count do
       truncate_grid(grid, count)
     else
@@ -324,7 +322,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     ~H"""
     <div class="container mx-auto max-w-6xl">
       <.page_header title="Station Layout Settings" subtitle="Configure the station grid layout displayed on signage" />
-
+      
     <!-- Grid Configuration Section -->
       <.admin_section title="Grid Configuration">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -348,7 +346,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
               />
             </form>
           </div>
-
+          
     <!-- Station Count -->
           <div>
             <h3 class="font-medium mb-3">Station Count</h3>
@@ -364,7 +362,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             </form>
             <p class="text-xs text-base-content/50 mt-2">Max: {@rows * @columns}</p>
           </div>
-
+          
     <!-- Aisle Gaps -->
           <div>
             <h3 class="font-medium mb-3">Aisle Gaps</h3>
@@ -389,7 +387,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           </div>
         </div>
       </.admin_section>
-
+      
     <!-- Layout Tools Section -->
       <.admin_section title="Layout Tools">
         <p class="text-sm text-base-content/60 mb-4">Transform station numbering or drag stations in the preview to manually reorder.</p>
@@ -441,7 +439,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
           </div>
         </div>
       </.admin_section>
-
+      
     <!-- Layout Preview Section -->
       <section class="mb-10">
         <div class="flex justify-between items-center mb-4 border-b border-base-300 pb-2">
