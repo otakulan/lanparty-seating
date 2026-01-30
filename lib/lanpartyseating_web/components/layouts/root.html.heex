@@ -14,7 +14,7 @@
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/css/app.css"} />
 
-    <!--
+    <%!--
       FOUC (Flash of Unstyled Content) Prevention
       ============================================
       When navigating between different LiveView sessions (e.g., public pages to admin pages),
@@ -28,7 +28,7 @@
 
       The inline <style> must be in <head> to take effect before any content renders.
       The reveal <script> must be at the end of <body> to run after all HTML is parsed.
-    -->
+    --%>
     <style>
       body { opacity: 0; }
       body.ready { opacity: 1; transition: opacity 150ms ease-in; }
@@ -41,7 +41,7 @@
   <body class="bg-base-100 text-base-content min-h-screen">
     {@inner_content}
 
-    <!-- Reveal body after DOM is parsed and CSS is applied -->
+    <%!-- Reveal body after DOM is parsed and CSS is applied --%>
     <script>
       document.body.classList.add('ready');
     </script>

@@ -1,4 +1,4 @@
-<!-- Navigation -->
+<%!-- Navigation --%>
 <Nav.nav
   nav_menu={@nav_menu}
   admin_menu={@admin_menu}
@@ -7,7 +7,7 @@
   is_authenticated={@is_authenticated}
   is_user_auth={@is_user_auth}
 />
-<!-- Page Content -->
+<%!-- Page Content --%>
 <div class="px-6 py-6 lg:px-8">
   <%= if Phoenix.Flash.get(@flash, :info) do %>
     <div class="shadow-lg alert alert-info mb-6">
@@ -69,4 +69,4 @@
   <% end %>
   {@inner_content}
 </div>
-<!-- /container -->
+<%!-- /container --%>

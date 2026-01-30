@@ -323,10 +323,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
     <div class="container mx-auto max-w-6xl">
       <.page_header title="Station Layout Settings" subtitle="Configure the station grid layout displayed on signage" />
 
-      <!-- Grid Configuration Section -->
+      <%!-- Grid Configuration Section --%>
       <.admin_section title="Grid Configuration">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Grid Dimensions -->
+          <%!-- Grid Dimensions --%>
           <div>
             <h3 class="font-medium mb-3">Dimensions</h3>
             <form id="dimensions-form" phx-change="change_dimensions" class="space-y-3">
@@ -347,7 +347,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             </form>
           </div>
 
-          <!-- Station Count -->
+          <%!-- Station Count --%>
           <div>
             <h3 class="font-medium mb-3">Station Count</h3>
             <form id="station-count-form" phx-change="change_station_count">
@@ -363,7 +363,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <p class="text-xs text-base-content/50 mt-2">Max: {@rows * @columns}</p>
           </div>
 
-          <!-- Aisle Gaps -->
+          <%!-- Aisle Gaps --%>
           <div>
             <h3 class="font-medium mb-3">Aisle Gaps</h3>
             <form id="padding-form" phx-change="change_padding" class="space-y-3">
@@ -388,7 +388,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
         </div>
       </.admin_section>
 
-      <!-- Layout Tools Section -->
+      <%!-- Layout Tools Section --%>
       <.admin_section title="Layout Tools">
         <p class="text-sm text-base-content/60 mb-4">Transform station numbering or drag stations in the preview to manually reorder.</p>
 
@@ -440,7 +440,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
         </div>
       </.admin_section>
 
-      <!-- Layout Preview Section -->
+      <%!-- Layout Preview Section --%>
       <section class="mb-10">
         <div class="flex justify-between items-center mb-4 border-b border-base-300 pb-2">
           <h2 class="text-xl font-semibold">Layout Preview</h2>
