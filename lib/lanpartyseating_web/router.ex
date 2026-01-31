@@ -68,9 +68,15 @@ defmodule LanpartyseatingWeb.Router do
       ],
       layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/tournaments", TournamentsLive, :index)
-      live("/settings", SettingsLive, :index)
       live("/logs", LogsLive, :index)
       live("/maintenance", MaintenanceLive, :index)
+
+      # Settings routes - unified settings page with sidebar
+      live("/settings", SettingsLive, :index)
+      live("/settings/seating", SettingsLive, :seating)
+      live("/settings/users", SettingsLive, :users)
+      live("/settings/badges", SettingsLive, :badges)
+      live("/settings/scanners", SettingsLive, :scanners)
     end
   end
 
@@ -86,22 +92,6 @@ defmodule LanpartyseatingWeb.Router do
       ],
       layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/profile", ProfileLive, :index)
-    end
-  end
-
-  # Admin management routes (require FULL user authentication - not badge)
-  scope "/admin", LanpartyseatingWeb do
-    pipe_through([:browser, :require_authenticated_user])
-
-    live_session :admin_management,
-      on_mount: [
-        {LanpartyseatingWeb.UserAuth, :mount_current_scope},
-        LanpartyseatingWeb.Nav,
-        {LanpartyseatingWeb.UserAuth, :ensure_user_authenticated},
-      ],
-      layout: {LanpartyseatingWeb.Layouts, :live} do
-      live("/users", AdminUsersLive, :index)
-      live("/badges", AdminBadgesLive, :index)
     end
   end
 

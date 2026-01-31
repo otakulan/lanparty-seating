@@ -69,4 +69,28 @@ defmodule LanpartyseatingWeb.ConnCase do
     |> Phoenix.ConnTest.init_test_session(%{})
     |> Plug.Conn.put_session(:user_token, token)
   end
+
+  @doc """
+  Logs in as a badge user (limited permissions).
+
+  It returns an updated `conn`.
+  """
+  def log_in_badge(conn, badge) do
+    conn
+    |> Phoenix.ConnTest.init_test_session(%{})
+    |> Plug.Conn.put_session(:badge_id, badge.id)
+  end
+
+  @doc """
+  Setup helper that creates and logs in with a badge.
+
+      setup :register_and_log_in_badge
+
+  It stores an updated connection and a badge in the test context.
+  """
+  def register_and_log_in_badge(%{conn: conn}) do
+    badge = Lanpartyseating.AccountsFixtures.admin_badge_fixture()
+    scope = Lanpartyseating.Accounts.Scope.for_badge(badge)
+    %{conn: log_in_badge(conn, badge), badge: badge, scope: scope}
+  end
 end
