@@ -62,6 +62,7 @@ defmodule Lanpartyseating.Mixfile do
       {:opentelemetry_bandit, "~> 0.3"},
       {:heartcheck, "~> 0.4"},
       {:prom_ex, "~> 1.11"},
+      {:open_api_spex, "~> 3.18"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:freedom_formatter, ">= 2.0.0", only: :dev},
       {:usage_rules, "~> 0.1", only: :dev},

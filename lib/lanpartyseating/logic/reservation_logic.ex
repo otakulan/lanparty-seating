@@ -146,6 +146,44 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   @doc """
+  Cancels a reservation by badge UID.
+  Used by external badge scanners for sign-out.
+
+  Flow:
+  1. Lookup badge by uid (case-insensitive)
+  2. Find active reservation with that badge's serial_key
+  3. Cancel the reservation
+
+  Returns {:ok, %{station_number: int, message: string}} or {:error, reason}.
+  """
+  def cancel_reservation_by_badge(badge_uid) do
+    with {:ok, badge} <- BadgesLogic.get_badge(badge_uid),
+         {:ok, reservation} <- find_active_reservation_by_badge(badge.serial_key) do
+      station_number = reservation.station_id
+      cancel_reservation(station_number, "Badge sign-out")
+      {:ok, %{station_number: station_number, message: "Reservation cancelled for station #{station_number}"}}
+    else
+      {:error, "Unknown badge serial number"} -> {:error, :badge_not_found}
+      {:error, :no_reservation} -> {:error, :no_reservation}
+      error -> error
+    end
+  end
+
+  defp find_active_reservation_by_badge(serial_key) do
+    query =
+      from(r in Reservation,
+        where: r.badge == ^serial_key,
+        where: is_nil(r.deleted_at),
+        limit: 1
+      )
+
+    case Repo.one(query) do
+      nil -> {:error, :no_reservation}
+      reservation -> {:ok, reservation}
+    end
+  end
+
+  @doc """
   Soft-deletes a reservation that has naturally expired.
   Called by ExpireReservation task. Does not broadcast to desktop clients
   in case the app has been down for some time and new non-tournament reservations have been made since.

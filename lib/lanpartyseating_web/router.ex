@@ -3,6 +3,8 @@ defmodule LanpartyseatingWeb.Router do
 
   import LanpartyseatingWeb.UserAuth
 
+  alias LanpartyseatingWeb.Plugs.ScannerAuth
+
   pipeline :browser do
     plug(:accepts, ["html"])
     plug(:fetch_session)
@@ -15,6 +17,16 @@ defmodule LanpartyseatingWeb.Router do
 
   pipeline :api do
     plug(:accepts, ["json"])
+  end
+
+  pipeline :api_authenticated do
+    plug(:accepts, ["json"])
+    plug(ScannerAuth)
+  end
+
+  pipeline :api_spec do
+    plug(:accepts, ["json"])
+    plug(OpenApiSpex.Plug.PutApiSpec, module: LanpartyseatingWeb.ApiSpec)
   end
 
   # Healthcheck scope
@@ -95,6 +107,13 @@ defmodule LanpartyseatingWeb.Router do
     end
   end
 
+  # API v1 routes (authenticated with scanner token)
+  scope "/api/v1", LanpartyseatingWeb.Api.V1 do
+    pipe_through(:api_authenticated)
+
+    post "/reservations/cancel", ReservationController, :cancel
+  end
+
   # Enables LiveDashboard only for development
   if Mix.env() in [:dev, :test] do
     import Phoenix.LiveDashboard.Router
@@ -102,6 +121,18 @@ defmodule LanpartyseatingWeb.Router do
     scope "/" do
       pipe_through(:browser)
       live_dashboard("/dashboard", metrics: LanpartyseatingWeb.Telemetry)
+    end
+
+    # OpenAPI documentation
+    scope "/api" do
+      pipe_through(:api_spec)
+      get "/openapi", OpenApiSpex.Plug.RenderSpec, []
+    end
+
+    # Swagger UI (needs browser pipeline for HTML)
+    scope "/api" do
+      pipe_through(:browser)
+      get "/docs", OpenApiSpex.Plug.SwaggerUI, path: "/api/openapi"
     end
   end
 end

@@ -2,13 +2,16 @@ import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
 import Alpine from "alpinejs"
 import focus from "@alpinejs/focus"
+import BluetoothProvisioning from "./hooks/bluetooth_provisioning"
 
 window.Alpine = Alpine
 Alpine.plugin(focus)
 Alpine.start()
 
 // LiveView Hooks
-let Hooks = {}
+let Hooks = {
+  BluetoothProvisioning
+}
 
 // Auto-focus input when mounted (used for modal badge inputs)
 Hooks.AutoFocus = {

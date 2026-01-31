@@ -44,12 +44,14 @@ Database (PostgreSQL via Ecto)
 
 ## Directory Structure
 
-- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, settings, station, tournaments)
-- `lib/lanpartyseating/repositories/` - Ecto schema definitions (not a repository pattern - just schemas)
+- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, scanner, settings, station, tournaments)
+- `lib/lanpartyseating/repositories/` - Ecto schema definitions (not a repository pattern - just schemas, badge_scanner, scanner_wifi_config)
 - `lib/lanpartyseating/tasks/` - GenServer background tasks (expiration_kickstarter, expire_reservation, expire_tournament, start_tournament)
 - `lib/lanpartyseating/accounts/` - User authentication (phx.gen.auth generated)
 - `lib/lanpartyseating_web/live/` - LiveView pages (admin_badges, admin_users, display, logs, maintenance, profile, settings, stations, tournaments)
 - `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, station_modal, tournament_modal, ui)
+- `lib/lanpartyseating_web/controllers/api/v1/` - REST API controllers (reservation_controller for scanner badge cancellation)
+- `lib/lanpartyseating_web/plugs/` - Custom Plug modules (scanner_auth for bearer token authentication)
 
 ## Development Best Practices
 
