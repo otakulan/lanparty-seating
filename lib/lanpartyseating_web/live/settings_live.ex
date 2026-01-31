@@ -1,25 +1,25 @@
 defmodule LanpartyseatingWeb.SettingsLive do
-  require Logger
   use LanpartyseatingWeb, :live_view
-  alias Lanpartyseating.Repo, as: Repo
-  require Ecto.Query
-  alias Lanpartyseating.PubSub, as: PubSub
+  require Logger
+  import Ecto.Query
+  alias Lanpartyseating.Repo
+  alias Lanpartyseating.PubSub
 
-  def minmax_row(grid, y_in) do
+  defp minmax_row(grid, y_in) do
     grid
     |> Enum.reject(fn {{_x, y}, _} -> y != y_in end)
     |> Enum.map(fn {{x, _}, _} -> x end)
     |> Enum.min_max()
   end
 
-  def minmax_column(grid, x_in) do
+  defp minmax_column(grid, x_in) do
     grid
     |> Enum.reject(fn {{x, _y}, _} -> x != x_in end)
     |> Enum.map(fn {{_, y}, _} -> y end)
     |> Enum.min_max()
   end
 
-  def reverse_rows(grid, rem) do
+  defp reverse_rows(grid, rem) do
     grid
     |> Enum.map(fn {{x, y}, num} ->
       if rem(y, 2) == rem do
@@ -32,15 +32,15 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(%{})
   end
 
-  def reverse_even_rows(grid) do
+  defp reverse_even_rows(grid) do
     reverse_rows(grid, 0)
   end
 
-  def reverse_odd_rows(grid) do
+  defp reverse_odd_rows(grid) do
     reverse_rows(grid, 1)
   end
 
-  def reverse_columns(grid, rem) do
+  defp reverse_columns(grid, rem) do
     grid
     |> Enum.map(fn {{x, y}, num} ->
       if rem(x, 2) == rem do
@@ -53,32 +53,30 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(%{})
   end
 
-  def reverse_even_columns(grid) do
+  defp reverse_even_columns(grid) do
     reverse_columns(grid, 0)
   end
 
-  def reverse_odd_columns(grid) do
+  defp reverse_odd_columns(grid) do
     reverse_columns(grid, 1)
   end
 
-  def transpose(grid) do
+  defp transpose(grid) do
     grid
     |> Enum.map(fn {{x, y}, num} -> {{y, x}, num} end)
     |> Enum.into(%{})
   end
 
-  @doc """
-  returns {columns, rows}
-  """
-  def grid_dimensions(grid) do
+  # Returns {columns, rows}
+  defp grid_dimensions(grid) do
     {max_x, max_y} =
       Map.keys(grid)
-      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+      |> Enum.reduce({0, 0}, fn {x, y}, {max_x, max_y} -> {max(x, max_x), max(y, max_y)} end)
 
     {max_x + 1, max_y + 1}
   end
 
-  def socket_assign_grid(socket, grid) do
+  defp socket_assign_grid(socket, grid) do
     {columns, rows} = grid_dimensions(grid)
 
     socket
@@ -87,7 +85,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> assign(:grid, grid)
   end
 
-  def add_stations_to_grid(grid, column_major?, columns, rows, first_num, count) do
+  defp add_stations_to_grid(grid, column_major?, columns, rows, first_num, count) do
     order =
       if column_major? do
         for c <- 0..(columns - 1), r <- 0..(rows - 1), do: {c, r}
@@ -103,11 +101,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(grid)
   end
 
-  def truncate_grid(grid, max) do
+  defp truncate_grid(grid, max) do
     grid |> Enum.reject(fn {_, num} -> num > max end) |> Enum.into(%{})
   end
 
-  def resize_grid(grid, columns, rows, count) do
+  defp resize_grid(grid, columns, rows, count) do
     if map_size(grid) > count do
       truncate_grid(grid, count)
     else
@@ -120,7 +118,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     layout = Lanpartyseating.StationLogic.get_station_layout()
     {columns, rows} = grid_dimensions(layout)
     # number of rows in layout table might not the number of rows in the stations table
-    station_count = Repo.one(Ecto.Query.from(s in Lanpartyseating.Station, select: count("*")))
+    station_count = Repo.one(from(s in Lanpartyseating.Station, select: count("*")))
     layout = resize_grid(layout, columns, rows, station_count)
     {columns, rows} = grid_dimensions(layout)
 
@@ -129,35 +127,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
       |> assign(:columns, columns)
       |> assign(:rows, rows)
       |> assign(:station_count, station_count)
-      |> assign(:col_trailing, settings.vertical_trailing)
-      |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> socket_assign_grid(layout)
 
     {:ok, socket}
-  end
-
-  def handle_event("number", _params, socket) do
-    {:noreply, assign(socket, :temperature, 2666)}
-  end
-
-  def handle_event("col_trailing", _params, socket) do
-    socket =
-      socket
-      # fixme: integer overflow warning
-      |> update(:col_trailing, &(&1 + 1))
-
-    {:noreply, socket}
-  end
-
-  def handle_event("row_trailing", _params, socket) do
-    socket =
-      socket
-      # fixme: integer overflow warning
-      |> update(:row_trailing, &(&1 + 1))
-
-    {:noreply, socket}
   end
 
   def handle_event("change_dimensions", %{"rows" => rows, "columns" => columns}, socket) do
@@ -255,9 +229,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
     save_settings =
       Lanpartyseating.SettingsLogic.settings_db_changes(
         s.rowpad,
-        s.colpad,
-        s.row_trailing,
-        s.col_trailing
+        s.colpad
       )
 
     multi =
@@ -297,18 +269,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {:noreply, socket}
   end
 
-  def publish_station_update() do
-    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
-
-    Phoenix.PubSub.broadcast(
-      PubSub,
-      "station_update",
-      {:stations, stations}
-    )
-  end
-
-  # Note: This handle_event clause is separated from others above by the
-  # helper function publish_station_update/0. This is intentional for code organization.
   def handle_event("move", params, socket) do
     grid = socket.assigns.grid
     %{"from" => %{"x" => x1, "y" => y1}, "to" => %{"x" => x2, "y" => y2}} = params
@@ -348,19 +308,28 @@ defmodule LanpartyseatingWeb.SettingsLive do
     {:noreply, socket}
   end
 
-  @spec render(any()) :: Phoenix.LiveView.Rendered.t()
+  defp publish_station_update do
+    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
+
+    Phoenix.PubSub.broadcast(
+      PubSub,
+      "station_update",
+      {:stations, stations}
+    )
+  end
+
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-6xl">
       <.page_header title="Station Layout Settings" subtitle="Configure the station grid layout displayed on signage" />
 
-    <!-- Grid Configuration Section -->
+      <%!-- Grid Configuration Section --%>
       <.admin_section title="Grid Configuration">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Grid Dimensions -->
+          <%!-- Grid Dimensions --%>
           <div>
             <h3 class="font-medium mb-3">Dimensions</h3>
-            <form phx-change="change_dimensions" class="space-y-3">
+            <form id="dimensions-form" phx-change="change_dimensions" class="space-y-3">
               <.labeled_input
                 label="Columns"
                 type="number"
@@ -378,10 +347,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
             </form>
           </div>
 
-    <!-- Station Count -->
+          <%!-- Station Count --%>
           <div>
             <h3 class="font-medium mb-3">Station Count</h3>
-            <form phx-change="change_station_count">
+            <form id="station-count-form" phx-change="change_station_count">
               <.labeled_input
                 label="Stations"
                 type="number"
@@ -394,10 +363,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <p class="text-xs text-base-content/50 mt-2">Max: {@rows * @columns}</p>
           </div>
 
-    <!-- Aisle Gaps -->
+          <%!-- Aisle Gaps --%>
           <div>
             <h3 class="font-medium mb-3">Aisle Gaps</h3>
-            <form phx-change="change_padding" class="space-y-3">
+            <form id="padding-form" phx-change="change_padding" class="space-y-3">
               <.labeled_input
                 label="Col gap"
                 type="number"
@@ -415,19 +384,11 @@ defmodule LanpartyseatingWeb.SettingsLive do
                 max={15}
               />
             </form>
-            <div class="flex gap-2 mt-3">
-              <button class="btn btn-xs btn-outline" phx-click="col_trailing">
-                <IconComponent.double_sided_arrow_horizontal /> Shift H
-              </button>
-              <button class="btn btn-xs btn-outline" phx-click="row_trailing">
-                <IconComponent.double_sided_arrow_vertical /> Shift V
-              </button>
-            </div>
           </div>
         </div>
       </.admin_section>
 
-    <!-- Layout Tools Section -->
+      <%!-- Layout Tools Section --%>
       <.admin_section title="Layout Tools">
         <p class="text-sm text-base-content/60 mb-4">Transform station numbering or drag stations in the preview to manually reorder.</p>
 
@@ -436,10 +397,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <span class="text-xs text-base-content/50 uppercase tracking-wide">Mirror Rows</span>
             <div class="flex gap-2 mt-1">
               <button class="btn btn-sm" phx-click="horizontal_mirror_even">
-                <IconComponent.double_sided_arrow_horizontal /> Even
+                <Icons.double_sided_arrow_horizontal /> Even
               </button>
               <button class="btn btn-sm" phx-click="horizontal_mirror_odd">
-                <IconComponent.double_sided_arrow_horizontal /> Odd
+                <Icons.double_sided_arrow_horizontal /> Odd
               </button>
             </div>
           </div>
@@ -448,10 +409,10 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <span class="text-xs text-base-content/50 uppercase tracking-wide">Mirror Columns</span>
             <div class="flex gap-2 mt-1">
               <button class="btn btn-sm" phx-click="vertical_mirror_even">
-                <IconComponent.double_sided_arrow_vertical /> Even
+                <Icons.double_sided_arrow_vertical /> Even
               </button>
               <button class="btn btn-sm" phx-click="vertical_mirror_odd">
-                <IconComponent.double_sided_arrow_vertical /> Odd
+                <Icons.double_sided_arrow_vertical /> Odd
               </button>
             </div>
           </div>
@@ -460,7 +421,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <span class="text-xs text-base-content/50 uppercase tracking-wide">Rotate</span>
             <div class="mt-1">
               <button class="btn btn-sm" phx-click="diagonal_mirror">
-                <IconComponent.refresh /> Transpose
+                <Icons.refresh /> Transpose
               </button>
             </div>
           </div>
@@ -469,17 +430,17 @@ defmodule LanpartyseatingWeb.SettingsLive do
             <span class="text-xs text-base-content/50 uppercase tracking-wide">Reset</span>
             <div class="flex gap-2 mt-1">
               <button class="btn btn-sm btn-warning" phx-click="reset_grid_column_major">
-                <IconComponent.x /> Column Major
+                <Icons.x /> Column Major
               </button>
               <button class="btn btn-sm btn-warning" phx-click="reset_grid_row_major">
-                <IconComponent.x /> Row Major
+                <Icons.x /> Row Major
               </button>
             </div>
           </div>
         </div>
       </.admin_section>
 
-    <!-- Layout Preview Section -->
+      <%!-- Layout Preview Section --%>
       <section class="mb-10">
         <div class="flex justify-between items-center mb-4 border-b border-base-300 pb-2">
           <h2 class="text-xl font-semibold">Layout Preview</h2>
@@ -488,13 +449,13 @@ defmodule LanpartyseatingWeb.SettingsLive do
 
         <div id="station-grid" phx-hook="ButtonGridHook" class="flex flex-col gap-4 w-full p-4">
           <%!-- Group rows into table rows (separated by rowpad) --%>
-          <% row_groups = group_by_padding(0..(@rows - 1), @rowpad, @row_trailing) %>
+          <% row_groups = group_by_padding(0..(@rows - 1), @rowpad) %>
           <% rows_per_table = if @rowpad > 1, do: @rowpad, else: @rows %>
           <% cols_per_table = if @colpad > 1, do: @colpad, else: @columns %>
           <%= for row_group <- row_groups do %>
             <div class="flex flex-row gap-4">
               <%!-- Group columns into tables (separated by colpad) --%>
-              <% col_groups = group_by_padding(0..(@columns - 1), @colpad, @col_trailing) %>
+              <% col_groups = group_by_padding(0..(@columns - 1), @colpad) %>
               <%= for col_group <- col_groups do %>
                 <%!-- Calculate how many rows to render (pad partial tables) --%>
                 <% actual_rows = length(row_group) %>

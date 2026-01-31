@@ -10,7 +10,7 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
   server: false
 
 # Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :warning
 
 # Configure your database
 config :lanpartyseating, Lanpartyseating.Repo,
@@ -19,4 +19,5 @@ config :lanpartyseating, Lanpartyseating.Repo,
   password: "postgres",
   database: "lanpartyseating_test",
   hostname: "localhost",
+  port: 5021,
   pool: Ecto.Adapters.SQL.Sandbox

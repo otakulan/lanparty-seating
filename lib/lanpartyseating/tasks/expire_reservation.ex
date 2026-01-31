@@ -1,15 +1,9 @@
 defmodule Lanpartyseating.Tasks.ExpireReservation do
   use GenServer, restart: :transient
-  import Ecto.Query
-  import Ecto.Changeset
   require Logger
-  alias Lanpartyseating.StationLogic
-  alias Lanpartyseating.Reservation, as: Reservation
-  alias Lanpartyseating.Repo, as: Repo
-  alias Lanpartyseating.PubSub, as: PubSub
+  alias Lanpartyseating.ReservationLogic
 
-  def start_link(arg) do
-    {_, reservation_id} = arg
+  def start_link({_end_date, reservation_id} = arg) do
     GenServer.start_link(__MODULE__, arg, name: :"expire_reservation_#{reservation_id}")
   end
 
@@ -32,33 +26,15 @@ defmodule Lanpartyseating.Tasks.ExpireReservation do
 
   @impl true
   def handle_info(:expire_reservation, reservation_id) do
-    Logger.debug("Expiring reservation #{reservation_id}")
-
-    reservation =
-      from(r in Reservation,
-        where: r.id == ^reservation_id,
-        join: s in assoc(r, :station),
-        preload: [station: s]
-      )
-      |> Repo.one()
-
-    now = DateTime.truncate(DateTime.utc_now(), :second)
-
-    deletion =
-      change(reservation, deleted_at: now)
-      |> Repo.update()
-
-    case deletion do
-      {:ok, _} ->
+    case ReservationLogic.expire_reservation(reservation_id) do
+      :ok ->
         Logger.debug("Reservation #{reservation_id} expired")
 
-        {:ok, stations} = StationLogic.get_all_stations()
+      {:error, :not_found} ->
+        Logger.warning("Reservation #{reservation_id} not found, skipping expiration")
 
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "station_update",
-          {:stations, stations}
-        )
+      {:error, :already_deleted} ->
+        Logger.debug("Reservation #{reservation_id} already deleted, skipping")
     end
 
     {:stop, :normal, reservation_id}

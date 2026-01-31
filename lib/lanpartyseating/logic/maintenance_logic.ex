@@ -19,27 +19,15 @@ defmodule Lanpartyseating.MaintenanceLogic do
   """
   @spec broadcast_single_station(String.t() | integer()) :: {:ok, integer()} | {:error, String.t()}
   def broadcast_single_station(station_number) do
-    case validate_single_station(station_number) do
-      {:ok, station_num} ->
-        try do
-          Endpoint.broadcast(
-            "desktop:all",
-            "tournament_start",
-            %{
-              station_number: station_num,
-            }
-          )
+    with {:ok, station_num} <- validate_single_station(station_number) do
+      Endpoint.broadcast(
+        "desktop:all",
+        "tournament_start",
+        %{station_number: station_num}
+      )
 
-          Logger.info("Broadcasted tournament start for station #{station_num}")
-          {:ok, station_num}
-        rescue
-          error ->
-            Logger.error("Failed to broadcast to station #{station_num}: #{inspect(error)}")
-            {:error, "Failed to broadcast tournament start command"}
-        end
-
-      {:error, message} ->
-        {:error, message}
+      Logger.info("Broadcasted tournament start for station #{station_num}")
+      {:ok, station_num}
     end
   end
 
@@ -55,28 +43,15 @@ defmodule Lanpartyseating.MaintenanceLogic do
   """
   @spec cancel_single_station(String.t() | integer()) :: {:ok, integer()} | {:error, String.t()}
   def cancel_single_station(station_number) do
-    case validate_single_station(station_number) do
-      {:ok, station_num} ->
-        try do
-          Endpoint.broadcast(
-            "desktop:all",
-            "cancel_reservation",
-            %{
-              station_number: station_num,
-            }
-          )
+    with {:ok, station_num} <- validate_single_station(station_number) do
+      Endpoint.broadcast(
+        "desktop:all",
+        "cancel_reservation",
+        %{station_number: station_num}
+      )
 
-          Logger.info("Broadcasted cancel reservation for station #{station_num}")
-          {:ok, station_num}
-        rescue
-          error ->
-            Logger.error("Failed to broadcast cancel reservation to station #{station_num}: #{inspect(error)}")
-
-            {:error, "Failed to broadcast cancel reservation command"}
-        end
-
-      {:error, message} ->
-        {:error, message}
+      Logger.info("Broadcasted cancel reservation for station #{station_num}")
+      {:ok, station_num}
     end
   end
 
@@ -93,30 +68,17 @@ defmodule Lanpartyseating.MaintenanceLogic do
   """
   @spec cancel_station_range(String.t() | integer(), String.t() | integer()) :: {:ok, integer(), integer()} | {:error, String.t()}
   def cancel_station_range(range_start, range_end) do
-    case validate_range(range_start, range_end) do
-      {:ok, start_num, end_num} ->
-        try do
-          Enum.each(start_num..end_num, fn station_num ->
-            Endpoint.broadcast(
-              "desktop:all",
-              "cancel_reservation",
-              %{
-                station_number: station_num,
-              }
-            )
-          end)
+    with {:ok, start_num, end_num} <- validate_range(range_start, range_end) do
+      Enum.each(start_num..end_num, fn station_num ->
+        Endpoint.broadcast(
+          "desktop:all",
+          "cancel_reservation",
+          %{station_number: station_num}
+        )
+      end)
 
-          Logger.info("Broadcasted cancel reservation for stations #{start_num} to #{end_num}")
-          {:ok, start_num, end_num}
-        rescue
-          error ->
-            Logger.error("Failed to broadcast cancel reservation to station range #{start_num}-#{end_num}: #{inspect(error)}")
-
-            {:error, "Failed to broadcast cancel reservation commands"}
-        end
-
-      {:error, message} ->
-        {:error, message}
+      Logger.info("Broadcasted cancel reservation for stations #{start_num} to #{end_num}")
+      {:ok, start_num, end_num}
     end
   end
 
@@ -133,30 +95,17 @@ defmodule Lanpartyseating.MaintenanceLogic do
   """
   @spec broadcast_station_range(String.t() | integer(), String.t() | integer()) :: {:ok, integer(), integer()} | {:error, String.t()}
   def broadcast_station_range(range_start, range_end) do
-    case validate_range(range_start, range_end) do
-      {:ok, start_num, end_num} ->
-        try do
-          Enum.each(start_num..end_num, fn station_num ->
-            Endpoint.broadcast(
-              "desktop:all",
-              "tournament_start",
-              %{
-                station_number: station_num,
-              }
-            )
-          end)
+    with {:ok, start_num, end_num} <- validate_range(range_start, range_end) do
+      Enum.each(start_num..end_num, fn station_num ->
+        Endpoint.broadcast(
+          "desktop:all",
+          "tournament_start",
+          %{station_number: station_num}
+        )
+      end)
 
-          Logger.info("Broadcasted tournament start for stations #{start_num} to #{end_num}")
-          {:ok, start_num, end_num}
-        rescue
-          error ->
-            Logger.error("Failed to broadcast to station range #{start_num}-#{end_num}: #{inspect(error)}")
-
-            {:error, "Failed to broadcast tournament start commands"}
-        end
-
-      {:error, message} ->
-        {:error, message}
+      Logger.info("Broadcasted tournament start for stations #{start_num} to #{end_num}")
+      {:ok, start_num, end_num}
     end
   end
 

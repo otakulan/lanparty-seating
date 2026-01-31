@@ -6,27 +6,10 @@ defmodule Lanpartyseating.TournamentsLogic do
   alias Lanpartyseating.TournamentReservation
   alias Lanpartyseating.Repo
 
-  @spec get_all_tournaments :: any
   def get_all_tournaments do
     from(t in Tournament,
       where: is_nil(t.deleted_at),
       order_by: [asc: t.end_date]
-    )
-    |> Repo.all()
-  end
-
-  @spec get_all_daily_tournaments :: any
-  def get_all_daily_tournaments do
-    now = DateTime.truncate(DateTime.utc_now(), :second)
-
-    date = elem(Date.new(now.year, now.month, now.day + 1), 1)
-    time = elem(Time.new(4, 0, 0, 0), 1)
-    tomorrow = elem(DateTime.new(date, time, "Etc/UTC"), 1)
-
-    from(t in Tournament,
-      where: t.end_date > from_now(0, "second"),
-      where: t.end_date < ^tomorrow,
-      where: is_nil(t.deleted_at)
     )
     |> Repo.all()
   end
@@ -45,8 +28,14 @@ defmodule Lanpartyseating.TournamentsLogic do
   def create_tournament(name, start_time, duration) do
     end_time = DateTime.add(start_time, duration, :hour, Tzdata.TimeZoneDatabase)
 
-    with {:ok, tournament} <-
-           Repo.insert(%Tournament{start_date: start_time, end_date: end_time, name: name}) do
+    changeset =
+      Tournament.changeset(%Tournament{}, %{
+        start_date: start_time,
+        end_date: end_time,
+        name: name,
+      })
+
+    with {:ok, tournament} <- Repo.insert(changeset) do
       DynamicSupervisor.start_child(
         Lanpartyseating.ExpirationTaskSupervisor,
         {Lanpartyseating.Tasks.StartTournament, {tournament.start_date, tournament.id}}
@@ -72,42 +61,50 @@ defmodule Lanpartyseating.TournamentsLogic do
     end
   end
 
+  @doc """
+  Manually deletes a tournament. Cancels any scheduled start/expire tasks.
+  """
   def delete_tournament(id) do
-    from(t in Tournament,
-      where: t.id == ^id,
-      where: is_nil(t.deleted_at)
-    )
-    |> Repo.all()
-    |> Enum.map(fn res ->
-      tournament =
-        Ecto.Changeset.change(res,
-          deleted_at: DateTime.truncate(DateTime.utc_now(), :second)
-        )
-
-      with {:ok, _updated} <- Repo.update(tournament),
-           {:ok, stations} <- StationLogic.get_all_stations(),
-           {:ok, tournaments} <- get_upcoming_tournaments() do
+    case do_soft_delete_tournament(id) do
+      :ok ->
         GenServer.cast(:"expire_tournament_#{id}", :terminate)
         GenServer.cast(:"start_tournament_#{id}", :terminate)
+        :ok
 
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "station_update",
-          {:stations, stations}
-        )
+      error ->
+        error
+    end
+  end
 
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "tournament_update",
-          {:tournaments, tournaments}
-        )
+  @doc """
+  Soft-deletes a tournament that has naturally expired.
+  Called by ExpireTournament task. Does NOT cancel scheduled tasks.
+  """
+  def expire_tournament(id) do
+    do_soft_delete_tournament(id)
+  end
+
+  defp do_soft_delete_tournament(id) do
+    case Repo.get(Tournament, id) do
+      nil ->
+        {:error, :not_found}
+
+      %Tournament{deleted_at: deleted_at} when not is_nil(deleted_at) ->
+        {:error, :already_deleted}
+
+      %Tournament{} = tournament ->
+        tournament
+        |> Tournament.changeset(%{deleted_at: DateTime.truncate(DateTime.utc_now(), :second)})
+        |> Repo.update!()
+
+        {:ok, stations} = StationLogic.get_all_stations()
+        {:ok, tournaments} = get_upcoming_tournaments()
+
+        Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
+        Phoenix.PubSub.broadcast(PubSub, "tournament_update", {:tournaments, tournaments})
 
         :ok
-      else
-        {:error, err} ->
-          {:error, {:delete_failed, err}}
-      end
-    end)
+    end
   end
 
   def create_tournament_reservations_by_range(start_station, end_station, tournament_id) do
@@ -140,11 +137,8 @@ defmodule Lanpartyseating.TournamentsLogic do
 
         Repo.insert_all(TournamentReservation, reservations)
 
-        Phoenix.PubSub.broadcast(
-          PubSub,
-          "station_update",
-          {:stations, StationLogic.get_all_stations()}
-        )
+        {:ok, stations} = StationLogic.get_all_stations()
+        Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
 
         {:ok, reservations}
     end

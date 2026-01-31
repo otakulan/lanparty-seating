@@ -79,15 +79,6 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
     end
   end
 
-  defp format_datetime(nil), do: "-"
-
-  defp format_datetime(dt) do
-    dt
-    |> DateTime.from_naive!("Etc/UTC")
-    |> DateTime.shift_zone!("America/Montreal")
-    |> Calendar.strftime("%Y-%m-%d %H:%M")
-  end
-
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-4xl">

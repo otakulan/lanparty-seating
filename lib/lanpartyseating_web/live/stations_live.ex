@@ -40,14 +40,11 @@ defmodule LanpartyseatingWeb.StationsLive do
     {:ok, station_list} = StationLogic.get_all_stations()
 
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(PubSub, "station_status")
       Phoenix.PubSub.subscribe(PubSub, "station_update")
     end
 
     socket =
       socket
-      |> assign(:col_trailing, settings.vertical_trailing)
-      |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign_stations(station_list)
@@ -238,29 +235,29 @@ defmodule LanpartyseatingWeb.StationsLive do
   defp execute_action("open_station", params, socket), do: do_open_station(params, socket)
 
   defp do_extend_reservation(%{"station_number" => id, "minutes_increment" => minutes}, socket) do
-    {:ok, _} =
-      ReservationLogic.extend_reservation(
-        String.to_integer(id),
-        String.to_integer(minutes)
-      )
+    case ReservationLogic.extend_reservation(String.to_integer(id), String.to_integer(minutes)) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(:show_station_modal, false)
+         |> assign(:selected_station, nil)}
 
-    {:noreply,
-     socket
-     |> assign(:show_station_modal, false)
-     |> assign(:selected_station, nil)}
+      {:error, :not_found} ->
+        {:noreply, assign(socket, :registration_error, "Reservation not found")}
+    end
   end
 
   defp do_cancel_station(%{"station_number" => id, "cancel_reason" => reason}, socket) do
-    {:ok, _} =
-      ReservationLogic.cancel_reservation(
-        String.to_integer(id),
-        reason
-      )
+    case ReservationLogic.cancel_reservation(String.to_integer(id), reason) do
+      :ok ->
+        {:noreply,
+         socket
+         |> assign(:show_station_modal, false)
+         |> assign(:selected_station, nil)}
 
-    {:noreply,
-     socket
-     |> assign(:show_station_modal, false)
-     |> assign(:selected_station, nil)}
+      {:error, :not_found} ->
+        {:noreply, assign(socket, :registration_error, "No active reservation found")}
+    end
   end
 
   defp do_close_station(%{"station_number" => station_number}, socket) do
@@ -309,8 +306,6 @@ defmodule LanpartyseatingWeb.StationsLive do
 
     socket =
       socket
-      |> assign(:col_trailing, settings.vertical_trailing)
-      |> assign(:row_trailing, settings.horizontal_trailing)
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign_stations(station_list)
@@ -339,8 +334,6 @@ defmodule LanpartyseatingWeb.StationsLive do
         columns={@columns}
         rowpad={@rowpad}
         colpad={@colpad}
-        row_trailing={@row_trailing}
-        col_trailing={@col_trailing}
       >
         <:cell :let={station_data}>
           <StationModal.station_button
@@ -418,7 +411,7 @@ defmodule LanpartyseatingWeb.StationsLive do
             </div>
           <% end %>
 
-          <form phx-submit="verify_sudo">
+          <form id="sudo-verify-form" phx-submit="verify_sudo">
             <div class="form-control">
               <label class="label">
                 <span class="label-text">Admin badge / Badge admin</span>

@@ -82,9 +82,14 @@ defmodule Lanpartyseating.AccountsTest do
       assert "should be at least 12 character(s)" in errors_on(changeset).password
     end
 
-    test "creates users with email and password" do
+    test "creates users with name, email and password" do
       email = unique_user_email()
-      {:ok, user} = Accounts.create_user(%{email: email, password: valid_user_password()})
+      name = unique_user_name()
+
+      {:ok, user} =
+        Accounts.create_user(%{name: name, email: email, password: valid_user_password()})
+
+      assert user.name == name
       assert user.email == email
       assert user.hashed_password != nil
       assert is_nil(user.password)

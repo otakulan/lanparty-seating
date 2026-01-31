@@ -1,29 +1,27 @@
 defmodule Lanpartyseating.StationLogic do
   import Ecto.Query
-  use Timex
-  alias Lanpartyseating.PubSub, as: PubSub
-  alias Lanpartyseating.StationLogic, as: StationLogic
-  alias Lanpartyseating.Reservation, as: Reservation
-  alias Lanpartyseating.Station, as: Station
-  alias Lanpartyseating.TournamentReservation, as: TournamentReservation
-  alias Lanpartyseating.Repo, as: Repo
-  alias Lanpartyseating.StationLayout, as: Layout
-  alias Lanpartyseating.StationStatus, as: Status
+  alias Lanpartyseating.PubSub
+  alias Lanpartyseating.Reservation
+  alias Lanpartyseating.Station
+  alias Lanpartyseating.StationLayout
+  alias Lanpartyseating.StationStatus
+  alias Lanpartyseating.TournamentReservation
+  alias Lanpartyseating.Repo
 
   def number_stations do
     Repo.aggregate(Station, :count)
   end
 
   def get_station_query(now \\ DateTime.utc_now()) do
-    tournament_buffer = DateTime.add(DateTime.utc_now(), 45, :minute)
+    tournament_buffer = DateTime.add(now, 45, :minute)
 
     from(s in Station,
       order_by: [asc: s.station_number],
       where: is_nil(s.deleted_at),
       preload: [
         # may return nil
-        stations_status: ^from(Status),
-        station_layout: ^from(Layout),
+        stations_status: ^from(StationStatus),
+        station_layout: ^from(StationLayout),
         reservations:
           ^from(
             r in Reservation,
@@ -45,7 +43,9 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_all_stations(now \\ DateTime.utc_now()) do
-    stations = get_station_query(now) |> Repo.all()
+    stations =
+      get_station_query(now)
+      |> Repo.all()
 
     case stations do
       [] ->
@@ -62,7 +62,7 @@ defmodule Lanpartyseating.StationLogic do
   end
 
   def get_station_layout() do
-    rows = Repo.all(from(Layout))
+    rows = Repo.all(from(StationLayout))
 
     Enum.map(rows, fn r -> {{r.x, r.y}, r.station_number} end)
     |> Enum.into(%{})
@@ -76,22 +76,25 @@ defmodule Lanpartyseating.StationLogic do
 
     {max_x, max_y} =
       Map.keys(by_pos)
-      |> Enum.reduce({0, 0}, fn {acc_x, acc_y}, {x, y} -> {max(x, acc_x), max(y, acc_y)} end)
+      |> Enum.reduce({0, 0}, fn {x, y}, {max_x, max_y} -> {max(x, max_x), max(y, max_y)} end)
 
     # {columns, rows}
     {by_pos, {max_x + 1, max_y + 1}}
   end
 
   def set_station_broken(station_number, is_broken) do
+    changeset =
+      StationStatus.changeset(%StationStatus{}, %{station_id: station_number, is_broken: is_broken})
+
     result =
       Repo.insert(
-        %Lanpartyseating.StationStatus{station_id: station_number, is_broken: is_broken},
+        changeset,
         on_conflict: [set: [is_broken: is_broken]],
         conflict_target: :station_id
       )
 
     with {:ok, update} <- result,
-         {:ok, stations} <- StationLogic.get_all_stations() do
+         {:ok, stations} <- get_all_stations() do
       Phoenix.PubSub.broadcast(
         PubSub,
         "station_update",
@@ -156,15 +159,9 @@ defmodule Lanpartyseating.StationLogic do
     end
   end
 
-  def is_station_available(station) do
-    %{status: status} = StationLogic.get_station_status(station)
-
-    case status do
-      :reserved -> false
-      :occupied -> false
-      :broken -> false
-      :available -> true
-    end
+  def station_available?(station) do
+    %{status: status} = get_station_status(station)
+    status == :available
   end
 
   def get_stations_by_range(start_number, end_number) do

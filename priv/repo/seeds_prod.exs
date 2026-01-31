@@ -6,6 +6,10 @@
 # For development with sample data, use seeds.exs via `mix ecto.reset`.
 
 alias Lanpartyseating.Repo
+alias Lanpartyseating.Setting
+alias Lanpartyseating.StationLayout
+alias Lanpartyseating.Station
+alias Lanpartyseating.Accounts.User
 
 # =============================================================================
 # CONFIGURATION
@@ -18,12 +22,12 @@ station_rows = 7
 # SETTINGS
 # =============================================================================
 
-Repo.insert!(%Lanpartyseating.Setting{
+%Setting{}
+|> Setting.changeset(%{
   row_padding: 2,
   column_padding: 1,
-  horizontal_trailing: 1,
-  vertical_trailing: 0,
 })
+|> Repo.insert!()
 
 IO.puts("Created default settings")
 
@@ -34,17 +38,19 @@ IO.puts("Created default settings")
 total_stations = station_columns * station_rows
 
 for station_number <- 1..total_stations do
-  Repo.insert!(%Lanpartyseating.StationLayout{
+  %StationLayout{}
+  |> StationLayout.changeset(%{
     station_number: station_number,
     x: rem(station_number - 1, station_columns),
     y: div(station_number - 1, station_columns),
   })
+  |> Repo.insert!()
 end
 
 for station_number <- 1..total_stations do
-  Repo.insert!(%Lanpartyseating.Station{
-    station_number: station_number,
-  })
+  %Station{}
+  |> Station.changeset(%{station_number: station_number})
+  |> Repo.insert!()
 end
 
 IO.puts("Created #{total_stations} stations (#{station_columns} cols x #{station_rows} rows)")
@@ -60,6 +66,6 @@ IO.puts("Created #{total_stations} stations (#{station_columns} cols x #{station
     password: "change-me-on-first-login",
   })
 
-Repo.update!(Ecto.Changeset.change(admin, confirmed_at: NaiveDateTime.utc_now(:second)))
+admin |> User.confirm_changeset() |> Repo.update!()
 
 IO.puts("Created admin user: admin@otakuthon.com (password: change-me-on-first-login)")

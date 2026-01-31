@@ -1,4 +1,7 @@
-defmodule TournamentModalComponent do
+defmodule LanpartyseatingWeb.Components.TournamentModal do
+  @moduledoc """
+  Tournament modal component for creating new tournaments.
+  """
   use Phoenix.Component
 
   def tournament_modal(assigns) do
@@ -17,7 +20,7 @@ defmodule TournamentModalComponent do
           <form method="dialog">
             <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
           </form>
-          <form phx-submit="create_tournament">
+          <form id="create-tournament-form" phx-submit="create_tournament">
             <label for="name" class="">Name:</label>
             <input
               type="text"

@@ -1,6 +1,10 @@
-defmodule NavComponent do
+defmodule LanpartyseatingWeb.Components.Nav do
+  @moduledoc """
+  Navigation bar component.
+  """
   use Phoenix.Component
   use LanpartyseatingWeb, :verified_routes
+  alias LanpartyseatingWeb.Components.Icons
 
   attr(:nav_menu, :list, required: true)
   attr(:admin_menu, :list, default: [])
@@ -48,12 +52,12 @@ defmodule NavComponent do
             <li>
               <%= if @is_user_auth do %>
                 <.link patch={~p"/profile"} class="hover:bg-neutral-focus rounded-lg gap-1">
-                  <IconComponent.user class="w-4 h-4" />
+                  <Icons.user class="w-4 h-4" />
                   {@current_scope.user.name}
                 </.link>
               <% else %>
                 <span class="hover:bg-transparent cursor-default opacity-80 gap-1">
-                  <IconComponent.user class="w-4 h-4" />
+                  <Icons.user class="w-4 h-4" />
                   {@current_scope.user.name}
                   <span class="badge badge-warning badge-sm">Badge</span>
                 </span>
@@ -108,7 +112,7 @@ defmodule NavComponent do
             <%= if @is_authenticated do %>
               <li class="menu-title">
                 <span class="flex items-center gap-1">
-                  <IconComponent.user class="w-4 h-4" />
+                  <Icons.user class="w-4 h-4" />
                   {@current_scope.user.name}
                   <%= if not @is_user_auth do %>
                     <span class="badge badge-warning badge-sm">Badge</span>

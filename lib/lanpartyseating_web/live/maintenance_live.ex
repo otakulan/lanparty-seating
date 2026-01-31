@@ -142,8 +142,8 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
     ~H"""
     <div class="container mx-auto max-w-4xl">
       <.page_header title="Maintenance" subtitle="Administrative tool for tournament and reservation management" />
-      
-    <!-- Warning Notice -->
+
+      <%!-- Warning Notice --%>
       <div class="alert alert-warning mb-8">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -172,14 +172,14 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
           <span>{@success_message}</span>
         </div>
       <% end %>
-      
-    <!-- Tournament Start Controls -->
+
+      <%!-- Tournament Start Controls --%>
       <.admin_section title="Tournament Start Controls" title_class="text-error">
         <div class="space-y-6">
-          <!-- Single Station -->
+          <%!-- Single Station --%>
           <div>
             <h3 class="font-medium mb-2">Single Station</h3>
-            <form phx-submit="single_station_broadcast" class="flex items-end gap-4">
+            <form id="single-station-broadcast-form" phx-submit="single_station_broadcast" class="flex items-end gap-4">
               <.labeled_input
                 label="Station #"
                 type="number"
@@ -195,11 +195,11 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
               <button type="submit" class="btn btn-error btn-sm">Start Tournament</button>
             </form>
           </div>
-          
-    <!-- Station Range -->
+
+          <%!-- Station Range --%>
           <div>
             <h3 class="font-medium mb-2">Station Range</h3>
-            <form phx-submit="range_broadcast" class="flex items-end gap-4">
+            <form id="range-broadcast-form" phx-submit="range_broadcast" class="flex items-end gap-4">
               <.labeled_input
                 label="From"
                 type="number"
@@ -229,14 +229,14 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
           </div>
         </div>
       </.admin_section>
-      
-    <!-- Cancel Reservation Controls -->
+
+      <%!-- Cancel Reservation Controls --%>
       <.admin_section title="Cancel Reservation Controls" title_class="text-error">
         <div class="space-y-6">
-          <!-- Single Station Logout -->
+          <%!-- Single Station Logout --%>
           <div>
             <h3 class="font-medium mb-2">Single Station Logout</h3>
-            <form phx-submit="cancel_single_station" class="flex items-end gap-4">
+            <form id="cancel-single-station-form" phx-submit="cancel_single_station" class="flex items-end gap-4">
               <.labeled_input
                 label="Station #"
                 type="number"
@@ -252,11 +252,11 @@ defmodule LanpartyseatingWeb.MaintenanceLive do
               <button type="submit" class="btn btn-error btn-sm">Cancel Reservation</button>
             </form>
           </div>
-          
-    <!-- Range Logout -->
+
+          <%!-- Range Logout --%>
           <div>
             <h3 class="font-medium mb-2">Station Range Logout</h3>
-            <form phx-submit="cancel_range" class="flex items-end gap-4">
+            <form id="cancel-range-form" phx-submit="cancel_range" class="flex items-end gap-4">
               <.labeled_input
                 label="From"
                 type="number"

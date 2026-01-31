@@ -2,11 +2,8 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
   use GenServer, restart: :transient
   require Logger
   alias Lanpartyseating.TournamentsLogic
-  alias Lanpartyseating.StationLogic
-  alias Lanpartyseating.PubSub, as: PubSub
 
-  def start_link(arg) do
-    {_, tournament_id} = arg
+  def start_link({_end_date, tournament_id} = arg) do
     GenServer.start_link(__MODULE__, arg, name: :"expire_tournament_#{tournament_id}")
   end
 
@@ -23,29 +20,22 @@ defmodule Lanpartyseating.Tasks.ExpireTournament do
 
   @impl true
   def handle_cast(:terminate, state) do
-    Logger.debug("Terminating reservation expiration task for #{state}")
+    Logger.debug("Terminating tournament expiration task for #{state}")
     {:stop, :normal, state}
   end
 
   @impl true
   def handle_info(:expire_tournament, tournament_id) do
-    Logger.debug("Expiring tournament #{tournament_id}")
+    case TournamentsLogic.expire_tournament(tournament_id) do
+      :ok ->
+        Logger.debug("Tournament #{tournament_id} expired")
 
-    {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
+      {:error, :not_found} ->
+        Logger.warning("Tournament #{tournament_id} not found, skipping expiration")
 
-    Phoenix.PubSub.broadcast(
-      PubSub,
-      "tournament_update",
-      {:tournaments, tournaments}
-    )
-
-    {:ok, stations} = StationLogic.get_all_stations()
-
-    Phoenix.PubSub.broadcast(
-      PubSub,
-      "station_update",
-      {:stations, stations}
-    )
+      {:error, :already_deleted} ->
+        Logger.debug("Tournament #{tournament_id} already deleted, skipping")
+    end
 
     {:stop, :normal, tournament_id}
   end

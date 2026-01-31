@@ -22,14 +22,6 @@ defmodule LanpartyseatingWeb.LogsLive do
     |> Repo.all()
   end
 
-  defp format_datetime(nil), do: "-"
-
-  defp format_datetime(dt) do
-    dt
-    |> Timex.to_datetime("America/Montreal")
-    |> Calendar.strftime("%Y-%m-%d %H:%M")
-  end
-
   defp reservation_status(reservation) do
     now = DateTime.utc_now()
 

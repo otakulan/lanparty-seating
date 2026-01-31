@@ -2,15 +2,22 @@ defmodule Lanpartyseating.ExpirationKickstarter do
   use Task
   import Ecto.Query
   require Logger
-  alias Lanpartyseating.Reservation, as: Reservation
-  alias Lanpartyseating.Tournament, as: Tournament
-  alias Lanpartyseating.Repo, as: Repo
+  alias Lanpartyseating.Reservation
+  alias Lanpartyseating.Tournament
+  alias Lanpartyseating.Repo
 
   def start_link(arg) do
     Task.start_link(__MODULE__, :run, [arg])
   end
 
   def run(_arg) do
+    if sandbox_mode?(), do: :ok, else: do_run()
+  end
+
+  # Don't run during tests because the SQL sandbox is not compatible with what this module does
+  defp sandbox_mode?, do: Repo.config()[:pool] == Ecto.Adapters.SQL.Sandbox
+
+  defp do_run do
     now = DateTime.truncate(DateTime.utc_now(), :second)
 
     Logger.debug("Starting reservation expiration tasks")

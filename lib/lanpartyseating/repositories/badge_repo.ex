@@ -13,9 +13,11 @@ defmodule Lanpartyseating.Badge do
   end
 
   @doc false
-  def changeset(reservation, attrs) do
-    reservation
-    |> cast(attrs, [:serial_key, :uid])
+  def changeset(badge, attrs) do
+    badge
+    |> cast(attrs, [:serial_key, :uid, :is_banned])
     |> validate_required([:serial_key, :uid])
+    |> validate_length(:serial_key, min: 1, max: 255)
+    |> validate_length(:uid, min: 1, max: 255)
   end
 end

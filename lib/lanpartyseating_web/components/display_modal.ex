@@ -1,4 +1,8 @@
-defmodule DisplayModalComponent do
+defmodule LanpartyseatingWeb.Components.DisplayModal do
+  @moduledoc """
+  Display modal component for the public display page.
+  Renders station buttons without modal dialogs (display-only).
+  """
   use Phoenix.Component
   import LanpartyseatingWeb.Components.UI, only: [station_button: 1]
 
