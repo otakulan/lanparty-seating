@@ -3,6 +3,7 @@ import { LiveSocket } from "phoenix_live_view"
 import Alpine from "alpinejs"
 import focus from "@alpinejs/focus"
 import BluetoothProvisioning from "./hooks/bluetooth_provisioning"
+import ButtonGridHook from "./hooks/button_grid_hook"
 
 window.Alpine = Alpine
 Alpine.plugin(focus)
@@ -10,7 +11,8 @@ Alpine.start()
 
 // LiveView Hooks
 let Hooks = {
-  BluetoothProvisioning
+  BluetoothProvisioning,
+  ButtonGridHook
 }
 
 // Auto-focus input when mounted (used for modal badge inputs)
@@ -30,7 +32,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
       }
     }
   },
-  hooks: { ...Hooks, ...(window.customHooks || {}) }
+  hooks: Hooks
 })
 
 // Connect if there are any LiveViews on the page

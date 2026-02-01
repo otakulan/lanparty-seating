@@ -47,4 +47,27 @@ defmodule LanpartyseatingWeb.Helpers do
     |> Enum.to_list()
     |> Enum.chunk_every(pad)
   end
+
+  @doc """
+  Formats a datetime as a human-readable relative time string.
+
+  ## Examples
+
+      iex> format_relative_time(DateTime.utc_now())
+      "just now"
+
+      iex> format_relative_time(DateTime.add(DateTime.utc_now(), -120, :second))
+      "2 min ago"
+  """
+  def format_relative_time(datetime) do
+    now = DateTime.utc_now()
+    diff_seconds = DateTime.diff(now, datetime, :second)
+
+    cond do
+      diff_seconds < 60 -> "just now"
+      diff_seconds < 3600 -> "#{div(diff_seconds, 60)} min ago"
+      diff_seconds < 86400 -> "#{div(diff_seconds, 3600)} hours ago"
+      true -> "#{div(diff_seconds, 86400)} days ago"
+    end
+  end
 end

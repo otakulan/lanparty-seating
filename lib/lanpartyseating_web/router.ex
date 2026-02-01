@@ -83,12 +83,12 @@ defmodule LanpartyseatingWeb.Router do
       live("/logs", LogsLive, :index)
       live("/maintenance", MaintenanceLive, :index)
 
-      # Settings routes - unified settings page with sidebar
-      live("/settings", SettingsLive, :index)
-      live("/settings/seating", SettingsLive, :seating)
-      live("/settings/users", SettingsLive, :users)
-      live("/settings/badges", SettingsLive, :badges)
-      live("/settings/scanners", SettingsLive, :scanners)
+      # Settings routes - separate LiveViews with shared sidebar navigation
+      live("/settings", Settings.SeatingLive, :index)
+      live("/settings/seating", Settings.SeatingLive, :seating)
+      live("/settings/users", Settings.UsersLive, :users)
+      live("/settings/badges", Settings.BadgesLive, :badges)
+      live("/settings/scanners", Settings.ScannersLive, :scanners)
     end
   end
 

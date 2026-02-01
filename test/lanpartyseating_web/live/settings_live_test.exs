@@ -140,27 +140,39 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   describe "sidebar navigation" do
     setup [:register_and_log_in_user, :create_settings]
 
-    test "clicking Users link patches to /settings/users", %{conn: conn} do
+    test "clicking Users link navigates to /settings/users", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/seating")
 
-      view |> element(~s|.drawer-side a[href="/settings/users"]|) |> render_click()
-      assert_patch(view, ~p"/settings/users")
+      {:ok, view, _html} =
+        view
+        |> element(~s|.drawer-side a[href="/settings/users"]|)
+        |> render_click()
+        |> follow_redirect(conn)
+
       assert has_element?(view, "h1", "Admin Users")
     end
 
-    test "clicking Badges link patches to /settings/badges", %{conn: conn} do
+    test "clicking Badges link navigates to /settings/badges", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/seating")
 
-      view |> element(~s|.drawer-side a[href="/settings/badges"]|) |> render_click()
-      assert_patch(view, ~p"/settings/badges")
+      {:ok, view, _html} =
+        view
+        |> element(~s|.drawer-side a[href="/settings/badges"]|)
+        |> render_click()
+        |> follow_redirect(conn)
+
       assert has_element?(view, "h1", "Admin Badges")
     end
 
-    test "clicking Seating link patches to /settings/seating", %{conn: conn} do
+    test "clicking Seating link navigates to /settings/seating", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/users")
 
-      view |> element(~s|.drawer-side a[href="/settings/seating"]|) |> render_click()
-      assert_patch(view, ~p"/settings/seating")
+      {:ok, view, _html} =
+        view
+        |> element(~s|.drawer-side a[href="/settings/seating"]|)
+        |> render_click()
+        |> follow_redirect(conn)
+
       assert has_element?(view, "h1", "Station Layout Settings")
     end
   end
