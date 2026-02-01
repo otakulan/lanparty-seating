@@ -22,10 +22,20 @@ defmodule Lanpartyseating.ScannerWifiConfig do
   def changeset(config, attrs) do
     config
     |> cast(attrs, [:ssid, :password])
-    |> validate_required([:ssid, :password])
+    |> validate_required([:ssid])
+    |> maybe_require_password()
     |> validate_length(:ssid, min: 1, max: 32)
     |> validate_length(:password, min: 1, max: 63)
     |> encrypt_password()
+  end
+
+  defp maybe_require_password(changeset) do
+    # Require password for new records (no existing encrypted password)
+    if is_nil(get_field(changeset, :password_encrypted)) and is_nil(get_change(changeset, :password)) do
+      add_error(changeset, :password, "is required")
+    else
+      changeset
+    end
   end
 
   defp encrypt_password(changeset) do
