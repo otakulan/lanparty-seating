@@ -17,7 +17,9 @@ defmodule Lanpartyseating.Application do
       # PubSub system (Presence depends on this)
       {Phoenix.PubSub, name: Lanpartyseating.PubSub},
       LanpartyseatingWeb.Presence,
-      # Expiration task infrastructure
+      # Task supervisor for fire-and-forget async operations (e.g., scanner last_seen updates)
+      {Task.Supervisor, name: Lanpartyseating.TaskSupervisor},
+      # Expiration task infrastructure (DynamicSupervisor for long-running scheduled tasks)
       {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},
       Lanpartyseating.ExpirationKickstarter,
       # Endpoint starts last - accept connections only when ready

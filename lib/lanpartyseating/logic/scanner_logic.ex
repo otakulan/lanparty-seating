@@ -93,12 +93,30 @@ defmodule Lanpartyseating.ScannerLogic do
   @doc """
   Updates the last_seen_at timestamp for a scanner.
   Called after successful API authentication.
+  Broadcasts to "scanner_update" topic for real-time UI updates.
   """
   def update_last_seen(scanner_id) do
     from(s in BadgeScanner, where: s.id == ^scanner_id)
     |> Repo.update_all(set: [last_seen_at: DateTime.utc_now() |> DateTime.truncate(:second)])
 
+    Phoenix.PubSub.broadcast(Lanpartyseating.PubSub, "scanner_update", {:scanner_seen, scanner_id})
     :ok
+  end
+
+  @doc """
+  Regenerates the API token for a scanner.
+  Returns {:ok, plaintext_token} or {:error, reason}.
+  The new token should be sent to the device during provisioning.
+  """
+  def regenerate_token(scanner_id) do
+    with {:ok, scanner} <- get_scanner(scanner_id) do
+      {changeset, token} = BadgeScanner.regenerate_token_changeset(scanner)
+
+      case Repo.update(changeset) do
+        {:ok, _} -> {:ok, token}
+        {:error, changeset} -> {:error, changeset}
+      end
+    end
   end
 
   # ============================================================================
@@ -161,11 +179,20 @@ defmodule Lanpartyseating.ScannerLogic do
   defp do_set_wifi_config(attrs) do
     case Repo.one(from(c in ScannerWifiConfig, limit: 1)) do
       nil ->
+        # New config - password required
         %ScannerWifiConfig{}
         |> ScannerWifiConfig.changeset(attrs)
         |> Repo.insert()
 
       config ->
+        # Update - password optional (keep existing if empty)
+        attrs =
+          if attrs["password"] in [nil, ""] do
+            Map.delete(attrs, "password")
+          else
+            attrs
+          end
+
         config
         |> ScannerWifiConfig.changeset(attrs)
         |> Repo.update()

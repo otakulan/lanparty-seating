@@ -14,7 +14,9 @@ defmodule LanpartyseatingWeb.Plugs.ScannerAuth do
     with {:ok, token} <- extract_token(conn),
          {:ok, scanner} <- ScannerLogic.verify_token(token) do
       # Update last seen asynchronously to not slow down the request
-      Task.start(fn -> ScannerLogic.update_last_seen(scanner.id) end)
+      Task.Supervisor.start_child(Lanpartyseating.TaskSupervisor, fn ->
+        ScannerLogic.update_last_seen(scanner.id)
+      end)
 
       assign(conn, :scanner, scanner)
     else

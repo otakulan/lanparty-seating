@@ -77,4 +77,20 @@ defmodule Lanpartyseating.BadgeScanner do
 
   @doc "Returns the token prefix used for all scanner tokens"
   def token_prefix, do: @token_prefix
+
+  @doc """
+  Regenerates the token for an existing scanner.
+  Returns {changeset, plaintext_token} where plaintext_token should be sent to the device.
+  """
+  def regenerate_token_changeset(scanner) do
+    token = generate_token()
+    token_hash = Bcrypt.hash_pwd_salt(token)
+    display_prefix = @token_prefix <> String.slice(token, 0, 8)
+
+    changeset =
+      scanner
+      |> change(%{token_hash: token_hash, token_prefix: display_prefix})
+
+    {changeset, @token_prefix <> token}
+  end
 end

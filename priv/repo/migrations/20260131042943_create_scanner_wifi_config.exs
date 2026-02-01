@@ -9,7 +9,6 @@ defmodule Lanpartyseating.Repo.Migrations.CreateScannerWifiConfig do
       timestamps(type: :utc_datetime)
     end
 
-    # Ensure only one row can exist (singleton pattern)
-    create unique_index(:scanner_wifi_config, [:id], name: :scanner_wifi_config_singleton)
+    # Singleton pattern enforced at application level in ScannerLogic
   end
 end

@@ -5,7 +5,6 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
   use LanpartyseatingWeb, :live_view
   import LanpartyseatingWeb.Helpers, only: [format_relative_time: 1]
 
-  alias Lanpartyseating.Repo
   alias Lanpartyseating.ScannerLogic
   alias LanpartyseatingWeb.Components.SettingsNav
 
@@ -14,6 +13,10 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
   # ============================================================================
 
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Lanpartyseating.PubSub, "scanner_update")
+    end
+
     {:ok, socket}
   end
 
@@ -26,17 +29,18 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
     scanners = ScannerLogic.list_scanners()
     can_edit_wifi = ScannerLogic.can_edit_wifi_config?()
 
-    {ssid, password} =
+    # Only load SSID, not password - password should not be sent to browser
+    ssid =
       case wifi_config do
-        {:ok, config} -> {config.ssid, config.password}
-        {:error, :not_configured} -> {"", ""}
+        {:ok, config} -> config.ssid
+        {:error, :not_configured} -> ""
       end
 
     socket
     |> assign(:scanners, scanners)
     |> assign(:wifi_configured, match?({:ok, _}, wifi_config))
     |> assign(:can_edit_wifi, can_edit_wifi)
-    |> assign(:wifi_form, to_form(%{"ssid" => ssid, "password" => password}, as: "wifi"))
+    |> assign(:wifi_form, to_form(%{"ssid" => ssid, "password" => ""}, as: "wifi"))
     |> assign(:wifi_form_error, nil)
     |> assign(:show_create_form, false)
     |> assign(:scanner_form, to_form(%{"name" => ""}, as: "scanner"))
@@ -180,7 +184,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
           end
 
         # Regenerate the scanner token for provisioning
-        case regenerate_scanner_token(scanner.id) do
+        case ScannerLogic.regenerate_token(scanner.id) do
           {:ok, token} ->
             {:noreply,
              socket
@@ -201,12 +205,16 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
   end
 
   # Handle BLE events from JavaScript hook
-  def handle_event("bluetooth_unsupported", %{"reason" => reason}, socket) do
-    {:noreply, assign(socket, :bluetooth_status, String.to_atom(reason))}
+  def handle_event("bluetooth_unsupported", %{"reason" => "requires_https"}, socket) do
+    {:noreply, assign(socket, :bluetooth_status, :requires_https)}
+  end
+
+  def handle_event("bluetooth_unsupported", %{"reason" => "not_available"}, socket) do
+    {:noreply, assign(socket, :bluetooth_status, :not_available)}
   end
 
   def handle_event("bluetooth_unsupported", _params, socket) do
-    # Fallback for old format without reason
+    # Fallback for unknown reasons
     {:noreply, assign(socket, :bluetooth_status, :not_available)}
   end
 
@@ -262,26 +270,17 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
   end
 
   # ============================================================================
-  # Helpers
+  # PubSub Handlers
   # ============================================================================
 
-  defp regenerate_scanner_token(scanner_id) do
-    # Delete and recreate the scanner to get a new token
-    # This is a bit heavy-handed, but ensures token security
-    with {:ok, scanner} <- ScannerLogic.get_scanner(scanner_id) do
-      # Create new token for this scanner
-      token = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
-      full_token = "lpss_" <> token
-      token_hash = Bcrypt.hash_pwd_salt(token)
-      token_prefix = "lpss_" <> String.slice(token, 0, 8)
-
-      scanner
-      |> Ecto.Changeset.change(%{token_hash: token_hash, token_prefix: token_prefix})
-      |> Repo.update()
-
-      {:ok, full_token}
-    end
+  def handle_info({:scanner_seen, _scanner_id}, socket) do
+    # Refresh scanner list when any scanner is seen (updates last_seen_at display)
+    {:noreply, assign(socket, :scanners, ScannerLogic.list_scanners())}
   end
+
+  # ============================================================================
+  # Helpers
+  # ============================================================================
 
   defp format_changeset_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
@@ -400,10 +399,9 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
               <input
                 type="password"
                 name="wifi[password]"
-                value={@wifi_form[:password].value}
                 class="input input-bordered w-full"
-                placeholder="********"
-                required
+                placeholder={if @wifi_configured, do: "••••••••  (leave empty to keep current)", else: "Enter password"}
+                required={not @wifi_configured}
                 disabled={not @can_edit_wifi}
                 autocomplete="new-password"
               />
