@@ -14,8 +14,16 @@ defmodule LanpartyseatingWeb.Plugs.ScannerAuth do
     with {:ok, token} <- extract_token(conn),
          {:ok, scanner} <- ScannerLogic.verify_token(token) do
       # Update last seen asynchronously to not slow down the request
+      # Wrap in try/catch to suppress errors in test environment where
+      # the parent process may exit before the task completes
       Task.Supervisor.start_child(Lanpartyseating.TaskSupervisor, fn ->
-        ScannerLogic.update_last_seen(scanner.id)
+        try do
+          ScannerLogic.update_last_seen(scanner.id)
+        rescue
+          DBConnection.OwnershipError -> :ok
+        catch
+          :exit, _ -> :ok
+        end
       end)
 
       assign(conn, :scanner, scanner)

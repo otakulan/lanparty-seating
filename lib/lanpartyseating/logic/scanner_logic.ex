@@ -27,17 +27,19 @@ defmodule Lanpartyseating.ScannerLogic do
 
   @doc """
   Lists all scanners (including revoked ones for audit purposes).
+  Ordered by inserted_at descending, with id as tiebreaker for deterministic ordering.
   """
   def list_scanners do
-    from(s in BadgeScanner, order_by: [desc: s.inserted_at])
+    from(s in BadgeScanner, order_by: [desc: s.inserted_at, desc: s.id])
     |> Repo.all()
   end
 
   @doc """
   Lists only active (non-revoked) scanners.
+  Ordered by inserted_at descending, with id as tiebreaker for deterministic ordering.
   """
   def list_active_scanners do
-    from(s in BadgeScanner, where: is_nil(s.revoked_at), order_by: [desc: s.inserted_at])
+    from(s in BadgeScanner, where: is_nil(s.revoked_at), order_by: [desc: s.inserted_at, desc: s.id])
     |> Repo.all()
   end
 
@@ -137,17 +139,46 @@ defmodule Lanpartyseating.ScannerLogic do
       from(s in BadgeScanner, where: s.token_prefix == ^prefix)
       |> Repo.all()
 
-    case Enum.find(scanners, &BadgeScanner.verify_token(&1, token)) do
-      nil ->
-        {:error, :invalid}
+    # Check each candidate scanner, handling revoked status explicitly
+    # BadgeScanner.verify_token returns false for revoked scanners (timing attack protection)
+    # so we need to check the hash manually for revoked scanners
+    find_matching_scanner(scanners, token)
+  end
 
-      %BadgeScanner{revoked_at: revoked_at} when not is_nil(revoked_at) ->
-        {:error, :revoked}
+  defp find_matching_scanner([], _token), do: {:error, :invalid}
 
-      scanner ->
-        {:ok, scanner}
+  defp find_matching_scanner([scanner | rest], token) do
+    case check_scanner_token(scanner, token) do
+      {:ok, scanner} -> {:ok, scanner}
+      {:error, :revoked} -> {:error, :revoked}
+      {:error, :invalid} -> find_matching_scanner(rest, token)
     end
   end
+
+  defp check_scanner_token(%BadgeScanner{revoked_at: revoked_at} = scanner, token)
+       when not is_nil(revoked_at) do
+    # Scanner is revoked - check if the token would have matched
+    if verify_token_hash(scanner, token) do
+      {:error, :revoked}
+    else
+      {:error, :invalid}
+    end
+  end
+
+  defp check_scanner_token(scanner, token) do
+    if BadgeScanner.verify_token(scanner, token) do
+      {:ok, scanner}
+    else
+      {:error, :invalid}
+    end
+  end
+
+  # Verify token hash without checking revoked status (for revoked scanner check)
+  defp verify_token_hash(%BadgeScanner{token_hash: hash}, "lpss_" <> token) do
+    Bcrypt.verify_pass(token, hash)
+  end
+
+  defp verify_token_hash(_, _), do: false
 
   # ============================================================================
   # WiFi Configuration (Singleton)
