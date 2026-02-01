@@ -23,10 +23,13 @@ To start lanparty-seating:
 3. Create and migrate database: `mix ecto.create && mix ecto.migrate`
 4. Seed database: `mix ecto.reset`
 5. Install Node.js dependencies: `cd assets && yarn install --dev && cd ..`
-6. Deploy assets: `mix assets.deploy`
-7. Start Phoenix: `mix phx.server`
+6. Generate HTTPS certificate: `mix gen_dev_cert`
+7. Deploy assets: `mix assets.deploy`
+8. Start Phoenix: `mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+
+For WebBluetooth scanner provisioning, use HTTPS at [`localhost:4001`](https://localhost:4001).
 
 ### Default Seed Data
 
@@ -205,7 +208,11 @@ curl -X POST https://your-server/api/v1/reservations/cancel \
 ### Development Notes
 
 WebBluetooth provisioning requires a secure context. In development:
-- Use `mix phx.server` with HTTPS on port 4001 (configured in `dev.exs`)
-- Or access via `localhost` (exempt from HTTPS requirement)
+- Generate HTTPS certificate: `mix gen_dev_cert`
+- Use HTTPS on port 4001: https://localhost:4001
+- Or access via `localhost` on HTTP (exempt from HTTPS requirement)
+
+The certificate is generated using OpenSSL (not `mix phx.gen.cert`) for
+compatibility with Chrome and OTP 28.
 
 See the [hardware repository](https://github.com/otakulan/lanparty-seating-badge-reader) for firmware setup, hardware requirements, and LED status indicators.
