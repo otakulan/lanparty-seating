@@ -3,6 +3,7 @@ defmodule LanpartyseatingWeb.UserAuthTest do
 
   alias Lanpartyseating.Accounts
   alias Lanpartyseating.Accounts.Scope
+  alias Lanpartyseating.BadgesLogic
   alias LanpartyseatingWeb.UserAuth
 
   import Lanpartyseating.AccountsFixtures
@@ -186,9 +187,9 @@ defmodule LanpartyseatingWeb.UserAuthTest do
       assert Scope.badge_auth?(conn.assigns.current_scope)
     end
 
-    test "clears badge session if badge is disabled", %{conn: conn} do
+    test "clears badge session if badge is no longer admin", %{conn: conn} do
       badge = admin_badge_fixture()
-      {:ok, _badge} = Accounts.update_admin_badge(badge, %{enabled: false})
+      {:ok, _badge} = BadgesLogic.update_badge(badge, %{is_admin: false})
 
       conn =
         conn |> put_session(:badge_id, badge.id) |> UserAuth.fetch_current_scope_for_user([])

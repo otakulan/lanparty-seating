@@ -20,7 +20,7 @@ defmodule Lanpartyseating.Accounts.Scope do
   """
 
   alias Lanpartyseating.Accounts.User
-  alias Lanpartyseating.Accounts.AdminBadge
+  alias Lanpartyseating.Badge
 
   defstruct user: nil, auth_type: nil, badge: nil
 
@@ -39,11 +39,11 @@ defmodule Lanpartyseating.Accounts.Scope do
   Creates a scope for badge authentication (emergency backdoor).
   Creates a virtual user-like struct for compatibility with existing code.
   """
-  def for_badge(%AdminBadge{} = badge) do
+  def for_badge(%Badge{} = badge) do
     # Create a virtual user with badge info for display purposes
     virtual_user = %User{
       id: -badge.id,
-      email: badge.label,
+      email: Badge.display_label(badge),
     }
 
     %__MODULE__{user: virtual_user, auth_type: :badge, badge: badge}

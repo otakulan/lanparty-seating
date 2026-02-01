@@ -7,6 +7,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
 
   alias Lanpartyseating.Repo
   alias Lanpartyseating.Setting
+  alias Lanpartyseating.BadgesLogic
 
   # Create settings required for the seating page to load
   defp create_settings(_context) do
@@ -68,7 +69,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
 
     test "can access /settings/badges", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
-      assert has_element?(view, "h1", "Admin Badges")
+      assert has_element?(view, "h1", "Badges")
     end
   end
 
@@ -161,7 +162,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
         |> render_click()
         |> follow_redirect(conn)
 
-      assert has_element?(view, "h1", "Admin Badges")
+      assert has_element?(view, "h1", "Badges")
     end
 
     test "clicking Seating link navigates to /settings/seating", %{conn: conn} do
@@ -323,7 +324,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   end
 
   # ============================================================================
-  # Badges Section - CRUD Tests
+  # Badges Section - Tests
   # ============================================================================
 
   describe "badges section - rendering" do
@@ -332,145 +333,230 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
     test "displays page header", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
-      assert has_element?(view, "h1", "Admin Badges")
-      assert has_element?(view, "p", "Manage admin badges for emergency backdoor access")
+      assert has_element?(view, "h1", "Badges")
+      assert has_element?(view, "p", "Manage attendee badges")
     end
 
     test "shows empty state when no badges exist", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
-      assert has_element?(view, "p", "No badges configured")
+      assert has_element?(view, "p", "No badges yet")
     end
 
     test "lists existing badges in table", %{conn: conn} do
-      badge = admin_badge_fixture(%{badge_number: "TEST-123", label: "Test Badge"})
+      badge = badge_fixture()
 
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
-      assert has_element?(view, "td", badge.badge_number)
-      assert has_element?(view, "td", badge.label)
+      assert has_element?(view, "td", badge.uid)
+      assert has_element?(view, "td", badge.serial_key)
+    end
+
+    test "shows Import CSV button", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      assert has_element?(view, "button", "Import CSV")
+    end
+
+    test "shows search input", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      assert has_element?(view, "input[name=\"search\"]")
     end
   end
 
-  describe "badges section - create form toggle" do
+  describe "badges section - search" do
     setup :register_and_log_in_user
 
-    test "form is hidden by default", %{conn: conn} do
+    test "search filters badges by UID with realtime debounced input", %{conn: conn} do
+      badge1 = badge_fixture()
+      _badge2 = badge_fixture()
+
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
-      refute has_element?(view, "#create-badge-form")
-      assert has_element?(view, "button", "+ Add Badge")
-    end
+      # Both badges should be visible initially
+      assert has_element?(view, "td", badge1.uid)
 
-    test "clicking Add Badge shows form", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+      # Search uses phx-change (realtime) instead of phx-submit
+      view
+      |> form("form[phx-change=\"search\"]", %{"search" => badge1.uid})
+      |> render_change()
 
-      view |> element("button", "+ Add Badge") |> render_click()
-
-      assert has_element?(view, "#create-badge-form")
-      assert has_element?(view, ~s|input[name="badge[badge_number]"]|)
-      assert has_element?(view, ~s|input[name="badge[label]"]|)
-    end
-
-    test "clicking Cancel hides form", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      view |> element("button", "+ Add Badge") |> render_click()
-      assert has_element?(view, "#create-badge-form")
-
-      view |> element("button", "Cancel") |> render_click()
-      refute has_element?(view, "#create-badge-form")
+      # Only first badge should be visible
+      assert has_element?(view, "td", badge1.uid)
     end
   end
 
-  describe "badges section - create badge" do
+  describe "badges section - toggle admin" do
     setup :register_and_log_in_user
 
-    test "create badge with valid params succeeds", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      view |> element("button", "+ Add Badge") |> render_click()
-
-      view
-      |> form("#create-badge-form", %{
-        "badge" => %{
-          "badge_number" => "NEW-BADGE-001",
-          "label" => "New Test Badge",
-        },
-      })
-      |> render_submit()
-
-      # Form should be hidden after success
-      refute has_element?(view, "#create-badge-form")
-
-      # New badge should appear in table
-      assert has_element?(view, "td", "NEW-BADGE-001")
-      assert has_element?(view, "td", "New Test Badge")
-
-      # Success flash
-      assert render(view) =~ "Admin badge created successfully"
-    end
-
-    test "create badge with duplicate badge number shows error", %{conn: conn} do
-      # Create an existing badge
-      admin_badge_fixture(%{badge_number: "EXISTING-001"})
+    test "can make a regular badge an admin", %{conn: conn} do
+      badge = badge_fixture()
+      refute badge.is_admin
 
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
-      view |> element("button", "+ Add Badge") |> render_click()
-
+      # Should have Make Admin button in dropdown menu
       view
-      |> form("#create-badge-form", %{
-        "badge" => %{
-          "badge_number" => "EXISTING-001",
-          "label" => "Duplicate Badge",
-        },
-      })
-      |> render_submit()
-
-      # Form should still be visible
-      assert has_element?(view, "#create-badge-form")
-
-      # Error should be displayed
-      assert has_element?(view, ".alert-error")
-    end
-  end
-
-  describe "badges section - toggle enabled" do
-    setup :register_and_log_in_user
-
-    test "can disable an enabled badge", %{conn: conn} do
-      badge = admin_badge_fixture(%{enabled: true})
-
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      # Should show Enabled status and Disable button
-      assert has_element?(view, "span.badge-success", "Enabled")
-
-      view
-      |> element(~s|button[phx-click="toggle_badge"][phx-value-id="#{badge.id}"]|, "Disable")
+      |> element(~s|button[phx-click="toggle_admin"][phx-value-id="#{badge.id}"]|, "Make Admin")
       |> render_click()
 
-      # Should now show Disabled status
-      assert has_element?(view, "span.badge-error", "Disabled")
-      assert render(view) =~ "Badge disabled"
+      # Should now show Admin badge
+      assert has_element?(view, "span.badge-primary", "Admin")
+
+      # Verify in database
+      updated_badge = BadgesLogic.get_badge!(badge.id)
+      assert updated_badge.is_admin
     end
 
-    test "can enable a disabled badge", %{conn: conn} do
-      badge = admin_badge_fixture(%{enabled: false})
+    test "can revoke admin from an admin badge", %{conn: conn} do
+      badge = admin_badge_fixture()
+      assert badge.is_admin
 
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
-      # Should show Disabled status and Enable button
-      assert has_element?(view, "span.badge-error", "Disabled")
-
+      # Should have Revoke Admin button in dropdown menu
       view
-      |> element(~s|button[phx-click="toggle_badge"][phx-value-id="#{badge.id}"]|, "Enable")
+      |> element(~s|button[phx-click="toggle_admin"][phx-value-id="#{badge.id}"]|, "Revoke Admin")
       |> render_click()
 
-      # Should now show Enabled status
-      assert has_element?(view, "span.badge-success", "Enabled")
-      assert render(view) =~ "Badge enabled"
+      # Should no longer show Admin badge
+      refute has_element?(view, ~s|tr:has(td:contains("#{badge.uid}")) span.badge-primary|, "Admin")
+
+      # Verify in database
+      updated_badge = BadgesLogic.get_badge!(badge.id)
+      refute updated_badge.is_admin
+    end
+  end
+
+  describe "badges section - toggle ban" do
+    setup :register_and_log_in_user
+
+    test "can ban a badge", %{conn: conn} do
+      badge = badge_fixture()
+      refute badge.is_banned
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      view
+      |> element(~s|button[phx-click="toggle_ban"][phx-value-id="#{badge.id}"]|, "Ban")
+      |> render_click()
+
+      assert has_element?(view, "span.badge-error", "Banned")
+
+      updated_badge = BadgesLogic.get_badge!(badge.id)
+      assert updated_badge.is_banned
+    end
+
+    test "can unban a banned badge", %{conn: conn} do
+      {:ok, badge} = BadgesLogic.create_badge(%{uid: "BANNED-001", serial_key: "BANNED-001", is_banned: true})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      view
+      |> element(~s|button[phx-click="toggle_ban"][phx-value-id="#{badge.id}"]|, "Unban")
+      |> render_click()
+
+      refute has_element?(view, ~s|tr:has(td:contains("#{badge.uid}")) span.badge-error|, "Banned")
+
+      updated_badge = BadgesLogic.get_badge!(badge.id)
+      refute updated_badge.is_banned
+    end
+  end
+
+  describe "badges section - delete" do
+    setup :register_and_log_in_user
+
+    test "can delete a badge via confirmation modal", %{conn: conn} do
+      badge = badge_fixture()
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      assert has_element?(view, "td", badge.uid)
+
+      # Click delete to open confirmation modal
+      view
+      |> element(~s|button[phx-click="request_delete"][phx-value-id="#{badge.id}"]|, "Delete")
+      |> render_click()
+
+      # Modal should now be open with badge info
+      assert has_element?(view, "dialog.modal-open")
+      assert render(view) =~ badge.uid
+
+      # Confirm deletion
+      view
+      |> element(~s|button[phx-click="confirm_delete"]|, "Delete Badge")
+      |> render_click()
+
+      # Badge should be gone
+      refute has_element?(view, "td", badge.uid)
+    end
+
+    test "can cancel badge deletion", %{conn: conn} do
+      badge = badge_fixture()
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      assert has_element?(view, "td", badge.uid)
+
+      # Click delete to open confirmation modal
+      view
+      |> element(~s|button[phx-click="request_delete"][phx-value-id="#{badge.id}"]|, "Delete")
+      |> render_click()
+
+      # Modal should be open
+      assert has_element?(view, "dialog.modal-open")
+
+      # Cancel deletion
+      view
+      |> element(~s|button[phx-click="cancel_delete"]|, "Cancel")
+      |> render_click()
+
+      # Modal should be closed, badge should still exist
+      refute has_element?(view, "dialog.modal-open")
+      assert has_element?(view, "td", badge.uid)
+    end
+  end
+
+  describe "badges section - pagination" do
+    setup :register_and_log_in_user
+
+    test "shows pagination controls when badges exist", %{conn: conn} do
+      badge_fixture()
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # DaisyUI join pagination uses « and » buttons
+      assert has_element?(view, "button", "«")
+      assert has_element?(view, "button", "»")
+      # Also has go-to-page input
+      assert has_element?(view, ~s|input[name="page"]|)
+    end
+
+    test "shows correct count", %{conn: conn} do
+      for _ <- 1..3, do: badge_fixture()
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      assert render(view) =~ "3 total badges"
+    end
+
+    test "can navigate to specific page using go-to input", %{conn: conn} do
+      # Create enough badges to have multiple pages (50 per page)
+      for i <- 1..55, do: badge_fixture(%{uid: "PAGE-TEST-#{String.pad_leading(to_string(i), 3, "0")}"})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # Should be on page 1
+      assert render(view) =~ "Showing 1-50 of 55"
+
+      # Use go-to-page form to jump to page 2
+      view
+      |> form(~s|form[phx-submit="goto_page"]|, %{"page" => "2"})
+      |> render_submit()
+
+      # Should now show page 2
+      assert render(view) =~ "Showing 51-55 of 55"
     end
   end
 end

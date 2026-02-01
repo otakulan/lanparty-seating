@@ -6,6 +6,7 @@ defmodule Lanpartyseating.AccountsFixtures do
 
   alias Lanpartyseating.Accounts
   alias Lanpartyseating.Accounts.Scope
+  alias Lanpartyseating.BadgesLogic
 
   def unique_user_email, do: "user#{System.unique_integer()}@example.com"
   def valid_user_password, do: "hello world!"
@@ -38,15 +39,22 @@ defmodule Lanpartyseating.AccountsFixtures do
     Scope.for_user(user)
   end
 
+  @doc """
+  Creates an admin badge (a badge with is_admin: true).
+  """
   def admin_badge_fixture(attrs \\ %{}) do
+    uid = "BADGE-#{System.unique_integer([:positive])}"
+
     {:ok, badge} =
       attrs
       |> Enum.into(%{
-        badge_number: "BADGE-#{System.unique_integer([:positive])}",
-        label: "Test Badge",
-        enabled: true,
+        serial_key: uid,
+        uid: uid,
+        label: Map.get(attrs, :label, "Test Badge"),
+        is_admin: Map.get(attrs, :enabled, true),
+        is_banned: false,
       })
-      |> Accounts.create_admin_badge()
+      |> BadgesLogic.create_badge()
 
     badge
   end
@@ -54,5 +62,24 @@ defmodule Lanpartyseating.AccountsFixtures do
   def admin_badge_scope_fixture do
     badge = admin_badge_fixture()
     Scope.for_badge(badge)
+  end
+
+  @doc """
+  Creates a regular attendee badge (non-admin).
+  """
+  def badge_fixture(attrs \\ %{}) do
+    uid = "ATTENDEE-#{System.unique_integer([:positive])}"
+
+    {:ok, badge} =
+      attrs
+      |> Enum.into(%{
+        serial_key: uid,
+        uid: uid,
+        is_admin: false,
+        is_banned: false,
+      })
+      |> BadgesLogic.create_badge()
+
+    badge
   end
 end
