@@ -19,7 +19,7 @@ defmodule LanpartyseatingWeb.Api.V1.Schemas do
           description: "The badge UID (scanned value). Case-insensitive, will be uppercased.",
           example: "ABC123DEF456",
           minLength: 1,
-          maxLength: 64,
+          maxLength: 255,
         },
       },
     })

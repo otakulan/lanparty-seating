@@ -25,10 +25,13 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       assert has_element?(view, "h1", "External Badge Scanners")
     end
 
-    test "accessible with badge auth", %{conn: conn} do
+    test "redirects badge auth users to seating settings", %{conn: conn} do
       conn = conn |> log_in_badge(admin_badge_fixture())
-      {:ok, view, _html} = live(conn, ~p"/settings/scanners")
-      assert has_element?(view, "h1", "External Badge Scanners")
+
+      assert {:error, {:live_redirect, %{to: "/settings/seating", flash: flash}}} =
+               live(conn, ~p"/settings/scanners")
+
+      assert flash["error"] == "Full admin access required"
     end
   end
 
@@ -273,10 +276,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       # Simulate scanner being seen (this broadcasts to PubSub)
       ScannerLogic.update_last_seen(scanner.id)
 
-      # Give the PubSub message time to be processed
-      Process.sleep(50)
-
-      # Should now show last seen time
+      # render/1 processes pending messages in the LiveView mailbox
       assert render(view) =~ "Last seen:"
     end
   end

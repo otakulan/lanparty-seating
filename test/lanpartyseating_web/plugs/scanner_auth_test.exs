@@ -69,12 +69,15 @@ defmodule LanpartyseatingWeb.Plugs.ScannerAuthTest do
       {scanner, token} = scanner_fixture()
       assert is_nil(scanner.last_seen_at)
 
+      # Subscribe to PubSub to wait for the async update
+      Phoenix.PubSub.subscribe(Lanpartyseating.PubSub, "scanner_update")
+
       conn
       |> put_req_header("authorization", "Bearer #{token}")
       |> ScannerAuth.call([])
 
-      # Give the async task time to complete
-      Process.sleep(50)
+      # Wait for the async broadcast (deterministic sync point)
+      assert_receive {:scanner_seen, _}, 1000
 
       {:ok, updated} = Lanpartyseating.ScannerLogic.get_scanner(scanner.id)
       assert updated.last_seen_at != nil

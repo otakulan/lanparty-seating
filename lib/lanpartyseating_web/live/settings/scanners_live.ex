@@ -21,7 +21,15 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
   end
 
   def handle_params(_params, _uri, socket) do
-    {:noreply, load_data(socket)}
+    # Redirect badge-auth users - they don't have access to scanner management
+    if socket.assigns.is_user_auth do
+      {:noreply, load_data(socket)}
+    else
+      {:noreply,
+       socket
+       |> put_flash(:error, "Full admin access required")
+       |> push_navigate(to: ~p"/settings/seating", replace: true)}
+    end
   end
 
   defp load_data(socket) do

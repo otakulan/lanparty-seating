@@ -56,18 +56,16 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
             <span>Badges</span>
           </.link>
         </li>
+        <li>
+          <.link
+            navigate={~p"/settings/scanners"}
+            class={["flex items-center gap-3", @current_page == :scanners && "active"]}
+          >
+            <Icons.qr_code class="w-5 h-5" />
+            <span>Scanners</span>
+          </.link>
+        </li>
       <% end %>
-
-      <%!-- Scanners --%>
-      <li>
-        <.link
-          navigate={~p"/settings/scanners"}
-          class={["flex items-center gap-3", @current_page == :scanners && "active"]}
-        >
-          <Icons.qr_code class="w-5 h-5" />
-          <span>Scanners</span>
-        </.link>
-      </li>
     </ul>
     """
   end

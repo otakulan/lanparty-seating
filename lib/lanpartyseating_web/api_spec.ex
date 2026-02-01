@@ -2,7 +2,7 @@ defmodule LanpartyseatingWeb.ApiSpec do
   @moduledoc """
   OpenAPI specification for the LAN Party Seating API.
   """
-  alias OpenApiSpex.{Info, OpenApi, Paths, Server}
+  alias OpenApiSpex.{Components, Info, OpenApi, Paths, SecurityScheme, Server}
 
   @behaviour OpenApi
 
@@ -30,6 +30,16 @@ defmodule LanpartyseatingWeb.ApiSpec do
         %Server{url: "/api/v1", description: "API v1"},
       ],
       paths: Paths.from_router(LanpartyseatingWeb.Router),
+      components: %Components{
+        securitySchemes: %{
+          "bearer" => %SecurityScheme{
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "opaque",
+            description: "Scanner authentication token (lpss_... prefix)",
+          },
+        },
+      },
     }
     |> OpenApiSpex.resolve_schema_modules()
   end
