@@ -169,8 +169,7 @@ defmodule Lanpartyseating.ScannerLogic do
   Returns true if WiFi config can be edited (no scanners exist).
   """
   def can_edit_wifi_config? do
-    count = Repo.one(from(s in BadgeScanner, select: count("*")))
-    count == 0
+    scanner_count() == 0
   end
 
   @doc """
