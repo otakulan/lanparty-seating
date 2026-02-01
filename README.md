@@ -178,3 +178,34 @@ bin/lanpartyseating eval "Lanpartyseating.Release.seed()"
 mix assets.deploy           # Build and digest assets
 mix release                 # Build OTP release
 ```
+
+## External Badge Scanner
+
+For exit sign-out stations, the system supports external ESP32-based badge scanners that allow attendees to cancel their reservations by scanning their badge at exit points.
+
+**Hardware Firmware:** [otakulan/lanparty-seating-badge-reader](https://github.com/otakulan/lanparty-seating-badge-reader)
+
+### Server Configuration
+
+1. Configure WiFi credentials in Settings > Scanners (stored encrypted, shared by all scanners)
+2. Create a scanner entry (generates a unique API token)
+3. Provision the ESP32 via WebBluetooth (sends WiFi + API credentials to device)
+
+### API Endpoint
+
+Scanners call `POST /api/v1/reservations/cancel` with bearer token authentication:
+
+```bash
+curl -X POST https://your-server/api/v1/reservations/cancel \
+  -H "Authorization: Bearer lpss_..." \
+  -H "Content-Type: application/json" \
+  -d '{"badge_uid": "ABC123"}'
+```
+
+### Development Notes
+
+WebBluetooth provisioning requires a secure context. In development:
+- Use `mix phx.server` with HTTPS on port 4001 (configured in `dev.exs`)
+- Or access via `localhost` (exempt from HTTPS requirement)
+
+See the [hardware repository](https://github.com/otakulan/lanparty-seating-badge-reader) for firmware setup, hardware requirements, and LED status indicators.
