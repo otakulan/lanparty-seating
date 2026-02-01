@@ -101,22 +101,6 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
     end
   end
 
-  def handle_event("revoke_scanner", %{"id" => id}, socket) do
-    case ScannerLogic.revoke_scanner(String.to_integer(id)) do
-      :ok ->
-        {:noreply,
-         socket
-         |> assign(:scanners, ScannerLogic.list_scanners())
-         |> put_flash(:info, "Scanner revoked.")}
-
-      {:error, :already_revoked} ->
-        {:noreply, put_flash(socket, :error, "Scanner already revoked.")}
-
-      {:error, :not_found} ->
-        {:noreply, put_flash(socket, :error, "Scanner not found.")}
-    end
-  end
-
   def handle_event("delete_scanner", %{"id" => id}, socket) do
     case ScannerLogic.delete_scanner(String.to_integer(id)) do
       :ok ->
@@ -481,7 +465,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
         <% else %>
           <div class="space-y-3">
             <%= for scanner <- @scanners do %>
-              <div class={["card bg-base-200 shadow-sm", scanner.revoked_at && "opacity-60"]}>
+              <div class="card bg-base-200 shadow-sm">
                 <div class="card-body p-4">
                   <div class="flex flex-wrap items-center justify-between gap-4">
                     <div class="flex-1 min-w-0">
@@ -500,29 +484,19 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
                     </div>
 
                     <div class="flex gap-2">
-                      <%= if is_nil(scanner.revoked_at) do %>
-                        <button
-                          class="btn btn-sm btn-primary"
-                          phx-click="start_provisioning"
-                          phx-value-id={scanner.id}
-                          disabled={@bluetooth_status != :supported}
-                        >
-                          <Icons.signal class="w-4 h-4" /> Provision
-                        </button>
-                        <button
-                          class="btn btn-sm btn-warning"
-                          phx-click="revoke_scanner"
-                          phx-value-id={scanner.id}
-                          data-confirm="Revoke this scanner's access? It will no longer be able to cancel reservations."
-                        >
-                          Revoke
-                        </button>
-                      <% end %>
+                      <button
+                        class="btn btn-sm btn-primary"
+                        phx-click="start_provisioning"
+                        phx-value-id={scanner.id}
+                        disabled={@bluetooth_status != :supported}
+                      >
+                        <Icons.signal class="w-4 h-4" /> Provision
+                      </button>
                       <button
                         class="btn btn-sm btn-error"
                         phx-click="delete_scanner"
                         phx-value-id={scanner.id}
-                        data-confirm="Permanently delete this scanner?"
+                        data-confirm="Permanently delete this scanner? Its token will be invalidated."
                       >
                         Delete
                       </button>
@@ -601,13 +575,10 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
 
   defp scanner_status(assigns) do
     ~H"""
-    <%= cond do %>
-      <% @scanner.revoked_at -> %>
-        <span class="badge badge-error">Revoked</span>
-      <% @scanner.provisioned_at -> %>
-        <span class="badge badge-success">Provisioned</span>
-      <% true -> %>
-        <span class="badge badge-warning">Not Provisioned</span>
+    <%= if @scanner.provisioned_at do %>
+      <span class="badge badge-success">Provisioned</span>
+    <% else %>
+      <span class="badge badge-warning">Not Provisioned</span>
     <% end %>
     """
   end

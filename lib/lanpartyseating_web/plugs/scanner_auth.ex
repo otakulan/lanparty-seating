@@ -39,12 +39,6 @@ defmodule LanpartyseatingWeb.Plugs.ScannerAuth do
         |> put_status(:unauthorized)
         |> Phoenix.Controller.json(%{status: "error", message: "Invalid token"})
         |> halt()
-
-      {:error, :revoked} ->
-        conn
-        |> put_status(:forbidden)
-        |> Phoenix.Controller.json(%{status: "error", message: "Token has been revoked"})
-        |> halt()
     end
   end
 

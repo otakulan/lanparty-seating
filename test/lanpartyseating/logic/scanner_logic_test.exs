@@ -46,9 +46,9 @@ defmodule Lanpartyseating.ScannerLogicTest do
       assert ScannerLogic.list_scanners() == []
     end
 
-    test "returns all scanners including revoked" do
+    test "returns all scanners" do
       {scanner1, _} = scanner_fixture(%{"name" => "Scanner 1"})
-      {scanner2, _} = revoked_scanner_fixture(%{"name" => "Scanner 2"})
+      {scanner2, _} = scanner_fixture(%{"name" => "Scanner 2"})
 
       scanners = ScannerLogic.list_scanners()
       assert length(scanners) == 2
@@ -66,17 +66,6 @@ defmodule Lanpartyseating.ScannerLogicTest do
     end
   end
 
-  describe "list_active_scanners/0" do
-    test "excludes revoked scanners" do
-      {active_scanner, _} = scanner_fixture(%{"name" => "Active"})
-      {_revoked_scanner, _} = revoked_scanner_fixture(%{"name" => "Revoked"})
-
-      scanners = ScannerLogic.list_active_scanners()
-      assert length(scanners) == 1
-      assert hd(scanners).id == active_scanner.id
-    end
-  end
-
   describe "get_scanner/1" do
     test "returns {:ok, scanner} when found" do
       {scanner, _} = scanner_fixture()
@@ -86,27 +75,6 @@ defmodule Lanpartyseating.ScannerLogicTest do
 
     test "returns {:error, :not_found} when not found" do
       assert {:error, :not_found} = ScannerLogic.get_scanner(999_999)
-    end
-  end
-
-  describe "revoke_scanner/1" do
-    test "sets revoked_at timestamp" do
-      {scanner, _} = scanner_fixture()
-      assert is_nil(scanner.revoked_at)
-
-      assert :ok = ScannerLogic.revoke_scanner(scanner.id)
-
-      {:ok, revoked} = ScannerLogic.get_scanner(scanner.id)
-      assert revoked.revoked_at != nil
-    end
-
-    test "returns {:error, :already_revoked} if already revoked" do
-      {scanner, _} = revoked_scanner_fixture()
-      assert {:error, :already_revoked} = ScannerLogic.revoke_scanner(scanner.id)
-    end
-
-    test "returns {:error, :not_found} if not found" do
-      assert {:error, :not_found} = ScannerLogic.revoke_scanner(999_999)
     end
   end
 
@@ -197,11 +165,6 @@ defmodule Lanpartyseating.ScannerLogicTest do
     test "returns {:error, :invalid} for wrong token" do
       scanner_fixture()
       assert {:error, :invalid} = ScannerLogic.verify_token("lpss_wrongtoken12345678901234567890123")
-    end
-
-    test "returns {:error, :revoked} for revoked scanner" do
-      {_scanner, token} = revoked_scanner_fixture()
-      assert {:error, :revoked} = ScannerLogic.verify_token(token)
     end
 
     test "returns {:error, :invalid} for malformed token" do

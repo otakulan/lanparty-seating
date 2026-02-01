@@ -65,23 +65,6 @@ defmodule LanpartyseatingWeb.Plugs.ScannerAuthTest do
              }
     end
 
-    test "returns 403 with revoked token", %{conn: conn} do
-      {_scanner, token} = revoked_scanner_fixture()
-
-      conn =
-        conn
-        |> put_req_header("authorization", "Bearer #{token}")
-        |> ScannerAuth.call([])
-
-      assert conn.halted
-      assert conn.status == 403
-
-      assert Jason.decode!(conn.resp_body) == %{
-               "status" => "error",
-               "message" => "Token has been revoked",
-             }
-    end
-
     test "updates last_seen_at asynchronously", %{conn: conn} do
       {scanner, token} = scanner_fixture()
       assert is_nil(scanner.last_seen_at)

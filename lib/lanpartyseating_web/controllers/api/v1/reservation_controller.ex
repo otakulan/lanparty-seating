@@ -22,7 +22,6 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationController do
       ok: {"Reservation cancelled", "application/json", Schemas.SuccessResponse},
       bad_request: {"Invalid request", "application/json", Schemas.ErrorResponse},
       unauthorized: {"Invalid or missing token", "application/json", Schemas.ErrorResponse},
-      forbidden: {"Token revoked", "application/json", Schemas.ErrorResponse},
       not_found: {"Badge or reservation not found", "application/json", Schemas.ErrorResponse},
     ]
   )

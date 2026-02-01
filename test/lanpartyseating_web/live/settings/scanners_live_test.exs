@@ -182,19 +182,6 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       assert has_element?(view, "h3", scanner2.name)
     end
 
-    test "revokes scanner", %{conn: conn} do
-      {scanner, _} = scanner_fixture(%{"name" => "To Revoke"})
-
-      {:ok, view, _html} = live(conn, ~p"/settings/scanners")
-
-      view
-      |> element(~s|button[phx-click="revoke_scanner"][phx-value-id="#{scanner.id}"]|)
-      |> render_click()
-
-      assert render(view) =~ "Scanner revoked"
-      assert has_element?(view, ".badge-error", "Revoked")
-    end
-
     test "deletes scanner", %{conn: conn} do
       {scanner, _} = scanner_fixture(%{"name" => "To Delete"})
 
@@ -235,14 +222,6 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/scanners")
 
       assert has_element?(view, ".badge-success", "Provisioned")
-    end
-
-    test "shows 'Revoked' badge for revoked scanners", %{conn: conn} do
-      revoked_scanner_fixture(%{"name" => "Revoked Scanner"})
-
-      {:ok, view, _html} = live(conn, ~p"/settings/scanners")
-
-      assert has_element?(view, ".badge-error", "Revoked")
     end
 
     test "shows 'Never connected' for scanners without last_seen", %{conn: conn} do

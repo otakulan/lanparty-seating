@@ -7,6 +7,7 @@ defmodule Lanpartyseating.BadgeScanner do
   import Ecto.Changeset
 
   @token_prefix "lpss_"
+  @display_token_chars 8
 
   schema "badge_scanners" do
     field :name, :string
@@ -14,7 +15,6 @@ defmodule Lanpartyseating.BadgeScanner do
     field :token_prefix, :string
     field :last_seen_at, :utc_datetime
     field :provisioned_at, :utc_datetime
-    field :revoked_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
@@ -22,7 +22,7 @@ defmodule Lanpartyseating.BadgeScanner do
   @doc false
   def changeset(scanner, attrs) do
     scanner
-    |> cast(attrs, [:name, :last_seen_at, :provisioned_at, :revoked_at])
+    |> cast(attrs, [:name, :last_seen_at, :provisioned_at])
     |> validate_required([:name])
     |> validate_length(:name, min: 1, max: 64)
   end
@@ -34,7 +34,7 @@ defmodule Lanpartyseating.BadgeScanner do
   def create_changeset(attrs) do
     token = generate_token()
     token_hash = Bcrypt.hash_pwd_salt(token)
-    display_prefix = @token_prefix <> String.slice(token, 0, 8)
+    display_prefix = @token_prefix <> String.slice(token, 0, @display_token_chars)
 
     changeset =
       %__MODULE__{}
@@ -50,14 +50,8 @@ defmodule Lanpartyseating.BadgeScanner do
   @doc """
   Verifies a plaintext token against a scanner's hash.
   """
-  def verify_token(%__MODULE__{token_hash: hash, revoked_at: nil}, @token_prefix <> token) do
+  def verify_token(%__MODULE__{token_hash: hash}, @token_prefix <> token) do
     Bcrypt.verify_pass(token, hash)
-  end
-
-  def verify_token(%__MODULE__{revoked_at: revoked_at}, _token) when not is_nil(revoked_at) do
-    # Perform dummy check to prevent timing attacks
-    Bcrypt.no_user_verify()
-    false
   end
 
   def verify_token(nil, _token) do
@@ -75,8 +69,14 @@ defmodule Lanpartyseating.BadgeScanner do
     :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
   end
 
-  @doc "Returns the token prefix used for all scanner tokens"
+  @doc "Returns the token prefix string used for all scanner tokens"
   def token_prefix, do: @token_prefix
+
+  @doc "Returns the length of the token prefix"
+  def token_prefix_length, do: String.length(@token_prefix)
+
+  @doc "Returns the total length of the display prefix (prefix + partial token for identification)"
+  def display_prefix_length, do: token_prefix_length() + @display_token_chars
 
   @doc """
   Regenerates the token for an existing scanner.
@@ -85,7 +85,7 @@ defmodule Lanpartyseating.BadgeScanner do
   def regenerate_token_changeset(scanner) do
     token = generate_token()
     token_hash = Bcrypt.hash_pwd_salt(token)
-    display_prefix = @token_prefix <> String.slice(token, 0, 8)
+    display_prefix = @token_prefix <> String.slice(token, 0, @display_token_chars)
 
     changeset =
       scanner

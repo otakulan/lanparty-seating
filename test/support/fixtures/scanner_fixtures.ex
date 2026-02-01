@@ -31,17 +31,6 @@ defmodule Lanpartyseating.ScannerFixtures do
   end
 
   @doc """
-  Creates a revoked scanner.
-  Returns {scanner, original_token}.
-  """
-  def revoked_scanner_fixture(attrs \\ %{}) do
-    {scanner, token} = scanner_fixture(attrs)
-    :ok = ScannerLogic.revoke_scanner(scanner.id)
-    {:ok, scanner} = ScannerLogic.get_scanner(scanner.id)
-    {scanner, token}
-  end
-
-  @doc """
   Creates a provisioned scanner.
   Returns {scanner, token}.
   """

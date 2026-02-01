@@ -8,7 +8,6 @@ defmodule Lanpartyseating.Repo.Migrations.CreateBadgeScanners do
       add :token_prefix, :string, size: 16, null: false
       add :last_seen_at, :utc_datetime
       add :provisioned_at, :utc_datetime
-      add :revoked_at, :utc_datetime
 
       timestamps(type: :utc_datetime)
     end
