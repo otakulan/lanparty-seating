@@ -146,22 +146,20 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   @doc """
-  Cancels a reservation by badge UID.
+  Cancels all active reservations for a badge UID.
   Used by external badge scanners for sign-out.
 
   Flow:
   1. Lookup badge by uid (case-insensitive)
-  2. Find active reservation with that badge's serial_key
-  3. Cancel the reservation
+  2. Find all active reservations with that badge's serial_key
+  3. Cancel all of them
 
-  Returns {:ok, %{station_number: int, message: string}} or {:error, reason}.
+  Returns {:ok, %{station_numbers: [int], message: string}} or {:error, reason}.
   """
   def cancel_reservation_by_badge(badge_uid) do
     with {:ok, badge} <- BadgesLogic.get_badge(badge_uid),
-         {:ok, reservation} <- find_active_reservation_by_badge(badge.serial_key) do
-      station_number = reservation.station_id
-      cancel_reservation(station_number, "Badge sign-out")
-      {:ok, %{station_number: station_number, message: "Reservation cancelled for station #{station_number}"}}
+         {:ok, reservations} <- find_active_reservations_by_badge(badge.serial_key) do
+      cancel_reservations_by_badge(reservations, "Badge sign-out")
     else
       {:error, "Unknown badge serial number"} -> {:error, :badge_not_found}
       {:error, :no_reservation} -> {:error, :no_reservation}
@@ -169,18 +167,51 @@ defmodule Lanpartyseating.ReservationLogic do
     end
   end
 
-  defp find_active_reservation_by_badge(serial_key) do
-    query =
+  defp find_active_reservations_by_badge(serial_key) do
+    reservations =
       from(r in Reservation,
         where: r.badge == ^serial_key,
         where: is_nil(r.deleted_at),
-        limit: 1
+        join: s in assoc(r, :station),
+        preload: [station: s]
       )
+      |> Repo.all()
 
-    case Repo.one(query) do
-      nil -> {:error, :no_reservation}
-      reservation -> {:ok, reservation}
+    case reservations do
+      [] -> {:error, :no_reservation}
+      reservations -> {:ok, reservations}
     end
+  end
+
+  defp cancel_reservations_by_badge(reservations, reason) do
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+
+    station_numbers =
+      Enum.map(reservations, fn res ->
+        res
+        |> Reservation.changeset(%{incident: reason, deleted_at: now})
+        |> Repo.update!()
+
+        GenServer.cast(:"expire_reservation_#{res.id}", :terminate)
+
+        Endpoint.broadcast!("desktop:all", "cancel_reservation", %{
+          station_number: res.station.station_number,
+        })
+
+        res.station.station_number
+      end)
+
+    # Broadcast station update once after all cancellations
+    {:ok, stations} = StationLogic.get_all_stations()
+    Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
+
+    message =
+      case station_numbers do
+        [single] -> "Reservation cancelled for station #{single}"
+        multiple -> "Reservations cancelled for stations #{Enum.join(multiple, ", ")}"
+      end
+
+    {:ok, %{station_numbers: station_numbers, message: message}}
   end
 
   @doc """

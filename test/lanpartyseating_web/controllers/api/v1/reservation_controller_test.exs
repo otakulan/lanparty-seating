@@ -23,8 +23,9 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
 
   defp create_test_station(station_number) do
     # Create layout first (required by foreign key)
+    # Use station_number as x coordinate to ensure uniqueness
     %StationLayout{}
-    |> StationLayout.changeset(%{station_number: station_number, x: 0, y: 0})
+    |> StationLayout.changeset(%{station_number: station_number, x: station_number, y: 0})
     |> Repo.insert!()
 
     %Station{}
@@ -151,6 +152,28 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
                "status" => "error",
                "message" => "No active reservation found for this badge",
              }
+    end
+
+    test "cancels all reservations for badge with multiple active reservations", %{conn: conn} do
+      badge = create_test_badge("MULTI")
+      station1 = create_test_station(10)
+      station2 = create_test_station(11)
+      _reservation1 = create_reservation(badge, station1.station_number)
+      _reservation2 = create_reservation(badge, station2.station_number)
+
+      conn = post(conn, ~p"/api/v1/reservations/cancel", %{"badge_uid" => "MULTI"})
+
+      response = json_response(conn, 200)
+      assert response["status"] == "ok"
+      assert response["message"] =~ "Reservations cancelled"
+      assert response["message"] =~ "10"
+      assert response["message"] =~ "11"
+
+      # Verify both reservations were soft-deleted
+      import Ecto.Query
+      reservations = Repo.all(from r in Reservation, where: r.badge == ^badge.serial_key)
+      assert length(reservations) == 2
+      assert Enum.all?(reservations, &(&1.deleted_at != nil))
     end
   end
 end
