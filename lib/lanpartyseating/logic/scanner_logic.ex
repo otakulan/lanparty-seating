@@ -107,20 +107,11 @@ defmodule Lanpartyseating.ScannerLogic do
     prefix_length = BadgeScanner.display_prefix_length()
     prefix = String.slice(token, 0, prefix_length)
 
-    scanners =
-      from(s in BadgeScanner, where: s.token_prefix == ^prefix)
-      |> Repo.all()
-
-    find_matching_scanner(scanners, token)
-  end
-
-  defp find_matching_scanner([], _token), do: {:error, :invalid}
-
-  defp find_matching_scanner([scanner | rest], token) do
-    if BadgeScanner.verify_token(scanner, token) do
-      {:ok, scanner}
-    else
-      find_matching_scanner(rest, token)
+    case from(s in BadgeScanner, where: s.token_prefix == ^prefix)
+         |> Repo.all()
+         |> Enum.find(&BadgeScanner.verify_token(&1, token)) do
+      nil -> {:error, :invalid}
+      scanner -> {:ok, scanner}
     end
   end
 
