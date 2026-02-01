@@ -59,54 +59,10 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
     :ok
   end
 
-  # ============================================================================
-  # Authentication Tests
-  # ============================================================================
+  # Note: Authentication edge cases (missing token, invalid token, revoked token)
+  # are tested in ScannerAuthTest. This file focuses on business logic.
 
-  describe "POST /api/v1/reservations/cancel - authentication" do
-    test "returns 401 without Authorization header", %{conn: conn} do
-      conn = post(conn, ~p"/api/v1/reservations/cancel", %{"badge_uid" => "ABC123"})
-
-      assert json_response(conn, 401) == %{
-               "status" => "error",
-               "message" => "Missing or invalid Authorization header",
-             }
-    end
-
-    test "returns 401 with invalid token", %{conn: conn} do
-      scanner_fixture()
-
-      conn =
-        conn
-        |> put_req_header("authorization", "Bearer lpss_invalidtoken1234567890123456789012")
-        |> post(~p"/api/v1/reservations/cancel", %{"badge_uid" => "ABC123"})
-
-      assert json_response(conn, 401) == %{
-               "status" => "error",
-               "message" => "Invalid token",
-             }
-    end
-
-    test "returns 403 with revoked scanner token", %{conn: conn} do
-      {_scanner, token} = revoked_scanner_fixture()
-
-      conn =
-        conn
-        |> put_req_header("authorization", "Bearer #{token}")
-        |> post(~p"/api/v1/reservations/cancel", %{"badge_uid" => "ABC123"})
-
-      assert json_response(conn, 403) == %{
-               "status" => "error",
-               "message" => "Token has been revoked",
-             }
-    end
-  end
-
-  # ============================================================================
-  # Business Logic Tests (with valid auth)
-  # ============================================================================
-
-  describe "POST /api/v1/reservations/cancel - business logic" do
+  describe "POST /api/v1/reservations/cancel" do
     setup %{conn: conn} do
       {_scanner, token} = scanner_fixture()
       conn = put_req_header(conn, "authorization", "Bearer #{token}")
