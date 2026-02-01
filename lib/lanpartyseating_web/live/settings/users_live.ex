@@ -1,24 +1,45 @@
-defmodule LanpartyseatingWeb.AdminUsersLive do
+defmodule LanpartyseatingWeb.Settings.UsersLive do
   @moduledoc """
-  LiveView for managing admin users.
-  Only accessible with full user authentication (not badge auth).
+  Settings page for admin user management.
+  Requires full user authentication (not badge auth).
   """
   use LanpartyseatingWeb, :live_view
+  import LanpartyseatingWeb.Helpers, only: [format_datetime: 1, format_changeset_errors: 1]
 
   alias Lanpartyseating.Accounts
+  alias LanpartyseatingWeb.Components.SettingsNav
+
+  # ============================================================================
+  # Mount & Handle Params
+  # ============================================================================
 
   def mount(_params, _session, socket) do
-    users = Accounts.list_users()
-
-    socket =
-      socket
-      |> assign(:users, users)
-      |> assign(:show_create_form, false)
-      |> assign(:form, to_form(%{"name" => "", "email" => "", "password" => ""}, as: "user"))
-      |> assign(:form_error, nil)
-
     {:ok, socket}
   end
+
+  def handle_params(_params, _uri, socket) do
+    # Redirect badge-auth users - they don't have access to user management
+    if socket.assigns.is_user_auth do
+      {:noreply, load_data(socket)}
+    else
+      {:noreply,
+       socket
+       |> put_flash(:error, "Full admin access required")
+       |> push_navigate(to: ~p"/settings/seating", replace: true)}
+    end
+  end
+
+  defp load_data(socket) do
+    socket
+    |> assign(:users, Accounts.list_users())
+    |> assign(:show_create_form, false)
+    |> assign(:form, to_form(%{"name" => "", "email" => "", "password" => ""}, as: "user"))
+    |> assign(:form_error, nil)
+  end
+
+  # ============================================================================
+  # Event Handlers
+  # ============================================================================
 
   def handle_event("toggle_create_form", _params, socket) do
     {:noreply,
@@ -40,17 +61,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
          |> put_flash(:info, "User created successfully.")}
 
       {:error, changeset} ->
-        errors =
-          Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-            Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-              opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-            end)
-          end)
-
-        error_msg =
-          errors
-          |> Enum.map(fn {field, msgs} -> "#{field}: #{Enum.join(msgs, ", ")}" end)
-          |> Enum.join("; ")
+        error_msg = format_changeset_errors(changeset)
 
         {:noreply,
          socket
@@ -62,7 +73,6 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
   def handle_event("delete_user", %{"id" => id}, socket) do
     user = Accounts.get_user!(id)
 
-    # Prevent self-deletion
     if user.id == socket.assigns.current_scope.user.id do
       {:noreply, put_flash(socket, :error, "You cannot delete your own account.")}
     else
@@ -79,9 +89,45 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
     end
   end
 
+  # ============================================================================
+  # Helpers
+  # ============================================================================
+
+  # ============================================================================
+  # Render
+  # ============================================================================
+
   def render(assigns) do
     ~H"""
-    <div class="container mx-auto max-w-4xl">
+    <div class="drawer lg:drawer-open">
+      <input id="settings-drawer" type="checkbox" class="drawer-toggle" />
+
+      <div class="drawer-content">
+        <%!-- Mobile header with hamburger --%>
+        <div class="lg:hidden navbar bg-base-200 border-b border-base-300">
+          <label for="settings-drawer" class="btn btn-square btn-ghost">
+            <Icons.menu />
+          </label>
+          <span class="text-lg font-bold">Users</span>
+        </div>
+
+        <%!-- Main content area --%>
+        <div class="p-4 lg:p-6">
+          <.users_content {assigns} />
+        </div>
+      </div>
+
+      <div class="drawer-side z-40">
+        <label for="settings-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+        <SettingsNav.settings_nav current_page={:users} is_user_auth={@is_user_auth} />
+      </div>
+    </div>
+    """
+  end
+
+  defp users_content(assigns) do
+    ~H"""
+    <div class="max-w-4xl">
       <.page_header title="Admin Users" subtitle="Manage admin user accounts with full access permissions.">
         <:trailing>
           <span class="text-base-content/60">{length(@users)} users</span>
@@ -90,19 +136,17 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
 
       <.admin_section title="Create New User">
         <%= if @show_create_form do %>
-          <.form for={@form} phx-submit="create_user" class="space-y-4">
+          <.form for={@form} id="create-user-form" phx-submit="create_user" class="space-y-4">
             <%= if @form_error do %>
               <div class="alert alert-error">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Icons.x_circle class="w-6 h-6" />
                 <span>{@form_error}</span>
               </div>
             <% end %>
 
             <div class="form-control">
               <label class="label">
-                <span class="label-text">Name / Nom</span>
+                <span class="label-text">Name</span>
               </label>
               <input
                 type="text"
@@ -130,7 +174,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
 
             <div class="form-control">
               <label class="label">
-                <span class="label-text">Password / Mot de passe (min 12 characters)</span>
+                <span class="label-text">Password (min 12 characters)</span>
               </label>
               <input
                 type="password"
@@ -162,7 +206,7 @@ defmodule LanpartyseatingWeb.AdminUsersLive do
         <.data_table>
           <:header>
             <th class="text-base-content">ID</th>
-            <th class="text-base-content">Name / Nom</th>
+            <th class="text-base-content">Name</th>
             <th class="text-base-content">Email</th>
             <th class="text-base-content">Created</th>
             <th class="text-base-content">Actions</th>

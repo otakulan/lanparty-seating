@@ -8,13 +8,27 @@
     nix2container.url = "github:nlewo/nix2container";
   };
 
-  outputs = inputs@{ flake-parts, devenv, nix2container, ... }:
+  outputs =
+    inputs@{
+      flake-parts,
+      devenv,
+      nix2container,
+      ...
+    }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.devenv.flakeModule
       ];
 
-      perSystem = { config, self', inputs', pkgs, system, ... }:
+      perSystem =
+        {
+          config,
+          self',
+          inputs',
+          pkgs,
+          system,
+          ...
+        }:
         let
           beamPackages = pkgs.beam.packages.erlang_28.extend (
             final: prev: { elixir = pkgs.beam.packages.erlang_28.elixir_1_19; }
@@ -108,6 +122,7 @@
             languages.erlang.package = pkgs.beam.interpreters.erlang_28;
             languages.javascript.enable = true;
             languages.javascript.yarn.enable = true;
+            packages = [ pkgs.openssl ];
             services.postgres = {
               enable = true;
               initialDatabases = [ { name = "lanpartyseating_dev"; } ];

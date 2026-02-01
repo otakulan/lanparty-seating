@@ -1,9 +1,53 @@
-defmodule LanpartyseatingWeb.SettingsLive do
+defmodule LanpartyseatingWeb.Settings.SeatingLive do
+  @moduledoc """
+  Settings page for station grid/seating configuration.
+  """
   use LanpartyseatingWeb, :live_view
   require Logger
   import Ecto.Query
+  import LanpartyseatingWeb.Helpers, only: [group_by_padding: 2]
+
   alias Lanpartyseating.Repo
   alias Lanpartyseating.PubSub
+  alias LanpartyseatingWeb.Components.SettingsNav
+
+  # ============================================================================
+  # Mount & Handle Params
+  # ============================================================================
+
+  def mount(_params, _session, socket) do
+    {:ok, socket}
+  end
+
+  def handle_params(_params, _uri, %{assigns: %{live_action: :index}} = socket) do
+    # Redirect /settings to /settings/seating
+    {:noreply, push_navigate(socket, to: ~p"/settings/seating", replace: true)}
+  end
+
+  def handle_params(_params, _uri, socket) do
+    {:noreply, load_data(socket)}
+  end
+
+  defp load_data(socket) do
+    {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+    layout = Lanpartyseating.StationLogic.get_station_layout()
+    {columns, rows} = grid_dimensions(layout)
+    station_count = Repo.one(from(s in Lanpartyseating.Station, select: count("*")))
+    layout = resize_grid(layout, columns, rows, station_count)
+    {columns, rows} = grid_dimensions(layout)
+
+    socket
+    |> assign(:columns, columns)
+    |> assign(:rows, rows)
+    |> assign(:station_count, station_count)
+    |> assign(:colpad, settings.column_padding)
+    |> assign(:rowpad, settings.row_padding)
+    |> socket_assign_grid(layout)
+  end
+
+  # ============================================================================
+  # Grid Helper Functions
+  # ============================================================================
 
   defp minmax_row(grid, y_in) do
     grid
@@ -32,13 +76,8 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(%{})
   end
 
-  defp reverse_even_rows(grid) do
-    reverse_rows(grid, 0)
-  end
-
-  defp reverse_odd_rows(grid) do
-    reverse_rows(grid, 1)
-  end
+  defp reverse_even_rows(grid), do: reverse_rows(grid, 0)
+  defp reverse_odd_rows(grid), do: reverse_rows(grid, 1)
 
   defp reverse_columns(grid, rem) do
     grid
@@ -53,13 +92,8 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(%{})
   end
 
-  defp reverse_even_columns(grid) do
-    reverse_columns(grid, 0)
-  end
-
-  defp reverse_odd_columns(grid) do
-    reverse_columns(grid, 1)
-  end
+  defp reverse_even_columns(grid), do: reverse_columns(grid, 0)
+  defp reverse_odd_columns(grid), do: reverse_columns(grid, 1)
 
   defp transpose(grid) do
     grid
@@ -67,7 +101,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
     |> Enum.into(%{})
   end
 
-  # Returns {columns, rows}
   defp grid_dimensions(grid) do
     {max_x, max_y} =
       Map.keys(grid)
@@ -113,124 +146,66 @@ defmodule LanpartyseatingWeb.SettingsLive do
     end
   end
 
-  def mount(_params, _session, socket) do
-    {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
-    layout = Lanpartyseating.StationLogic.get_station_layout()
-    {columns, rows} = grid_dimensions(layout)
-    # number of rows in layout table might not the number of rows in the stations table
-    station_count = Repo.one(from(s in Lanpartyseating.Station, select: count("*")))
-    layout = resize_grid(layout, columns, rows, station_count)
-    {columns, rows} = grid_dimensions(layout)
-
-    socket =
-      socket
-      |> assign(:columns, columns)
-      |> assign(:rows, rows)
-      |> assign(:station_count, station_count)
-      |> assign(:colpad, settings.column_padding)
-      |> assign(:rowpad, settings.row_padding)
-      |> socket_assign_grid(layout)
-
-    {:ok, socket}
-  end
+  # ============================================================================
+  # Event Handlers
+  # ============================================================================
 
   def handle_event("change_dimensions", %{"rows" => rows, "columns" => columns}, socket) do
-    socket =
-      socket
-      |> assign(:rows, String.to_integer(rows))
-      |> assign(:columns, String.to_integer(columns))
-
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:rows, String.to_integer(rows))
+     |> assign(:columns, String.to_integer(columns))}
   end
 
   def handle_event("change_padding", %{"rowpad" => rowpad, "colpad" => colpad}, socket) do
-    socket =
-      socket
-      # fixme: colpad should not be bigger than "rows"
-      |> assign(:rowpad, String.to_integer(rowpad))
-      # fixme: colpad should not be bigger than "columns"
-      |> assign(:colpad, String.to_integer(colpad))
-
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:rowpad, String.to_integer(rowpad))
+     |> assign(:colpad, String.to_integer(colpad))}
   end
 
   def handle_event("horizontal_mirror_even", _params, socket) do
-    socket =
-      socket
-      |> socket_assign_grid(reverse_even_rows(socket.assigns.grid))
-
-    {:noreply, socket}
+    {:noreply, socket_assign_grid(socket, reverse_even_rows(socket.assigns.grid))}
   end
 
   def handle_event("horizontal_mirror_odd", _params, socket) do
-    socket =
-      socket
-      |> socket_assign_grid(reverse_odd_rows(socket.assigns.grid))
-
-    {:noreply, socket}
+    {:noreply, socket_assign_grid(socket, reverse_odd_rows(socket.assigns.grid))}
   end
 
   def handle_event("vertical_mirror_even", _params, socket) do
-    socket =
-      socket
-      |> socket_assign_grid(reverse_even_columns(socket.assigns.grid))
-
-    {:noreply, socket}
+    {:noreply, socket_assign_grid(socket, reverse_even_columns(socket.assigns.grid))}
   end
 
   def handle_event("vertical_mirror_odd", _params, socket) do
-    socket =
-      socket
-      |> socket_assign_grid(reverse_odd_columns(socket.assigns.grid))
-
-    {:noreply, socket}
+    {:noreply, socket_assign_grid(socket, reverse_odd_columns(socket.assigns.grid))}
   end
 
   def handle_event("diagonal_mirror", _params, socket) do
     grid = transpose(socket.assigns.grid)
     {columns, rows} = grid_dimensions(grid)
 
-    socket =
-      socket
-      |> assign(:columns, columns)
-      |> assign(:rows, rows)
-      |> socket_assign_grid(grid)
-
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:columns, columns)
+     |> assign(:rows, rows)
+     |> socket_assign_grid(grid)}
   end
 
   def handle_event("reset_grid_column_major", _params, socket) do
-    grid =
-      add_stations_to_grid(%{}, true, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
-
-    socket =
-      socket
-      |> socket_assign_grid(grid)
-
-    {:noreply, socket}
+    grid = add_stations_to_grid(%{}, true, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
+    {:noreply, socket_assign_grid(socket, grid)}
   end
 
   def handle_event("reset_grid_row_major", _params, socket) do
-    grid =
-      add_stations_to_grid(%{}, false, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
-
-    socket =
-      socket
-      |> socket_assign_grid(grid)
-
-    {:noreply, socket}
+    grid = add_stations_to_grid(%{}, false, socket.assigns.columns, socket.assigns.rows, 1, socket.assigns.station_count)
+    {:noreply, socket_assign_grid(socket, grid)}
   end
 
   def handle_event("save", _params, socket) do
     s = socket.assigns
 
     save_stations = Lanpartyseating.StationLogic.save_stations(s.grid)
-
-    save_settings =
-      Lanpartyseating.SettingsLogic.settings_db_changes(
-        s.rowpad,
-        s.colpad
-      )
+    save_settings = Lanpartyseating.SettingsLogic.settings_db_changes(s.rowpad, s.colpad)
 
     multi =
       Ecto.Multi.new()
@@ -261,9 +236,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
       rescue
         e ->
           Logger.error("Postgres exception trying to commit transaction: #{inspect(e)}")
-
-          socket
-          |> put_flash(:error, "Postgres exception trying to commit transaction:\n#{inspect(e)}")
+          socket |> put_flash(:error, "Postgres exception trying to commit transaction:\n#{inspect(e)}")
       end
 
     {:noreply, socket}
@@ -272,9 +245,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
   def handle_event("move", params, socket) do
     grid = socket.assigns.grid
     %{"from" => %{"x" => x1, "y" => y1}, "to" => %{"x" => x2, "y" => y2}} = params
-    # should never be nil
     from_num = Map.get(grid, {x1, y1})
-    # nil if empty slot
     to_num = Map.get(grid, {x2, y2})
 
     grid =
@@ -288,11 +259,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
         |> Map.put({x2, y2}, from_num)
       end
 
-    socket =
-      socket
-      |> socket_assign_grid(grid)
-
-    {:noreply, socket}
+    {:noreply, socket_assign_grid(socket, grid)}
   end
 
   def handle_event("change_station_count", %{"station_count" => count}, socket) do
@@ -300,27 +267,56 @@ defmodule LanpartyseatingWeb.SettingsLive do
     count = String.to_integer(count)
     grid = resize_grid(grid, socket.assigns.columns, socket.assigns.rows, count)
 
-    socket =
-      socket
-      |> assign(:station_count, count)
-      |> socket_assign_grid(grid)
-
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:station_count, count)
+     |> socket_assign_grid(grid)}
   end
+
+  # ============================================================================
+  # Helpers
+  # ============================================================================
 
   defp publish_station_update do
     {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
-
-    Phoenix.PubSub.broadcast(
-      PubSub,
-      "station_update",
-      {:stations, stations}
-    )
+    Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
   end
+
+  # ============================================================================
+  # Render
+  # ============================================================================
 
   def render(assigns) do
     ~H"""
-    <div class="container mx-auto max-w-6xl">
+    <div class="drawer lg:drawer-open">
+      <input id="settings-drawer" type="checkbox" class="drawer-toggle" />
+
+      <div class="drawer-content">
+        <%!-- Mobile header with hamburger --%>
+        <div class="lg:hidden navbar bg-base-200 border-b border-base-300">
+          <label for="settings-drawer" class="btn btn-square btn-ghost">
+            <Icons.menu />
+          </label>
+          <span class="text-lg font-bold">Seating Configuration</span>
+        </div>
+
+        <%!-- Main content area --%>
+        <div class="p-4 lg:p-6">
+          <.seating_content {assigns} />
+        </div>
+      </div>
+
+      <div class="drawer-side z-40">
+        <label for="settings-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+        <SettingsNav.settings_nav current_page={:seating} is_user_auth={@is_user_auth} />
+      </div>
+    </div>
+    """
+  end
+
+  defp seating_content(assigns) do
+    ~H"""
+    <div class="max-w-6xl">
       <.page_header title="Station Layout Settings" subtitle="Configure the station grid layout displayed on signage" />
 
       <%!-- Grid Configuration Section --%>
@@ -471,7 +467,7 @@ defmodule LanpartyseatingWeb.SettingsLive do
                         <% c = Enum.at(col_group, col_idx) %>
                         <div class="flex flex-col flex-1 grow mx-0.5">
                           <%= if r != nil and c != nil do %>
-                            <% station_num = assigns.grid |> Map.get({c, r}) %>
+                            <% station_num = @grid |> Map.get({c, r}) %>
                             <%= if !is_nil(station_num) do %>
                               <div class="btn btn-warning h-full" station-x={"#{c}"} station-y={"#{r}"} draggable="true">
                                 {Map.get(@grid, {c, r})}
@@ -491,29 +487,6 @@ defmodule LanpartyseatingWeb.SettingsLive do
         </div>
       </section>
     </div>
-    <script>
-      let hooks = {};
-      let draggedElement = null;
-
-      hooks.ButtonGridHook = {
-        mounted() {
-          const container = document.getElementById('station-grid');
-          container.addEventListener('dragstart', event => {
-            if (!event.target.matches('[station-x]')) return;
-            draggedElement = event.target;
-          });
-
-          container.addEventListener("drop", event => {
-          if (!event.target.matches('[station-x]')) return;
-            // Push an event to the LiveView with some parameters
-            let from = { x: parseInt(draggedElement.getAttribute("station-x")), y: parseInt(draggedElement.getAttribute("station-y")) };
-            let to = { x: parseInt(event.target.getAttribute("station-x")), y: parseInt(event.target.getAttribute("station-y")) };
-            this.pushEvent("move", { from: from, to: to });
-          });
-        }
-      };
-      window.customHooks = hooks;
-    </script>
     """
   end
 end

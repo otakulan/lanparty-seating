@@ -13,16 +13,9 @@ defmodule LanpartyseatingWeb.Nav do
   defp admin_menu do
     [
       {"Tournaments", ~p"/tournaments"},
-      {"Settings", ~p"/settings"},
+      {"Settings", ~p"/settings/seating"},
       {"Logs", ~p"/logs"},
       {"Maintenance", ~p"/maintenance"},
-    ]
-  end
-
-  defp admin_management_menu do
-    [
-      {"Users", ~p"/admin/users"},
-      {"Badges", ~p"/admin/badges"},
     ]
   end
 
@@ -35,19 +28,12 @@ defmodule LanpartyseatingWeb.Nav do
     nav_menu = public_menu()
 
     # Admin dropdown items based on auth level
+    # Users/Badges management is now in the Settings sidebar, not the main nav
     admin_dropdown =
-      cond do
-        is_user_auth ->
-          # Full user auth: all admin items including user/badge management
-          admin_menu() ++ admin_management_menu()
-
-        is_authenticated ->
-          # Badge auth: admin menu but not user/badge management
-          admin_menu()
-
-        true ->
-          # Not authenticated: no admin dropdown
-          []
+      if is_authenticated do
+        admin_menu()
+      else
+        []
       end
 
     socket =

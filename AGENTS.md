@@ -44,12 +44,14 @@ Database (PostgreSQL via Ecto)
 
 ## Directory Structure
 
-- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, settings, station, tournaments)
-- `lib/lanpartyseating/repositories/` - Ecto schema definitions (not a repository pattern - just schemas)
+- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, scanner, settings, station, tournaments)
+- `lib/lanpartyseating/repositories/` - Ecto schema definitions (not a repository pattern - just schemas, badge_scanner, scanner_wifi_config)
 - `lib/lanpartyseating/tasks/` - GenServer background tasks (expiration_kickstarter, expire_reservation, expire_tournament, start_tournament)
 - `lib/lanpartyseating/accounts/` - User authentication (phx.gen.auth generated)
 - `lib/lanpartyseating_web/live/` - LiveView pages (admin_badges, admin_users, display, logs, maintenance, profile, settings, stations, tournaments)
 - `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, station_modal, tournament_modal, ui)
+- `lib/lanpartyseating_web/controllers/api/v1/` - REST API controllers (reservation_controller for scanner badge cancellation)
+- `lib/lanpartyseating_web/plugs/` - Custom Plug modules (scanner_auth for bearer token authentication)
 
 ## Development Best Practices
 
@@ -156,6 +158,31 @@ All user-facing text must be in both French and English. Use inline bilingual te
 3. Add `deleted_at` field for soft deletes
 4. Run migration: `mix ecto.migrate`
 
+## External Badge Scanner Integration
+
+ESP32-based exit badge scanners allow attendees to cancel reservations at exit points.
+
+**Hardware Firmware:** [otakulan/lanparty-seating-badge-reader](https://github.com/otakulan/lanparty-seating-badge-reader)
+
+### Server-Side Components
+
+| File | Purpose |
+|------|---------|
+| `lib/lanpartyseating/logic/scanner_logic.ex` | Scanner CRUD, WiFi config, token management |
+| `lib/lanpartyseating/repositories/badge_scanner.ex` | Scanner schema |
+| `lib/lanpartyseating/repositories/scanner_wifi_config.ex` | WiFi config schema (singleton) |
+| `lib/lanpartyseating_web/controllers/api/v1/reservation_controller.ex` | `POST /api/v1/reservations/cancel` |
+| `lib/lanpartyseating_web/plugs/scanner_auth.ex` | Bearer token authentication |
+| `lib/lanpartyseating_web/live/settings/scanners_live.ex` | Scanner management UI with BLE provisioning |
+| `assets/js/hooks/bluetooth_provisioning.js` | WebBluetooth LiveView hook |
+
+### API Endpoint
+
+`POST /api/v1/reservations/cancel`
+- **Auth:** Bearer token (`Authorization: Bearer lpss_...`)
+- **Body:** `{"badge_uid": "..."}`
+- **Returns:** 200 (cancelled), 404 (no reservation), 401 (invalid token)
+
 ## Gotchas
 
 1. **Timezone**: Dates stored as UTC, displayed in `America/Toronto`
@@ -170,6 +197,8 @@ All user-facing text must be in both French and English. Use inline bilingual te
 10. **Bilingual**: All user-facing text needs French + English
 11. **OTP/Async Debugging**: AI agents struggle with OTP, Task, and async issues. They don't understand process lifecycles, the actor model, or GenServer interactions. Step in early when debugging concurrency.
 12. **Ecto Sandbox Isolation**: Each test runs in a transaction that rolls back. AI may query dev DB thinking it's test DB. Tests can't see each other's data due to transaction isolation.
+13. **Scanner Tokens**: Tokens are `lpss_` prefixed, stored as bcrypt hash. Only the prefix is visible in UI for identification.
+14. **HTTPS for WebBluetooth**: Dev provisioning requires HTTPS on port 4001. Certs must be generated with OpenSSL directly (not `mix phx.gen.cert`) due to OTP 28 + Chrome SSL compatibility issues.
 
 
 <!-- phoenix-gen-auth-start -->

@@ -28,3 +28,6 @@ assets/node_modules
 .DS_STORE
 
 .env
+
+# Self-signed SSL certificates for development
+/priv/cert/

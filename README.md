@@ -23,10 +23,13 @@ To start lanparty-seating:
 3. Create and migrate database: `mix ecto.create && mix ecto.migrate`
 4. Seed database: `mix ecto.reset`
 5. Install Node.js dependencies: `cd assets && yarn install --dev && cd ..`
-6. Deploy assets: `mix assets.deploy`
-7. Start Phoenix: `mix phx.server`
+6. Generate HTTPS certificate: `mix gen_dev_cert`
+7. Deploy assets: `mix assets.deploy`
+8. Start Phoenix: `mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+
+For WebBluetooth scanner provisioning, use HTTPS at [`localhost:4001`](https://localhost:4001).
 
 ### Default Seed Data
 
@@ -178,3 +181,38 @@ bin/lanpartyseating eval "Lanpartyseating.Release.seed()"
 mix assets.deploy           # Build and digest assets
 mix release                 # Build OTP release
 ```
+
+## External Badge Scanner
+
+For exit sign-out stations, the system supports external ESP32-based badge scanners that allow attendees to cancel their reservations by scanning their badge at exit points.
+
+**Hardware Firmware:** [otakulan/lanparty-seating-badge-reader](https://github.com/otakulan/lanparty-seating-badge-reader)
+
+### Server Configuration
+
+1. Configure WiFi credentials in Settings > Scanners (stored encrypted, shared by all scanners)
+2. Create a scanner entry (generates a unique API token)
+3. Provision the ESP32 via WebBluetooth (sends WiFi + API credentials to device)
+
+### API Endpoint
+
+Scanners call `POST /api/v1/reservations/cancel` with bearer token authentication:
+
+```bash
+curl -X POST https://your-server/api/v1/reservations/cancel \
+  -H "Authorization: Bearer lpss_..." \
+  -H "Content-Type: application/json" \
+  -d '{"badge_uid": "ABC123"}'
+```
+
+### Development Notes
+
+WebBluetooth provisioning requires a secure context. In development:
+- Generate HTTPS certificate: `mix gen_dev_cert`
+- Use HTTPS on port 4001: https://localhost:4001
+- Or access via `localhost` on HTTP (exempt from HTTPS requirement)
+
+The certificate is generated using OpenSSL (not `mix phx.gen.cert`) for
+compatibility with Chrome and OTP 28.
+
+See the [hardware repository](https://github.com/otakulan/lanparty-seating-badge-reader) for firmware setup, hardware requirements, and LED status indicators.

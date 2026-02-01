@@ -13,7 +13,19 @@ config :phoenix_live_view,
 # watchers to your application. For example, we use it
 # with brunch.io to recompile .js and .css sources.
 config :lanpartyseating, LanpartyseatingWeb.Endpoint,
-  http: [port: 4000],
+  http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
+  https: [
+    port: 4001,
+    ip: {0, 0, 0, 0, 0, 0, 0, 0},
+    certfile: "priv/cert/selfsigned.pem",
+    keyfile: "priv/cert/selfsigned_key.pem",
+    http_2_options: [enabled: false],
+    thousand_island_options: [
+      transport_options: [
+        versions: [:"tlsv1.2"],
+      ],
+    ],
+  ],
   debug_errors: true,
   code_reloader: true,
   check_origin: false,
