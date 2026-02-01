@@ -4,7 +4,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
   Requires full user authentication (not badge auth).
   """
   use LanpartyseatingWeb, :live_view
-  import LanpartyseatingWeb.Helpers, only: [format_datetime: 1]
+  import LanpartyseatingWeb.Helpers, only: [format_datetime: 1, format_changeset_errors: 1]
 
   alias Lanpartyseating.Accounts
   alias LanpartyseatingWeb.Components.SettingsNav
@@ -105,16 +105,6 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
   # ============================================================================
   # Helpers
   # ============================================================================
-
-  defp format_changeset_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-      end)
-    end)
-    |> Enum.map(fn {field, msgs} -> "#{field}: #{Enum.join(msgs, ", ")}" end)
-    |> Enum.join("; ")
-  end
 
   # ============================================================================
   # Render

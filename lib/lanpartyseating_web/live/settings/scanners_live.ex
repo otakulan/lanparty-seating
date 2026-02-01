@@ -3,7 +3,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
   Settings page for external badge scanner management.
   """
   use LanpartyseatingWeb, :live_view
-  import LanpartyseatingWeb.Helpers, only: [format_relative_time: 1]
+  import LanpartyseatingWeb.Helpers, only: [format_relative_time: 1, format_changeset_errors: 1]
 
   alias Lanpartyseating.ScannerLogic
   alias LanpartyseatingWeb.Components.SettingsNav
@@ -273,16 +273,6 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
   # ============================================================================
   # Helpers
   # ============================================================================
-
-  defp format_changeset_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-      end)
-    end)
-    |> Enum.map(fn {field, msgs} -> "#{field}: #{Enum.join(msgs, ", ")}" end)
-    |> Enum.join("; ")
-  end
 
   # ============================================================================
   # Render

@@ -70,4 +70,25 @@ defmodule LanpartyseatingWeb.Helpers do
       true -> "#{div(diff_seconds, 86400)} days ago"
     end
   end
+
+  @doc """
+  Formats Ecto changeset errors into a human-readable string.
+
+  Interpolates error message placeholders (e.g., %{count}) with actual values.
+
+  ## Examples
+
+      iex> changeset = Ecto.Changeset.add_error(%Ecto.Changeset{}, :email, "is invalid")
+      iex> format_changeset_errors(changeset)
+      "email: is invalid"
+  """
+  def format_changeset_errors(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+      end)
+    end)
+    |> Enum.map(fn {field, msgs} -> "#{field}: #{Enum.join(msgs, ", ")}" end)
+    |> Enum.join("; ")
+  end
 end
