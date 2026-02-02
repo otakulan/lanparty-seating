@@ -1,6 +1,3 @@
-# Define the CSV parser module (NimbleCSV requires this)
-NimbleCSV.define(Lanpartyseating.BadgesCSV, separator: ",", escape: "\"")
-
 defmodule Lanpartyseating.BadgesLogic do
   @moduledoc """
   Business logic for badge management.
@@ -157,7 +154,8 @@ defmodule Lanpartyseating.BadgesLogic do
   Imports badges from a CSV file, replacing all existing badges.
 
   The CSV must have headers and at least two columns: `serial_key` and `uid`.
-  All existing badges are deleted before import.
+  All rows are validated through changesets before import. If any row fails
+  validation, the entire import is rejected and no changes are made.
 
   Returns `{:ok, count}` with the number of badges imported,
   or `{:error, reason}` if import fails.
@@ -165,34 +163,50 @@ defmodule Lanpartyseating.BadgesLogic do
   def import_from_csv(file_path) do
     Repo.transaction(
       fn ->
-        # Delete all existing badges
-        Repo.delete_all(Badge)
-
-        # Parse CSV and insert in chunks
         now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
 
-        file_path
-        |> File.stream!()
-        |> BadgesCSV.parse_stream(skip_headers: true)
-        |> Stream.map(fn row ->
-          [serial_key, uid | _rest] = row
+        # Parse and validate all rows first
+        validated_rows =
+          file_path
+          |> File.stream!()
+          |> BadgesCSV.parse_stream(skip_headers: true)
+          |> Stream.with_index(2)
+          |> Enum.map(fn {[serial_key, uid | _rest], line_num} ->
+            attrs = %{
+              serial_key: String.trim(serial_key),
+              uid: String.trim(uid),
+            }
 
-          %{
-            serial_key: String.trim(serial_key),
-            uid: String.trim(uid) |> String.upcase(),
-            is_admin: false,
-            is_banned: false,
-            inserted_at: now,
-            updated_at: now,
-          }
-        end)
-        |> Stream.chunk_every(1000)
-        |> Enum.reduce(0, fn chunk, acc ->
-          {count, _} =
-            Repo.insert_all(Badge, chunk, on_conflict: :nothing)
+            changeset = Badge.import_changeset(%Badge{}, attrs)
+            {line_num, attrs, changeset}
+          end)
 
-          acc + count
-        end)
+        # Check for any invalid rows
+        case Enum.find(validated_rows, fn {_, _, cs} -> not cs.valid? end) do
+          {line_num, _attrs, changeset} ->
+            errors = format_changeset_errors(changeset)
+            Repo.rollback("Row #{line_num}: #{errors}")
+
+          nil ->
+            # All valid - delete existing and bulk insert
+            Repo.delete_all(Badge)
+
+            validated_rows
+            |> Enum.map(fn {_, attrs, _} ->
+              Map.merge(attrs, %{
+                uid: String.upcase(attrs.uid),
+                is_admin: false,
+                is_banned: false,
+                inserted_at: now,
+                updated_at: now,
+              })
+            end)
+            |> Enum.chunk_every(1000)
+            |> Enum.reduce(0, fn chunk, acc ->
+              {count, _} = Repo.insert_all(Badge, chunk, on_conflict: :nothing)
+              acc + count
+            end)
+        end
       end,
       timeout: :infinity
     )
@@ -218,9 +232,7 @@ defmodule Lanpartyseating.BadgesLogic do
       sample_rows =
         rows
         |> Enum.take(5)
-        |> Enum.map(fn [serial_key, uid | _rest] ->
-          %{serial_key: String.trim(serial_key), uid: String.trim(uid)}
-        end)
+        |> Enum.map(&parse_csv_row/1)
 
       {:ok, %{row_count: min(row_count, 10_000), sample_rows: sample_rows, truncated: row_count > 10_000}}
     rescue
@@ -230,8 +242,25 @@ defmodule Lanpartyseating.BadgesLogic do
       e in File.Error ->
         {:error, "File error: #{Exception.message(e)}"}
 
-      MatchError ->
+      _e in [MatchError, FunctionClauseError] ->
         {:error, "CSV must have at least two columns: serial_key, uid"}
     end
+  end
+
+  defp parse_csv_row([serial_key, uid | _rest]) do
+    %{serial_key: String.trim(serial_key), uid: String.trim(uid)}
+  end
+
+  @doc """
+  Formats changeset errors into a human-readable string.
+  """
+  def format_changeset_errors(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Enum.reduce(opts, msg, fn {key, value}, acc ->
+        String.replace(acc, "%{#{key}}", to_string(value))
+      end)
+    end)
+    |> Enum.map(fn {field, msgs} -> "#{field} #{Enum.join(msgs, ", ")}" end)
+    |> Enum.join("; ")
   end
 end

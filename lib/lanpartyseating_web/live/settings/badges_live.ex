@@ -50,8 +50,14 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
   end
 
   defp parse_page(nil), do: 1
-  defp parse_page(page) when is_binary(page), do: String.to_integer(page)
   defp parse_page(page) when is_integer(page), do: page
+
+  defp parse_page(page) when is_binary(page) do
+    case Integer.parse(page) do
+      {num, _} when num >= 1 -> num
+      _ -> 1
+    end
+  end
 
   defp load_data(socket, page, search) do
     search_term = if search == "", do: nil, else: search
@@ -185,8 +191,9 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
          |> put_flash(:info, "Badge created successfully.")
          |> load_data(socket.assigns.page, socket.assigns.search)}
 
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Failed to create badge.")}
+      {:error, changeset} ->
+        error_msg = BadgesLogic.format_changeset_errors(changeset)
+        {:noreply, put_flash(socket, :error, "Failed to create badge: #{error_msg}")}
     end
   end
 

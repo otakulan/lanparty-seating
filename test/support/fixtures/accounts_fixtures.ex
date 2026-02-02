@@ -50,8 +50,8 @@ defmodule Lanpartyseating.AccountsFixtures do
       |> Enum.into(%{
         serial_key: uid,
         uid: uid,
-        label: Map.get(attrs, :label, "Test Badge"),
-        is_admin: Map.get(attrs, :enabled, true),
+        label: "Test Badge",
+        is_admin: true,
         is_banned: false,
       })
       |> BadgesLogic.create_badge()
