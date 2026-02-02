@@ -14,6 +14,7 @@ defmodule Lanpartyseating.ReservationLogic do
 
   def create_reservation(station_number, duration, uid) do
     with {:ok, badge} <- BadgesLogic.get_badge(uid),
+         :ok <- check_badge_not_banned(badge),
          {:ok, station} <- StationLogic.get_station(station_number),
          true <- StationLogic.station_available?(station) do
       Logger.debug("Station is available")
@@ -55,10 +56,14 @@ defmodule Lanpartyseating.ReservationLogic do
           {:error, {:reservation_failed, err}}
       end
     else
+      {:error, :banned} -> {:error, "This badge has been banned and cannot make reservations"}
       {:error, _} = error -> error
       false -> {:error, :station_unavailable}
     end
   end
+
+  defp check_badge_not_banned(%{is_banned: true}), do: {:error, :banned}
+  defp check_badge_not_banned(_badge), do: :ok
 
   def extend_reservation(_id, minutes) when minutes <= 0 do
     {:error, "Reservations can only be extended by a positive non-zero amount of minutes"}
