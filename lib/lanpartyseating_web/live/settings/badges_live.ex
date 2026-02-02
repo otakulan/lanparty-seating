@@ -389,11 +389,11 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
           <table class="table table-sm">
             <thead>
               <tr class="border-b border-base-content/10">
-                <th class="text-base-content">UID</th>
-                <th class="text-base-content">Serial Key</th>
+                <th class="text-base-content w-[20%]">UID</th>
+                <th class="text-base-content w-[12%]">Serial Key</th>
                 <th class="text-base-content">Label</th>
-                <th class="text-base-content">Status</th>
-                <th class="w-12"></th>
+                <th class="text-base-content w-[25%]">Status</th>
+                <th class="w-[8%]"></th>
               </tr>
             </thead>
             <tbody>
@@ -415,42 +415,36 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
                       <span class="badge badge-ghost badge-sm">Normal</span>
                     <% end %>
                   </td>
-                  <td>
-                    <div class="dropdown dropdown-end">
-                      <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
-                        <Icons.ellipsis_vertical class="w-4 h-4" />
-                      </div>
-                      <ul tabindex="-1" class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-44">
-                        <li>
-                          <button
-                            phx-click="toggle_admin"
-                            phx-value-id={badge.id}
-                            onclick="document.activeElement.blur()"
-                          >
-                            {if badge.is_admin, do: "Revoke Admin", else: "Make Admin"}
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            phx-click="toggle_ban"
-                            phx-value-id={badge.id}
-                            onclick="document.activeElement.blur()"
-                          >
-                            {if badge.is_banned, do: "Unban", else: "Ban"}
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            phx-click="request_delete"
-                            phx-value-id={badge.id}
-                            class="text-error"
-                            onclick="document.activeElement.blur()"
-                          >
-                            Delete
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
+                  <td class="text-right">
+                    <button
+                      class="btn btn-ghost btn-xs"
+                      popovertarget={"badge-menu-#{badge.id}"}
+                      style={"anchor-name: --badge-anchor-#{badge.id}"}
+                    >
+                      <Icons.ellipsis_vertical class="w-4 h-4" />
+                    </button>
+                    <ul
+                      id={"badge-menu-#{badge.id}"}
+                      popover="auto"
+                      class="dropdown menu rounded-box bg-base-200 shadow-sm"
+                      style={"position-anchor: --badge-anchor-#{badge.id}; position-area: bottom span-left;"}
+                    >
+                      <li>
+                        <button phx-click="toggle_admin" phx-value-id={badge.id} class="justify-end" onclick="this.closest('[popover]').hidePopover()">
+                          {if badge.is_admin, do: "Revoke Admin", else: "Make Admin"}
+                        </button>
+                      </li>
+                      <li>
+                        <button phx-click="toggle_ban" phx-value-id={badge.id} class="justify-end" onclick="this.closest('[popover]').hidePopover()">
+                          {if badge.is_banned, do: "Unban", else: "Ban"}
+                        </button>
+                      </li>
+                      <li>
+                        <button phx-click="request_delete" phx-value-id={badge.id} class="justify-end text-error" onclick="this.closest('[popover]').hidePopover()">
+                          Delete
+                        </button>
+                      </li>
+                    </ul>
                   </td>
                 </tr>
               <% end %>
@@ -511,7 +505,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
               </div>
 
               <div class="overflow-x-auto rounded-box border border-base-content/10">
-                <table class="table table-sm">
+                <table class="table table-sm table-fixed w-full">
                   <thead>
                     <tr>
                       <th>Serial Key</th>
@@ -596,14 +590,11 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
     <dialog class={["modal", @badge && "modal-open"]}>
       <div class="modal-box">
         <h3 class="font-bold text-lg text-error">
-          Delete Badge / Supprimer le badge
+          Delete Badge
         </h3>
         <div class="py-4">
           <p class="mb-4">
-            This action cannot be undone. The following badge will be permanently deleted: <br />
-            <span class="text-sm opacity-70">
-              Cette action est irréversible. Le badge suivant sera définitivement supprimé:
-            </span>
+            This action cannot be undone. The following badge will be permanently deleted:
           </p>
           <%= if @badge do %>
             <div class="bg-base-200 rounded-lg p-3 space-y-1">
@@ -624,10 +615,10 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
         </div>
         <div class="modal-action">
           <button class="btn" phx-click="cancel_delete">
-            Cancel / Annuler
+            Cancel
           </button>
           <button class="btn btn-error" phx-click="confirm_delete">
-            Delete Badge / Supprimer
+            Delete Badge
           </button>
         </div>
       </div>
