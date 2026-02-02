@@ -29,6 +29,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
       |> assign(:show_import_modal, false)
       |> assign(:importing, false)
       |> assign(:delete_confirm_badge, nil)
+      |> assign(:show_add_badge_modal, false)
 
     {:ok, socket}
   end
@@ -161,6 +162,32 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
 
   def handle_event("cancel_delete", _params, socket) do
     {:noreply, assign(socket, :delete_confirm_badge, nil)}
+  end
+
+  # ============================================================================
+  # Event Handlers - Add Badge
+  # ============================================================================
+
+  def handle_event("show_add_badge_modal", _params, socket) do
+    {:noreply, assign(socket, :show_add_badge_modal, true)}
+  end
+
+  def handle_event("cancel_add_badge", _params, socket) do
+    {:noreply, assign(socket, :show_add_badge_modal, false)}
+  end
+
+  def handle_event("create_badge", %{"uid" => uid, "serial_key" => serial_key}, socket) do
+    case BadgesLogic.create_badge(%{uid: uid, serial_key: serial_key}) do
+      {:ok, _badge} ->
+        {:noreply,
+         socket
+         |> assign(:show_add_badge_modal, false)
+         |> put_flash(:info, "Badge created successfully.")
+         |> load_data(socket.assigns.page, socket.assigns.search)}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to create badge.")}
+    end
   end
 
   # ============================================================================
@@ -333,6 +360,9 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
 
       <%!-- Delete Confirmation Modal --%>
       <.delete_confirm_modal badge={@delete_confirm_badge} />
+
+      <%!-- Add Badge Modal --%>
+      <.add_badge_modal show={@show_add_badge_modal} />
     </div>
     """
   end
@@ -364,13 +394,22 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
           <% end %>
         </form>
 
-        <button
-          type="button"
-          class="btn btn-primary"
-          phx-click="open_import_modal"
-        >
-          <Icons.arrow_up_tray class="w-4 h-4" /> Import CSV
-        </button>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="btn btn-primary"
+            phx-click="show_add_badge_modal"
+          >
+            <Icons.plus class="w-4 h-4" /> Add Badge
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            phx-click="open_import_modal"
+          >
+            <Icons.arrow_up_tray class="w-4 h-4" /> Import CSV
+          </button>
+        </div>
       </div>
 
       <%!-- Badges Table --%>
@@ -624,6 +663,53 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
       </div>
       <form method="dialog" class="modal-backdrop">
         <button phx-click="cancel_delete">close</button>
+      </form>
+    </dialog>
+    """
+  end
+
+  defp add_badge_modal(assigns) do
+    ~H"""
+    <dialog class={["modal", @show && "modal-open"]}>
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Add Badge</h3>
+        <form phx-submit="create_badge" class="py-4 space-y-4">
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">UID</span>
+            </label>
+            <input
+              type="text"
+              name="uid"
+              class="input input-bordered"
+              placeholder="E0040153255CEF2C"
+              required
+            />
+          </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Serial Key</span>
+            </label>
+            <input
+              type="text"
+              name="serial_key"
+              class="input input-bordered"
+              placeholder="386687"
+              required
+            />
+          </div>
+          <div class="modal-action">
+            <button type="button" class="btn" phx-click="cancel_add_badge">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+              Add Badge
+            </button>
+          </div>
+        </form>
+      </div>
+      <form method="dialog" class="modal-backdrop">
+        <button phx-click="cancel_add_badge">close</button>
       </form>
     </dialog>
     """
