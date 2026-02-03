@@ -40,7 +40,9 @@ jobs:
         run: nix develop --impure --command mix compile --warnings-as-errors
 
       - name: Setup database
-        run: nix develop --impure --command mix ecto.setup
+        run: |
+          nix develop --impure --command mix ecto.create
+          nix develop --impure --command mix ecto.migrate
         env:
           MIX_ENV: test
 

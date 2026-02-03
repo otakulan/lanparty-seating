@@ -25,7 +25,10 @@ defmodule Lanpartyseating.ReservationLogicTest do
     |> Repo.insert!()
   end
 
-  defp create_station(station_number) do
+  defp create_station do
+    # Use unique station number to avoid conflicts with seed data or parallel tests
+    station_number = System.unique_integer([:positive])
+
     # Create layout first (required by foreign key)
     %StationLayout{}
     |> StationLayout.changeset(%{station_number: station_number, x: station_number, y: 0})
@@ -54,7 +57,7 @@ defmodule Lanpartyseating.ReservationLogicTest do
   describe "create_reservation/3" do
     test "creates reservation for valid badge and station" do
       badge = create_badge(%{uid: "VALID001"})
-      station = create_station(1)
+      station = create_station()
 
       assert {:ok, reservation} = ReservationLogic.create_reservation(station.station_number, 45, badge.uid)
       assert reservation.badge == badge.serial_key
@@ -64,23 +67,23 @@ defmodule Lanpartyseating.ReservationLogicTest do
 
     test "rejects reservation for banned badge" do
       badge = create_badge(%{uid: "BANNED001", is_banned: true})
-      station = create_station(2)
+      station = create_station()
 
       assert {:error, message} = ReservationLogic.create_reservation(station.station_number, 45, badge.uid)
       assert message == "This badge has been banned and cannot make reservations"
     end
 
     test "rejects reservation for unknown badge" do
-      station = create_station(3)
+      station = create_station()
 
       assert {:error, message} = ReservationLogic.create_reservation(station.station_number, 45, "NONEXISTENT")
       assert message == "Unknown badge serial number"
     end
 
     test "rejects reservation with empty badge uid" do
-      _station = create_station(4)
+      station = create_station()
 
-      assert {:error, message} = ReservationLogic.create_reservation(4, 45, "")
+      assert {:error, message} = ReservationLogic.create_reservation(station.station_number, 45, "")
       assert message == "Please fill all the fields"
     end
   end
