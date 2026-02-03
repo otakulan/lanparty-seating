@@ -13,12 +13,13 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   def create_reservation(station_number, duration, uid) do
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+
     with {:ok, badge} <- BadgesLogic.get_badge(uid),
          :ok <- check_badge_not_banned(badge),
-         {:ok, station} <- StationLogic.get_station(station_number),
+         {:ok, station} <- StationLogic.get_station(station_number, now),
          true <- StationLogic.station_available?(station) do
       Logger.debug("Station is available")
-      now = DateTime.truncate(DateTime.utc_now(), :second)
       end_time = DateTime.add(now, duration, :minute)
 
       changeset =
@@ -32,8 +33,7 @@ defmodule Lanpartyseating.ReservationLogic do
 
       case Repo.insert(changeset) do
         {:ok, reservation} ->
-          {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
-          {:ok, stations} = StationLogic.get_all_stations(now, settings.tournament_buffer_minutes)
+          {:ok, stations} = StationLogic.get_all_stations(now)
 
           Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
 
@@ -105,8 +105,7 @@ defmodule Lanpartyseating.ReservationLogic do
           end_date: new_end_date |> DateTime.to_iso8601(),
         })
 
-        {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
-        {:ok, stations} = StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
+        {:ok, stations} = StationLogic.get_all_stations()
         Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
 
         {:ok, updated}
@@ -205,8 +204,7 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   defp broadcast_station_update do
-    {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
-    {:ok, stations} = StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
+    {:ok, stations} = StationLogic.get_all_stations()
     Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
   end
 

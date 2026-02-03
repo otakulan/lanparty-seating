@@ -89,8 +89,7 @@ defmodule LanpartyseatingWeb.Settings.ReservationsLive do
   # ============================================================================
 
   defp publish_station_update do
-    {:ok, settings} = SettingsLogic.get_settings()
-    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
+    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
     Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
   end
 

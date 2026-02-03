@@ -37,7 +37,7 @@ defmodule LanpartyseatingWeb.StationsLive do
 
   def mount(_params, _session, socket) do
     {:ok, settings} = SettingsLogic.get_settings()
-    {:ok, station_list} = StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
+    {:ok, station_list} = StationLogic.get_all_stations()
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_update")
@@ -48,7 +48,6 @@ defmodule LanpartyseatingWeb.StationsLive do
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign(:reservation_duration_minutes, settings.reservation_duration_minutes)
-      |> assign(:tournament_buffer_minutes, settings.tournament_buffer_minutes)
       |> assign_stations(station_list)
       |> assign(:registration_error, nil)
       # Station modal state
@@ -313,7 +312,6 @@ defmodule LanpartyseatingWeb.StationsLive do
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
       |> assign(:reservation_duration_minutes, settings.reservation_duration_minutes)
-      |> assign(:tournament_buffer_minutes, settings.tournament_buffer_minutes)
       |> assign_stations(station_list)
       |> assign(:selected_station, selected_station)
 
