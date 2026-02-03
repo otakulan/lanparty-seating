@@ -187,9 +187,13 @@ defmodule Lanpartyseating.AccountsTest do
       refute Accounts.get_enabled_admin_badge(badge.uid)
     end
 
-    test "does not return banned admin badge" do
+    # Note: With the admin_cannot_be_banned database constraint, a badge cannot
+    # be both admin AND banned at the same time. Admin status must be revoked
+    # before a badge can be banned. This test verifies that after revoking admin,
+    # the badge is no longer returned as an admin badge.
+    test "does not return badge after admin is revoked" do
       badge = admin_badge_fixture()
-      {:ok, _} = Lanpartyseating.BadgesLogic.update_badge(badge, %{is_banned: true})
+      {:ok, _} = Lanpartyseating.BadgesLogic.update_badge(badge, %{is_admin: false})
       refute Accounts.get_enabled_admin_badge(badge.uid)
     end
 

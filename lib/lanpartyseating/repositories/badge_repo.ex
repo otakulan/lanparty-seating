@@ -25,6 +25,10 @@ defmodule Lanpartyseating.Badge do
     |> validate_length(:uid, min: 1, max: 255)
     |> update_change(:uid, &String.upcase/1)
     |> unique_constraint(:uid)
+    |> check_constraint(:is_banned,
+      name: :admin_cannot_be_banned,
+      message: "admin badges cannot be banned"
+    )
   end
 
   @doc """

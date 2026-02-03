@@ -110,15 +110,8 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       assert has_element?(view, ".badge-error", "Banned")
     end
 
-    test "shows both Admin and Banned badges when both flags set", %{conn: conn} do
-      badge_fixture(%{uid: "BOTH", serial_key: "001", is_admin: true, is_banned: true})
-
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      html = render(view)
-      assert html =~ "Admin"
-      assert html =~ "Banned"
-    end
+    # Note: Admin and Banned cannot both be true (database constraint)
+    # This is enforced by the admin_cannot_be_banned check constraint
   end
 
   # ============================================================================
@@ -767,6 +760,147 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
 
       # Should default to page 1
       assert has_element?(view, "button.btn-active", "1")
+    end
+  end
+
+  # ============================================================================
+  # Admin Cannot Be Banned Tests
+  # ============================================================================
+
+  describe "admin cannot be banned constraint" do
+    setup :register_and_log_in_user
+
+    test "hides 'Make Admin' button for banned badges", %{conn: conn} do
+      banned = badge_fixture(%{uid: "BANNED", serial_key: "001", is_banned: true, is_admin: false})
+      normal = badge_fixture(%{uid: "NORMAL", serial_key: "002", is_banned: false, is_admin: false})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # Normal badge should have Make Admin button
+      assert has_element?(
+               view,
+               ~s|ul#badge-menu-#{normal.id} button[phx-click="toggle_admin"]|,
+               "Make Admin"
+             )
+
+      # Banned badge should NOT have Make Admin button
+      refute has_element?(
+               view,
+               ~s|ul#badge-menu-#{banned.id} button[phx-click="toggle_admin"]|,
+               "Make Admin"
+             )
+    end
+
+    test "shows 'Revoke Admin' button for admin badges", %{conn: conn} do
+      admin = badge_fixture(%{uid: "ADMIN", serial_key: "001", is_admin: true})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # Admin badge should have Revoke Admin button
+      assert has_element?(
+               view,
+               ~s|ul#badge-menu-#{admin.id} button[phx-click="toggle_admin"]|,
+               "Revoke Admin"
+             )
+    end
+
+    test "hides 'Ban' button for admin badges", %{conn: conn} do
+      admin = badge_fixture(%{uid: "ADMIN", serial_key: "001", is_admin: true})
+      normal = badge_fixture(%{uid: "NORMAL", serial_key: "002", is_admin: false})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # Normal badge should have Ban button
+      assert has_element?(
+               view,
+               ~s|ul#badge-menu-#{normal.id} button[phx-click="toggle_ban"]|,
+               "Ban"
+             )
+
+      # Admin badge should NOT have Ban button
+      refute has_element?(
+               view,
+               ~s|ul#badge-menu-#{admin.id} button[phx-click="toggle_ban"]|
+             )
+    end
+
+    test "shows 'Unban' button for banned badges", %{conn: conn} do
+      banned = badge_fixture(%{uid: "BANNED", serial_key: "001", is_banned: true})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # Banned badge should have Unban button
+      assert has_element?(
+               view,
+               ~s|ul#badge-menu-#{banned.id} button[phx-click="toggle_ban"]|,
+               "Unban"
+             )
+    end
+
+    test "toggle_admin fails with flash error for banned badge", %{conn: conn} do
+      banned = badge_fixture(%{uid: "BANNED", serial_key: "001", is_banned: true, is_admin: false})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # Manually trigger the event (would require bypass of UI hiding)
+      render_click(view, "toggle_admin", %{"id" => to_string(banned.id)})
+
+      # Should show error flash
+      assert render(view) =~ "Cannot make a banned badge an admin"
+
+      # Badge should still be banned, not admin
+      updated = BadgesLogic.get_badge!(banned.id)
+      refute updated.is_admin
+      assert updated.is_banned
+    end
+
+    test "toggle_ban fails with flash error for admin badge", %{conn: conn} do
+      admin = badge_fixture(%{uid: "ADMIN", serial_key: "001", is_admin: true, is_banned: false})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # Manually trigger the event (would require bypass of UI hiding)
+      render_click(view, "toggle_ban", %{"id" => to_string(admin.id)})
+
+      # Should show error flash
+      assert render(view) =~ "Cannot ban an admin badge"
+
+      # Badge should still be admin, not banned
+      updated = BadgesLogic.get_badge!(admin.id)
+      assert updated.is_admin
+      refute updated.is_banned
+    end
+
+    test "can unban a badge then make it admin", %{conn: conn} do
+      badge = badge_fixture(%{uid: "TOBEUNADMIN", serial_key: "001", is_banned: true, is_admin: false})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # First unban
+      render_click(view, "toggle_ban", %{"id" => to_string(badge.id)})
+
+      # Now make admin should work
+      render_click(view, "toggle_admin", %{"id" => to_string(badge.id)})
+
+      updated = BadgesLogic.get_badge!(badge.id)
+      assert updated.is_admin
+      refute updated.is_banned
+    end
+
+    test "can revoke admin then ban", %{conn: conn} do
+      badge = badge_fixture(%{uid: "TOBEREVOKEDBAN", serial_key: "001", is_admin: true, is_banned: false})
+
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      # First revoke admin
+      render_click(view, "toggle_admin", %{"id" => to_string(badge.id)})
+
+      # Now ban should work
+      render_click(view, "toggle_ban", %{"id" => to_string(badge.id)})
+
+      updated = BadgesLogic.get_badge!(badge.id)
+      refute updated.is_admin
+      assert updated.is_banned
     end
   end
 

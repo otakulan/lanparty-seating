@@ -109,24 +109,34 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
   def handle_event("toggle_admin", %{"id" => id}, socket) do
     badge = BadgesLogic.get_badge!(id)
 
-    case BadgesLogic.update_badge(badge, %{is_admin: !badge.is_admin}) do
-      {:ok, _} ->
-        {:noreply, load_data(socket, socket.assigns.page, socket.assigns.search)}
+    # Prevent making a banned badge an admin
+    if badge.is_banned and not badge.is_admin do
+      {:noreply, put_flash(socket, :error, "Cannot make a banned badge an admin. Unban first.")}
+    else
+      case BadgesLogic.update_badge(badge, %{is_admin: !badge.is_admin}) do
+        {:ok, _} ->
+          {:noreply, load_data(socket, socket.assigns.page, socket.assigns.search)}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to update badge.")}
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Failed to update badge.")}
+      end
     end
   end
 
   def handle_event("toggle_ban", %{"id" => id}, socket) do
     badge = BadgesLogic.get_badge!(id)
 
-    case BadgesLogic.update_badge(badge, %{is_banned: !badge.is_banned}) do
-      {:ok, _} ->
-        {:noreply, load_data(socket, socket.assigns.page, socket.assigns.search)}
+    # Prevent banning an admin badge
+    if badge.is_admin and not badge.is_banned do
+      {:noreply, put_flash(socket, :error, "Cannot ban an admin badge. Revoke admin first.")}
+    else
+      case BadgesLogic.update_badge(badge, %{is_banned: !badge.is_banned}) do
+        {:ok, _} ->
+          {:noreply, load_data(socket, socket.assigns.page, socket.assigns.search)}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to update badge.")}
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Failed to update badge.")}
+      end
     end
   end
 
@@ -451,16 +461,22 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
                       class="dropdown menu rounded-box bg-base-200 shadow-sm"
                       style={"position-anchor: --badge-anchor-#{badge.id}; position-area: bottom span-left;"}
                     >
-                      <li>
-                        <button phx-click="toggle_admin" phx-value-id={badge.id} class="justify-end" onclick="this.closest('[popover]').hidePopover()">
-                          {if badge.is_admin, do: "Revoke Admin", else: "Make Admin"}
-                        </button>
-                      </li>
-                      <li>
-                        <button phx-click="toggle_ban" phx-value-id={badge.id} class="justify-end" onclick="this.closest('[popover]').hidePopover()">
-                          {if badge.is_banned, do: "Unban", else: "Ban"}
-                        </button>
-                      </li>
+                      <%!-- Show admin toggle: "Revoke Admin" always visible for admins, "Make Admin" hidden for banned --%>
+                      <%= if badge.is_admin or not badge.is_banned do %>
+                        <li>
+                          <button phx-click="toggle_admin" phx-value-id={badge.id} class="justify-end" onclick="this.closest('[popover]').hidePopover()">
+                            {if badge.is_admin, do: "Revoke Admin", else: "Make Admin"}
+                          </button>
+                        </li>
+                      <% end %>
+                      <%!-- Show ban toggle: hidden for admins (must revoke admin first) --%>
+                      <%= if not badge.is_admin do %>
+                        <li>
+                          <button phx-click="toggle_ban" phx-value-id={badge.id} class="justify-end" onclick="this.closest('[popover]').hidePopover()">
+                            {if badge.is_banned, do: "Unban", else: "Ban"}
+                          </button>
+                        </li>
+                      <% end %>
                       <li>
                         <button phx-click="request_delete" phx-value-id={badge.id} class="justify-end text-error" onclick="this.closest('[popover]').hidePopover()">
                           Delete
