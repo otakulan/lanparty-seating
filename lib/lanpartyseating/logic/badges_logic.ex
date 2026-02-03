@@ -44,7 +44,7 @@ defmodule Lanpartyseating.BadgesLogic do
     upper_uid = String.upcase(uid)
 
     from(b in Badge,
-      where: b.uid == ^upper_uid and b.is_admin == true and b.is_banned == false
+      where: b.uid == ^upper_uid and b.is_admin == true
     )
     |> Repo.one()
   end
@@ -56,7 +56,7 @@ defmodule Lanpartyseating.BadgesLogic do
   """
   def get_admin_badge_by_id(id) do
     from(b in Badge,
-      where: b.id == ^id and b.is_admin == true and b.is_banned == false
+      where: b.id == ^id and b.is_admin == true
     )
     |> Repo.one()
   end
