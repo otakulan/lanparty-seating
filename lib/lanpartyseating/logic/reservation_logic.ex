@@ -17,7 +17,7 @@ defmodule Lanpartyseating.ReservationLogic do
 
     with {:ok, badge} <- BadgesLogic.get_badge(uid),
          :ok <- check_badge_not_banned(badge),
-         {:ok, station} <- StationLogic.get_station(station_number, now),
+         {:ok, station} <- StationLogic.get_station(station_number),
          true <- StationLogic.station_available?(station) do
       Logger.debug("Station is available")
       end_time = DateTime.add(now, duration, :minute)
