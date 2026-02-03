@@ -97,7 +97,8 @@ defmodule Lanpartyseating.TournamentsLogic do
         |> Tournament.changeset(%{deleted_at: DateTime.truncate(DateTime.utc_now(), :second)})
         |> Repo.update!()
 
-        {:ok, stations} = StationLogic.get_all_stations()
+        {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+        {:ok, stations} = StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
         {:ok, tournaments} = get_upcoming_tournaments()
 
         Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
@@ -137,7 +138,8 @@ defmodule Lanpartyseating.TournamentsLogic do
 
         Repo.insert_all(TournamentReservation, reservations)
 
-        {:ok, stations} = StationLogic.get_all_stations()
+        {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+        {:ok, stations} = StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
         Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
 
         {:ok, reservations}

@@ -32,7 +32,8 @@ defmodule Lanpartyseating.ReservationLogic do
 
       case Repo.insert(changeset) do
         {:ok, reservation} ->
-          {:ok, stations} = StationLogic.get_all_stations(now)
+          {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+          {:ok, stations} = StationLogic.get_all_stations(now, settings.tournament_buffer_minutes)
 
           Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
 
@@ -104,7 +105,8 @@ defmodule Lanpartyseating.ReservationLogic do
           end_date: new_end_date |> DateTime.to_iso8601(),
         })
 
-        {:ok, stations} = StationLogic.get_all_stations()
+        {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+        {:ok, stations} = StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
         Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
 
         {:ok, updated}
@@ -203,7 +205,8 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   defp broadcast_station_update do
-    {:ok, stations} = StationLogic.get_all_stations()
+    {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+    {:ok, stations} = StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
     Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
   end
 

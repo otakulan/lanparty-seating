@@ -134,6 +134,7 @@ defmodule LanpartyseatingWeb.Components.StationModal do
   attr :reservation, :any, default: nil
   attr :error, :string, default: nil
   attr :is_admin, :boolean, default: false
+  attr :reservation_minutes, :integer, default: 45
 
   def modal_content(assigns) do
     case assigns.status do
@@ -155,8 +156,8 @@ defmodule LanpartyseatingWeb.Components.StationModal do
 
       <%!-- Self-service reservation section --%>
       <div class="space-y-2 text-base-content/80">
-        <p>Once your badge is scanned, a 45 min session will start at the chosen station.</p>
-        <p class="text-sm">Une fois votre badge scanné, une session de 45 min commencera à la station choisie.</p>
+        <p>Once your badge is scanned, a {@reservation_minutes} min session will start at the chosen station.</p>
+        <p class="text-sm">Une fois votre badge scanné, une session de {@reservation_minutes} min commencera à la station choisie.</p>
       </div>
 
       <form phx-submit="reserve_station" class="mt-6">

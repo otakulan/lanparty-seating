@@ -12,7 +12,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
 
   ## Attributes
 
-    * `:current_page` - The current page atom (:seating, :users, :badges, :scanners)
+    * `:current_page` - The current page atom (:seating, :reservations, :users, :badges, :scanners)
     * `:is_user_auth` - Whether the user is authenticated via user login (not badge)
   """
   attr :current_page, :atom, required: true
@@ -33,6 +33,17 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
         >
           <Icons.squares_2x2 class="w-5 h-5" />
           <span>Seating Configuration</span>
+        </.link>
+      </li>
+
+      <%!-- Reservations - available to all authenticated users --%>
+      <li>
+        <.link
+          navigate={~p"/settings/reservations"}
+          class={["flex items-center gap-3", @current_page == :reservations && "active"]}
+        >
+          <Icons.clock class="w-5 h-5" />
+          <span>Reservations</span>
         </.link>
       </li>
 

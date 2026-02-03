@@ -12,8 +12,8 @@ defmodule Lanpartyseating.StationLogic do
     Repo.aggregate(Station, :count)
   end
 
-  def get_station_query(now \\ DateTime.utc_now()) do
-    tournament_buffer = DateTime.add(now, 45, :minute)
+  def get_station_query(now \\ DateTime.utc_now(), tournament_buffer_minutes \\ 45) do
+    tournament_buffer = DateTime.add(now, tournament_buffer_minutes, :minute)
 
     from(s in Station,
       order_by: [asc: s.station_number],
@@ -42,9 +42,9 @@ defmodule Lanpartyseating.StationLogic do
     )
   end
 
-  def get_all_stations(now \\ DateTime.utc_now()) do
+  def get_all_stations(now \\ DateTime.utc_now(), tournament_buffer_minutes \\ 45) do
     stations =
-      get_station_query(now)
+      get_station_query(now, tournament_buffer_minutes)
       |> Repo.all()
 
     case stations do
@@ -94,7 +94,8 @@ defmodule Lanpartyseating.StationLogic do
       )
 
     with {:ok, update} <- result,
-         {:ok, stations} <- get_all_stations() do
+         {:ok, settings} <- Lanpartyseating.SettingsLogic.get_settings(),
+         {:ok, stations} <- get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes) do
       Phoenix.PubSub.broadcast(
         PubSub,
         "station_update",
@@ -108,9 +109,9 @@ defmodule Lanpartyseating.StationLogic do
     end
   end
 
-  def get_station(station_number, now \\ DateTime.utc_now()) do
+  def get_station(station_number, now \\ DateTime.utc_now(), tournament_buffer_minutes \\ 45) do
     station =
-      get_station_query(now)
+      get_station_query(now, tournament_buffer_minutes)
       |> where([s], s.station_number == ^station_number)
       |> Repo.one()
 

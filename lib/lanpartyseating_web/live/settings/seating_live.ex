@@ -205,7 +205,12 @@ defmodule LanpartyseatingWeb.Settings.SeatingLive do
     s = socket.assigns
 
     save_stations = Lanpartyseating.StationLogic.save_stations(s.grid)
-    save_settings = Lanpartyseating.SettingsLogic.settings_db_changes(s.rowpad, s.colpad)
+
+    save_settings =
+      Lanpartyseating.SettingsLogic.settings_db_changes(%{
+        row_padding: s.rowpad,
+        column_padding: s.colpad,
+      })
 
     multi =
       Ecto.Multi.new()
@@ -278,7 +283,8 @@ defmodule LanpartyseatingWeb.Settings.SeatingLive do
   # ============================================================================
 
   defp publish_station_update do
-    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations()
+    {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+    {:ok, stations} = Lanpartyseating.StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
     Phoenix.PubSub.broadcast(PubSub, "station_update", {:stations, stations})
   end
 

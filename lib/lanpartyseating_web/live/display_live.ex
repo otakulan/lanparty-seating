@@ -34,7 +34,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def mount(_params, _session, socket) do
     {:ok, settings} = SettingsLogic.get_settings()
-    {:ok, station_list} = StationLogic.get_all_stations()
+    {:ok, station_list} = StationLogic.get_all_stations(DateTime.utc_now(), settings.tournament_buffer_minutes)
     {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
 
     if connected?(socket) do
@@ -46,6 +46,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
       socket
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
+      |> assign(:tournament_buffer_minutes, settings.tournament_buffer_minutes)
       |> assign_stations(station_list)
       |> assign(:tournaments, tournaments)
 
