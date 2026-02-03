@@ -677,7 +677,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       assert render(view) =~ "must have at least two columns"
     end
 
-    test "rejects import when CSV has invalid row data", %{conn: conn} do
+    test "rejects CSV with invalid row data at preview time", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
       view |> element(~s|button[phx-click="open_import_modal"]|) |> render_click()
@@ -699,15 +699,38 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       |> form(~s|form[phx-submit="preview_csv"]|)
       |> render_submit()
 
-      # Confirm import
-      view |> element(~s|button[phx-click="confirm_import"]|) |> render_click()
-
-      # render() processes the :do_import message
+      # Error should appear at preview time (validation happens during preview)
       html = render(view)
-
-      # Should show error about the invalid row
       assert html =~ "Row 3"
       assert html =~ "uid"
+    end
+
+    test "rejects CSV with row missing columns at preview time", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/settings/badges")
+
+      view |> element(~s|button[phx-click="open_import_modal"]|) |> render_click()
+
+      csv_path = Path.join([__DIR__, "../../../support/fixtures/files/missing_column.csv"])
+      csv_content = File.read!(csv_path)
+
+      view
+      |> file_input(~s|form[phx-submit="preview_csv"]|, :csv_file, [
+        %{
+          name: "missing.csv",
+          content: csv_content,
+          type: "text/csv",
+        },
+      ])
+      |> render_upload("missing.csv")
+
+      view
+      |> form(~s|form[phx-submit="preview_csv"]|)
+      |> render_submit()
+
+      # Error should appear at preview time
+      html = render(view)
+      assert html =~ "Row 3"
+      assert html =~ "must have at least two columns"
     end
   end
 

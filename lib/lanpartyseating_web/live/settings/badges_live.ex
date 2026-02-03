@@ -192,7 +192,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
          |> load_data(socket.assigns.page, socket.assigns.search)}
 
       {:error, changeset} ->
-        error_msg = BadgesLogic.format_changeset_errors(changeset)
+        error_msg = format_changeset_errors(changeset)
         {:noreply, put_flash(socket, :error, "Failed to create badge: #{error_msg}")}
     end
   end
@@ -206,12 +206,6 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
   end
 
   def handle_event("close_import_modal", _params, socket) do
-    # Clean up temp file if exists
-    case socket.assigns.csv_preview do
-      %{temp_path: temp_path} -> File.rm(temp_path)
-      _ -> :ok
-    end
-
     {:noreply,
      socket
      |> assign(:show_import_modal, false)
@@ -231,26 +225,18 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
   def handle_event("preview_csv", _params, socket) do
     case uploaded_entries(socket, :csv_file) do
       {[entry], []} ->
-        # Consume the upload to get file path for preview
+        # Read file content into memory and parse/validate
         result =
           consume_uploaded_entry(socket, entry, fn %{path: path} ->
-            case BadgesLogic.validate_csv(path) do
-              {:ok, preview} ->
-                # Copy file to temp location so we can use it later for import
-                temp_path = Path.join(System.tmp_dir!(), "badge_import_#{:rand.uniform(1_000_000)}.csv")
-                File.cp!(path, temp_path)
-                {:ok, {:preview, preview, temp_path}}
-
-              {:error, reason} ->
-                {:ok, {:error, reason}}
-            end
+            content = File.read!(path)
+            {:ok, BadgesLogic.parse_and_validate_csv_content(content)}
           end)
 
         case result do
-          {:preview, preview, temp_path} ->
+          {:ok, preview} ->
             {:noreply,
              socket
-             |> assign(:csv_preview, Map.put(preview, :temp_path, temp_path))
+             |> assign(:csv_preview, preview)
              |> assign(:upload_error, nil)}
 
           {:error, reason} ->
@@ -270,7 +256,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
 
   def handle_event("confirm_import", _params, socket) do
     case socket.assigns.csv_preview do
-      %{temp_path: _temp_path} ->
+      %{validated_rows: _rows} ->
         # Set importing state and trigger async import
         # This allows the UI to update with spinner before the import runs
         send(self(), :do_import)
@@ -278,17 +264,11 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
         {:noreply, assign(socket, :importing, true)}
 
       _ ->
-        {:noreply, assign(socket, :upload_error, "No file to import.")}
+        {:noreply, assign(socket, :upload_error, "No data to import.")}
     end
   end
 
   def handle_event("cancel_import", _params, socket) do
-    # Clean up temp file if exists
-    case socket.assigns.csv_preview do
-      %{temp_path: temp_path} -> File.rm(temp_path)
-      _ -> :ok
-    end
-
     {:noreply,
      socket
      |> assign(:csv_preview, nil)
@@ -302,16 +282,12 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
 
   def handle_info(:do_import, socket) do
     case socket.assigns.csv_preview do
-      %{temp_path: temp_path} ->
-        case BadgesLogic.import_from_csv(temp_path) do
+      %{validated_rows: validated_rows} ->
+        case BadgesLogic.import_validated_rows(validated_rows) do
           {:ok, count} ->
-            # Clean up temp file
-            File.rm(temp_path)
-
             {:noreply,
              socket
              |> assign(:csv_preview, nil)
-             |> assign(:import_result, {:ok, count})
              |> assign(:show_import_modal, false)
              |> assign(:importing, false)
              |> load_data(1, "")
@@ -328,7 +304,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
       _ ->
         {:noreply,
          socket
-         |> assign(:upload_error, "No file to import.")
+         |> assign(:upload_error, "No data to import.")
          |> assign(:importing, false)}
     end
   end
@@ -545,7 +521,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
                 <div>
                   <p class="font-semibold">Ready to import</p>
                   <p class="text-sm text-base-content/70">
-                    {if @csv_preview.truncated, do: "#{@csv_preview.row_count}+ rows", else: "#{@csv_preview.row_count} rows"} found in CSV
+                    {@csv_preview.row_count} rows found in CSV
                   </p>
                 </div>
               </div>

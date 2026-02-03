@@ -147,120 +147,99 @@ defmodule Lanpartyseating.BadgesLogic do
   end
 
   # ============================================================================
-  # CSV Import
+  # CSV Import (In-Memory)
   # ============================================================================
 
   @doc """
-  Imports badges from a CSV file, replacing all existing badges.
+  Parses and validates CSV content from a binary string.
 
-  The CSV must have headers and at least two columns: `serial_key` and `uid`.
-  All rows are validated through changesets before import. If any row fails
-  validation, the entire import is rejected and no changes are made.
+  Parses all rows, validates each through changesets. If any row fails
+  validation, returns an error immediately. Otherwise returns the validated
+  rows ready for import.
+
+  Returns `{:ok, %{row_count: n, sample_rows: [...], validated_rows: [...]}}` if valid,
+  or `{:error, reason}` if invalid.
+  """
+  def parse_and_validate_csv_content(csv_content) when is_binary(csv_content) do
+    import LanpartyseatingWeb.Helpers, only: [format_changeset_errors: 1]
+
+    lines = String.split(csv_content, "\n", trim: true)
+    rows = BadgesCSV.parse_enumerable(lines, skip_headers: true)
+
+    validated_rows =
+      rows
+      |> Enum.with_index(2)
+      |> Enum.map(fn {row, line_num} -> validate_row(row, line_num) end)
+
+    case Enum.find(validated_rows, &match?({:error, _}, &1)) do
+      {:error, reason} ->
+        {:error, reason}
+
+      nil ->
+        attrs_list = Enum.map(validated_rows, fn {:ok, attrs} -> attrs end)
+
+        {:ok,
+         %{
+           row_count: length(attrs_list),
+           sample_rows: Enum.take(attrs_list, 5),
+           validated_rows: attrs_list,
+         }}
+    end
+  rescue
+    e in NimbleCSV.ParseError ->
+      {:error, "Invalid CSV format: #{Exception.message(e)}"}
+  end
+
+  defp validate_row(row, line_num) when length(row) < 2 do
+    {:error, "Row #{line_num}: must have at least two columns (serial_key, uid)"}
+  end
+
+  defp validate_row([serial_key, uid | _rest], line_num) do
+    import LanpartyseatingWeb.Helpers, only: [format_changeset_errors: 1]
+
+    attrs = %{serial_key: String.trim(serial_key), uid: String.trim(uid)}
+    changeset = Badge.import_changeset(%Badge{}, attrs)
+
+    if changeset.valid? do
+      {:ok, attrs}
+    else
+      {:error, "Row #{line_num}: #{format_changeset_errors(changeset)}"}
+    end
+  end
+
+  @doc """
+  Imports pre-validated badge rows, replacing all existing badges.
+
+  Takes a list of validated attribute maps (from `parse_and_validate_csv_content/1`)
+  and bulk inserts them. All existing badges are deleted first.
 
   Returns `{:ok, count}` with the number of badges imported,
   or `{:error, reason}` if import fails.
   """
-  def import_from_csv(file_path) do
+  def import_validated_rows(validated_rows) when is_list(validated_rows) do
     Repo.transaction(
       fn ->
         now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
 
-        # Parse and validate all rows first
-        validated_rows =
-          file_path
-          |> File.stream!()
-          |> BadgesCSV.parse_stream(skip_headers: true)
-          |> Stream.with_index(2)
-          |> Enum.map(fn {[serial_key, uid | _rest], line_num} ->
-            attrs = %{
-              serial_key: String.trim(serial_key),
-              uid: String.trim(uid),
-            }
+        Repo.delete_all(Badge)
 
-            changeset = Badge.import_changeset(%Badge{}, attrs)
-            {line_num, attrs, changeset}
-          end)
-
-        # Check for any invalid rows
-        case Enum.find(validated_rows, fn {_, _, cs} -> not cs.valid? end) do
-          {line_num, _attrs, changeset} ->
-            errors = format_changeset_errors(changeset)
-            Repo.rollback("Row #{line_num}: #{errors}")
-
-          nil ->
-            # All valid - delete existing and bulk insert
-            Repo.delete_all(Badge)
-
-            validated_rows
-            |> Enum.map(fn {_, attrs, _} ->
-              Map.merge(attrs, %{
-                uid: String.upcase(attrs.uid),
-                is_admin: false,
-                is_banned: false,
-                inserted_at: now,
-                updated_at: now,
-              })
-            end)
-            |> Enum.chunk_every(1000)
-            |> Enum.reduce(0, fn chunk, acc ->
-              {count, _} = Repo.insert_all(Badge, chunk, on_conflict: :nothing)
-              acc + count
-            end)
-        end
+        validated_rows
+        |> Enum.map(fn attrs ->
+          Map.merge(attrs, %{
+            uid: String.upcase(attrs.uid),
+            is_admin: false,
+            is_banned: false,
+            inserted_at: now,
+            updated_at: now,
+          })
+        end)
+        |> Enum.chunk_every(1000)
+        |> Enum.reduce(0, fn chunk, acc ->
+          {count, _} = Repo.insert_all(Badge, chunk, on_conflict: :nothing)
+          acc + count
+        end)
       end,
       timeout: :infinity
     )
-  end
-
-  @doc """
-  Validates a CSV file before import.
-
-  Returns `{:ok, %{row_count: n, sample_rows: [...]}}` if valid,
-  or `{:error, reason}` if invalid.
-  """
-  def validate_csv(file_path) do
-    try do
-      rows =
-        file_path
-        |> File.stream!()
-        |> BadgesCSV.parse_stream(skip_headers: true)
-        |> Enum.take(10_005)
-
-      row_count = length(rows)
-
-      # Check first few rows have required columns
-      sample_rows =
-        rows
-        |> Enum.take(5)
-        |> Enum.map(&parse_csv_row/1)
-
-      {:ok, %{row_count: min(row_count, 10_000), sample_rows: sample_rows, truncated: row_count > 10_000}}
-    rescue
-      e in NimbleCSV.ParseError ->
-        {:error, "Invalid CSV format: #{Exception.message(e)}"}
-
-      e in File.Error ->
-        {:error, "File error: #{Exception.message(e)}"}
-
-      _e in [MatchError, FunctionClauseError] ->
-        {:error, "CSV must have at least two columns: serial_key, uid"}
-    end
-  end
-
-  defp parse_csv_row([serial_key, uid | _rest]) do
-    %{serial_key: String.trim(serial_key), uid: String.trim(uid)}
-  end
-
-  @doc """
-  Formats changeset errors into a human-readable string.
-  """
-  def format_changeset_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Enum.reduce(opts, msg, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
-      end)
-    end)
-    |> Enum.map(fn {field, msgs} -> "#{field} #{Enum.join(msgs, ", ")}" end)
-    |> Enum.join("; ")
   end
 end
