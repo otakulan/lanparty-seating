@@ -6,7 +6,8 @@ defmodule LanpartyseatingWeb.UserAuth do
 
   alias Lanpartyseating.Accounts
   alias Lanpartyseating.Accounts.Scope
-  alias Lanpartyseating.Accounts.AdminBadge
+  alias Lanpartyseating.Badge
+  alias Lanpartyseating.BadgesLogic
 
   # Make the remember me cookie valid for 14 days. This should match
   # the session validity setting in UserToken.
@@ -47,7 +48,7 @@ defmodule LanpartyseatingWeb.UserAuth do
   Badge sessions are browser-session only - no persistent token or remember me cookie.
   This is intentionally less persistent than user auth for security.
   """
-  def log_in_badge(conn, %AdminBadge{} = badge) do
+  def log_in_badge(conn, %Badge{} = badge) do
     user_return_to = get_session(conn, :user_return_to)
 
     conn
@@ -89,8 +90,8 @@ defmodule LanpartyseatingWeb.UserAuth do
     badge_id = get_session(conn, :badge_id)
 
     if badge_id do
-      case Accounts.get_enabled_admin_badge_by_id(badge_id) do
-        %AdminBadge{} = badge ->
+      case BadgesLogic.get_admin_badge_by_id(badge_id) do
+        %Badge{} = badge ->
           assign(conn, :current_scope, Scope.for_badge(badge))
 
         nil ->
@@ -280,8 +281,8 @@ defmodule LanpartyseatingWeb.UserAuth do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
       # First check for badge session
       if badge_id = session["badge_id"] do
-        case Accounts.get_enabled_admin_badge_by_id(badge_id) do
-          %AdminBadge{} = badge -> Scope.for_badge(badge)
+        case BadgesLogic.get_admin_badge_by_id(badge_id) do
+          %Badge{} = badge -> Scope.for_badge(badge)
           nil -> Scope.for_user(nil)
         end
       else

@@ -1,0 +1,52 @@
+name: Test
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lanpartyseating_test
+        ports:
+          - 5021:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Install dependencies
+        run: |
+          nix develop --impure --command mix deps.get
+          nix develop --impure --command bash -c "cd assets && yarn install"
+
+      - name: Check formatting
+        run: nix develop --impure --command mix format --check-formatted
+
+      - name: Compile with warnings as errors
+        run: nix develop --impure --command mix compile --warnings-as-errors
+
+      - name: Setup database
+        run: |
+          nix develop --impure --command mix ecto.create
+          nix develop --impure --command mix ecto.migrate
+        env:
+          MIX_ENV: test
+
+      - name: Run tests
+        run: nix develop --impure --command mix test
+        env:
+          MIX_ENV: test

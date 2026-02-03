@@ -82,11 +82,14 @@ IO.puts("Created admin user: admin@otakuthon.com (password: change-me-on-first-l
 # ADMIN BADGE
 # =============================================================================
 
-Lanpartyseating.Accounts.create_admin_badge(%{
-  badge_number: "ADMIN-001",
+%Badge{}
+|> Badge.changeset(%{
+  uid: "ADMIN-001",
+  serial_key: "ADMIN-001",
   label: "Emergency Admin / Admin d'urgence",
-  enabled: true,
+  is_admin: true,
 })
+|> Repo.insert!()
 
 IO.puts("Created admin badge: ADMIN-001")
 
@@ -98,7 +101,7 @@ IO.puts("Created admin badge: ADMIN-001")
 |> Badge.changeset(%{uid: "1", serial_key: "1"})
 |> Repo.insert!()
 
-IO.puts("Created sample badge: 1")
+IO.puts("Created sample attendee badge: 1")
 
 # =============================================================================
 # SAMPLE TOURNAMENTS

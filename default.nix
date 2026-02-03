@@ -9,14 +9,14 @@
 
 let
   pname = "lanpartyseating";
-  version = "1.2.0";
+  version = "1.3.0";
 
   src = ./.;
 
   mixFodDeps = beamPackages.fetchMixDeps {
     pname = "${pname}-deps";
     inherit src version;
-    hash = "sha256-vHM/LE1/1etZ0ukBNHWZPp2vlqsfKkmW11XWEZmTjkE=";
+    hash = "sha256-XC6ou6HDyW1m/f9rxYVAahq4JvmPnO0h1hx9EShpgKU=";
   };
 
   yarnDeps = mkYarnModules {

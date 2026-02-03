@@ -4,7 +4,8 @@ defmodule Lanpartyseating.AccountsTest do
   alias Lanpartyseating.Accounts
 
   import Lanpartyseating.AccountsFixtures
-  alias Lanpartyseating.Accounts.{User, UserToken, AdminBadge}
+  alias Lanpartyseating.Accounts.{User, UserToken}
+  alias Lanpartyseating.Badge
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
@@ -165,81 +166,39 @@ defmodule Lanpartyseating.AccountsTest do
     end
   end
 
-  # Admin Badges
+  # Admin Badges (now using merged Badge table)
 
   describe "get_enabled_admin_badge/1" do
-    test "returns enabled badge by badge number" do
+    test "returns admin badge by UID" do
       badge = admin_badge_fixture()
-      assert %AdminBadge{id: id} = Accounts.get_enabled_admin_badge(badge.badge_number)
+      assert %Badge{id: id} = Accounts.get_enabled_admin_badge(badge.uid)
       assert id == badge.id
     end
 
-    test "does not return disabled badge" do
-      badge = admin_badge_fixture(%{enabled: false})
-      refute Accounts.get_enabled_admin_badge(badge.badge_number)
+    test "returns admin badge with case-insensitive UID lookup" do
+      badge = admin_badge_fixture()
+      # UID is stored uppercase, but lookup should work with lowercase
+      assert %Badge{id: id} = Accounts.get_enabled_admin_badge(String.downcase(badge.uid))
+      assert id == badge.id
+    end
+
+    test "does not return non-admin badge" do
+      badge = badge_fixture()
+      refute Accounts.get_enabled_admin_badge(badge.uid)
+    end
+
+    # Note: With the admin_cannot_be_banned database constraint, a badge cannot
+    # be both admin AND banned at the same time. Admin status must be revoked
+    # before a badge can be banned. This test verifies that after revoking admin,
+    # the badge is no longer returned as an admin badge.
+    test "does not return badge after admin is revoked" do
+      badge = admin_badge_fixture()
+      {:ok, _} = Lanpartyseating.BadgesLogic.update_badge(badge, %{is_admin: false})
+      refute Accounts.get_enabled_admin_badge(badge.uid)
     end
 
     test "returns nil for non-existent badge" do
       refute Accounts.get_enabled_admin_badge("NON-EXISTENT")
-    end
-  end
-
-  describe "get_enabled_admin_badge_by_id/1" do
-    test "returns enabled badge by id" do
-      badge = admin_badge_fixture()
-      assert %AdminBadge{} = Accounts.get_enabled_admin_badge_by_id(badge.id)
-    end
-
-    test "does not return disabled badge" do
-      badge = admin_badge_fixture(%{enabled: false})
-      refute Accounts.get_enabled_admin_badge_by_id(badge.id)
-    end
-  end
-
-  describe "list_admin_badges/0" do
-    test "returns all badges ordered by label" do
-      _badge1 = admin_badge_fixture(%{label: "Zebra"})
-      badge2 = admin_badge_fixture(%{label: "Alpha"})
-      badges = Accounts.list_admin_badges()
-      assert length(badges) == 2
-      assert hd(badges).id == badge2.id
-    end
-  end
-
-  describe "create_admin_badge/1" do
-    test "creates badge with valid attributes" do
-      attrs = %{badge_number: "BADGE-123", label: "Test Badge", enabled: true}
-      assert {:ok, %AdminBadge{} = badge} = Accounts.create_admin_badge(attrs)
-      assert badge.badge_number == "BADGE-123"
-      assert badge.label == "Test Badge"
-      assert badge.enabled == true
-    end
-
-    test "requires badge_number" do
-      {:error, changeset} = Accounts.create_admin_badge(%{label: "Test"})
-      assert %{badge_number: ["can't be blank"]} = errors_on(changeset)
-    end
-
-    test "enforces unique badge_number" do
-      badge = admin_badge_fixture()
-      {:error, changeset} = Accounts.create_admin_badge(%{badge_number: badge.badge_number, label: "Dupe"})
-      assert "has already been taken" in errors_on(changeset).badge_number
-    end
-  end
-
-  describe "update_admin_badge/2" do
-    test "updates badge with valid attributes" do
-      badge = admin_badge_fixture()
-      {:ok, updated} = Accounts.update_admin_badge(badge, %{enabled: false})
-      assert updated.enabled == false
-    end
-  end
-
-  describe "delete_admin_badge/1" do
-    test "deletes badge" do
-      badge = admin_badge_fixture()
-      assert {:ok, %AdminBadge{}} = Accounts.delete_admin_badge(badge)
-      assert_raise Ecto.NoResultsError, fn -> Accounts.get_admin_badge!(badge.id) end
     end
   end
 

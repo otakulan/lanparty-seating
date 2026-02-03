@@ -2,7 +2,6 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   use LanpartyseatingWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import Lanpartyseating.AccountsFixtures
   import LanpartyseatingWeb.ConnCase
 
   alias Lanpartyseating.Repo
@@ -68,7 +67,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
 
     test "can access /settings/badges", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
-      assert has_element?(view, "h1", "Admin Badges")
+      assert has_element?(view, "h1", "Badges")
     end
   end
 
@@ -161,7 +160,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
         |> render_click()
         |> follow_redirect(conn)
 
-      assert has_element?(view, "h1", "Admin Badges")
+      assert has_element?(view, "h1", "Badges")
     end
 
     test "clicking Seating link navigates to /settings/seating", %{conn: conn} do
@@ -322,155 +321,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
     end
   end
 
-  # ============================================================================
-  # Badges Section - CRUD Tests
-  # ============================================================================
-
-  describe "badges section - rendering" do
-    setup :register_and_log_in_user
-
-    test "displays page header", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      assert has_element?(view, "h1", "Admin Badges")
-      assert has_element?(view, "p", "Manage admin badges for emergency backdoor access")
-    end
-
-    test "shows empty state when no badges exist", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      assert has_element?(view, "p", "No badges configured")
-    end
-
-    test "lists existing badges in table", %{conn: conn} do
-      badge = admin_badge_fixture(%{badge_number: "TEST-123", label: "Test Badge"})
-
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      assert has_element?(view, "td", badge.badge_number)
-      assert has_element?(view, "td", badge.label)
-    end
-  end
-
-  describe "badges section - create form toggle" do
-    setup :register_and_log_in_user
-
-    test "form is hidden by default", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      refute has_element?(view, "#create-badge-form")
-      assert has_element?(view, "button", "+ Add Badge")
-    end
-
-    test "clicking Add Badge shows form", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      view |> element("button", "+ Add Badge") |> render_click()
-
-      assert has_element?(view, "#create-badge-form")
-      assert has_element?(view, ~s|input[name="badge[badge_number]"]|)
-      assert has_element?(view, ~s|input[name="badge[label]"]|)
-    end
-
-    test "clicking Cancel hides form", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      view |> element("button", "+ Add Badge") |> render_click()
-      assert has_element?(view, "#create-badge-form")
-
-      view |> element("button", "Cancel") |> render_click()
-      refute has_element?(view, "#create-badge-form")
-    end
-  end
-
-  describe "badges section - create badge" do
-    setup :register_and_log_in_user
-
-    test "create badge with valid params succeeds", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      view |> element("button", "+ Add Badge") |> render_click()
-
-      view
-      |> form("#create-badge-form", %{
-        "badge" => %{
-          "badge_number" => "NEW-BADGE-001",
-          "label" => "New Test Badge",
-        },
-      })
-      |> render_submit()
-
-      # Form should be hidden after success
-      refute has_element?(view, "#create-badge-form")
-
-      # New badge should appear in table
-      assert has_element?(view, "td", "NEW-BADGE-001")
-      assert has_element?(view, "td", "New Test Badge")
-
-      # Success flash
-      assert render(view) =~ "Admin badge created successfully"
-    end
-
-    test "create badge with duplicate badge number shows error", %{conn: conn} do
-      # Create an existing badge
-      admin_badge_fixture(%{badge_number: "EXISTING-001"})
-
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      view |> element("button", "+ Add Badge") |> render_click()
-
-      view
-      |> form("#create-badge-form", %{
-        "badge" => %{
-          "badge_number" => "EXISTING-001",
-          "label" => "Duplicate Badge",
-        },
-      })
-      |> render_submit()
-
-      # Form should still be visible
-      assert has_element?(view, "#create-badge-form")
-
-      # Error should be displayed
-      assert has_element?(view, ".alert-error")
-    end
-  end
-
-  describe "badges section - toggle enabled" do
-    setup :register_and_log_in_user
-
-    test "can disable an enabled badge", %{conn: conn} do
-      badge = admin_badge_fixture(%{enabled: true})
-
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      # Should show Enabled status and Disable button
-      assert has_element?(view, "span.badge-success", "Enabled")
-
-      view
-      |> element(~s|button[phx-click="toggle_badge"][phx-value-id="#{badge.id}"]|, "Disable")
-      |> render_click()
-
-      # Should now show Disabled status
-      assert has_element?(view, "span.badge-error", "Disabled")
-      assert render(view) =~ "Badge disabled"
-    end
-
-    test "can enable a disabled badge", %{conn: conn} do
-      badge = admin_badge_fixture(%{enabled: false})
-
-      {:ok, view, _html} = live(conn, ~p"/settings/badges")
-
-      # Should show Disabled status and Enable button
-      assert has_element?(view, "span.badge-error", "Disabled")
-
-      view
-      |> element(~s|button[phx-click="toggle_badge"][phx-value-id="#{badge.id}"]|, "Enable")
-      |> render_click()
-
-      # Should now show Enabled status
-      assert has_element?(view, "span.badge-success", "Enabled")
-      assert render(view) =~ "Badge enabled"
-    end
-  end
+  # Note: Badge-specific tests (CRUD, search, pagination, admin/ban toggles, CSV import)
+  # are in test/lanpartyseating_web/live/settings/badges_live_test.exs
+  # This file focuses on cross-page concerns: auth, sidebar, navigation, and users section.
 end

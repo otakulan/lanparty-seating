@@ -6,7 +6,8 @@ defmodule Lanpartyseating.Accounts do
   import Ecto.Query, warn: false
   alias Lanpartyseating.Repo
 
-  alias Lanpartyseating.Accounts.{User, UserToken, UserNotifier, AdminBadge}
+  alias Lanpartyseating.Accounts.{User, UserToken, UserNotifier}
+  alias Lanpartyseating.BadgesLogic
 
   ## Database getters
 
@@ -295,66 +296,16 @@ defmodule Lanpartyseating.Accounts do
     end)
   end
 
-  ## Admin Badges
+  ## Admin Badges (delegated to BadgesLogic)
 
   @doc """
-  Gets an enabled admin badge by badge number.
-  Returns nil if not found or disabled.
-  """
-  def get_enabled_admin_badge(badge_number) when is_binary(badge_number) do
-    Repo.get_by(AdminBadge, badge_number: badge_number, enabled: true)
-  end
+  Gets an enabled admin badge by UID.
+  Returns nil if not found, not admin, or banned.
 
-  @doc """
-  Gets an enabled admin badge by id.
-  Returns nil if not found or disabled.
+  Delegates to `BadgesLogic.get_admin_badge/1`.
   """
-  def get_enabled_admin_badge_by_id(id) do
-    Repo.get_by(AdminBadge, id: id, enabled: true)
-  end
-
-  @doc """
-  Gets an admin badge by id.
-  """
-  def get_admin_badge!(id), do: Repo.get!(AdminBadge, id)
-
-  @doc """
-  Lists all admin badges.
-  """
-  def list_admin_badges do
-    Repo.all(from(b in AdminBadge, order_by: [asc: b.label]))
-  end
-
-  @doc """
-  Creates an admin badge.
-  """
-  def create_admin_badge(attrs) do
-    %AdminBadge{}
-    |> AdminBadge.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @doc """
-  Updates an admin badge.
-  """
-  def update_admin_badge(%AdminBadge{} = badge, attrs) do
-    badge
-    |> AdminBadge.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes an admin badge.
-  """
-  def delete_admin_badge(%AdminBadge{} = badge) do
-    Repo.delete(badge)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking admin badge changes.
-  """
-  def change_admin_badge(%AdminBadge{} = badge, attrs \\ %{}) do
-    AdminBadge.changeset(badge, attrs)
+  def get_enabled_admin_badge(uid) when is_binary(uid) do
+    BadgesLogic.get_admin_badge(uid)
   end
 
   ## User CRUD (for admin management)
