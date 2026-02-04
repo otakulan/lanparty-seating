@@ -6,7 +6,6 @@ defmodule Lanpartyseating.SettingsLogic do
   def get_settings do
     settings =
       Setting
-      |> last(:inserted_at)
       |> Repo.one()
 
     case settings do

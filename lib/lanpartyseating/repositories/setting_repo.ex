@@ -2,14 +2,13 @@ defmodule Lanpartyseating.Setting do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @primary_key {:id, :id, autogenerate: true}
-  @foreign_key_type :id
+  @primary_key {:id, :id, autogenerate: false}
 
   schema "settings" do
-    field :row_padding, :integer, default: 1
-    field :column_padding, :integer, default: 1
-    field :reservation_duration_minutes, :integer, default: 45
-    field :tournament_buffer_minutes, :integer, default: 45
+    field :row_padding, :integer
+    field :column_padding, :integer
+    field :reservation_duration_minutes, :integer
+    field :tournament_buffer_minutes, :integer
     timestamps()
   end
 
