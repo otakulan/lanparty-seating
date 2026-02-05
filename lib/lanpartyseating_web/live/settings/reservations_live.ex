@@ -23,7 +23,7 @@ defmodule LanpartyseatingWeb.Settings.ReservationsLive do
   end
 
   defp load_data(socket) do
-    {:ok, settings} = SettingsLogic.get_settings()
+    settings = SettingsLogic.get_settings()
 
     socket
     |> assign(:reservation_duration, settings.reservation_duration_minutes)

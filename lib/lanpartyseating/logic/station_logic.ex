@@ -9,10 +9,7 @@ defmodule Lanpartyseating.StationLogic do
   alias Lanpartyseating.Repo
 
   defp get_tournament_buffer_minutes do
-    case Lanpartyseating.SettingsLogic.get_settings() do
-      {:ok, settings} -> settings.tournament_buffer_minutes
-      {:error, _} -> 45
-    end
+    Lanpartyseating.SettingsLogic.get_settings().tournament_buffer_minutes
   end
 
   def number_stations do

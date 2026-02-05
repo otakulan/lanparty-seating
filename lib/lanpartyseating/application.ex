@@ -42,11 +42,9 @@ defmodule Lanpartyseating.Application do
 
   defp ensure_settings_exist() do
     alias Lanpartyseating.{Repo, Setting}
-    case Repo.get(Setting, 1) do
-      nil ->
-        IO.puts("Creating default settings row")
-        %Setting{}
-        |> Repo.insert!()
+    unless Repo.get(Setting, 1) do
+      IO.puts("Creating default settings row")
+      Repo.insert!(%Setting{id: 1})
     end
   end
 end

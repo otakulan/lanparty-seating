@@ -4,14 +4,7 @@ defmodule Lanpartyseating.SettingsLogic do
   alias Lanpartyseating.Repo
 
   def get_settings do
-    settings =
-      Setting
-      |> Repo.one()
-
-    case settings do
-      nil -> {:error, "No settings found"}
-      _ -> {:ok, settings}
-    end
+    Repo.get!(Setting, 1)
   end
 
   @doc """
@@ -31,11 +24,9 @@ defmodule Lanpartyseating.SettingsLogic do
   """
   def settings_db_changes(attrs) when is_map(attrs) do
     settings =
-      Setting
-      |> last(:inserted_at)
-      |> Repo.one()
+      Repo.get(Setting, 1)
       |> case do
-        nil -> %Setting{}
+        nil -> %Setting{} # should be impossible
         existing -> existing
       end
 
