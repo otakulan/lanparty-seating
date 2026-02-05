@@ -1,5 +1,4 @@
 defmodule Lanpartyseating.SettingsLogic do
-  import Ecto.Query
   alias Lanpartyseating.Setting
   alias Lanpartyseating.Repo
 
