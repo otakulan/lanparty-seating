@@ -6,7 +6,6 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
   alias Lanpartyseating.Badge
   alias Lanpartyseating.Station
   alias Lanpartyseating.StationLayout
-  alias Lanpartyseating.Setting
   alias Lanpartyseating.Reservation
 
   import Lanpartyseating.ScannerFixtures
@@ -33,12 +32,6 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
     |> Repo.insert!()
   end
 
-  defp create_settings do
-    %Setting{}
-    |> Setting.changeset(%{row_padding: 2, column_padding: 1})
-    |> Repo.insert!()
-  end
-
   defp create_reservation(badge, station_number) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
     end_time = DateTime.add(now, 60, :minute)
@@ -56,7 +49,6 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
 
   setup do
     wifi_config_fixture()
-    create_settings()
     :ok
   end
 

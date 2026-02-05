@@ -4,19 +4,6 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   import Phoenix.LiveViewTest
   import LanpartyseatingWeb.ConnCase
 
-  alias Lanpartyseating.Repo
-  alias Lanpartyseating.Setting
-
-  # Create settings required for the seating page to load
-  defp create_settings(_context) do
-    settings =
-      %Setting{}
-      |> Setting.changeset(%{row_padding: 2, column_padding: 1})
-      |> Repo.insert!()
-
-    %{settings: settings}
-  end
-
   # ============================================================================
   # Authentication/Authorization Tests
   # ============================================================================
@@ -48,7 +35,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   end
 
   describe "user auth - access control" do
-    setup [:register_and_log_in_user, :create_settings]
+    setup [:register_and_log_in_user]
 
     test "/settings redirects to /settings/seating", %{conn: conn} do
       assert {:error, {:live_redirect, %{to: path}}} = live(conn, ~p"/settings")
@@ -72,7 +59,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   end
 
   describe "badge auth - access control" do
-    setup [:register_and_log_in_badge, :create_settings]
+    setup [:register_and_log_in_badge]
 
     test "can access /settings/seating", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/seating")
@@ -97,7 +84,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   # ============================================================================
 
   describe "sidebar - user auth" do
-    setup [:register_and_log_in_user, :create_settings]
+    setup [:register_and_log_in_user]
 
     test "shows all menu items", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/seating")
@@ -125,7 +112,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   end
 
   describe "sidebar - badge auth" do
-    setup [:register_and_log_in_badge, :create_settings]
+    setup [:register_and_log_in_badge]
 
     test "shows only seating link, not users or badges", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/seating")
@@ -137,7 +124,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   end
 
   describe "sidebar navigation" do
-    setup [:register_and_log_in_user, :create_settings]
+    setup [:register_and_log_in_user]
 
     test "clicking Users link navigates to /settings/users", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/seating")

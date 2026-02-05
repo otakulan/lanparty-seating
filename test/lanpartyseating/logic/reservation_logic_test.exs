@@ -6,7 +6,6 @@ defmodule Lanpartyseating.ReservationLogicTest do
   alias Lanpartyseating.Badge
   alias Lanpartyseating.Station
   alias Lanpartyseating.StationLayout
-  alias Lanpartyseating.Setting
 
   # ============================================================================
   # Setup Helpers
@@ -37,17 +36,6 @@ defmodule Lanpartyseating.ReservationLogicTest do
     %Station{}
     |> Station.changeset(%{station_number: station_number})
     |> Repo.insert!()
-  end
-
-  defp create_settings do
-    %Setting{}
-    |> Setting.changeset(%{row_padding: 2, column_padding: 1})
-    |> Repo.insert!()
-  end
-
-  setup do
-    create_settings()
-    :ok
   end
 
   # ============================================================================
