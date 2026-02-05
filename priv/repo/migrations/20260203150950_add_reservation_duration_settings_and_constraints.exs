@@ -14,6 +14,7 @@ defmodule Lanpartyseating.Repo.Migrations.AddReservationDurationSettings do
       modify :row_padding, :integer, null: false, default: 2
       modify :column_padding, :integer, null: false, default: 1
     end
+
     create constraint(:settings, :id_must_be_one, check: "id = 1")
   end
 end

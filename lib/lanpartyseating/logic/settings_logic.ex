@@ -26,7 +26,8 @@ defmodule Lanpartyseating.SettingsLogic do
     settings =
       Repo.get(Setting, 1)
       |> case do
-        nil -> %Setting{} # should be impossible
+        # should be impossible
+        nil -> %Setting{}
         existing -> existing
       end
 
