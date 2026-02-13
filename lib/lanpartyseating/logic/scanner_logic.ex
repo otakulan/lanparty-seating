@@ -124,7 +124,7 @@ defmodule Lanpartyseating.ScannerLogic do
   Returns {:ok, config} or {:error, :not_configured}.
   """
   def get_wifi_config do
-    case Repo.one(from(c in ScannerWifiConfig, limit: 1)) do
+    case Repo.get(ScannerWifiConfig, 1) do
       nil -> {:error, :not_configured}
       config -> {:ok, ScannerWifiConfig.decrypt_password(config)}
     end
@@ -143,10 +143,10 @@ defmodule Lanpartyseating.ScannerLogic do
   end
 
   defp do_set_wifi_config(attrs) do
-    case Repo.one(from(c in ScannerWifiConfig, limit: 1)) do
+    case Repo.get(ScannerWifiConfig, 1) do
       nil ->
         # New config - password required
-        %ScannerWifiConfig{}
+        %ScannerWifiConfig{id: 1}
         |> ScannerWifiConfig.changeset(attrs)
         |> Repo.insert()
 

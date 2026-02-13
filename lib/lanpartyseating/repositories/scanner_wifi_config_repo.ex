@@ -9,6 +9,8 @@ defmodule Lanpartyseating.ScannerWifiConfig do
 
   @encryption_secret_key_base "scanner_wifi_password_encryption_key"
 
+  @primary_key {:id, :id, autogenerate: false}
+
   schema "scanner_wifi_config" do
     field :ssid, :string
     field :password_encrypted, :binary
