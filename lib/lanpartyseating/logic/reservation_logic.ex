@@ -70,12 +70,9 @@ defmodule Lanpartyseating.ReservationLogic do
   Returns `{:error, reason}` if the badge UID is invalid.
   """
   def check_active_reservation(uid) do
-    with {:ok, badge} <- BadgesLogic.get_badge(uid) do
-      find_active_reservations_by_badge(badge.serial_key)
-      |> case do
-        {:ok, [reservation | _]} -> {:ok, reservation}
-        {:error, :no_reservation} -> {:error, :no_reservation}
-      end
+    with {:ok, badge} <- BadgesLogic.get_badge(uid),
+         {:ok, [reservation | _]} <- find_active_reservations_by_badge(badge.serial_key) do
+      {:ok, reservation}
     end
   end
 
