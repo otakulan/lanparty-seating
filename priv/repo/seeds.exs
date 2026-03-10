@@ -5,7 +5,6 @@
 # This file assumes a fresh database.
 
 alias Lanpartyseating.Repo
-alias Lanpartyseating.Setting
 alias Lanpartyseating.StationLayout
 alias Lanpartyseating.Station
 alias Lanpartyseating.Badge
@@ -24,19 +23,6 @@ station_rows = 7
 # Sample data timing - days offset from today
 # 0 = today, 1 = tomorrow, etc.
 event_start_offset_days = 0
-
-# =============================================================================
-# SETTINGS
-# =============================================================================
-
-%Setting{}
-|> Setting.changeset(%{
-  row_padding: 2,
-  column_padding: 1,
-})
-|> Repo.insert!()
-
-IO.puts("Created default settings")
 
 # =============================================================================
 # STATIONS

@@ -8,12 +8,17 @@ defmodule Lanpartyseating.StationLogic do
   alias Lanpartyseating.TournamentReservation
   alias Lanpartyseating.Repo
 
+  defp get_tournament_buffer_minutes do
+    Lanpartyseating.SettingsLogic.get_settings().tournament_buffer_minutes
+  end
+
   def number_stations do
     Repo.aggregate(Station, :count)
   end
 
   def get_station_query(now \\ DateTime.utc_now()) do
-    tournament_buffer = DateTime.add(now, 45, :minute)
+    tournament_buffer_minutes = get_tournament_buffer_minutes()
+    tournament_buffer = DateTime.add(now, tournament_buffer_minutes, :minute)
 
     from(s in Station,
       order_by: [asc: s.station_number],

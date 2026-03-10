@@ -11,6 +11,7 @@ defmodule Lanpartyseating.Application do
     children = [
       # Database must be ready before anything queries it
       Lanpartyseating.Repo,
+      {Task, fn -> ensure_settings_exist() end},
       # Telemetry and metrics
       LanpartyseatingWeb.Telemetry,
       Lanpartyseating.PromEx,
@@ -37,5 +38,14 @@ defmodule Lanpartyseating.Application do
   def config_change(changed, _new, removed) do
     LanpartyseatingWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp ensure_settings_exist() do
+    alias Lanpartyseating.{Repo, Setting}
+
+    unless Repo.get(Setting, 1) do
+      IO.puts("Creating default settings row")
+      Repo.insert!(%Setting{id: 1})
+    end
   end
 end

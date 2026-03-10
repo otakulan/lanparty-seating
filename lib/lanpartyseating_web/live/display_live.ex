@@ -33,7 +33,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
   end
 
   def mount(_params, _session, socket) do
-    {:ok, settings} = SettingsLogic.get_settings()
+    settings = SettingsLogic.get_settings()
     {:ok, station_list} = StationLogic.get_all_stations()
     {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
 
@@ -58,7 +58,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def handle_info({:stations, station_list}, socket) do
     # Reload settings in case padding/gaps changed
-    {:ok, settings} = SettingsLogic.get_settings()
+    settings = SettingsLogic.get_settings()
 
     socket =
       socket

@@ -29,7 +29,7 @@ defmodule LanpartyseatingWeb.Settings.SeatingLive do
   end
 
   defp load_data(socket) do
-    {:ok, settings} = Lanpartyseating.SettingsLogic.get_settings()
+    settings = Lanpartyseating.SettingsLogic.get_settings()
     layout = Lanpartyseating.StationLogic.get_station_layout()
     {columns, rows} = grid_dimensions(layout)
     station_count = Repo.one(from(s in Lanpartyseating.Station, select: count("*")))
@@ -205,7 +205,12 @@ defmodule LanpartyseatingWeb.Settings.SeatingLive do
     s = socket.assigns
 
     save_stations = Lanpartyseating.StationLogic.save_stations(s.grid)
-    save_settings = Lanpartyseating.SettingsLogic.settings_db_changes(s.rowpad, s.colpad)
+
+    save_settings =
+      Lanpartyseating.SettingsLogic.settings_db_changes(%{
+        row_padding: s.rowpad,
+        column_padding: s.colpad,
+      })
 
     multi =
       Ecto.Multi.new()

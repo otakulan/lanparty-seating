@@ -9,6 +9,10 @@ defmodule Lanpartyseating.Repo.Migrations.CreateScannerWifiConfig do
       timestamps(type: :utc_datetime)
     end
 
-    # Singleton pattern enforced at application level in ScannerLogic
+    # Enforce singleton at database level (same pattern as settings table)
+    execute "ALTER TABLE scanner_wifi_config ALTER COLUMN id SET DEFAULT 1",
+            "ALTER TABLE scanner_wifi_config ALTER COLUMN id DROP DEFAULT"
+
+    create constraint(:scanner_wifi_config, :id_must_be_one, check: "id = 1")
   end
 end

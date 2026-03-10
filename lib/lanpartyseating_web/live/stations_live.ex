@@ -5,7 +5,7 @@ defmodule LanpartyseatingWeb.StationsLive do
 
   Public users can:
   - View station availability
-  - Reserve available stations (45-minute session)
+  - Reserve available stations (configurable duration from settings)
 
   Admin actions (require authentication or sudo badge scan):
   - Extend reservations
@@ -36,7 +36,7 @@ defmodule LanpartyseatingWeb.StationsLive do
   # ============================================================================
 
   def mount(_params, _session, socket) do
-    {:ok, settings} = SettingsLogic.get_settings()
+    settings = SettingsLogic.get_settings()
     {:ok, station_list} = StationLogic.get_all_stations()
 
     if connected?(socket) do
@@ -47,6 +47,7 @@ defmodule LanpartyseatingWeb.StationsLive do
       socket
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
+      |> assign(:reservation_duration_minutes, settings.reservation_duration_minutes)
       |> assign_stations(station_list)
       |> assign(:registration_error, nil)
       # Station modal state
@@ -144,7 +145,9 @@ defmodule LanpartyseatingWeb.StationsLive do
   # ============================================================================
 
   def handle_event("reserve_station", %{"station_number" => station_number, "uid" => uid}, socket) do
-    case ReservationLogic.create_reservation(String.to_integer(station_number), 45, uid) do
+    duration = socket.assigns.reservation_duration_minutes
+
+    case ReservationLogic.create_reservation(String.to_integer(station_number), duration, uid) do
       {:error, error} ->
         {:noreply, assign(socket, :registration_error, error)}
 
@@ -292,7 +295,7 @@ defmodule LanpartyseatingWeb.StationsLive do
 
   def handle_info({:stations, station_list}, socket) do
     # Reload settings in case padding/gaps changed
-    {:ok, settings} = SettingsLogic.get_settings()
+    settings = SettingsLogic.get_settings()
 
     # Update selected station data if modal is open
     selected_station =
@@ -308,6 +311,7 @@ defmodule LanpartyseatingWeb.StationsLive do
       socket
       |> assign(:colpad, settings.column_padding)
       |> assign(:rowpad, settings.row_padding)
+      |> assign(:reservation_duration_minutes, settings.reservation_duration_minutes)
       |> assign_stations(station_list)
       |> assign(:selected_station, selected_station)
 
@@ -367,6 +371,7 @@ defmodule LanpartyseatingWeb.StationsLive do
               reservation={@selected_station.reservation}
               error={@registration_error}
               is_admin={@current_scope != nil && @current_scope.user != nil}
+              reservation_minutes={@reservation_duration_minutes}
             />
           </.focus_wrap>
         <% end %>

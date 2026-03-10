@@ -13,12 +13,13 @@ defmodule Lanpartyseating.ReservationLogic do
   end
 
   def create_reservation(station_number, duration, uid) do
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+
     with {:ok, badge} <- BadgesLogic.get_badge(uid),
          :ok <- check_badge_not_banned(badge),
          {:ok, station} <- StationLogic.get_station(station_number),
          true <- StationLogic.station_available?(station) do
       Logger.debug("Station is available")
-      now = DateTime.truncate(DateTime.utc_now(), :second)
       end_time = DateTime.add(now, duration, :minute)
 
       changeset =
