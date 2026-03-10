@@ -146,7 +146,7 @@ defmodule Lanpartyseating.ScannerLogic do
     case Repo.get(ScannerWifiConfig, 1) do
       nil ->
         # New config - password required
-        %ScannerWifiConfig{id: 1}
+        %ScannerWifiConfig{}
         |> ScannerWifiConfig.changeset(attrs)
         |> Repo.insert()
 
