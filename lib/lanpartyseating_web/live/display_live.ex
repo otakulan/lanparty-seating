@@ -218,7 +218,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
                 if (this.total > 1) {
                   this.intervalId = setInterval(() => {
                     this.currentIndex = (this.currentIndex + 1) % this.total;
-                  }, 5000);
+                  }, 2000);
                 }
               },
               destroy() {
@@ -226,7 +226,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
               }
             }"}
             @mouseenter="if (intervalId) { clearInterval(intervalId); intervalId = null; }"
-            @mouseleave="if (total > 1) { intervalId = setInterval(() => { currentIndex = (currentIndex + 1) % total; }, 5000); }"
+            @mouseleave="if (total > 1) { intervalId = setInterval(() => { currentIndex = (currentIndex + 1) % total; }, 2000); }"
           >
             <%!-- Slides area — takes remaining space after dots --%>
             <div class="relative flex-1 min-h-0">

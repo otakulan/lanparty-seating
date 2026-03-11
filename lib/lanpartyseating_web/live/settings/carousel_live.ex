@@ -200,7 +200,7 @@ defmodule LanpartyseatingWeb.Settings.CarouselLive do
           <label for="settings-drawer" class="btn btn-square btn-ghost">
             <Icons.menu />
           </label>
-          <span class="text-lg font-bold">Carousel</span>
+          <span class="text-lg font-bold">Game Carousel</span>
         </div>
 
         <%!-- Main content area --%>

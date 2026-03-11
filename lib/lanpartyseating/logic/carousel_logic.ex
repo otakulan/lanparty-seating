@@ -80,14 +80,21 @@ defmodule Lanpartyseating.CarouselLogic do
   Returns :ok.
   """
   def reorder_images(ordered_ids) when is_list(ordered_ids) do
-    Repo.transaction(fn ->
-      ordered_ids
-      |> Enum.with_index()
-      |> Enum.each(fn {id, index} ->
-        from(i in CarouselImage, where: i.id == ^id)
-        |> Repo.update_all(set: [display_order: index])
+    ordered_ids =
+      Enum.map(ordered_ids, fn
+        id when is_integer(id) -> id
+        id when is_binary(id) -> String.to_integer(id)
       end)
-    end)
+
+    # Single bulk UPDATE using unnest join — avoids N+1 queries
+    orders = Enum.to_list(0..(length(ordered_ids) - 1))
+
+    from(i in CarouselImage,
+      join: v in fragment("SELECT * FROM unnest(?::int[], ?::int[]) AS v(id, ord)", ^ordered_ids, ^orders),
+      on: i.id == v.id,
+      update: [set: [display_order: v.ord, updated_at: ^DateTime.utc_now()]]
+    )
+    |> Repo.update_all([])
 
     refresh_and_broadcast()
     :ok
