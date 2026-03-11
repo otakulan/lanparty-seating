@@ -12,6 +12,7 @@ defmodule LanpartyseatingWeb.Components.StationModal do
   """
   use Phoenix.Component
   import LanpartyseatingWeb.Components.UI, only: [countdown: 1]
+  alias LanpartyseatingWeb.Components.Icons
 
   # ============================================================================
   # Station Button Component
@@ -135,6 +136,7 @@ defmodule LanpartyseatingWeb.Components.StationModal do
   attr :error, :string, default: nil
   attr :is_admin, :boolean, default: false
   attr :reservation_minutes, :integer, default: 45
+  attr :duplicate_warning, :any, default: nil
 
   def modal_content(assigns) do
     case assigns.status do
@@ -154,45 +156,80 @@ defmodule LanpartyseatingWeb.Components.StationModal do
     <div x-data={"{ adminOpen: #{@is_admin} }"}>
       <h3 class="text-xl font-bold mb-4">Station {@station.station_number}</h3>
 
-      <%!-- Self-service reservation section --%>
-      <div class="space-y-2 text-base-content/80">
-        <p>Once your badge is scanned, a {@reservation_minutes} min session will start at the chosen station.</p>
-        <p class="text-sm">Une fois votre badge scanné, une session de {@reservation_minutes} min commencera à la station choisie.</p>
-      </div>
-
-      <form phx-submit="reserve_station" class="mt-6">
-        <input type="hidden" name="station_number" value={@station.station_number} />
-
-        <%= if @error do %>
-          <div class="alert alert-error mb-4">
-            <span>{@error}</span>
+      <%= if @duplicate_warning do %>
+        <%!-- Duplicate reservation warning --%>
+        <div class="alert alert-warning mb-4">
+          <Icons.exclamation_triangle class="shrink-0 h-6 w-6" />
+          <div>
+            <p class="font-bold">
+              This badge already has an active reservation at station {@duplicate_warning.station_number}!
+            </p>
+            <p class="text-sm">
+              Are you sure you want to create another reservation?
+            </p>
+            <p class="font-bold mt-2">
+              Ce badge a déjà une réservation active à la station {@duplicate_warning.station_number}!
+            </p>
+            <p class="text-sm">
+              Êtes-vous sûr de vouloir créer une autre réservation?
+            </p>
           </div>
-        <% end %>
-
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Badge number / Numéro de badge</span>
-          </label>
-          <input
-            type="text"
-            placeholder="Enter badge number..."
-            class="input input-bordered w-full"
-            name="uid"
-            autocomplete="off"
-            id={"station-badge-input-#{@station.station_number}"}
-            phx-hook="AutoFocus"
-          />
         </div>
 
-        <div class="modal-action">
-          <button type="button" class="btn btn-ghost" phx-click="close_station_modal">
-            Cancel / Annuler
-          </button>
-          <button class="btn btn-success" type="submit">
-            Reserve / Réserver
-          </button>
+        <form phx-submit="confirm_reserve_station">
+          <input type="hidden" name="station_number" value={@duplicate_warning.target_station} />
+          <input type="hidden" name="uid" value={@duplicate_warning.badge_uid} />
+
+          <div class="modal-action">
+            <button type="button" class="btn btn-ghost" phx-click="close_station_modal">
+              Cancel / Annuler
+            </button>
+            <button class="btn btn-warning" type="submit">
+              Reserve Anyway / Réserver quand même
+            </button>
+          </div>
+        </form>
+      <% else %>
+        <%!-- Self-service reservation section --%>
+        <div class="space-y-2 text-base-content/80">
+          <p>Once your badge is scanned, a {@reservation_minutes} min session will start at the chosen station.</p>
+          <p class="text-sm">Une fois votre badge scanné, une session de {@reservation_minutes} min commencera à la station choisie.</p>
         </div>
-      </form>
+
+        <form phx-submit="reserve_station" class="mt-6">
+          <input type="hidden" name="station_number" value={@station.station_number} />
+
+          <%= if @error do %>
+            <div class="alert alert-error mb-4">
+              <span>{@error}</span>
+            </div>
+          <% end %>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Badge number / Numéro de badge</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Enter badge number..."
+              class="input input-bordered w-full"
+              name="uid"
+              autocomplete="off"
+              id={"station-badge-input-#{@station.station_number}"}
+              phx-hook="AutoFocus"
+            />
+          </div>
+
+          <div class="modal-action">
+            <button type="button" class="btn btn-ghost" phx-click="close_station_modal">
+              Cancel / Annuler
+            </button>
+            <button class="btn btn-success" type="submit">
+              Reserve / Réserver
+            </button>
+          </div>
+        </form>
+      <% end %>
 
       <%!-- Admin actions collapsible section --%>
       <div class="divider"></div>

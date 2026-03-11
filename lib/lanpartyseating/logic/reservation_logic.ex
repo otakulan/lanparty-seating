@@ -63,6 +63,19 @@ defmodule Lanpartyseating.ReservationLogic do
     end
   end
 
+  @doc """
+  Checks if a badge UID already has an active (non-deleted) reservation.
+  Returns `{:ok, reservation}` with the first active reservation if one exists,
+  or `{:error, :no_reservation}` if the badge has no active reservations.
+  Returns `{:error, reason}` if the badge UID is invalid.
+  """
+  def check_active_reservation(uid) do
+    with {:ok, badge} <- BadgesLogic.get_badge(uid),
+         {:ok, [reservation | _]} <- find_active_reservations_by_badge(badge.serial_key) do
+      {:ok, reservation}
+    end
+  end
+
   defp check_badge_not_banned(%{is_banned: true}), do: {:error, :banned}
   defp check_badge_not_banned(_badge), do: :ok
 

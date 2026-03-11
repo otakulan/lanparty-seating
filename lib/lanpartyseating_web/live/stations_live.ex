@@ -50,6 +50,7 @@ defmodule LanpartyseatingWeb.StationsLive do
       |> assign(:reservation_duration_minutes, settings.reservation_duration_minutes)
       |> assign_stations(station_list)
       |> assign(:registration_error, nil)
+      |> assign(:duplicate_warning, nil)
       # Station modal state
       |> assign(:show_station_modal, false)
       |> assign(:selected_station, nil)
@@ -109,6 +110,26 @@ defmodule LanpartyseatingWeb.StationsLive do
     end
   end
 
+  defp do_create_reservation(station_number, uid, socket) do
+    duration = socket.assigns.reservation_duration_minutes
+
+    case ReservationLogic.create_reservation(String.to_integer(station_number), duration, uid) do
+      {:error, error} ->
+        {:noreply,
+         socket
+         |> assign(:registration_error, error)
+         |> assign(:duplicate_warning, nil)}
+
+      {:ok, _reservation} ->
+        {:noreply,
+         socket
+         |> assign(:registration_error, nil)
+         |> assign(:duplicate_warning, nil)
+         |> assign(:show_station_modal, false)
+         |> assign(:selected_station, nil)}
+    end
+  end
+
   # ============================================================================
   # Modal Control Events
   # ============================================================================
@@ -121,7 +142,8 @@ defmodule LanpartyseatingWeb.StationsLive do
      socket
      |> assign(:selected_station, station_data)
      |> assign(:show_station_modal, true)
-     |> assign(:registration_error, nil)}
+     |> assign(:registration_error, nil)
+     |> assign(:duplicate_warning, nil)}
   end
 
   def handle_event("close_station_modal", _params, socket) do
@@ -129,7 +151,8 @@ defmodule LanpartyseatingWeb.StationsLive do
      socket
      |> assign(:selected_station, nil)
      |> assign(:show_station_modal, false)
-     |> assign(:registration_error, nil)}
+     |> assign(:registration_error, nil)
+     |> assign(:duplicate_warning, nil)}
   end
 
   def handle_event("close_sudo_modal", _params, socket) do
@@ -145,19 +168,28 @@ defmodule LanpartyseatingWeb.StationsLive do
   # ============================================================================
 
   def handle_event("reserve_station", %{"station_number" => station_number, "uid" => uid}, socket) do
-    duration = socket.assigns.reservation_duration_minutes
-
-    case ReservationLogic.create_reservation(String.to_integer(station_number), duration, uid) do
-      {:error, error} ->
-        {:noreply, assign(socket, :registration_error, error)}
-
-      {:ok, _reservation} ->
+    # Check if this badge already has an active reservation
+    case ReservationLogic.check_active_reservation(uid) do
+      {:ok, existing_reservation} ->
+        # Badge has an active reservation — show warning, don't reserve yet
         {:noreply,
          socket
-         |> assign(:registration_error, nil)
-         |> assign(:show_station_modal, false)
-         |> assign(:selected_station, nil)}
+         |> assign(:duplicate_warning, %{
+           station_number: existing_reservation.station_id,
+           badge_uid: uid,
+           target_station: station_number,
+         })
+         |> assign(:registration_error, nil)}
+
+      {:error, _} ->
+        # No active reservation (or invalid badge — create_reservation will handle that error)
+        do_create_reservation(station_number, uid, socket)
     end
+  end
+
+  def handle_event("confirm_reserve_station", %{"station_number" => station_number, "uid" => uid}, socket) do
+    # User confirmed they want to proceed despite duplicate warning
+    do_create_reservation(station_number, uid, socket)
   end
 
   # ============================================================================
@@ -372,6 +404,7 @@ defmodule LanpartyseatingWeb.StationsLive do
               error={@registration_error}
               is_admin={@current_scope != nil && @current_scope.user != nil}
               reservation_minutes={@reservation_duration_minutes}
+              duplicate_warning={@duplicate_warning}
             />
           </.focus_wrap>
         <% end %>
