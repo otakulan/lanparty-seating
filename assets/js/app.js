@@ -4,6 +4,7 @@ import Alpine from "alpinejs"
 import focus from "@alpinejs/focus"
 import BluetoothProvisioning from "./hooks/bluetooth_provisioning"
 import ButtonGridHook from "./hooks/button_grid_hook"
+import SortableListHook from "./hooks/sortable_list_hook"
 
 window.Alpine = Alpine
 Alpine.plugin(focus)
@@ -12,7 +13,8 @@ Alpine.start()
 // LiveView Hooks
 let Hooks = {
   BluetoothProvisioning,
-  ButtonGridHook
+  ButtonGridHook,
+  SortableListHook
 }
 
 // Auto-focus input when mounted (used for modal badge inputs)
