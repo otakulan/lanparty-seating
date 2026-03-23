@@ -111,11 +111,11 @@ export default class SeatMapRuntime {
       draggable: this.mode !== "kiosk"
     })
 
-    this.backgroundLayer = new Konva.FastLayer()
-    this.objectLayer = this.editable ? new Konva.Layer() : new Konva.FastLayer()
-    this.groupLayer = new Konva.FastLayer()
+    this.backgroundLayer = new Konva.Layer({ listening: false })
+    this.objectLayer = this.editable ? new Konva.Layer() : new Konva.Layer({ listening: false })
+    this.groupLayer = new Konva.Layer({ listening: false })
     this.seatLayer = new Konva.Layer()
-    this.overlayLayer = new Konva.FastLayer()
+    this.overlayLayer = new Konva.Layer({ listening: false })
 
     this.transformer = new Konva.Transformer({
       rotateEnabled: this.editable,
@@ -303,6 +303,7 @@ export default class SeatMapRuntime {
           fontStyle: "bold",
           fontFamily: DISPLAY_FONT,
           fill: object.fill || "#2f3e46",
+          perfectDrawEnabled: false,
           listening: this.editable,
           draggable: this.editable
         })
@@ -323,6 +324,7 @@ export default class SeatMapRuntime {
           shadowBlur: 24,
           shadowOffset: { x: 0, y: 10 },
           shadowOpacity: 0.8,
+          perfectDrawEnabled: false,
           listening: this.editable,
           draggable: this.editable
         })
@@ -365,6 +367,7 @@ export default class SeatMapRuntime {
         shadowColor: this.transparentColor(group.color || "#1d4ed8", 0.14),
         shadowBlur: 22,
         shadowOpacity: 0.8,
+        perfectDrawEnabled: false,
         listening: false
       }))
 
@@ -400,7 +403,8 @@ export default class SeatMapRuntime {
           shadowColor: this.transparentColor(group.color || "#1d4ed8", 0.28),
           shadowBlur: 18,
           shadowOffset: { x: 0, y: 10 },
-          shadowOpacity: 0.7
+          shadowOpacity: 0.7,
+          perfectDrawEnabled: false
         }))
 
         text.position({ x: 10, y: 5 })
@@ -430,6 +434,7 @@ export default class SeatMapRuntime {
         radiusY: 14,
         fill: this.transparentColor(palette.stroke, 0.16),
         blurRadius: 12,
+        perfectDrawEnabled: false,
         listening: false
       }))
 
@@ -447,7 +452,8 @@ export default class SeatMapRuntime {
         shadowColor: this.transparentColor(palette.stroke, 0.22),
         shadowBlur: 22,
         shadowOffset: { x: 0, y: 10 },
-        shadowOpacity: 0.75
+        shadowOpacity: 0.75,
+        perfectDrawEnabled: false
       }))
 
       seatGroup.add(new Konva.Rect({
@@ -461,6 +467,7 @@ export default class SeatMapRuntime {
         fillLinearGradientColorStops: [0, this.transparentColor("#ffffff", 0.82), 1, palette.accent],
         stroke: this.transparentColor("#ffffff", 0.5),
         strokeWidth: 1.5,
+        perfectDrawEnabled: false,
         listening: false
       }))
 
@@ -473,6 +480,7 @@ export default class SeatMapRuntime {
         fill: this.transparentColor("#ffffff", 0.45),
         stroke: this.transparentColor(palette.stroke, 0.35),
         strokeWidth: 1.3,
+        perfectDrawEnabled: false,
         listening: false
       }))
 
@@ -481,6 +489,7 @@ export default class SeatMapRuntime {
         y: -seatHeight * 0.1,
         radius: 3.8,
         fill: palette.accent,
+        perfectDrawEnabled: false,
         listening: false
       }))
 
@@ -493,6 +502,7 @@ export default class SeatMapRuntime {
         fill: this.transparentColor("#ffffff", 0.88),
         stroke: this.transparentColor(palette.stroke, 0.16),
         strokeWidth: 1,
+        perfectDrawEnabled: false,
         listening: false
       }))
 
@@ -506,6 +516,7 @@ export default class SeatMapRuntime {
         fontStyle: "700",
         fontFamily: DISPLAY_FONT,
         fill: "#31424d",
+        perfectDrawEnabled: false,
         listening: false
       }))
 
@@ -519,6 +530,7 @@ export default class SeatMapRuntime {
         fontStyle: "bold",
         fontFamily: MONO_FONT,
         fill: palette.text,
+        perfectDrawEnabled: false,
         listening: false,
         visible: false
       })
@@ -581,6 +593,7 @@ export default class SeatMapRuntime {
         letterSpacing: 0.15,
         fill: "#f8fafc",
         padding: 0,
+        perfectDrawEnabled: false,
         listening: false
       })
 
@@ -604,7 +617,8 @@ export default class SeatMapRuntime {
         shadowColor: "rgba(15, 23, 42, 0.22)",
         shadowBlur: 18,
         shadowOffset: { x: 0, y: 10 },
-        shadowOpacity: 0.8
+        shadowOpacity: 0.8,
+        perfectDrawEnabled: false
       }))
 
       text.position({ x: 12, y: 6 })
