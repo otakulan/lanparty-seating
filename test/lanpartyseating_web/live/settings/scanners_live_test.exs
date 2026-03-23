@@ -25,10 +25,10 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       assert has_element?(view, "h1", "External Badge Scanners")
     end
 
-    test "redirects badge auth users to seating settings", %{conn: conn} do
+    test "redirects badge auth users to seat map settings", %{conn: conn} do
       conn = conn |> log_in_badge(admin_badge_fixture())
 
-      assert {:error, {:live_redirect, %{to: "/settings/seating", flash: flash}}} =
+      assert {:error, {:live_redirect, %{to: "/settings/seat-map", flash: flash}}} =
                live(conn, ~p"/settings/scanners")
 
       assert flash["error"] == "Full admin access required"
@@ -81,9 +81,12 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/scanners")
 
       view
-      |> form("#wifi-form", %{
-        "wifi" => %{"ssid" => "TestNetwork", "password" => "testpass123"},
-      })
+      |> form(
+        "#wifi-form",
+        %{
+          "wifi" => %{"ssid" => "TestNetwork", "password" => "testpass123"},
+        }
+      )
       |> render_submit()
 
       assert has_element?(view, ".badge-success", "Configured")
@@ -94,9 +97,12 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/scanners")
 
       view
-      |> form("#wifi-form", %{
-        "wifi" => %{"ssid" => "", "password" => ""},
-      })
+      |> form(
+        "#wifi-form",
+        %{
+          "wifi" => %{"ssid" => "", "password" => ""},
+        }
+      )
       |> render_submit()
 
       assert has_element?(view, ".alert-error")
@@ -147,9 +153,12 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       view |> element("button", "+ Add Scanner") |> render_click()
 
       view
-      |> form("#create-scanner-form", %{
-        "scanner" => %{"name" => "Exit Door A"},
-      })
+      |> form(
+        "#create-scanner-form",
+        %{
+          "scanner" => %{"name" => "Exit Door A"},
+        }
+      )
       |> render_submit()
 
       # Form should be hidden after success
@@ -166,9 +175,12 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
       view |> element("button", "+ Add Scanner") |> render_click()
 
       view
-      |> form("#create-scanner-form", %{
-        "scanner" => %{"name" => ""},
-      })
+      |> form(
+        "#create-scanner-form",
+        %{
+          "scanner" => %{"name" => ""},
+        }
+      )
       |> render_submit()
 
       assert has_element?(view, "#create-scanner-form")

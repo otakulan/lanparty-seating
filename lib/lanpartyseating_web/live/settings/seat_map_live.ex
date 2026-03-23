@@ -565,8 +565,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
   defp normalize_background_value(_kind, _value), do: nil
 
   defp default_team_assignment_form(payload, tournaments) do
-    first_group = payload["groups"] |> List.first()
-    first_tournament = List.first(tournaments)
+    first_group = payload["groups"] |> Kernel.||([]) |> List.first()
+    first_tournament = tournaments |> Kernel.||([]) |> List.first()
 
     %{
       "group_id" => first_group && first_group["id"],

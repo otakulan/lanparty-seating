@@ -24,10 +24,10 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       assert has_element?(view, "h1", "Badges")
     end
 
-    test "redirects badge auth users to seating settings", %{conn: conn} do
+    test "redirects badge auth users to seat map settings", %{conn: conn} do
       conn = conn |> log_in_badge(admin_badge_fixture())
 
-      assert {:error, {:live_redirect, %{to: "/settings/seating", flash: flash}}} =
+      assert {:error, {:live_redirect, %{to: "/settings/seat-map", flash: flash}}} =
                live(conn, ~p"/settings/badges")
 
       assert flash["error"] == "Full admin access required"
@@ -433,9 +433,10 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       refute render(view) =~ "WILLDISAPPEAR"
 
       # Verify deleted in database
-      assert_raise Ecto.NoResultsError, fn ->
-        BadgesLogic.get_badge!(badge.id)
-      end
+      assert_raise Ecto.NoResultsError,
+                   fn ->
+                     BadgesLogic.get_badge!(badge.id)
+                   end
     end
 
     test "cancels delete", %{conn: conn} do
@@ -575,13 +576,17 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       csv_content = File.read!(csv_path)
 
       view
-      |> file_input(~s|form[phx-submit="preview_csv"]|, :csv_file, [
-        %{
-          name: "badges.csv",
-          content: csv_content,
-          type: "text/csv",
-        },
-      ])
+      |> file_input(
+        ~s|form[phx-submit="preview_csv"]|,
+        :csv_file,
+        [
+          %{
+            name: "badges.csv",
+            content: csv_content,
+            type: "text/csv",
+          },
+        ]
+      )
       |> render_upload("badges.csv")
 
       # Submit preview
@@ -614,13 +619,17 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       csv_content = File.read!(csv_path)
 
       view
-      |> file_input(~s|form[phx-submit="preview_csv"]|, :csv_file, [
-        %{
-          name: "badges.csv",
-          content: csv_content,
-          type: "text/csv",
-        },
-      ])
+      |> file_input(
+        ~s|form[phx-submit="preview_csv"]|,
+        :csv_file,
+        [
+          %{
+            name: "badges.csv",
+            content: csv_content,
+            type: "text/csv",
+          },
+        ]
+      )
       |> render_upload("badges.csv")
 
       view
@@ -653,13 +662,17 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       csv_content = File.read!(csv_path)
 
       view
-      |> file_input(~s|form[phx-submit="preview_csv"]|, :csv_file, [
-        %{
-          name: "invalid.csv",
-          content: csv_content,
-          type: "text/csv",
-        },
-      ])
+      |> file_input(
+        ~s|form[phx-submit="preview_csv"]|,
+        :csv_file,
+        [
+          %{
+            name: "invalid.csv",
+            content: csv_content,
+            type: "text/csv",
+          },
+        ]
+      )
       |> render_upload("invalid.csv")
 
       view
@@ -679,13 +692,17 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       csv_content = File.read!(csv_path)
 
       view
-      |> file_input(~s|form[phx-submit="preview_csv"]|, :csv_file, [
-        %{
-          name: "invalid.csv",
-          content: csv_content,
-          type: "text/csv",
-        },
-      ])
+      |> file_input(
+        ~s|form[phx-submit="preview_csv"]|,
+        :csv_file,
+        [
+          %{
+            name: "invalid.csv",
+            content: csv_content,
+            type: "text/csv",
+          },
+        ]
+      )
       |> render_upload("invalid.csv")
 
       view
@@ -707,13 +724,17 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       csv_content = File.read!(csv_path)
 
       view
-      |> file_input(~s|form[phx-submit="preview_csv"]|, :csv_file, [
-        %{
-          name: "missing.csv",
-          content: csv_content,
-          type: "text/csv",
-        },
-      ])
+      |> file_input(
+        ~s|form[phx-submit="preview_csv"]|,
+        :csv_file,
+        [
+          %{
+            name: "missing.csv",
+            content: csv_content,
+            type: "text/csv",
+          },
+        ]
+      )
       |> render_upload("missing.csv")
 
       view
