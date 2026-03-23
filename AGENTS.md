@@ -7,7 +7,7 @@
 
 Real-time web application for managing gaming station reservations at LAN party events. Handles badge scanning, tournaments, and live station availability displays.
 
-**Stack:** Elixir 1.16+ / Phoenix 1.7 / LiveView / Alpine.js / Tailwind CSS / DaisyUI / PostgreSQL
+**Stack:** Elixir 1.16+ / Phoenix 1.7 / LiveView / Konva.js / Tailwind CSS / DaisyUI / PostgreSQL
 
 ## Quick Start
 
@@ -44,12 +44,12 @@ Database (PostgreSQL via Ecto)
 
 ## Directory Structure
 
-- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, scanner, settings, station, tournaments)
-- `lib/lanpartyseating/repositories/` - Ecto schema definitions (not a repository pattern - just schemas, badge_scanner, scanner_wifi_config)
+- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, scanner, seat_maps, settings, station, tournaments)
+- `lib/lanpartyseating/repositories/` - Ecto schema definitions (badge_scanner, pc_asset, scanner_wifi_config, seat_map, seat_map_version, seat_slot, seat_slot_assignment, seat_slot_status, tournament_team_assignment)
 - `lib/lanpartyseating/tasks/` - GenServer background tasks (expiration_kickstarter, expire_reservation, expire_tournament, start_tournament)
 - `lib/lanpartyseating/accounts/` - User authentication (phx.gen.auth generated)
-- `lib/lanpartyseating_web/live/` - LiveView pages (admin_badges, admin_users, display, logs, maintenance, profile, settings, stations, tournaments)
-- `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, station_modal, tournament_modal, ui)
+- `lib/lanpartyseating_web/live/` - LiveView pages (display, display_seat_map, logs, maintenance, profile, seat_map, settings, stations, tournaments)
+- `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, seat_map, station_modal, tournament_modal, ui)
 - `lib/lanpartyseating_web/controllers/api/v1/` - REST API controllers (reservation_controller for scanner badge cancellation)
 - `lib/lanpartyseating_web/plugs/` - Custom Plug modules (scanner_auth for bearer token authentication)
 
@@ -71,6 +71,11 @@ Database (PostgreSQL via Ecto)
 | `labeled_input` | Form inputs with horizontal labels |
 | `data_table` | Styled data tables |
 | `modal` | DaisyUI modal dialogs |
+
+**Seat map components:**
+- Use `lib/lanpartyseating_web/components/seat_map.ex` for the shared viewer/editor shell.
+- Konva hooks live in `assets/js/hooks/seat_map_canvas.js`, `assets/js/hooks/seat_map_editor.js`, and `assets/js/hooks/seat_map_runtime.js`.
+- Public routes are `/map` and `/display/map`; the admin editor lives at `/settings/seat-map`.
 
 **When to create components:**
 - Extract to `ui.ex` when a pattern appears in 2+ places
@@ -199,6 +204,8 @@ ESP32-based exit badge scanners allow attendees to cancel reservations at exit p
 12. **Ecto Sandbox Isolation**: Each test runs in a transaction that rolls back. AI may query dev DB thinking it's test DB. Tests can't see each other's data due to transaction isolation.
 13. **Scanner Tokens**: Tokens are `lpss_` prefixed, stored as bcrypt hash. Only the prefix is visible in UI for identification.
 14. **HTTPS for WebBluetooth**: Dev provisioning requires HTTPS on port 4001. Certs must be generated with OpenSSL directly (not `mix phx.gen.cert`) due to OTP 28 + Chrome SSL compatibility issues.
+15. **Seat Identity vs Placement**: `seat_slot` is the attendee-facing physical location, while `pc_asset` is the remotely managed machine currently assigned to that slot.
+16. **Published Map Safety**: Only one published seat map version is active; publishing must not move or remap seats with active reservations or tournament holds.
 
 
 <!-- phoenix-gen-auth-start -->
