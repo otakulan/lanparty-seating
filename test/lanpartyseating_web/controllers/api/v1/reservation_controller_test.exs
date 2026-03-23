@@ -21,6 +21,8 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
   end
 
   defp create_test_station(station_number) do
+    station_number = station_number + 10_000
+
     # Create layout first (required by foreign key)
     # Use station_number as x coordinate to ensure uniqueness
     %StationLayout{}
@@ -37,13 +39,15 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
     end_time = DateTime.add(now, 60, :minute)
 
     %Reservation{}
-    |> Reservation.changeset(%{
-      badge: badge.serial_key,
-      station_id: station_number,
-      duration: 60,
-      start_date: now,
-      end_date: end_time,
-    })
+    |> Reservation.changeset(
+      %{
+        badge: badge.serial_key,
+        station_id: station_number,
+        duration: 60,
+        start_date: now,
+        end_date: end_time,
+      }
+    )
     |> Repo.insert!()
   end
 
@@ -81,10 +85,11 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
     test "returns 404 for unknown badge", %{conn: conn} do
       conn = post(conn, ~p"/api/v1/reservations/cancel", %{"badge_uid" => "NONEXISTENT"})
 
-      assert json_response(conn, 404) == %{
-               "status" => "error",
-               "message" => "Unknown badge",
-             }
+      assert json_response(conn, 404) ==
+               %{
+                 "status" => "error",
+                 "message" => "Unknown badge",
+               }
     end
 
     test "returns 404 for badge with no active reservation", %{conn: conn} do
@@ -92,28 +97,31 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
 
       conn = post(conn, ~p"/api/v1/reservations/cancel", %{"badge_uid" => "noreservation"})
 
-      assert json_response(conn, 404) == %{
-               "status" => "error",
-               "message" => "No active reservation found for this badge",
-             }
+      assert json_response(conn, 404) ==
+               %{
+                 "status" => "error",
+                 "message" => "No active reservation found for this badge",
+               }
     end
 
     test "returns 400 for missing badge_uid", %{conn: conn} do
       conn = post(conn, ~p"/api/v1/reservations/cancel", %{})
 
-      assert json_response(conn, 400) == %{
-               "status" => "error",
-               "message" => "badge_uid is required",
-             }
+      assert json_response(conn, 400) ==
+               %{
+                 "status" => "error",
+                 "message" => "badge_uid is required",
+               }
     end
 
     test "returns 400 for empty badge_uid", %{conn: conn} do
       conn = post(conn, ~p"/api/v1/reservations/cancel", %{"badge_uid" => ""})
 
-      assert json_response(conn, 400) == %{
-               "status" => "error",
-               "message" => "badge_uid is required",
-             }
+      assert json_response(conn, 400) ==
+               %{
+                 "status" => "error",
+                 "message" => "badge_uid is required",
+               }
     end
 
     test "badge_uid is case-insensitive", %{conn: conn} do
@@ -140,10 +148,11 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
 
       conn = post(conn, ~p"/api/v1/reservations/cancel", %{"badge_uid" => "cancelled"})
 
-      assert json_response(conn, 404) == %{
-               "status" => "error",
-               "message" => "No active reservation found for this badge",
-             }
+      assert json_response(conn, 404) ==
+               %{
+                 "status" => "error",
+                 "message" => "No active reservation found for this badge",
+               }
     end
 
     test "cancels all reservations for badge with multiple active reservations", %{conn: conn} do

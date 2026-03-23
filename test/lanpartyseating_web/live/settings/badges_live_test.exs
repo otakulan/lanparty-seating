@@ -5,7 +5,12 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
   import Lanpartyseating.AccountsFixtures
   import LanpartyseatingWeb.ConnCase
 
-  alias Lanpartyseating.BadgesLogic
+  alias Lanpartyseating.{Badge, BadgesLogic, Repo}
+
+  setup do
+    Repo.delete_all(Badge)
+    :ok
+  end
 
   # ============================================================================
   # Authentication Tests
@@ -61,7 +66,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
 
     test "shows empty message when no badges exist", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
-      assert render(view) =~ "No badges yet. Import a CSV to get started."
+      assert render(view) =~ ~r/No badges yet\.\s+Import a CSV to get started\./
     end
 
     test "shows empty search result message when no matches", %{conn: conn} do
@@ -77,7 +82,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       badge_fixture(%{uid: "BADGE002", serial_key: "002"})
 
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
-      assert render(view) =~ "2 total badges"
+      assert render(view) =~ ~r/2\s+total badges/
     end
   end
 
@@ -200,7 +205,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
     test "shows first page by default", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
-      assert render(view) =~ "Showing 1-50 of 55"
+      assert render(view) =~ ~r/Showing\s+1-50\s+of\s+55/
       assert has_element?(view, "button.btn-active", "1")
     end
 
@@ -210,7 +215,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       view |> element(~s|button[phx-click="next_page"]|) |> render_click()
       assert_patch(view, ~p"/settings/badges?search=&page=2")
 
-      assert render(view) =~ "Showing 51-55 of 55"
+      assert render(view) =~ ~r/Showing\s+51-55\s+of\s+55/
     end
 
     test "navigates to previous page", %{conn: conn} do
@@ -250,7 +255,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       |> render_click()
 
       # Should stay on page 1
-      assert render(view) =~ "Showing 1-50 of 55"
+      assert render(view) =~ ~r/Showing\s+1-50\s+of\s+55/
     end
   end
 
@@ -495,7 +500,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
       view
-      |> form(~s|form[phx-submit="save_label"]|, %{"badge_id" => badge.id, "label" => "New Label"})
+      |> form("#badge-label-form-#{badge.id}", %{"badge_id" => badge.id, "label" => "New Label"})
       |> render_submit()
 
       updated = BadgesLogic.get_badge!(badge.id)
@@ -508,7 +513,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
 
       view
-      |> form(~s|form[phx-submit="save_label"]|, %{"badge_id" => badge.id, "label" => ""})
+      |> form("#badge-label-form-#{badge.id}", %{"badge_id" => badge.id, "label" => ""})
       |> render_submit()
 
       updated = BadgesLogic.get_badge!(badge.id)

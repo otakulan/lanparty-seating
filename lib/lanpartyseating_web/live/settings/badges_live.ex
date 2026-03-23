@@ -808,7 +808,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
 
   defp inline_label_editor(assigns) do
     ~H"""
-    <form phx-submit="save_label" class="flex gap-1 items-center">
+    <form id={"badge-label-form-#{@badge.id}"} phx-submit="save_label" class="flex gap-1 items-center">
       <input type="hidden" name="badge_id" value={@badge.id} />
       <input
         type="text"
