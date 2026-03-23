@@ -12,6 +12,7 @@ defmodule Lanpartyseating.Reservation do
     field :deleted_at, :utc_datetime
 
     belongs_to :station, Lanpartyseating.Station, foreign_key: :station_id, references: :station_number
+    belongs_to :seat_slot, Lanpartyseating.SeatSlot
 
     field :start_date, :utc_datetime
     field :end_date, :utc_datetime
@@ -21,12 +22,23 @@ defmodule Lanpartyseating.Reservation do
   @doc false
   def changeset(reservation, attrs) do
     reservation
-    |> cast(attrs, [:duration, :badge, :station_id, :start_date, :end_date, :incident, :deleted_at])
-    |> validate_required([:badge, :station_id, :start_date, :end_date])
+    |> cast(attrs, [:duration, :badge, :station_id, :seat_slot_id, :start_date, :end_date, :incident, :deleted_at])
+    |> validate_required([:badge, :start_date, :end_date])
     |> validate_length(:badge, min: 1, max: 255)
     |> validate_number(:duration, greater_than: 0)
-    |> validate_number(:station_id, greater_than: 0)
+    |> validate_reservation_target()
     |> validate_end_date_after_start_date()
+  end
+
+  defp validate_reservation_target(changeset) do
+    station_id = get_field(changeset, :station_id)
+    seat_slot_id = get_field(changeset, :seat_slot_id)
+
+    cond do
+      is_integer(seat_slot_id) and seat_slot_id > 0 -> changeset
+      is_integer(station_id) and station_id > 0 -> changeset
+      true -> add_error(changeset, :seat_slot_id, "must reference a seat slot")
+    end
   end
 
   defp validate_end_date_after_start_date(changeset) do

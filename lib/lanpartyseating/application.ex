@@ -8,24 +8,25 @@ defmodule Lanpartyseating.Application do
     OpentelemetryPhoenix.setup(adapter: :bandit, liveview: true)
     OpentelemetryEcto.setup([:lanpartyseating, :repo])
 
-    children = [
-      # Database must be ready before anything queries it
-      Lanpartyseating.Repo,
-      {Task, fn -> ensure_settings_exist() end},
-      # Telemetry and metrics
-      LanpartyseatingWeb.Telemetry,
-      Lanpartyseating.PromEx,
-      # PubSub system (Presence depends on this)
-      {Phoenix.PubSub, name: Lanpartyseating.PubSub},
-      LanpartyseatingWeb.Presence,
-      # Task supervisor for fire-and-forget async operations (e.g., scanner last_seen updates)
-      {Task.Supervisor, name: Lanpartyseating.TaskSupervisor},
-      # Expiration task infrastructure (DynamicSupervisor for long-running scheduled tasks)
-      {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},
-      Lanpartyseating.ExpirationKickstarter,
-      # Endpoint starts last - accept connections only when ready
-      LanpartyseatingWeb.Endpoint,
-    ]
+    children =
+      [
+        # Database must be ready before anything queries it
+        Lanpartyseating.Repo,
+        {Task, fn -> ensure_settings_exist() end},
+        # Telemetry and metrics
+        LanpartyseatingWeb.Telemetry,
+        Lanpartyseating.PromEx,
+        # PubSub system (Presence depends on this)
+        {Phoenix.PubSub, name: Lanpartyseating.PubSub},
+        LanpartyseatingWeb.Presence,
+        # Task supervisor for fire-and-forget async operations (e.g., scanner last_seen updates)
+        {Task.Supervisor, name: Lanpartyseating.TaskSupervisor},
+        # Expiration task infrastructure (DynamicSupervisor for long-running scheduled tasks)
+        {DynamicSupervisor, strategy: :one_for_one, name: Lanpartyseating.ExpirationTaskSupervisor},
+        Lanpartyseating.ExpirationKickstarter,
+        # Endpoint starts last - accept connections only when ready
+        LanpartyseatingWeb.Endpoint,
+      ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

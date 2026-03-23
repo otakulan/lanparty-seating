@@ -2,9 +2,9 @@ import Config
 
 # Enable enhanced LiveView debugging in development
 config :phoenix_live_view,
-  debug_heex_annotations: true,
-  debug_attributes: true,
-  enable_expensive_runtime_checks: true
+       debug_heex_annotations: true,
+       debug_attributes: true,
+       enable_expensive_runtime_checks: true
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
@@ -12,34 +12,40 @@ config :phoenix_live_view,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we use it
 # with brunch.io to recompile .js and .css sources.
-config :lanpartyseating, LanpartyseatingWeb.Endpoint,
-  http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
-  https: [
-    port: 4001,
-    ip: {0, 0, 0, 0, 0, 0, 0, 0},
-    certfile: "priv/cert/selfsigned.pem",
-    keyfile: "priv/cert/selfsigned_key.pem",
-    http_2_options: [enabled: false],
-    thousand_island_options: [
-      transport_options: [
-        versions: [:"tlsv1.2"],
-      ],
-    ],
-  ],
-  debug_errors: true,
-  code_reloader: true,
-  check_origin: false,
-  watchers: [
-    npx: [
-      "@tailwindcss/cli",
-      "--input=css/app.css",
-      "--output=../priv/static/css/app.css",
-      "--watch",
-      cd: Path.expand("../assets", __DIR__),
-    ],
-    # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
-    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch --loader:.woff=file --loader:.woff2=file)]},
-  ]
+config :lanpartyseating,
+       LanpartyseatingWeb.Endpoint,
+       http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
+       https:
+         [
+           port: 4001,
+           ip: {0, 0, 0, 0, 0, 0, 0, 0},
+           certfile: "priv/cert/selfsigned.pem",
+           keyfile: "priv/cert/selfsigned_key.pem",
+           http_2_options: [enabled: false],
+           thousand_island_options:
+             [
+               transport_options:
+                 [
+                   versions: [:"tlsv1.2"],
+                 ],
+             ],
+         ],
+       debug_errors: true,
+       code_reloader: true,
+       check_origin: false,
+       watchers:
+         [
+           npx:
+             [
+               "@tailwindcss/cli",
+               "--input=css/app.css",
+               "--output=../priv/static/css/app.css",
+               "--watch",
+               cd: Path.expand("../assets", __DIR__),
+             ],
+           # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
+           esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch --loader:.woff=file --loader:.woff2=file)]},
+         ]
 
 # ## SSL Support
 #
@@ -58,14 +64,17 @@ config :lanpartyseating, LanpartyseatingWeb.Endpoint,
 # different ports.
 
 # Watch static and templates for browser reloading.
-config :lanpartyseating, LanpartyseatingWeb.Endpoint,
-  live_reload: [
-    patterns: [
-      ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
-      ~r"priv/gettext/.*(po)$",
-      ~r"lib/lanpartyseating_web/(controllers|live|components)/.*(ex|heex)$",
-    ],
-  ]
+config :lanpartyseating,
+       LanpartyseatingWeb.Endpoint,
+       live_reload:
+         [
+           patterns:
+             [
+               ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
+               ~r"priv/gettext/.*(po)$",
+               ~r"lib/lanpartyseating_web/(controllers|live|components)/.*(ex|heex)$",
+             ],
+         ]
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
@@ -75,10 +84,17 @@ config :logger, :console, format: "[$level] $message\n"
 config :phoenix, :stacktrace_depth, 20
 
 # Configure your database
-config :lanpartyseating, Lanpartyseating.Repo,
-  username: "postgres",
-  password: "postgres",
-  database: "lanpartyseating_dev",
-  hostname: "localhost",
-  pool_size: 10,
-  port: 5021
+db_port = String.to_integer(System.get_env("PGPORT") || "5021")
+db_host = System.get_env("PGHOST") || "localhost"
+db_user = System.get_env("PGUSER") || "postgres"
+db_password = System.get_env("PGPASSWORD") || "postgres"
+db_name = System.get_env("PGDATABASE") || "lanpartyseating_dev"
+
+config :lanpartyseating,
+       Lanpartyseating.Repo,
+       username: db_user,
+       password: db_password,
+       database: db_name,
+       hostname: db_host,
+       pool_size: 10,
+       port: db_port
