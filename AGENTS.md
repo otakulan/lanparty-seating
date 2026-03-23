@@ -16,7 +16,7 @@ direnv allow                               # Setup nix environment
 devenv up                                  # Terminal 1: Start PostgreSQL (keep running)
 mix deps.get                               # Install Elixir dependencies
 mix usage_rules.sync AGENTS.md --all --link-to-folder deps  # Sync LLM docs from deps
-cd assets && yarn install && cd ..         # Install Node.js dependencies
+cd assets && npm install && cd ..          # Install Node.js dependencies
 mix ecto.reset                             # Create, migrate, seed database
 mix phx.server                             # Start server at localhost:4000
 ```

@@ -1,10 +1,10 @@
 defmodule LanpartyseatingWeb.Components.UI do
   @moduledoc """
-  Shared UI components for the LAN Party Seating application.
+             Shared UI components for the LAN Party Seating application.
 
-  These components reduce code duplication across LiveView pages
-  by providing consistent, reusable UI elements.
-  """
+             These components reduce code duplication across LiveView pages
+             by providing consistent, reusable UI elements.
+             """
   use Phoenix.Component
   import LanpartyseatingWeb.Helpers
 
@@ -13,13 +13,13 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders the station status legend with color-coded indicators.
+       Renders the station status legend with color-coded indicators.
 
-  ## Examples
+       ## Examples
 
-      <.station_legend />
+           <.station_legend />
 
-  """
+       """
   attr :class, :string, default: nil
 
   def station_legend(assigns) do
@@ -50,30 +50,30 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders a station grid layout with proper table grouping based on padding settings.
+       Renders a station grid layout with proper table grouping based on padding settings.
 
-  The grid automatically groups stations into "physical tables" based on the
-  row and column padding values, creating visual separation between groups.
+       The grid automatically groups stations into "physical tables" based on the
+       row and column padding values, creating visual separation between groups.
 
-  ## Examples
+       ## Examples
 
-      <.station_grid
-        stations={@stations}
-        rows={@rows}
-        columns={@columns}
-        rowpad={@rowpad}
-        colpad={@colpad}
-      >
-        <:cell :let={station_data}>
-          <DisplayModalComponent.modal
-            reservation={station_data.reservation}
-            station={station_data.station}
-            status={station_data.status}
-          />
-        </:cell>
-      </.station_grid>
+           <.station_grid
+             stations={@stations}
+             rows={@rows}
+             columns={@columns}
+             rowpad={@rowpad}
+             colpad={@colpad}
+           >
+             <:cell :let={station_data}>
+               <DisplayModalComponent.modal
+                 reservation={station_data.reservation}
+                 station={station_data.station}
+                 status={station_data.status}
+               />
+             </:cell>
+           </.station_grid>
 
-  """
+       """
   attr :stations, :map, required: true
   attr :rows, :integer, required: true
   attr :columns, :integer, required: true
@@ -106,17 +106,21 @@ defmodule LanpartyseatingWeb.Components.UI do
     # Filter each group to only rows that have stations, remove empty groups
     row_groups =
       group_by_padding(0..(assigns.rows - 1), assigns.rowpad)
-      |> Enum.map(fn group ->
-        Enum.filter(group, &(&1 in active_rows))
-      end)
+      |> Enum.map(
+        fn group ->
+          Enum.filter(group, &(&1 in active_rows))
+        end
+      )
       |> Enum.reject(&(&1 == []))
 
     # Filter each group to only columns that have stations, remove empty groups
     col_groups =
       group_by_padding(0..(assigns.columns - 1), assigns.colpad)
-      |> Enum.map(fn group ->
-        Enum.filter(group, &(&1 in active_cols))
-      end)
+      |> Enum.map(
+        fn group ->
+          Enum.filter(group, &(&1 in active_cols))
+        end
+      )
       |> Enum.reject(&(&1 == []))
 
     assigns =
@@ -169,18 +173,18 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders a countdown timer using Alpine.js that counts down to a given end time.
+       Renders a countdown timer using Alpine.js that counts down to a given end time.
 
-  The timer automatically updates every second and displays in "XmYs" format
-  (e.g., "32m14s" or "45s" when under a minute).
+       The timer automatically updates every second and displays in "XmYs" format
+       (e.g., "32m14s" or "45s" when under a minute).
 
-  ## Examples
+       ## Examples
 
-      <.countdown end_date={@reservation.end_date} />
+           <.countdown end_date={@reservation.end_date} />
 
-      <.countdown end_date={@tournament.start_date} class="text-2xl font-bold" />
+           <.countdown end_date={@tournament.start_date} class="text-2xl font-bold" />
 
-  """
+       """
   attr :end_date, DateTime, required: true
   attr :class, :string, default: "font-mono font-bold"
 
@@ -218,16 +222,16 @@ defmodule LanpartyseatingWeb.Components.UI do
   end
 
   @doc """
-  Renders a countdown timer with hours support for longer durations.
+       Renders a countdown timer with hours support for longer durations.
 
-  Displays in "Xh Ym Zs" format (omitting zero-value leading units).
-  Shows "Started!" when the countdown reaches zero.
+       Displays in "Xh Ym Zs" format (omitting zero-value leading units).
+       Shows "Started!" when the countdown reaches zero.
 
-  ## Examples
+       ## Examples
 
-      <.countdown_long start_date={@tournament.start_date} class="countdown-timer" />
+           <.countdown_long start_date={@tournament.start_date} class="countdown-timer" />
 
-  """
+       """
   attr :start_date, DateTime, required: true
   attr :class, :string, default: "font-mono font-bold"
 
@@ -277,19 +281,19 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders a consistent page header with title and optional subtitle.
+       Renders a consistent page header with title and optional subtitle.
 
-  ## Examples
+       ## Examples
 
-      <.page_header title="Station Layout Settings" subtitle="Configure the station grid layout" />
+           <.page_header title="Seat Map Editor" subtitle="Configure the room-true seat map layout" />
 
-      <.page_header title="Reservation History">
-        <:trailing>
-          <span class="text-base-content/60">88 records</span>
-        </:trailing>
-      </.page_header>
+           <.page_header title="Reservation History">
+             <:trailing>
+               <span class="text-base-content/60">88 records</span>
+             </:trailing>
+           </.page_header>
 
-  """
+       """
   attr :title, :string, required: true
   attr :subtitle, :string, default: nil
   attr :class, :string, default: nil
@@ -317,19 +321,19 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders a section container for admin pages with a bordered heading.
+       Renders a section container for admin pages with a bordered heading.
 
-  ## Examples
+       ## Examples
 
-      <.admin_section title="Grid Configuration">
-        <p>Section content here...</p>
-      </.admin_section>
+           <.admin_section title="Grid Configuration">
+             <p>Section content here...</p>
+           </.admin_section>
 
-      <.admin_section title="Danger Zone" title_class="text-error">
-        <p>Dangerous controls here...</p>
-      </.admin_section>
+           <.admin_section title="Danger Zone" title_class="text-error">
+             <p>Dangerous controls here...</p>
+           </.admin_section>
 
-  """
+       """
   attr :title, :string, required: true
   attr :title_class, :string, default: nil
   attr :class, :string, default: "mb-10"
@@ -352,22 +356,22 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders a station button with consistent styling based on status.
+       Renders a station button with consistent styling based on status.
 
-  This is the base button used by station modals. It handles the common
-  styling patterns for available, occupied, broken, and reserved states.
+       This is the base button used by station modals. It handles the common
+       styling patterns for available, occupied, broken, and reserved states.
 
-  ## Examples
+       ## Examples
 
-      <.station_button status={:available} station_number={5} />
+           <.station_button status={:available} station_number={5} />
 
-      <.station_button status={:occupied} station_number={5} end_date={@end_date}>
-        <:extra>
-          <div class="text-xs" x-text="remaining"></div>
-        </:extra>
-      </.station_button>
+           <.station_button status={:occupied} station_number={5} end_date={@end_date}>
+             <:extra>
+               <div class="text-xs" x-text="remaining"></div>
+             </:extra>
+           </.station_button>
 
-  """
+       """
   attr :status, :atom, required: true, values: [:available, :occupied, :broken, :reserved]
   attr :station_number, :integer, required: true
   attr :end_date, DateTime, default: nil
@@ -447,15 +451,15 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders a DaisyUI modal dialog with consistent styling.
+       Renders a DaisyUI modal dialog with consistent styling.
 
-  ## Examples
+       ## Examples
 
-      <.modal id="station-modal-5" title="Station 5">
-        <p>Modal content here...</p>
-      </.modal>
+           <.modal id="station-modal-5" title="Station 5">
+             <p>Modal content here...</p>
+           </.modal>
 
-  """
+       """
   attr :id, :string, required: true
   attr :title, :string, required: true
   attr :class, :string, default: nil
@@ -487,15 +491,15 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders a form input with a label in a horizontal layout.
+       Renders a form input with a label in a horizontal layout.
 
-  ## Examples
+       ## Examples
 
-      <.labeled_input label="Columns" type="number" name="columns" value={@columns} min={1} />
+           <.labeled_input label="Columns" type="number" name="columns" value={@columns} min={1} />
 
-      <.labeled_input label="Station #" type="number" name="station" placeholder="e.g. 15" />
+           <.labeled_input label="Station #" type="number" name="station" placeholder="e.g. 15" />
 
-  """
+       """
   attr :label, :string, required: true
   attr :type, :string, default: "text"
   attr :name, :string, required: true
@@ -536,22 +540,22 @@ defmodule LanpartyseatingWeb.Components.UI do
   # ============================================================================
 
   @doc """
-  Renders a styled data table with consistent formatting.
+       Renders a styled data table with consistent formatting.
 
-  ## Examples
+       ## Examples
 
-      <.data_table>
-        <:header>
-          <th>Name</th>
-          <th>Status</th>
-        </:header>
-        <:row :for={item <- @items}>
-          <td>{item.name}</td>
-          <td>{item.status}</td>
-        </:row>
-      </.data_table>
+           <.data_table>
+             <:header>
+               <th>Name</th>
+               <th>Status</th>
+             </:header>
+             <:row :for={item <- @items}>
+               <td>{item.name}</td>
+               <td>{item.status}</td>
+             </:row>
+           </.data_table>
 
-  """
+       """
   attr :class, :string, default: nil
 
   slot :header, required: true

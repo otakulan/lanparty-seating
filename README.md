@@ -1,6 +1,6 @@
 # LAN Party Seating
 
-Real-time web application for managing gaming station reservations at LAN party events.
+Real-time web application for managing gaming station reservations at LAN party events, including a room-true Konva seat map, kiosk display, tournaments, and badge-scanner sign-out flows.
 
 ## Development Setup
 
@@ -22,12 +22,28 @@ To start lanparty-seating:
 2. Install dependencies: `mix deps.get`
 3. Create and migrate database: `mix ecto.create && mix ecto.migrate`
 4. Seed database: `mix ecto.reset`
-5. Install Node.js dependencies: `cd assets && yarn install --dev && cd ..`
-6. Generate HTTPS certificate: `mix gen_dev_cert`
+5. Install Node.js dependencies: `cd assets && npm install && cd ..`
+6. Generate HTTPS certificates with OpenSSL:
+
+   ```bash
+   mkdir -p priv/cert
+   openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+     -subj "/C=CA/ST=Quebec/L=Montreal/O=Otakuthon/CN=localhost" \
+     -keyout priv/cert/selfsigned_key.pem \
+     -out priv/cert/selfsigned.pem
+   ```
+
 7. Deploy assets: `mix assets.deploy`
 8. Start Phoenix: `mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+
+Useful public routes:
+
+- `http://localhost:4000/map` - interactive public seat map
+- `http://localhost:4000/display/map` - kiosk/non-interactive seat map
+- `http://localhost:4000/map/editor` - public proof-of-concept editor route
+- `http://localhost:4000/settings/seat-map` - authenticated admin editor
 
 For WebBluetooth scanner provisioning, use HTTPS at [`localhost:4001`](https://localhost:4001).
 
@@ -49,16 +65,16 @@ After running `mix ecto.reset`, the following test data is created from `priv/re
 - Badge Number: `1`
 
 **Sample Tournaments:**
-- 3 tournaments with stations 1-10 locked for the first one
+- 3 tournaments with sample tournament holds for testing overlays and reservations
 
-The seed configuration (grid size, timing offset) can be adjusted at the top of `priv/repo/seeds.exs`.
+The seed configuration can be adjusted at the top of `priv/repo/seeds.exs`.
 
 #### Production (`Lanpartyseating.Release.seed()`)
 
 Production seeds (`priv/repo/seeds_prod.exs`) create only the minimal required data:
 
 - Default settings
-- 70 stations (10x7 grid)
+- 70 stations
 - Admin user (`admin@otakuthon.com` / `change-me-on-first-login`)
 
 No test badges or sample tournaments are created.
@@ -73,7 +89,7 @@ cp .env.sample .env
 
 The `.envrc` file automatically loads `.env` when using direnv. Edit `.env` to configure optional integrations like OpenTelemetry tracing.
 
-**Note:** Database configuration for development is handled automatically by `devenv up` - no `DATABASE_URL` needed locally.
+**Note:** Database configuration for development can be driven by `.env` using `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, and `PGDATABASE`.
 
 ## Useful Commands
 
@@ -118,6 +134,7 @@ You can also launch the program with the elixir repl using `iex -S mix phx.serve
 
 **Database:**
 - `DATABASE_URL` - PostgreSQL connection string
+- `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` - local PostgreSQL settings for development/test
 
 **Web:**
 - `PHX_HOST` - Public hostname
@@ -208,7 +225,7 @@ curl -X POST https://your-server/api/v1/reservations/cancel \
 ### Development Notes
 
 WebBluetooth provisioning requires a secure context. In development:
-- Generate HTTPS certificate: `mix gen_dev_cert`
+- Generate HTTPS certificates with OpenSSL into `priv/cert/selfsigned.pem` and `priv/cert/selfsigned_key.pem`
 - Use HTTPS on port 4001: https://localhost:4001
 - Or access via `localhost` on HTTP (exempt from HTTPS requirement)
 

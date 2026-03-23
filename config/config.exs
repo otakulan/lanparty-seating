@@ -5,57 +5,65 @@
 # is restricted to this project.
 import Config
 
-config :lanpartyseating, :scopes,
-  user: [
-    default: true,
-    module: Lanpartyseating.Accounts.Scope,
-    assign_key: :current_scope,
-    access_path: [:user, :id],
-    schema_key: :user_id,
-    schema_type: :id,
-    schema_table: :users,
-    test_data_fixture: Lanpartyseating.AccountsFixtures,
-    test_setup_helper: :register_and_log_in_user,
-  ]
+config :lanpartyseating,
+       :scopes,
+       user:
+         [
+           default: true,
+           module: Lanpartyseating.Accounts.Scope,
+           assign_key: :current_scope,
+           access_path: [:user, :id],
+           schema_key: :user_id,
+           schema_type: :id,
+           schema_table: :users,
+           test_data_fixture: Lanpartyseating.AccountsFixtures,
+           test_setup_helper: :register_and_log_in_user,
+         ]
 
 # esbuild config
 config :esbuild,
-  path: System.get_env("MIX_ESBUILD_PATH"),
-  default: [
-    args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/js --external:/images/*),
-    cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)},
-  ]
+       version: "0.12.18",
+       path: System.get_env("MIX_ESBUILD_PATH") || Path.expand("../assets/node_modules/.bin/esbuild", __DIR__),
+       default:
+         [
+           args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/js --external:/images/*),
+           cd: Path.expand("../assets", __DIR__),
+           env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)},
+         ]
 
 # General application configuration
 config :lanpartyseating,
-  ecto_repos: [Lanpartyseating.Repo]
+       ecto_repos: [Lanpartyseating.Repo]
 
 # Configures the endpoint
-config :lanpartyseating, LanpartyseatingWeb.Endpoint,
-  http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
-  url: [host: "localhost"],
-  secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
-  render_errors: [
-    formats: [html: LanpartyseatingWeb.ErrorHTML, json: LanpartyseatingWeb.ErrorJSON],
-    layout: false,
-  ],
-  pubsub_server: Lanpartyseating.PubSub,
-  live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"],
-  adapter: Bandit.PhoenixAdapter
+config :lanpartyseating,
+       LanpartyseatingWeb.Endpoint,
+       http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
+       url: [host: "localhost"],
+       secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
+       render_errors:
+         [
+           formats: [html: LanpartyseatingWeb.ErrorHTML, json: LanpartyseatingWeb.ErrorJSON],
+           layout: false,
+         ],
+       pubsub_server: Lanpartyseating.PubSub,
+       live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"],
+       adapter: Bandit.PhoenixAdapter
 
 # Configures PromEx
-config :lanpartyseating, Lanpartyseating.PromEx,
-  disabled: false,
-  manual_metrics_start_delay: :no_delay,
-  drop_metrics_groups: [],
-  grafana: :disabled,
-  metrics_server: :disabled
+config :lanpartyseating,
+       Lanpartyseating.PromEx,
+       disabled: false,
+       manual_metrics_start_delay: :no_delay,
+       drop_metrics_groups: [],
+       grafana: :disabled,
+       metrics_server: :disabled
 
 # Configures Elixir's Logger
-config :logger, :console,
-  format: "$time $metadata[$level] $message\n",
-  metadata: [:user_id]
+config :logger,
+       :console,
+       format: "$time $metadata[$level] $message\n",
+       metadata: [:user_id]
 
 config :phoenix, :json_library, Jason
 
