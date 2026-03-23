@@ -112,10 +112,13 @@ export default class SeatMapRuntime {
     })
 
     this.backgroundLayer = new Konva.Layer({ listening: false })
-    this.objectLayer = this.editable ? new Konva.Layer() : new Konva.Layer({ listening: false })
-    this.groupLayer = new Konva.Layer({ listening: false })
-    this.seatLayer = new Konva.Layer()
-    this.overlayLayer = new Konva.Layer({ listening: false })
+    this.sceneLayer = this.editable ? null : new Konva.Layer({ listening: false })
+    this.objectLayer = this.editable ? new Konva.Layer() : this.sceneLayer
+    this.groupLayer = this.editable ? new Konva.Layer({ listening: false }) : this.sceneLayer
+    this.seatLayer = this.editable ? new Konva.Layer() : null
+    this.seatVisualLayer = this.editable ? null : this.sceneLayer
+    this.seatHitLayer = this.editable ? null : new Konva.Layer()
+    this.overlayLayer = this.editable ? new Konva.Layer({ listening: false }) : this.sceneLayer
 
     this.transformer = new Konva.Transformer({
       rotateEnabled: this.editable,
@@ -126,12 +129,11 @@ export default class SeatMapRuntime {
       ignoreStroke: true
     })
 
-    this.stage.add(this.backgroundLayer)
-    this.stage.add(this.objectLayer)
-    this.stage.add(this.groupLayer)
-    this.stage.add(this.seatLayer)
-    this.stage.add(this.overlayLayer)
-    this.objectLayer.add(this.transformer)
+    this.uniqueLayers().forEach((layer) => this.stage.add(layer))
+
+    if (this.editable) {
+      this.objectLayer.add(this.transformer)
+    }
 
     this.stage.on("wheel", (event) => this.handleWheel(event))
     this.stage.on("touchmove", (event) => this.handleTouchMove(event))
@@ -173,13 +175,12 @@ export default class SeatMapRuntime {
   }
 
   renderScene(resetView) {
-    this.backgroundLayer.destroyChildren()
-    this.objectLayer.destroyChildren()
-    this.groupLayer.destroyChildren()
-    this.seatLayer.destroyChildren()
-    this.overlayLayer.destroyChildren()
+    this.uniqueLayers().forEach((layer) => layer.destroyChildren())
     this.timerNodes = new Map()
-    this.objectLayer.add(this.transformer)
+
+    if (this.editable) {
+      this.objectLayer.add(this.transformer)
+    }
 
     this.renderBackdrop()
     this.renderObjects()
@@ -544,13 +545,34 @@ export default class SeatMapRuntime {
         })
       }
 
-      if (this.mode !== "kiosk") seatGroup.on("click tap", (event) => this.handleSeatInteraction(event, seat))
-      if (this.editable) seatGroup.on("dragend transformend", () => this.syncSeatNode(seatGroup, seat.seat_slot_id))
-
       seatGroup.id(`seat-${seat.seat_slot_id}`)
       seatGroup.setAttr("nodeType", "seat")
       seatGroup.setAttr("seatSlotId", seat.seat_slot_id)
-      this.seatLayer.add(seatGroup)
+
+      if (this.editable) {
+        seatGroup.on("click tap", (event) => this.handleSeatInteraction(event, seat))
+        seatGroup.on("dragend transformend", () => this.syncSeatNode(seatGroup, seat.seat_slot_id))
+        this.seatLayer.add(seatGroup)
+        return
+      }
+
+      this.seatVisualLayer.add(seatGroup)
+
+      if (this.mode !== "kiosk") {
+        const hitTarget = new Konva.Rect({
+          x: seat.x - seatWidth * 0.55,
+          y: seat.y - seatHeight * 0.6,
+          width: seatWidth * 1.1,
+          height: seatHeight * 1.25,
+          cornerRadius: 12,
+          fill: "rgba(0,0,0,0.01)",
+          strokeWidth: 0,
+          perfectDrawEnabled: false
+        })
+
+        hitTarget.on("click tap", (event) => this.handleSeatInteraction(event, seat))
+        this.seatHitLayer.add(hitTarget)
+      }
     })
   }
 
@@ -569,7 +591,8 @@ export default class SeatMapRuntime {
       }
     })
 
-    this.seatLayer.batchDraw()
+    if (this.editable) this.seatLayer.batchDraw()
+    else this.sceneLayer.batchDraw()
   }
 
   renderTeamLabels() {
@@ -943,15 +966,32 @@ export default class SeatMapRuntime {
   }
 
   handleStageDragStart() {
-    this.seatLayer.listening(false)
+    if (this.seatLayer) this.seatLayer.listening(false)
+    if (this.seatHitLayer) this.seatHitLayer.listening(false)
     if (this.editable) this.objectLayer.listening(false)
   }
 
   handleStageDragEnd() {
-    if (this.mode !== "kiosk") this.seatLayer.listening(true)
+    if (this.editable && this.mode !== "kiosk") this.seatLayer.listening(true)
+    if (this.seatHitLayer && this.mode !== "kiosk") this.seatHitLayer.listening(true)
     if (this.editable) this.objectLayer.listening(true)
-    this.seatLayer.batchDraw()
+    if (this.sceneLayer) this.sceneLayer.batchDraw()
+    if (this.seatLayer) this.seatLayer.batchDraw()
+    if (this.seatHitLayer) this.seatHitLayer.batchDraw()
     if (this.editable) this.objectLayer.batchDraw()
+  }
+
+  uniqueLayers() {
+    return [...new Set([
+      this.backgroundLayer,
+      this.sceneLayer,
+      this.objectLayer,
+      this.groupLayer,
+      this.seatLayer,
+      this.seatVisualLayer,
+      this.seatHitLayer,
+      this.overlayLayer
+    ].filter(Boolean))]
   }
 
   clearSelection() {
