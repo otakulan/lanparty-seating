@@ -1,7 +1,7 @@
 defmodule LanpartyseatingWeb.Settings.ScannersLive do
   @moduledoc """
-  Settings page for external badge scanner management.
-  """
+             Settings page for external badge scanner management.
+             """
   use LanpartyseatingWeb, :live_view
   import LanpartyseatingWeb.Helpers, only: [format_relative_time: 1, format_changeset_errors: 1]
 
@@ -28,7 +28,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
       {:noreply,
        socket
        |> put_flash(:error, "Full admin access required")
-       |> push_navigate(to: ~p"/settings/seating", replace: true)}
+       |> push_navigate(to: ~p"/settings/seat-map", replace: true)}
     end
   end
 
@@ -180,12 +180,15 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
           {:ok, token} ->
             {:noreply,
              socket
-             |> push_event("ble_provision", %{
-               ssid: wifi_config.ssid,
-               password: wifi_config.password,
-               apiUrl: api_url,
-               apiToken: token,
-             })}
+             |> push_event(
+               "ble_provision",
+               %{
+                 ssid: wifi_config.ssid,
+                 password: wifi_config.password,
+                 apiUrl: api_url,
+                 apiToken: token,
+               }
+             )}
 
           {:error, _} ->
             {:noreply, put_flash(socket, :error, "Failed to generate provisioning token.")}

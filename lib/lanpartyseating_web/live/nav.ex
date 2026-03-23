@@ -6,6 +6,7 @@ defmodule LanpartyseatingWeb.Nav do
   defp public_menu do
     [
       {"Live Display", ~p"/"},
+      {"Seat Map", ~p"/map"},
       {"Stations", ~p"/stations"},
     ]
   end
@@ -13,7 +14,7 @@ defmodule LanpartyseatingWeb.Nav do
   defp admin_menu do
     [
       {"Tournaments", ~p"/tournaments"},
-      {"Settings", ~p"/settings/seating"},
+      {"Settings", ~p"/settings/seat-map"},
       {"Logs", ~p"/logs"},
       {"Maintenance", ~p"/maintenance"},
     ]
@@ -42,10 +43,14 @@ defmodule LanpartyseatingWeb.Nav do
       |> assign(admin_menu: admin_dropdown)
       |> assign(is_authenticated: is_authenticated)
       |> assign(is_user_auth: is_user_auth)
-      |> attach_hook(:set_nav_menu_active_path, :handle_params, fn
-        _params, url, socket ->
-          {:cont, assign(socket, nav_menu_active_path: URI.parse(url).path)}
-      end)
+      |> attach_hook(
+        :set_nav_menu_active_path,
+        :handle_params,
+        fn
+          _params, url, socket ->
+            {:cont, assign(socket, nav_menu_active_path: URI.parse(url).path)}
+        end
+      )
 
     {:cont, socket}
   end

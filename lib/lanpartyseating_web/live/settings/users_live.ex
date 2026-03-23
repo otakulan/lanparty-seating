@@ -1,8 +1,8 @@
 defmodule LanpartyseatingWeb.Settings.UsersLive do
   @moduledoc """
-  Settings page for admin user management.
-  Requires full user authentication (not badge auth).
-  """
+             Settings page for admin user management.
+             Requires full user authentication (not badge auth).
+             """
   use LanpartyseatingWeb, :live_view
   import LanpartyseatingWeb.Helpers, only: [format_datetime: 1, format_changeset_errors: 1]
 
@@ -25,7 +25,7 @@ defmodule LanpartyseatingWeb.Settings.UsersLive do
       {:noreply,
        socket
        |> put_flash(:error, "Full admin access required")
-       |> push_navigate(to: ~p"/settings/seating", replace: true)}
+       |> push_navigate(to: ~p"/settings/seat-map", replace: true)}
     end
   end
 

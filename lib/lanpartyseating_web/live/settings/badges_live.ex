@@ -1,9 +1,9 @@
 defmodule LanpartyseatingWeb.Settings.BadgesLive do
   @moduledoc """
-  Settings page for badge management.
-  Supports CSV import, paginated listing with search, and per-badge admin/ban toggles.
-  Requires full user authentication (not badge auth).
-  """
+             Settings page for badge management.
+             Supports CSV import, paginated listing with search, and per-badge admin/ban toggles.
+             Requires full user authentication (not badge auth).
+             """
   use LanpartyseatingWeb, :live_view
 
   alias Lanpartyseating.BadgesLogic
@@ -18,7 +18,8 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
   def mount(_params, _session, socket) do
     socket =
       socket
-      |> allow_upload(:csv_file,
+      |> allow_upload(
+        :csv_file,
         accept: ~w(.csv),
         max_entries: 1,
         max_file_size: 50_000_000
@@ -45,7 +46,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
       {:noreply,
        socket
        |> put_flash(:error, "Full admin access required")
-       |> push_navigate(to: ~p"/settings/seating", replace: true)}
+       |> push_navigate(to: ~p"/settings/seat-map", replace: true)}
     end
   end
 
@@ -237,10 +238,14 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
       {[entry], []} ->
         # Read file content into memory and parse/validate
         result =
-          consume_uploaded_entry(socket, entry, fn %{path: path} ->
-            content = File.read!(path)
-            {:ok, BadgesLogic.parse_and_validate_csv_content(content)}
-          end)
+          consume_uploaded_entry(
+            socket,
+            entry,
+            fn %{path: path} ->
+              content = File.read!(path)
+              {:ok, BadgesLogic.parse_and_validate_csv_content(content)}
+            end
+          )
 
         case result do
           {:ok, preview} ->

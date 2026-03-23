@@ -40,12 +40,21 @@ defmodule LanpartyseatingWeb.Router do
   scope "/", LanpartyseatingWeb do
     pipe_through(:browser)
 
+    live_session :seat_map_public,
+                 on_mount: [{LanpartyseatingWeb.UserAuth, :mount_current_scope}],
+                 layout: {LanpartyseatingWeb.Layouts, :map} do
+      live("/map", SeatMapLive, :interactive)
+      live("/map/editor", Settings.SeatMapLive, :poc)
+      live("/display/map", DisplaySeatMapLive, :kiosk)
+    end
+
     live_session :public,
-      on_mount: [
-        {LanpartyseatingWeb.UserAuth, :mount_current_scope},
-        LanpartyseatingWeb.Nav,
-      ],
-      layout: {LanpartyseatingWeb.Layouts, :live} do
+                 on_mount:
+                   [
+                     {LanpartyseatingWeb.UserAuth, :mount_current_scope},
+                     LanpartyseatingWeb.Nav,
+                   ],
+                 layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/", DisplayLive, :index)
       live("/stations", StationsLive, :index)
     end
@@ -73,19 +82,20 @@ defmodule LanpartyseatingWeb.Router do
     pipe_through([:browser, :require_authenticated_user])
 
     live_session :admin,
-      on_mount: [
-        {LanpartyseatingWeb.UserAuth, :mount_current_scope},
-        LanpartyseatingWeb.Nav,
-        {LanpartyseatingWeb.UserAuth, :ensure_authenticated},
-      ],
-      layout: {LanpartyseatingWeb.Layouts, :live} do
+                 on_mount:
+                   [
+                     {LanpartyseatingWeb.UserAuth, :mount_current_scope},
+                     LanpartyseatingWeb.Nav,
+                     {LanpartyseatingWeb.UserAuth, :ensure_authenticated},
+                   ],
+                 layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/tournaments", TournamentsLive, :index)
       live("/logs", LogsLive, :index)
       live("/maintenance", MaintenanceLive, :index)
 
       # Settings routes - separate LiveViews with shared sidebar navigation
-      live("/settings", Settings.SeatingLive, :index)
-      live("/settings/seating", Settings.SeatingLive, :seating)
+      live("/settings", Settings.SeatMapLive, :index)
+      live("/settings/seat-map", Settings.SeatMapLive, :index)
       live("/settings/reservations", Settings.ReservationsLive, :reservations)
       live("/settings/users", Settings.UsersLive, :users)
       live("/settings/badges", Settings.BadgesLive, :badges)
@@ -98,12 +108,13 @@ defmodule LanpartyseatingWeb.Router do
     pipe_through([:browser, :require_authenticated_user])
 
     live_session :user_profile,
-      on_mount: [
-        {LanpartyseatingWeb.UserAuth, :mount_current_scope},
-        LanpartyseatingWeb.Nav,
-        {LanpartyseatingWeb.UserAuth, :ensure_user_authenticated},
-      ],
-      layout: {LanpartyseatingWeb.Layouts, :live} do
+                 on_mount:
+                   [
+                     {LanpartyseatingWeb.UserAuth, :mount_current_scope},
+                     LanpartyseatingWeb.Nav,
+                     {LanpartyseatingWeb.UserAuth, :ensure_user_authenticated},
+                   ],
+                 layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/profile", ProfileLive, :index)
     end
   end
