@@ -69,14 +69,20 @@ export default class SeatMapRuntime {
     this.editable = Boolean(options.editable)
     this.stageContainer = this.el.querySelector("[data-seat-map-stage]")
     this.exportTarget = document.querySelector(`[data-seat-map-export-for="${this.el.id}"]`)
+    this.minimap = this.el.querySelector("[data-seat-map-minimap]")
+    this.minimapSvg = this.el.querySelector("[data-seat-map-minimap-svg]")
     this.selectedSeats = new Set()
     this.selectedObjects = new Set()
     this.timerNodes = new Map()
+    this.seatVisualClusters = new Map()
     this.backgroundImageSrc = null
     this.backgroundImageElement = null
     this.lastTouchCenter = null
     this.lastTouchDistance = 0
     this.renderTick = null
+    this.renderFrame = null
+    this.viewportFrame = null
+    this.pendingRenderReset = false
     this.state = this.parsePayload()
     this.detailLevel = this.computeDetailLevel(1)
   }
@@ -90,14 +96,38 @@ export default class SeatMapRuntime {
 
   update() {
     this.state = this.parsePayload()
-    this.renderScene(false)
+    this.scheduleRender(false)
   }
 
   destroy() {
     this.el.removeEventListener("click", this.handleCommandClick)
     window.removeEventListener("resize", this.handleResize)
     clearInterval(this.renderTick)
+    if (this.renderFrame) window.cancelAnimationFrame(this.renderFrame)
+    if (this.viewportFrame) window.cancelAnimationFrame(this.viewportFrame)
     if (this.stage) this.stage.destroy()
+  }
+
+  scheduleRender(resetView = false) {
+    this.pendingRenderReset = this.pendingRenderReset || resetView
+
+    if (this.renderFrame) return
+
+    this.renderFrame = window.requestAnimationFrame(() => {
+      const nextReset = this.pendingRenderReset
+      this.renderFrame = null
+      this.pendingRenderReset = false
+      this.renderScene(nextReset)
+    })
+  }
+
+  scheduleViewportSync() {
+    if (this.viewportFrame) return
+
+    this.viewportFrame = window.requestAnimationFrame(() => {
+      this.viewportFrame = null
+      this.updateMinimapViewport()
+    })
   }
 
   parsePayload() {
@@ -140,6 +170,7 @@ export default class SeatMapRuntime {
     this.stage.on("touchmove", (event) => this.handleTouchMove(event))
     this.stage.on("touchend", () => this.handleTouchEnd())
     this.stage.on("dragstart", () => this.handleStageDragStart())
+    this.stage.on("dragmove", () => this.scheduleViewportSync())
     this.stage.on("dragend", () => this.handleStageDragEnd())
     this.stage.on("click tap", (event) => {
       if (event.target === this.stage && this.editable) this.clearSelection()
@@ -178,6 +209,7 @@ export default class SeatMapRuntime {
   renderScene(resetView) {
     this.uniqueLayers().forEach((layer) => layer.destroyChildren())
     this.timerNodes = new Map()
+    this.seatVisualClusters = new Map()
 
     if (this.editable) {
       this.objectLayer.add(this.transformer)
@@ -190,12 +222,18 @@ export default class SeatMapRuntime {
     this.renderTeamLabels()
     this.updateExportTarget()
     this.updateCountdowns()
+    this.renderMinimap()
 
     if (resetView || !this.stage.scaleX()) {
       this.fitToStage(true)
     } else {
-      this.stage.batchDraw()
+      this.batchDrawLayers()
+      this.updateMinimapViewport()
     }
+  }
+
+  batchDrawLayers() {
+    this.uniqueLayers().forEach((layer) => layer.batchDraw())
   }
 
   computeDetailLevel(scale) {
@@ -491,7 +529,8 @@ export default class SeatMapRuntime {
         x: seat.x,
         y: seat.y,
         rotation: seat.rotation || 0,
-        draggable: this.editable
+        draggable: this.editable,
+        listening: this.editable
       })
 
       seatGroup.add(new Konva.Ellipse({
@@ -668,7 +707,7 @@ export default class SeatMapRuntime {
         return
       }
 
-      this.seatVisualLayer.add(seatGroup)
+      this.getSeatVisualCluster(seat, detail).add(seatGroup)
 
       if (this.mode !== "kiosk") {
         const hitTarget = new Konva.Rect({
@@ -685,6 +724,42 @@ export default class SeatMapRuntime {
         hitTarget.on("click tap", (event) => this.handleSeatInteraction(event, seat))
         this.seatHitLayer.add(hitTarget)
       }
+    })
+
+    this.finalizeSeatClusters(detail)
+  }
+
+  getSeatVisualCluster(seat, detail) {
+    const bucketSize = detail.spriteMode === "full" ? 520 : 720
+    const bucketX = Math.floor(seat.x / bucketSize)
+    const bucketY = Math.floor(seat.y / bucketSize)
+    const key = `${bucketX}:${bucketY}`
+
+    if (this.seatVisualClusters.has(key)) return this.seatVisualClusters.get(key)
+
+    const cluster = new Konva.Group({ listening: false })
+    this.seatVisualClusters.set(key, cluster)
+    this.seatVisualLayer.add(cluster)
+    return cluster
+  }
+
+  finalizeSeatClusters(detail) {
+    if (this.editable || detail.showSeatTimers) return
+
+    this.seatVisualClusters.forEach((cluster) => {
+      const rect = cluster.getClientRect({ skipShadow: false, skipStroke: false })
+
+      if (rect.width <= 0 || rect.height <= 0) return
+
+      cluster.cache({
+        x: rect.x - 24,
+        y: rect.y - 24,
+        width: rect.width + 48,
+        height: rect.height + 48,
+        pixelRatio: 1,
+        imageSmoothingEnabled: true,
+        drawBorder: false
+      })
     })
   }
 
@@ -766,7 +841,7 @@ export default class SeatMapRuntime {
   handleSeatInteraction(event, seat) {
     if (this.editable) {
       if (event.evt.shiftKey) {
-        if (this.selectedSeats.has(seat.seat_slot_id)) this.selectedSeats.delete(seat.seat_slot_id)
+      if (this.selectedSeats.has(seat.seat_slot_id)) this.selectedSeats.delete(seat.seat_slot_id)
         else this.selectedSeats.add(seat.seat_slot_id)
       } else {
         this.selectedSeats = new Set([seat.seat_slot_id])
@@ -774,7 +849,7 @@ export default class SeatMapRuntime {
       }
 
       this.transformer.visible(false)
-      this.renderScene(false)
+      this.scheduleRender(false)
       return
     }
 
@@ -810,7 +885,7 @@ export default class SeatMapRuntime {
     })
 
     node.scale({ x: 1, y: 1 })
-    this.renderScene(false)
+    this.scheduleRender(false)
   }
 
   syncSeatNode(node, seatSlotId) {
@@ -823,7 +898,7 @@ export default class SeatMapRuntime {
         rotation: Math.round(node.rotation())
       }
     })
-    this.renderScene(false)
+    this.scheduleRender(false)
   }
 
   executeCommand(command) {
@@ -883,7 +958,7 @@ export default class SeatMapRuntime {
         reservation_end_date: null
       }
     ]
-    this.renderScene(false)
+    this.scheduleRender(false)
   }
 
   addObject(type) {
@@ -902,7 +977,7 @@ export default class SeatMapRuntime {
     }
 
     this.state.objects = [...(this.state.objects || []), base]
-    this.renderScene(false)
+    this.scheduleRender(false)
   }
 
   createGroupFromSelection() {
@@ -916,7 +991,7 @@ export default class SeatMapRuntime {
         color: "#1d4ed8"
       }
     ]
-    this.renderScene(false)
+    this.scheduleRender(false)
   }
 
   deleteSelection() {
@@ -937,7 +1012,7 @@ export default class SeatMapRuntime {
       this.transformer.visible(false)
     }
 
-    this.renderScene(false)
+    this.scheduleRender(false)
   }
 
   updateExportTarget(selectText = false) {
@@ -971,7 +1046,10 @@ export default class SeatMapRuntime {
       x: center.x - contentPoint.x * clampedScale,
       y: center.y - contentPoint.y * clampedScale
     })
-    if (!this.syncDetailLevel()) this.stage.batchDraw()
+    if (!this.syncDetailLevel()) {
+      this.stage.batchDraw()
+      this.updateMinimapViewport()
+    }
   }
 
   fitToStage(resetPosition) {
@@ -989,7 +1067,10 @@ export default class SeatMapRuntime {
       })
     }
 
-    if (!this.syncDetailLevel()) this.stage.batchDraw()
+    if (!this.syncDetailLevel()) {
+      this.stage.batchDraw()
+      this.updateMinimapViewport()
+    }
   }
 
   viewportCenter() {
@@ -1021,7 +1102,10 @@ export default class SeatMapRuntime {
       x: pointer.x - pointTo.x * clampedScale,
       y: pointer.y - pointTo.y * clampedScale
     })
-    if (!this.syncDetailLevel()) this.stage.batchDraw()
+    if (!this.syncDetailLevel()) {
+      this.stage.batchDraw()
+      this.updateMinimapViewport()
+    }
   }
 
   handleTouchMove(event) {
@@ -1064,7 +1148,10 @@ export default class SeatMapRuntime {
 
       this.lastTouchCenter = center
       this.lastTouchDistance = distance
-      if (!this.syncDetailLevel()) this.stage.batchDraw()
+      if (!this.syncDetailLevel()) {
+        this.stage.batchDraw()
+        this.updateMinimapViewport()
+      }
     } else {
       this.stage.draggable(this.mode !== "kiosk")
     }
@@ -1091,6 +1178,7 @@ export default class SeatMapRuntime {
     if (this.seatLayer) this.seatLayer.batchDraw()
     if (this.seatHitLayer) this.seatHitLayer.batchDraw()
     if (this.editable) this.objectLayer.batchDraw()
+    this.updateMinimapViewport()
   }
 
   uniqueLayers() {
@@ -1111,7 +1199,55 @@ export default class SeatMapRuntime {
     this.selectedObjects.clear()
     this.transformer.nodes([])
     this.transformer.visible(false)
-    this.renderScene(false)
+    this.scheduleRender(false)
+  }
+
+  renderMinimap() {
+    if (!this.minimap || !this.minimapSvg || this.editable) return
+
+    const width = this.state.width || 1800
+    const height = this.state.height || 1100
+    const seatDots = (this.state.seats || []).map((seat) => {
+      const palette = STATUS_COLORS[seat.status] || STATUS_COLORS.available
+      return `<circle cx="${seat.x}" cy="${seat.y}" r="14" fill="${palette.fill}" fill-opacity="0.92" stroke="${palette.stroke}" stroke-width="6"></circle>`
+    }).join("")
+
+    const objectBlocks = (this.state.objects || [])
+      .filter((object) => object.type === "rect")
+      .map((object) => `<rect x="${object.x}" y="${object.y}" width="${object.width}" height="${object.height}" rx="18" fill="${object.fill || "#e9e3d8"}" fill-opacity="0.66" stroke="${object.stroke || "#bda98b"}" stroke-width="6"></rect>`)
+      .join("")
+
+    this.minimapSvg.setAttribute("viewBox", `0 0 ${width} ${height}`)
+    this.minimapSvg.innerHTML = `
+      <rect x="0" y="0" width="${width}" height="${height}" rx="36" fill="#faf7f1" stroke="#d4c6b1" stroke-width="14"></rect>
+      ${objectBlocks}
+      ${seatDots}
+      <rect data-seat-map-minimap-viewport x="0" y="0" width="0" height="0" rx="22" fill="rgba(255,255,255,0.12)" stroke="#2f4350" stroke-width="16"></rect>
+    `
+
+    this.updateMinimapViewport()
+  }
+
+  updateMinimapViewport() {
+    if (!this.minimap || !this.minimapSvg || this.editable) return
+
+    const showMinimap = this.detailLevel !== "full" || this.mode === "kiosk"
+    this.minimap.classList.toggle("hidden", !showMinimap)
+    if (!showMinimap) return
+
+    const viewport = this.minimapSvg.querySelector("[data-seat-map-minimap-viewport]")
+    if (!viewport) return
+
+    const scale = this.stage.scaleX() || 1
+    const x = Math.max(0, -this.stage.x() / scale)
+    const y = Math.max(0, -this.stage.y() / scale)
+    const width = Math.min((this.stage.width() / scale), this.state.width || 1800)
+    const height = Math.min((this.stage.height() / scale), this.state.height || 1100)
+
+    viewport.setAttribute("x", x)
+    viewport.setAttribute("y", y)
+    viewport.setAttribute("width", width)
+    viewport.setAttribute("height", height)
   }
 
   groupBounds(seats) {

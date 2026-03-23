@@ -25,6 +25,17 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
     >
       <div data-seat-map-stage class={[@stage_class || "h-full w-full"]}></div>
 
+      <div
+        data-seat-map-minimap
+        class="pointer-events-none absolute bottom-4 left-4 z-10 hidden rounded-[24px] border border-white/80 bg-white/78 p-3 shadow-[0_18px_50px_rgba(54,40,26,0.14)] backdrop-blur-xl"
+      >
+        <div class="mb-2 flex items-center justify-between gap-3">
+          <p class="text-[0.58rem] font-semibold uppercase tracking-[0.28em] text-[#8b6f52]">Overview</p>
+          <div class="h-2 w-2 rounded-full bg-[#86a89b]"></div>
+        </div>
+        <svg data-seat-map-minimap-svg class="h-28 w-40 overflow-hidden rounded-[16px] border border-[#e4d8c8]/80 bg-[rgba(255,255,255,0.55)]"></svg>
+      </div>
+
       <div :if={@toolbar != []} class="pointer-events-none absolute inset-x-4 top-4 z-10 flex justify-between gap-4">
         <div class="pointer-events-auto flex flex-wrap items-center gap-2 rounded-[28px] border border-white/80 bg-white/78 px-3 py-3 shadow-[0_20px_60px_rgba(54,40,26,0.14)] backdrop-blur-xl">
           {render_slot(@toolbar)}
