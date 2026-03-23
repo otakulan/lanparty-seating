@@ -78,6 +78,7 @@ export default class SeatMapRuntime {
     this.lastTouchDistance = 0
     this.renderTick = null
     this.state = this.parsePayload()
+    this.detailLevel = this.computeDetailLevel(1)
   }
 
   mount() {
@@ -197,6 +198,65 @@ export default class SeatMapRuntime {
     }
   }
 
+  computeDetailLevel(scale) {
+    if (this.editable) return "full"
+
+    const seatCount = (this.state.seats || []).length
+    const denseMap = seatCount >= 80
+
+    if (scale < (denseMap ? 0.62 : 0.48)) return "minimal"
+    if (scale < (denseMap ? 0.95 : 0.78)) return "medium"
+    return "full"
+  }
+
+  syncDetailLevel() {
+    const nextDetailLevel = this.computeDetailLevel(this.stage.scaleX() || 1)
+
+    if (nextDetailLevel === this.detailLevel) return false
+
+    this.detailLevel = nextDetailLevel
+    this.renderScene(false)
+    return true
+  }
+
+  detailConfig() {
+    switch (this.detailLevel) {
+      case "minimal":
+        return {
+          objectShadowOpacity: 0,
+          groupShadowOpacity: 0.18,
+          seatShadowOpacity: 0,
+          seatShadowBlur: 0,
+          showSeatLabels: false,
+          showSeatTimers: false,
+          showSeatChip: false,
+          spriteMode: "minimal"
+        }
+      case "medium":
+        return {
+          objectShadowOpacity: 0.28,
+          groupShadowOpacity: 0.36,
+          seatShadowOpacity: 0.22,
+          seatShadowBlur: 10,
+          showSeatLabels: true,
+          showSeatTimers: false,
+          showSeatChip: true,
+          spriteMode: "medium"
+        }
+      default:
+        return {
+          objectShadowOpacity: 0.8,
+          groupShadowOpacity: 0.8,
+          seatShadowOpacity: 0.75,
+          seatShadowBlur: 22,
+          showSeatLabels: true,
+          showSeatTimers: true,
+          showSeatChip: true,
+          spriteMode: "full"
+        }
+    }
+  }
+
   renderBackdrop() {
     const width = this.state.width || 1800
     const height = this.state.height || 1100
@@ -287,6 +347,8 @@ export default class SeatMapRuntime {
   }
 
   renderObjects() {
+    const detail = this.detailConfig()
+
     ;(this.state.objects || []).forEach((object) => {
       const id = object.id || randomId("object")
       const isText = object.type === "text"
@@ -324,7 +386,7 @@ export default class SeatMapRuntime {
           shadowColor: "rgba(15, 23, 42, 0.09)",
           shadowBlur: 24,
           shadowOffset: { x: 0, y: 10 },
-          shadowOpacity: 0.8,
+          shadowOpacity: detail.objectShadowOpacity,
           perfectDrawEnabled: false,
           listening: this.editable,
           draggable: this.editable
@@ -345,6 +407,8 @@ export default class SeatMapRuntime {
   }
 
   renderGroups() {
+    const detail = this.detailConfig()
+
     ;(this.state.groups || []).forEach((group) => {
       const memberSeats = (group.seat_slot_ids || [])
         .map((seatId) => (this.state.seats || []).find((seat) => seat.seat_slot_id === seatId))
@@ -367,7 +431,7 @@ export default class SeatMapRuntime {
         fill,
         shadowColor: this.transparentColor(group.color || "#1d4ed8", 0.14),
         shadowBlur: 22,
-        shadowOpacity: 0.8,
+        shadowOpacity: detail.groupShadowOpacity,
         perfectDrawEnabled: false,
         listening: false
       }))
@@ -404,7 +468,7 @@ export default class SeatMapRuntime {
           shadowColor: this.transparentColor(group.color || "#1d4ed8", 0.28),
           shadowBlur: 18,
           shadowOffset: { x: 0, y: 10 },
-          shadowOpacity: 0.7,
+          shadowOpacity: detail.groupShadowOpacity,
           perfectDrawEnabled: false
         }))
 
@@ -416,6 +480,8 @@ export default class SeatMapRuntime {
   }
 
   renderSeats() {
+    const detail = this.detailConfig()
+
     ;(this.state.seats || []).forEach((seat) => {
       const palette = STATUS_COLORS[seat.status] || STATUS_COLORS.available
       const seatWidth = seat.width || 78
@@ -434,92 +500,136 @@ export default class SeatMapRuntime {
         radiusX: seatWidth * 0.56,
         radiusY: 14,
         fill: this.transparentColor(palette.stroke, 0.16),
-        blurRadius: 12,
+        blurRadius: detail.seatShadowBlur,
+        opacity: detail.seatShadowOpacity > 0 ? 1 : 0,
         perfectDrawEnabled: false,
         listening: false
       }))
 
-      seatGroup.add(new Konva.Path({
-        data: COMPUTER_SHELL_PATH,
-        x: -32 * scale,
-        y: -32 * scale,
-        scaleX: scale,
-        scaleY: scale,
-        fillLinearGradientStartPoint: { x: 0, y: 0 },
-        fillLinearGradientEndPoint: { x: 64 * scale, y: 56 * scale },
-        fillLinearGradientColorStops: [0, palette.fillSecondary, 1, palette.fill],
-        stroke: this.selectedSeats.has(seat.seat_slot_id) ? palette.accent : palette.stroke,
-        strokeWidth: this.selectedSeats.has(seat.seat_slot_id) ? 3 : 2,
-        shadowColor: this.transparentColor(palette.stroke, 0.22),
-        shadowBlur: 22,
-        shadowOffset: { x: 0, y: 10 },
-        shadowOpacity: 0.75,
-        perfectDrawEnabled: false
-      }))
+      if (detail.spriteMode === "minimal") {
+        seatGroup.add(new Konva.Rect({
+          x: -seatWidth * 0.34,
+          y: -seatHeight * 0.3,
+          width: seatWidth * 0.68,
+          height: seatHeight * 0.52,
+          cornerRadius: 10,
+          fillLinearGradientStartPoint: { x: 0, y: 0 },
+          fillLinearGradientEndPoint: { x: seatWidth * 0.68, y: seatHeight * 0.52 },
+          fillLinearGradientColorStops: [0, palette.fillSecondary, 1, palette.fill],
+          stroke: palette.stroke,
+          strokeWidth: 1.6,
+          perfectDrawEnabled: false,
+          listening: false
+        }))
 
-      seatGroup.add(new Konva.Rect({
-        x: -seatWidth * 0.28,
-        y: -seatHeight * 0.31,
-        width: seatWidth * 0.56,
-        height: seatHeight * 0.3,
-        cornerRadius: 8,
-        fillLinearGradientStartPoint: { x: 0, y: 0 },
-        fillLinearGradientEndPoint: { x: seatWidth * 0.56, y: seatHeight * 0.3 },
-        fillLinearGradientColorStops: [0, this.transparentColor("#ffffff", 0.82), 1, palette.accent],
-        stroke: this.transparentColor("#ffffff", 0.5),
-        strokeWidth: 1.5,
-        perfectDrawEnabled: false,
-        listening: false
-      }))
+        seatGroup.add(new Konva.Rect({
+          x: -seatWidth * 0.22,
+          y: -seatHeight * 0.18,
+          width: seatWidth * 0.44,
+          height: seatHeight * 0.18,
+          cornerRadius: 5,
+          fill: this.transparentColor("#ffffff", 0.75),
+          stroke: this.transparentColor("#ffffff", 0.45),
+          strokeWidth: 0.8,
+          perfectDrawEnabled: false,
+          listening: false
+        }))
 
-      seatGroup.add(new Konva.Path({
-        data: KEYBOARD_PATH,
-        x: -32 * scale,
-        y: -32 * scale,
-        scaleX: scale,
-        scaleY: scale,
-        fill: this.transparentColor("#ffffff", 0.45),
-        stroke: this.transparentColor(palette.stroke, 0.35),
-        strokeWidth: 1.3,
-        perfectDrawEnabled: false,
-        listening: false
-      }))
+        seatGroup.add(new Konva.Circle({
+          x: seatWidth * 0.16,
+          y: -seatHeight * 0.05,
+          radius: 3.2,
+          fill: palette.accent,
+          perfectDrawEnabled: false,
+          listening: false
+        }))
+      } else {
+        seatGroup.add(new Konva.Path({
+          data: COMPUTER_SHELL_PATH,
+          x: -32 * scale,
+          y: -32 * scale,
+          scaleX: scale,
+          scaleY: scale,
+          fillLinearGradientStartPoint: { x: 0, y: 0 },
+          fillLinearGradientEndPoint: { x: 64 * scale, y: 56 * scale },
+          fillLinearGradientColorStops: [0, palette.fillSecondary, 1, palette.fill],
+          stroke: this.selectedSeats.has(seat.seat_slot_id) ? palette.accent : palette.stroke,
+          strokeWidth: this.selectedSeats.has(seat.seat_slot_id) ? 3 : 2,
+          shadowColor: this.transparentColor(palette.stroke, 0.22),
+          shadowBlur: detail.seatShadowBlur,
+          shadowOffset: { x: 0, y: 10 },
+          shadowOpacity: detail.seatShadowOpacity,
+          perfectDrawEnabled: false
+        }))
 
-      seatGroup.add(new Konva.Circle({
-        x: seatWidth * 0.24,
-        y: -seatHeight * 0.1,
-        radius: 3.8,
-        fill: palette.accent,
-        perfectDrawEnabled: false,
-        listening: false
-      }))
+        seatGroup.add(new Konva.Rect({
+          x: -seatWidth * 0.28,
+          y: -seatHeight * 0.31,
+          width: seatWidth * 0.56,
+          height: seatHeight * 0.3,
+          cornerRadius: 8,
+          fillLinearGradientStartPoint: { x: 0, y: 0 },
+          fillLinearGradientEndPoint: { x: seatWidth * 0.56, y: seatHeight * 0.3 },
+          fillLinearGradientColorStops: [0, this.transparentColor("#ffffff", 0.82), 1, palette.accent],
+          stroke: this.transparentColor("#ffffff", 0.5),
+          strokeWidth: 1.5,
+          perfectDrawEnabled: false,
+          listening: false
+        }))
 
-      seatGroup.add(new Konva.Rect({
-        x: -seatWidth * 0.35,
-        y: seatHeight * 0.26,
-        width: seatWidth * 0.7,
-        height: 18,
-        cornerRadius: 999,
-        fill: this.transparentColor("#ffffff", 0.88),
-        stroke: this.transparentColor(palette.stroke, 0.16),
-        strokeWidth: 1,
-        perfectDrawEnabled: false,
-        listening: false
-      }))
+        seatGroup.add(new Konva.Path({
+          data: KEYBOARD_PATH,
+          x: -32 * scale,
+          y: -32 * scale,
+          scaleX: scale,
+          scaleY: scale,
+          fill: this.transparentColor("#ffffff", 0.45),
+          stroke: this.transparentColor(palette.stroke, 0.35),
+          strokeWidth: 1.3,
+          perfectDrawEnabled: false,
+          listening: false
+        }))
 
-      seatGroup.add(new Konva.Text({
-        x: -seatWidth * 0.35,
-        y: seatHeight * 0.29,
-        width: seatWidth * 0.7,
-        align: "center",
-        text: seat.label,
-        fontSize: 10.5,
-        fontStyle: "700",
-        fontFamily: DISPLAY_FONT,
-        fill: "#31424d",
-        perfectDrawEnabled: false,
-        listening: false
-      }))
+        seatGroup.add(new Konva.Circle({
+          x: seatWidth * 0.24,
+          y: -seatHeight * 0.1,
+          radius: 3.8,
+          fill: palette.accent,
+          perfectDrawEnabled: false,
+          listening: false
+        }))
+      }
+
+      if (detail.showSeatChip) {
+        seatGroup.add(new Konva.Rect({
+          x: -seatWidth * 0.35,
+          y: seatHeight * 0.26,
+          width: seatWidth * 0.7,
+          height: 18,
+          cornerRadius: 999,
+          fill: this.transparentColor("#ffffff", 0.88),
+          stroke: this.transparentColor(palette.stroke, 0.16),
+          strokeWidth: 1,
+          perfectDrawEnabled: false,
+          listening: false
+        }))
+      }
+
+      if (detail.showSeatLabels) {
+        seatGroup.add(new Konva.Text({
+          x: -seatWidth * 0.35,
+          y: seatHeight * 0.29,
+          width: seatWidth * 0.7,
+          align: "center",
+          text: seat.label,
+          fontSize: detail.spriteMode === "medium" ? 9.5 : 10.5,
+          fontStyle: "700",
+          fontFamily: DISPLAY_FONT,
+          fill: detail.showSeatChip ? "#31424d" : this.transparentColor("#ffffff", 0.92),
+          perfectDrawEnabled: false,
+          listening: false
+        }))
+      }
 
       const timerNode = new Konva.Text({
         x: -seatWidth * 0.3,
@@ -536,9 +646,11 @@ export default class SeatMapRuntime {
         visible: false
       })
 
-      seatGroup.add(timerNode)
+      if (detail.showSeatTimers) {
+        seatGroup.add(timerNode)
+      }
 
-      if (seat.reservation_end_date) {
+      if (detail.showSeatTimers && seat.reservation_end_date) {
         this.timerNodes.set(seat.seat_slot_id, {
           node: timerNode,
           reservationEndDate: seat.reservation_end_date
@@ -859,7 +971,7 @@ export default class SeatMapRuntime {
       x: center.x - contentPoint.x * clampedScale,
       y: center.y - contentPoint.y * clampedScale
     })
-    this.stage.batchDraw()
+    if (!this.syncDetailLevel()) this.stage.batchDraw()
   }
 
   fitToStage(resetPosition) {
@@ -877,7 +989,7 @@ export default class SeatMapRuntime {
       })
     }
 
-    this.stage.batchDraw()
+    if (!this.syncDetailLevel()) this.stage.batchDraw()
   }
 
   viewportCenter() {
@@ -909,7 +1021,7 @@ export default class SeatMapRuntime {
       x: pointer.x - pointTo.x * clampedScale,
       y: pointer.y - pointTo.y * clampedScale
     })
-    this.stage.batchDraw()
+    if (!this.syncDetailLevel()) this.stage.batchDraw()
   }
 
   handleTouchMove(event) {
@@ -952,7 +1064,7 @@ export default class SeatMapRuntime {
 
       this.lastTouchCenter = center
       this.lastTouchDistance = distance
-      this.stage.batchDraw()
+      if (!this.syncDetailLevel()) this.stage.batchDraw()
     } else {
       this.stage.draggable(this.mode !== "kiosk")
     }
