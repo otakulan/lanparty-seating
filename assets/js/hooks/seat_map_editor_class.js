@@ -93,11 +93,12 @@ export default class SeatMapEditor extends SeatMapBase {
     this.lastTouchCenter = null
     this.lastTouchDistance = 0
     this.renderFrame = null
-    this.isDragging = false
+    this.isMarqueeActive = false
     this.marqueeRect = null
     this.marqueeStartPos = null
     this.marqueeStartPosTransformed = null
     this.lastSelectionModifier = null
+    this.isPanning = false
   }
   
   mount() {
@@ -111,7 +112,7 @@ export default class SeatMapEditor extends SeatMapBase {
       container: this.stageContainer,
       width: this.stageContainer.clientWidth,
       height: this.stageContainer.clientHeight,
-      draggable: true
+      draggable: false
     })
     
     this.backgroundLayer = new Konva.Layer({ listening: false })
@@ -143,12 +144,16 @@ export default class SeatMapEditor extends SeatMapBase {
     this.stage.on("touchmove", (event) => this.handleTouchMove(event))
     this.stage.on("touchend", () => this.handleTouchEnd())
     this.stage.on("click tap", (event) => this.handleStageClick(event))
-    this.stage.on("dragstart", () => this.handleDragStart())
-    this.stage.on("dragend", () => this.handleDragEnd())
     
     this.stage.on("mousedown", (event) => {
+      if (event.evt.altKey) {
+        this.isPanning = true
+        this.stage.draggable(true)
+        return
+      }
+      
       if (event.target === this.stage && event.evt.button === 0) {
-        this.isDragging = true
+        this.isMarqueeActive = true
         this.lastSelectionModifier = event.evt.ctrlKey ? 'ctrl' : event.evt.metaKey ? 'meta' : event.evt.shiftKey ? 'shift' : null
         const pos = this.stage.getPointerPosition()
         this.marqueeStartPos = pos
@@ -160,26 +165,47 @@ export default class SeatMapEditor extends SeatMapBase {
     })
     
     this.stage.on("mousemove", (event) => {
-      if (this.isDragging && this.marqueeStartPos && event.target === this.stage) {
+      if (this.isMarqueeActive && this.marqueeStartPos && event.target === this.stage) {
         this.handleMarqueeMove(event)
       }
     })
     
-    this.stage.on("mouseup", (event) => {
-      if (this.isDragging && this.marqueeStartPos) {
+    this.stage.on("mouseup mouseleave", (event) => {
+      if (this.isMarqueeActive) {
         this.handleMarqueeEnd()
       }
-      this.isDragging = false
+      this.isMarqueeActive = false
+      
+      if (this.isPanning) {
+        this.isPanning = false
+        this.stage.draggable(false)
+      }
     })
     
-    this.stageContainer.addEventListener("keydown", (e) => {
-      if (e.key === "Delete" || e.key === "Backspace") {
+    const handleKeyDown = (e) => {
+      if (e.key === "Alt") {
+        this.stage.draggable(true)
+      }
+      if (e.key === "Escape") {
+        this.clearSelection()
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && !e.target.closest('input, textarea')) {
         if (this.selectedSeats.size > 0 || this.selectedObjects.size > 0) {
           e.preventDefault()
           this.deleteSelection()
         }
       }
-    })
+    }
+    
+    const handleKeyUp = (e) => {
+      if (e.key === "Alt") {
+        this.stage.draggable(false)
+      }
+    }
+    
+    this.stageContainer.addEventListener("keydown", handleKeyDown)
+    this.stageContainer.addEventListener("keyup", handleKeyUp)
+    this.keyHandler = { keydown: handleKeyDown, keyup: handleKeyUp }
     
     this.handleResize = () => {
       this.stage.width(this.stageContainer.clientWidth)
@@ -206,6 +232,10 @@ export default class SeatMapEditor extends SeatMapBase {
   destroy() {
     this.el.removeEventListener("click", this.handleCommandClick)
     window.removeEventListener("resize", this.handleResize)
+    if (this.keyHandler) {
+      this.stageContainer.removeEventListener("keydown", this.keyHandler.keydown)
+      this.stageContainer.removeEventListener("keyup", this.keyHandler.keyup)
+    }
     if (this.renderFrame) window.cancelAnimationFrame(this.renderFrame)
     if (this.stage) this.stage.destroy()
   }
@@ -500,7 +530,7 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   handleStageClick(event) {
-    if (this.isDragging && this.marqueeRect) {
+    if (this.isMarqueeActive && this.marqueeRect) {
       return
     }
     
@@ -610,7 +640,7 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   handleMarqueeMove(event) {
-    if (!this.isDragging) return
+    if (!this.isMarqueeActive) return
     
     const pos = this.stage.getPointerPosition()
     if (!pos) return
@@ -642,9 +672,9 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   handleMarqueeEnd() {
-    if (!this.isDragging) return
+    if (!this.isMarqueeActive) return
     
-    this.isDragging = false
+    this.isMarqueeActive = false
     
     if (this.marqueeRect) {
       const marqueeBox = {
