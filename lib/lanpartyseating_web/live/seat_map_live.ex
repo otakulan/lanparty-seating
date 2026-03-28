@@ -133,7 +133,14 @@ defmodule LanpartyseatingWeb.SeatMapLive do
   defp status_text("reserved"), do: "Reserved"
   defp status_text("unavailable"), do: "Offline"
   defp status_text("tournament"), do: "Tournament"
-  defp status_text(status), do: String.capitalize(status)
+  defp status_text(:available), do: "Available"
+  defp status_text(:occupied), do: "Occupied"
+  defp status_text(:reserved), do: "Reserved"
+  defp status_text(:unavailable), do: "Offline"
+  defp status_text(:tournament), do: "Tournament"
+  defp status_text(status) when is_atom(status), do: status_text(Atom.to_string(status))
+  defp status_text(status) when is_binary(status), do: String.capitalize(status)
+  defp status_text(_), do: "Unknown"
 
   defp format_iso_datetime(iso_value) do
     case DateTime.from_iso8601(iso_value) do
