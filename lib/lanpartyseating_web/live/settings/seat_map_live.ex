@@ -199,128 +199,142 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
   defp settings_render(assigns) do
     ~H"""
-    <div class="drawer lg:drawer-open" style="font-family: 'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;">
+    <div class="drawer lg:drawer-open" style="font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;">
       <input id="settings-drawer" type="checkbox" class="drawer-toggle" />
 
-      <div class="drawer-content bg-[linear-gradient(180deg,#faf6ef_0%,#f4eee2_100%)]">
-        <div class="lg:hidden navbar border-b border-base-300 bg-base-200">
-          <label for="settings-drawer" class="btn btn-square btn-ghost">
+      <div class="drawer-content min-h-screen bg-[#0d1117]">
+        <div class="lg:hidden navbar border-b border-[#30363d] bg-[#161b22]">
+          <label for="settings-drawer" class="btn btn-square btn-ghost text-[#8b949e]">
             <Icons.menu />
           </label>
-          <span class="text-lg font-bold">Seat Map Editor</span>
+          <span class="text-lg font-bold text-[#e6edf3]">Seat Map Editor</span>
         </div>
 
         <div class="p-4 lg:p-6">
           <div class="mb-6 max-w-5xl">
-            <.page_header
-              title="Seat Map Editor"
-              subtitle="Proof of concept editor / Editeur preuve de concept"
-            />
-
-            <div class="rounded-[28px] border border-white/70 bg-white/78 p-5 text-sm leading-6 text-[#4a5963] shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-              <p>
-                This editor is intentionally non-collaborative. If a newer draft exists, saving is rejected as stale.
-                / Cet editeur n'est pas collaboratif. Si un brouillon plus recent existe, l'enregistrement est refuse comme obsolete.
-              </p>
-              <p class="mt-2">
-                One published seat map remains active at a time. Draft deletion and named drafts will be part of the backend phase.
-                / Une seule carte publiee reste active a la fois. La suppression et le nommage des brouillons viendront dans la phase backend.
-              </p>
+            <div class="mb-2 flex items-center gap-3">
+              <div class="h-2 w-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+              <h1 class="text-2xl font-bold text-[#e6edf3]">SEAT MAP EDITOR</h1>
             </div>
+            <p class="text-sm text-[#8b949e]">
+              Proof of concept editor / Editeur preuve de concept
+            </p>
           </div>
 
           <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
             <SeatMap.canvas id="editor-seat-map" hook="SeatMapEditor" payload={@map_payload} mode="editor" class="min-h-[72svh]">
               <:toolbar>
-                <button type="button" data-seat-map-command="add-seat" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Add Seat</button>
-                <button type="button" data-seat-map-command="add-table" class="btn btn-sm rounded-2xl border-0 bg-[#e8d6bd] text-[#5d4637] shadow-none hover:bg-[#dcc5a5]">Add Table</button>
-                <button type="button" data-seat-map-command="add-label" class="btn btn-sm rounded-2xl border-0 bg-[#dce8f5] text-[#2d557a] shadow-none hover:bg-[#cdddf0]">Add Label</button>
-                <button type="button" data-seat-map-command="group-selection" class="btn btn-sm rounded-2xl border-0 bg-[#d9ead4] text-[#2f5732] shadow-none hover:bg-[#cadec5]">Group Seats</button>
-                <button type="button" data-seat-map-command="delete-selection" class="btn btn-sm rounded-2xl border-0 bg-[#f5dde1] text-[#8a3240] shadow-none hover:bg-[#efced5]">Delete</button>
-                <button type="button" data-seat-map-command="zoom-out" class="btn btn-sm rounded-2xl border-0 bg-[#f3ece1] text-[#31424d] shadow-none hover:bg-[#eadfce]">-</button>
-                <button type="button" data-seat-map-command="zoom-in" class="btn btn-sm rounded-2xl border-0 bg-[#f3ece1] text-[#31424d] shadow-none hover:bg-[#eadfce]">+</button>
-                <button type="button" data-seat-map-command="reset-view" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Reset</button>
-                <button type="button" phx-click="reset_draft" class="btn btn-sm rounded-2xl border-0 bg-[#ece7e0] text-[#4d5c66] shadow-none hover:bg-[#e1dad2]">Reset Draft</button>
-                <button type="button" data-seat-map-command="save-draft" class="btn btn-sm rounded-2xl border-0 bg-[#2d9c8f] text-white shadow-none hover:bg-[#218175]">Save Draft</button>
-                <button type="button" data-seat-map-command="publish-preview" class="btn btn-sm rounded-2xl border-0 bg-[#c27a35] text-white shadow-none hover:bg-[#aa6728]">Publish</button>
+                <button type="button" data-seat-map-command="add-seat" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#22c55e] hover:bg-[#22c55e]/10 hover:border-[#22c55e]">+ Seat</button>
+                <button type="button" data-seat-map-command="add-table" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#06b6d4] hover:bg-[#06b6d4]/10 hover:border-[#06b6d4]">+ Table</button>
+                <button type="button" data-seat-map-command="add-label" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#f59e0b] hover:bg-[#f59e0b]/10 hover:border-[#f59e0b]">+ Label</button>
+                <button type="button" data-seat-map-command="group-selection" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10 hover:border-[#8b949e]">
+                  Group
+                </button>
+                <button type="button" data-seat-map-command="delete-selection" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#ef4444] hover:bg-[#ef4444]/10 hover:border-[#ef4444]">
+                  DEL
+                </button>
+                <div class="mx-2 h-4 w-px bg-[#30363d]"></div>
+                <button type="button" data-seat-map-command="zoom-out" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">-</button>
+                <button type="button" data-seat-map-command="zoom-in" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">+</button>
+                <button type="button" data-seat-map-command="reset-view" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">Reset</button>
+                <div class="mx-2 h-4 w-px bg-[#30363d]"></div>
+                <button type="button" phx-click="reset_draft" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">Reset</button>
+                <button type="button" data-seat-map-command="save-draft" class="btn btn-sm border border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20">Save</button>
+                <button type="button" data-seat-map-command="publish-preview" class="btn btn-sm border border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b]/20">Publish</button>
               </:toolbar>
 
               <:details>
-                <div class="space-y-3 text-sm text-[#40505a]">
-                  <div>
-                    <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Draft</p>
-                    <h2 class="text-[2rem] font-semibold tracking-[-0.05em] text-[#26333b]">{@draft_name}</h2>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-2">
+                    <div class="h-2 w-2 rounded-full bg-[#06b6d4] shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+                    <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Draft</span>
                   </div>
-                  <div class="grid grid-cols-2 gap-3 text-xs uppercase tracking-[0.16em] text-[#6d7a81]">
-                    <div class="rounded-2xl bg-[#f6f0e6] px-3 py-2">Revision {@revision}</div>
-                    <div class="rounded-2xl bg-[#edf4f1] px-3 py-2">Published rev {@published_revision}</div>
+                  <h2 class="text-xl font-bold text-[#e6edf3]">{@draft_name}</h2>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="rounded border border-[#30363d] bg-[#161b22] px-3 py-2">
+                      <span class="text-[0.6rem] uppercase tracking-[0.15em] text-[#8b949e]">Rev</span>
+                      <span class="ml-2 font-mono text-[#22c55e]">{@revision}</span>
+                    </div>
+                    <div class="rounded border border-[#30363d] bg-[#161b22] px-3 py-2">
+                      <span class="text-[0.6rem] uppercase tracking-[0.15em] text-[#8b949e]">Published</span>
+                      <span class="ml-2 font-mono text-[#06b6d4]">{@published_revision}</span>
+                    </div>
                   </div>
                   <%= if @stale_draft do %>
-                    <p class="rounded-2xl bg-[#fff3e8] px-3 py-2 text-[#8c5614]">Draft is stale / Brouillon obsolete</p>
+                    <div class="rounded border border-[#f59e0b]/50 bg-[#f59e0b]/10 px-3 py-2 text-sm text-[#fbbf24]">
+                      Draft is stale / Brouillon obsolete
+                    </div>
                   <% end %>
-                  <p>Shift-click multiple seats, then create a group. / Maj-clic pour plusieurs postes, puis creez un groupe.</p>
+                  <p class="text-xs text-[#8b949e]">Shift-click to multi-select / Maj-clic pour selection multiple</p>
                 </div>
               </:details>
             </SeatMap.canvas>
 
             <div class="space-y-4">
-              <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-                <div class="flex items-center justify-between gap-3">
-                  <div>
-                    <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Draft JSON</p>
-                    <h3 class="text-xl font-black tracking-tight text-[#26333b]">Export / Exporter</h3>
-                  </div>
+              <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="h-1.5 w-1.5 rounded-full bg-[#22c55e]"></div>
+                  <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Export JSON</span>
                 </div>
-
                 <textarea
                   data-seat-map-export-for="editor-seat-map"
-                  class="textarea textarea-bordered mt-4 h-[30rem] w-full font-mono text-xs leading-5"
+                  class="textarea textarea-bordered h-[20rem] w-full border-[#30363d] bg-[#0d1117] font-mono text-xs text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
                   readonly
                 >{@export_json}</textarea>
               </div>
 
-              <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-                <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Import JSON</p>
-                <h3 class="text-xl font-black tracking-tight text-[#26333b]">Import / Importer</h3>
-
-                <.form for={%{}} as={:import} phx-submit="import_json" class="mt-4 space-y-3">
-                  <textarea name="import[json]" class="textarea textarea-bordered h-48 w-full font-mono text-xs leading-5"><%= @import_json %></textarea>
-                  <button type="submit" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Apply Import</button>
+              <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="h-1.5 w-1.5 rounded-full bg-[#06b6d4]"></div>
+                  <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Import JSON</span>
+                </div>
+                <.form for={%{}} as={:import} phx-submit="import_json" class="space-y-3">
+                  <textarea
+                    name="import[json]"
+                    class="textarea textarea-bordered h-36 w-full border-[#30363d] bg-[#0d1117] font-mono text-xs text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
+                  ><%= @import_json %></textarea>
+                  <button type="submit" class="btn btn-sm w-full border border-[#06b6d4] bg-[#06b6d4]/10 text-[#06b6d4] hover:bg-[#06b6d4]/20">Import</button>
                 </.form>
               </div>
 
-              <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-                <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Background</p>
-                <h3 class="text-xl font-black tracking-tight text-[#26333b]">SVG / Image</h3>
-
-                <.form for={%{}} as={:background} phx-submit="save_background" class="mt-4 space-y-3">
-                  <select name="background[kind]" class="select select-bordered w-full">
+              <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="h-1.5 w-1.5 rounded-full bg-[#f59e0b]"></div>
+                  <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Background</span>
+                </div>
+                <.form for={%{}} as={:background} phx-submit="save_background" class="space-y-3">
+                  <select name="background[kind]" class="select select-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] focus:border-[#06b6d4]">
                     <option value="none" selected={@background_kind == "none"}>None</option>
                     <option value="svg" selected={@background_kind == "svg"}>Inline SVG / SVG data</option>
                     <option value="image" selected={@background_kind == "image"}>Image URL / data URL</option>
                   </select>
-                  <textarea name="background[value]" class="textarea textarea-bordered h-36 w-full font-mono text-xs leading-5"><%= @background_value %></textarea>
-                  <button type="submit" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Update Background</button>
+                  <textarea
+                    name="background[value]"
+                    class="textarea textarea-bordered h-24 w-full border-[#30363d] bg-[#0d1117] font-mono text-xs text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
+                  ><%= @background_value %></textarea>
+                  <button type="submit" class="btn btn-sm w-full border border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b]/20">Update</button>
                 </.form>
               </div>
 
-              <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-                <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Tournament Teams</p>
-                <h3 class="text-xl font-black tracking-tight text-[#26333b]">Assignments / Attributions</h3>
+              <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="h-1.5 w-1.5 rounded-full bg-[#22c55e]"></div>
+                  <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Tournament Teams</span>
+                </div>
 
-                <div class="mt-4 space-y-2">
+                <div class="space-y-2 mb-4">
                   <%= for assignment <- @map_payload["team_assignments"] || [] do %>
-                    <div class="flex items-center justify-between gap-3 rounded-2xl bg-[#f6f2ea] px-3 py-3 text-sm">
+                    <div class="flex items-center justify-between gap-3 rounded border border-[#30363d] bg-[#0d1117] px-3 py-2">
                       <div>
-                        <p class="font-semibold text-[#26333b]">{assignment["team_name"]}</p>
-                        <p class="text-xs uppercase tracking-[0.16em] text-[#7b6d5d]">{assignment["tournament_name"]} · {assignment["group_id"]}</p>
+                        <p class="font-semibold text-[#e6edf3]">{assignment["team_name"]}</p>
+                        <p class="text-xs text-[#8b949e]">{assignment["tournament_name"]} · {assignment["group_id"]}</p>
                       </div>
                       <button
                         type="button"
                         phx-click="remove_team_assignment"
                         phx-value-group_id={assignment["group_id"]}
                         phx-value-tournament_id={assignment["tournament_id"]}
-                        class="btn btn-xs rounded-full border-0 bg-[#f5dde1] text-[#8a3240] shadow-none hover:bg-[#efced5]"
+                        class="btn btn-xs border border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444]/20"
                       >
                         Remove
                       </button>
@@ -328,28 +342,38 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
                   <% end %>
 
                   <%= if Enum.empty?(@map_payload["team_assignments"] || []) do %>
-                    <p class="rounded-2xl bg-[#f6f2ea] px-3 py-3 text-sm text-[#5a6871]">No tournament team labels yet / Aucune etiquette d'equipe pour le moment.</p>
+                    <p class="rounded border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#8b949e]">No tournament team labels yet</p>
                   <% end %>
                 </div>
 
-                <.form for={%{}} as={:team_assignment} phx-submit="assign_team" class="mt-4 space-y-3">
-                  <select name="team_assignment[group_id]" class="select select-bordered w-full">
+                <.form for={%{}} as={:team_assignment} phx-submit="assign_team" class="space-y-3">
+                  <select name="team_assignment[group_id]" class="select select-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] focus:border-[#06b6d4]">
                     <%= for group <- @map_payload["groups"] || [] do %>
                       <option value={group["id"]} selected={@team_assignment_form["group_id"] == group["id"]}>{group["name"]}</option>
                     <% end %>
                   </select>
-                  <select name="team_assignment[tournament_id]" class="select select-bordered w-full">
+                  <select name="team_assignment[tournament_id]" class="select select-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] focus:border-[#06b6d4]">
                     <%= for tournament <- @tournaments do %>
                       <option value={tournament.id} selected={to_string(@team_assignment_form["tournament_id"]) == to_string(tournament.id)}>{tournament.name}</option>
                     <% end %>
                   </select>
-                  <input name="team_assignment[team_name]" value={@team_assignment_form["team_name"]} class="input input-bordered w-full" placeholder="Team name" />
-                  <input name="team_assignment[color]" value={@team_assignment_form["color"]} class="input input-bordered w-full" placeholder="#2563eb" />
-                  <button type="submit" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Save Team Label</button>
+                  <input
+                    name="team_assignment[team_name]"
+                    value={@team_assignment_form["team_name"]}
+                    class="input input-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
+                    placeholder="Team name"
+                  />
+                  <input
+                    name="team_assignment[color]"
+                    value={@team_assignment_form["color"]}
+                    class="input input-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
+                    placeholder="#2563eb"
+                  />
+                  <button type="submit" class="btn btn-sm w-full border border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20">Save</button>
                 </.form>
               </div>
 
-              <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
+              <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
                 <SeatMap.legend />
               </div>
             </div>
@@ -368,113 +392,126 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
   defp poc_render(assigns) do
     ~H"""
     <div
-      class="min-h-screen bg-[linear-gradient(180deg,#faf6ef_0%,#f4eee2_100%)] px-4 py-4 md:px-6 md:py-6"
-      style="font-family: 'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;"
+      class="min-h-screen bg-[#0d1117] px-4 py-4 md:px-6 md:py-6"
+      style="font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;"
     >
       <div class="mb-6 max-w-5xl">
-        <.page_header
-          title="Seat Map Editor"
-          subtitle="Public proof of concept / Preuve de concept publique"
-        />
-
-        <div class="rounded-[28px] border border-white/75 bg-white/80 p-5 text-sm leading-6 text-[#4a5963] shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-          <p>
-            Konva editor proof of concept with local draft state, pushEvent-driven save/publish actions, and stale draft messaging.
-            / Preuve de concept Konva avec brouillon local, sauvegarde/publication via pushEvent et message de brouillon obsolete.
-          </p>
+        <div class="mb-2 flex items-center gap-3">
+          <div class="h-2 w-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+          <h1 class="text-2xl font-bold text-[#e6edf3]">SEAT MAP EDITOR</h1>
         </div>
+        <p class="text-sm text-[#8b949e]">
+          Public proof of concept / Preuve de concept publique
+        </p>
       </div>
 
       <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <SeatMap.canvas id="editor-seat-map" hook="SeatMapEditor" payload={@map_payload} mode="editor" class="min-h-[78svh]">
           <:toolbar>
-            <button type="button" data-seat-map-command="add-seat" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Add Seat</button>
-            <button type="button" data-seat-map-command="add-table" class="btn btn-sm rounded-2xl border-0 bg-[#e8d6bd] text-[#5d4637] shadow-none hover:bg-[#dcc5a5]">Add Table</button>
-            <button type="button" data-seat-map-command="add-label" class="btn btn-sm rounded-2xl border-0 bg-[#dce8f5] text-[#2d557a] shadow-none hover:bg-[#cdddf0]">Add Label</button>
-            <button type="button" data-seat-map-command="group-selection" class="btn btn-sm rounded-2xl border-0 bg-[#d9ead4] text-[#2f5732] shadow-none hover:bg-[#cadec5]">Group Seats</button>
-            <button type="button" data-seat-map-command="delete-selection" class="btn btn-sm rounded-2xl border-0 bg-[#f5dde1] text-[#8a3240] shadow-none hover:bg-[#efced5]">Delete</button>
-            <button type="button" data-seat-map-command="zoom-out" class="btn btn-sm rounded-2xl border-0 bg-[#f3ece1] text-[#31424d] shadow-none hover:bg-[#eadfce]">-</button>
-            <button type="button" data-seat-map-command="zoom-in" class="btn btn-sm rounded-2xl border-0 bg-[#f3ece1] text-[#31424d] shadow-none hover:bg-[#eadfce]">+</button>
-            <button type="button" data-seat-map-command="reset-view" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Reset</button>
-            <button type="button" phx-click="reset_draft" class="btn btn-sm rounded-2xl border-0 bg-[#ece7e0] text-[#4d5c66] shadow-none hover:bg-[#e1dad2]">Reset Draft</button>
-            <button type="button" data-seat-map-command="save-draft" class="btn btn-sm rounded-2xl border-0 bg-[#2d9c8f] text-white shadow-none hover:bg-[#218175]">Save Draft</button>
-            <button type="button" data-seat-map-command="publish-preview" class="btn btn-sm rounded-2xl border-0 bg-[#c27a35] text-white shadow-none hover:bg-[#aa6728]">Publish</button>
+            <button type="button" data-seat-map-command="add-seat" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#22c55e] hover:bg-[#22c55e]/10 hover:border-[#22c55e]">+ Seat</button>
+            <button type="button" data-seat-map-command="add-table" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#06b6d4] hover:bg-[#06b6d4]/10 hover:border-[#06b6d4]">+ Table</button>
+            <button type="button" data-seat-map-command="add-label" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#f59e0b] hover:bg-[#f59e0b]/10 hover:border-[#f59e0b]">+ Label</button>
+            <button type="button" data-seat-map-command="group-selection" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10 hover:border-[#8b949e]">Group</button>
+            <button type="button" data-seat-map-command="delete-selection" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#ef4444] hover:bg-[#ef4444]/10 hover:border-[#ef4444]">DEL</button>
+            <div class="mx-2 h-4 w-px bg-[#30363d]"></div>
+            <button type="button" data-seat-map-command="zoom-out" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">-</button>
+            <button type="button" data-seat-map-command="zoom-in" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">+</button>
+            <button type="button" data-seat-map-command="reset-view" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">Reset</button>
+            <div class="mx-2 h-4 w-px bg-[#30363d]"></div>
+            <button type="button" phx-click="reset_draft" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">Reset</button>
+            <button type="button" data-seat-map-command="save-draft" class="btn btn-sm border border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20">Save</button>
+            <button type="button" data-seat-map-command="publish-preview" class="btn btn-sm border border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b]/20">Publish</button>
           </:toolbar>
 
           <:details>
-            <div class="space-y-3 text-sm text-[#40505a]">
-              <div>
-                <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Draft</p>
-                <h2 class="text-[2rem] font-semibold tracking-[-0.05em] text-[#26333b]">{@draft_name}</h2>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div class="h-2 w-2 rounded-full bg-[#06b6d4] shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+                <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Draft</span>
               </div>
-              <div class="grid grid-cols-2 gap-3 text-xs uppercase tracking-[0.16em] text-[#6d7a81]">
-                <div class="rounded-2xl bg-[#f6f0e6] px-3 py-2">Revision {@revision}</div>
-                <div class="rounded-2xl bg-[#edf4f1] px-3 py-2">Published rev {@published_revision}</div>
+              <h2 class="text-xl font-bold text-[#e6edf3]">{@draft_name}</h2>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="rounded border border-[#30363d] bg-[#161b22] px-3 py-2">
+                  <span class="text-[0.6rem] uppercase tracking-[0.15em] text-[#8b949e]">Rev</span>
+                  <span class="ml-2 font-mono text-[#22c55e]">{@revision}</span>
+                </div>
+                <div class="rounded border border-[#30363d] bg-[#161b22] px-3 py-2">
+                  <span class="text-[0.6rem] uppercase tracking-[0.15em] text-[#8b949e]">Published</span>
+                  <span class="ml-2 font-mono text-[#06b6d4]">{@published_revision}</span>
+                </div>
               </div>
               <%= if @stale_draft do %>
-                <p class="rounded-2xl bg-[#fff3e8] px-3 py-2 text-[#8c5614]">Draft is stale / Brouillon obsolete</p>
+                <div class="rounded border border-[#f59e0b]/50 bg-[#f59e0b]/10 px-3 py-2 text-sm text-[#fbbf24]">
+                  Draft is stale / Brouillon obsolete
+                </div>
               <% end %>
-              <p>Shift-click multiple seats, then create a group. / Maj-clic pour plusieurs postes, puis creez un groupe.</p>
+              <p class="text-xs text-[#8b949e]">Shift-click to multi-select / Maj-clic pour selection multiple</p>
             </div>
           </:details>
         </SeatMap.canvas>
 
         <div class="space-y-4">
-          <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-            <div>
-              <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Draft JSON</p>
-              <h3 class="text-xl font-black tracking-tight text-[#26333b]">Export / Exporter</h3>
+          <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="h-1.5 w-1.5 rounded-full bg-[#22c55e]"></div>
+              <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Export JSON</span>
             </div>
-
             <textarea
               data-seat-map-export-for="editor-seat-map"
-              class="textarea textarea-bordered mt-4 h-[30rem] w-full font-mono text-xs leading-5"
+              class="textarea textarea-bordered h-[20rem] w-full border-[#30363d] bg-[#0d1117] font-mono text-xs text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
               readonly
             >{@export_json}</textarea>
           </div>
 
-          <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-            <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Import JSON</p>
-            <h3 class="text-xl font-black tracking-tight text-[#26333b]">Import / Importer</h3>
-
-            <.form for={%{}} as={:import} phx-submit="import_json" class="mt-4 space-y-3">
-              <textarea name="import[json]" class="textarea textarea-bordered h-48 w-full font-mono text-xs leading-5"><%= @import_json %></textarea>
-              <button type="submit" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Apply Import</button>
+          <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="h-1.5 w-1.5 rounded-full bg-[#06b6d4]"></div>
+              <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Import JSON</span>
+            </div>
+            <.form for={%{}} as={:import} phx-submit="import_json" class="space-y-3">
+              <textarea name="import[json]" class="textarea textarea-bordered h-36 w-full border-[#30363d] bg-[#0d1117] font-mono text-xs text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"><%= @import_json %></textarea>
+              <button type="submit" class="btn btn-sm w-full border border-[#06b6d4] bg-[#06b6d4]/10 text-[#06b6d4] hover:bg-[#06b6d4]/20">Import</button>
             </.form>
           </div>
 
-          <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-            <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Background</p>
-            <h3 class="text-xl font-black tracking-tight text-[#26333b]">SVG / Image</h3>
-
-            <.form for={%{}} as={:background} phx-submit="save_background" class="mt-4 space-y-3">
-              <select name="background[kind]" class="select select-bordered w-full">
+          <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="h-1.5 w-1.5 rounded-full bg-[#f59e0b]"></div>
+              <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Background</span>
+            </div>
+            <.form for={%{}} as={:background} phx-submit="save_background" class="space-y-3">
+              <select name="background[kind]" class="select select-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] focus:border-[#06b6d4]">
                 <option value="none" selected={@background_kind == "none"}>None</option>
                 <option value="svg" selected={@background_kind == "svg"}>Inline SVG / SVG data</option>
                 <option value="image" selected={@background_kind == "image"}>Image URL / data URL</option>
               </select>
-              <textarea name="background[value]" class="textarea textarea-bordered h-36 w-full font-mono text-xs leading-5"><%= @background_value %></textarea>
-              <button type="submit" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Update Background</button>
+              <textarea
+                name="background[value]"
+                class="textarea textarea-bordered h-24 w-full border-[#30363d] bg-[#0d1117] font-mono text-xs text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
+              ><%= @background_value %></textarea>
+              <button type="submit" class="btn btn-sm w-full border border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b]/20">Update</button>
             </.form>
           </div>
 
-          <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
-            <p class="text-[0.68rem] uppercase tracking-[0.24em] text-[#7b6d5d]">Tournament Teams</p>
-            <h3 class="text-xl font-black tracking-tight text-[#26333b]">Assignments / Attributions</h3>
+          <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="h-1.5 w-1.5 rounded-full bg-[#22c55e]"></div>
+              <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Tournament Teams</span>
+            </div>
 
-            <div class="mt-4 space-y-2">
+            <div class="space-y-2 mb-4">
               <%= for assignment <- @map_payload["team_assignments"] || [] do %>
-                <div class="flex items-center justify-between gap-3 rounded-2xl bg-[#f6f2ea] px-3 py-3 text-sm">
+                <div class="flex items-center justify-between gap-3 rounded border border-[#30363d] bg-[#0d1117] px-3 py-2">
                   <div>
-                    <p class="font-semibold text-[#26333b]">{assignment["team_name"]}</p>
-                    <p class="text-xs uppercase tracking-[0.16em] text-[#7b6d5d]">{assignment["tournament_name"]} · {assignment["group_id"]}</p>
+                    <p class="font-semibold text-[#e6edf3]">{assignment["team_name"]}</p>
+                    <p class="text-xs text-[#8b949e]">{assignment["tournament_name"]} · {assignment["group_id"]}</p>
                   </div>
                   <button
                     type="button"
                     phx-click="remove_team_assignment"
                     phx-value-group_id={assignment["group_id"]}
                     phx-value-tournament_id={assignment["tournament_id"]}
-                    class="btn btn-xs rounded-full border-0 bg-[#f5dde1] text-[#8a3240] shadow-none hover:bg-[#efced5]"
+                    class="btn btn-xs border border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444]/20"
                   >
                     Remove
                   </button>
@@ -482,28 +519,38 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
               <% end %>
 
               <%= if Enum.empty?(@map_payload["team_assignments"] || []) do %>
-                <p class="rounded-2xl bg-[#f6f2ea] px-3 py-3 text-sm text-[#5a6871]">No tournament team labels yet / Aucune etiquette d'equipe pour le moment.</p>
+                <p class="rounded border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#8b949e]">No tournament team labels yet</p>
               <% end %>
             </div>
 
-            <.form for={%{}} as={:team_assignment} phx-submit="assign_team" class="mt-4 space-y-3">
-              <select name="team_assignment[group_id]" class="select select-bordered w-full">
+            <.form for={%{}} as={:team_assignment} phx-submit="assign_team" class="space-y-3">
+              <select name="team_assignment[group_id]" class="select select-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] focus:border-[#06b6d4]">
                 <%= for group <- @map_payload["groups"] || [] do %>
                   <option value={group["id"]} selected={@team_assignment_form["group_id"] == group["id"]}>{group["name"]}</option>
                 <% end %>
               </select>
-              <select name="team_assignment[tournament_id]" class="select select-bordered w-full">
+              <select name="team_assignment[tournament_id]" class="select select-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] focus:border-[#06b6d4]">
                 <%= for tournament <- @tournaments do %>
                   <option value={tournament.id} selected={to_string(@team_assignment_form["tournament_id"]) == to_string(tournament.id)}>{tournament.name}</option>
                 <% end %>
               </select>
-              <input name="team_assignment[team_name]" value={@team_assignment_form["team_name"]} class="input input-bordered w-full" placeholder="Team name" />
-              <input name="team_assignment[color]" value={@team_assignment_form["color"]} class="input input-bordered w-full" placeholder="#2563eb" />
-              <button type="submit" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Save Team Label</button>
+              <input
+                name="team_assignment[team_name]"
+                value={@team_assignment_form["team_name"]}
+                class="input input-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
+                placeholder="Team name"
+              />
+              <input
+                name="team_assignment[color]"
+                value={@team_assignment_form["color"]}
+                class="input input-bordered w-full border-[#30363d] bg-[#0d1117] text-[#8b949e] placeholder:text-[#6e7681] focus:border-[#06b6d4]"
+                placeholder="#2563eb"
+              />
+              <button type="submit" class="btn btn-sm w-full border border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20">Save</button>
             </.form>
           </div>
 
-          <div class="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_70px_rgba(60,47,31,0.08)] backdrop-blur-xl">
+          <div class="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
             <SeatMap.legend />
           </div>
         </div>
