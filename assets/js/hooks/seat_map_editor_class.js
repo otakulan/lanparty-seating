@@ -93,6 +93,11 @@ export default class SeatMapEditor extends SeatMapBase {
     this.lastTouchCenter = null
     this.lastTouchDistance = 0
     this.renderFrame = null
+    this.isDragging = false
+    this.marqueeRect = null
+    this.marqueeStartPos = null
+    this.marqueeStartPosTransformed = null
+    this.lastSelectionModifier = null
   }
   
   mount() {
@@ -140,6 +145,41 @@ export default class SeatMapEditor extends SeatMapBase {
     this.stage.on("click tap", (event) => this.handleStageClick(event))
     this.stage.on("dragstart", () => this.handleDragStart())
     this.stage.on("dragend", () => this.handleDragEnd())
+    
+    this.stage.on("mousedown", (event) => {
+      if (event.target === this.stage && event.evt.button === 0) {
+        this.isDragging = true
+        this.lastSelectionModifier = event.evt.ctrlKey ? 'ctrl' : event.evt.metaKey ? 'meta' : event.evt.shiftKey ? 'shift' : null
+        const pos = this.stage.getPointerPosition()
+        this.marqueeStartPos = pos
+        this.marqueeStartPosTransformed = pos ? {
+          x: (pos.x - this.stage.x()) / this.stage.scaleX(),
+          y: (pos.y - this.stage.y()) / this.stage.scaleY()
+        } : null
+      }
+    })
+    
+    this.stage.on("mousemove", (event) => {
+      if (this.isDragging && this.marqueeStartPos && event.target === this.stage) {
+        this.handleMarqueeMove(event)
+      }
+    })
+    
+    this.stage.on("mouseup", (event) => {
+      if (this.isDragging && this.marqueeStartPos) {
+        this.handleMarqueeEnd()
+      }
+      this.isDragging = false
+    })
+    
+    this.stageContainer.addEventListener("keydown", (e) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (this.selectedSeats.size > 0 || this.selectedObjects.size > 0) {
+          e.preventDefault()
+          this.deleteSelection()
+        }
+      }
+    })
     
     this.handleResize = () => {
       this.stage.width(this.stageContainer.clientWidth)
@@ -460,6 +500,10 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   handleStageClick(event) {
+    if (this.isDragging && this.marqueeRect) {
+      return
+    }
+    
     if (event.target === this.stage) {
       this.clearSelection()
     }
@@ -468,7 +512,9 @@ export default class SeatMapEditor extends SeatMapBase {
   handleSeatClick(event, seat) {
     event.cancelBubble = true
     
-    if (event.evt.shiftKey) {
+    const isMultiSelect = event.evt.shiftKey || event.evt.ctrlKey || event.evt.metaKey
+    
+    if (isMultiSelect) {
       if (this.selectedSeats.has(seat.seat_slot_id)) {
         this.selectedSeats.delete(seat.seat_slot_id)
       } else {
@@ -485,10 +531,27 @@ export default class SeatMapEditor extends SeatMapBase {
   
   handleObjectSelection(event, node) {
     event.cancelBubble = true
-    this.selectedObjects = new Set([node.getAttr("objectId")])
-    this.selectedSeats.clear()
-    this.transformer.nodes([node])
-    this.transformer.visible(true)
+    
+    const isMultiSelect = event.evt.shiftKey || event.evt.ctrlKey || event.evt.metaKey
+    const objectId = node.getAttr("objectId")
+    
+    if (isMultiSelect) {
+      if (this.selectedObjects.has(objectId)) {
+        this.selectedObjects.delete(objectId)
+        const currentNodes = this.transformer.nodes()
+        this.transformer.nodes(currentNodes.filter(n => n !== node))
+      } else {
+        this.selectedObjects.add(objectId)
+        this.transformer.nodes([...this.transformer.nodes(), node])
+      }
+      this.selectedSeats.clear()
+    } else {
+      this.selectedObjects = new Set([objectId])
+      this.selectedSeats.clear()
+      this.transformer.nodes([node])
+    }
+    
+    this.transformer.visible(this.selectedObjects.size > 0)
     this.objectLayer.batchDraw()
   }
   
@@ -530,6 +593,132 @@ export default class SeatMapEditor extends SeatMapBase {
     this.transformer.nodes([])
     this.transformer.visible(false)
     this.scheduleRender(false)
+  }
+  
+  handleSelectionStart(event) {
+    if (event.evt.button !== 0 && event.evt.touches?.length !== 1) return
+    if (event.target !== this.stage && event.target.parent !== this.seatLayer) return
+    
+    const pos = this.stage.getPointerPosition()
+    if (!pos) return
+    
+    this.isMarqueeSelecting = true
+    this.marqueeStartPos = {
+      x: (pos.x - this.stage.x()) / this.stage.scaleX(),
+      y: (pos.y - this.stage.y()) / this.stage.scaleY()
+    }
+  }
+  
+  handleMarqueeMove(event) {
+    if (!this.isDragging) return
+    
+    const pos = this.stage.getPointerPosition()
+    if (!pos) return
+    
+    const currentPos = {
+      x: (pos.x - this.stage.x()) / this.stage.scaleX(),
+      y: (pos.y - this.stage.y()) / this.stage.scaleY()
+    }
+    
+    if (!this.marqueeRect) {
+      this.marqueeRect = new Konva.Rect({
+        fill: "rgba(6, 182, 212, 0.15)",
+        stroke: THEME.accentCyan,
+        strokeWidth: 2,
+        dash: [4, 4],
+        listening: false
+      })
+      this.overlayLayer.add(this.marqueeRect)
+    }
+    
+    const startPos = this.marqueeStartPosTransformed || currentPos
+    const x = Math.min(startPos.x, currentPos.x)
+    const y = Math.min(startPos.y, currentPos.y)
+    const width = Math.abs(currentPos.x - startPos.x)
+    const height = Math.abs(currentPos.y - startPos.y)
+    
+    this.marqueeRect.setAttrs({ x, y, width, height })
+    this.overlayLayer.batchDraw()
+  }
+  
+  handleMarqueeEnd() {
+    if (!this.isDragging) return
+    
+    this.isDragging = false
+    
+    if (this.marqueeRect) {
+      const marqueeBox = {
+        x: this.marqueeRect.x(),
+        y: this.marqueeRect.y(),
+        width: this.marqueeRect.width(),
+        height: this.marqueeRect.height()
+      }
+      
+      if (marqueeBox.width > 5 && marqueeBox.height > 5) {
+        this.selectSeatsInRect(marqueeBox)
+      }
+      
+      this.marqueeRect.destroy()
+      this.marqueeRect = null
+      this.overlayLayer.batchDraw()
+    }
+    
+    this.marqueeStartPos = null
+    this.marqueeStartPosTransformed = null
+    this.lastSelectionModifier = null
+  }
+  
+  selectSeatsInRect(rect) {
+    const isCtrlOrMeta = this.lastSelectionModifier === 'ctrl' || this.lastSelectionModifier === 'meta'
+    
+    if (!isCtrlOrMeta) {
+      this.selectedSeats.clear()
+      this.selectedObjects.clear()
+    }
+    
+    (this.state.seats || []).forEach((seat) => {
+      const seatBounds = {
+        x: seat.x - SEAT_WIDTH / 2,
+        y: seat.y - SEAT_HEIGHT / 2,
+        width: SEAT_WIDTH,
+        height: SEAT_HEIGHT
+      }
+      
+      if (this.rectanglesIntersect(rect, seatBounds)) {
+        if (isCtrlOrMeta && this.selectedSeats.has(seat.seat_slot_id)) {
+          this.selectedSeats.delete(seat.seat_slot_id)
+        } else {
+          this.selectedSeats.add(seat.seat_slot_id)
+        }
+      }
+    })
+    
+    (this.state.objects || []).forEach((obj) => {
+      const objBounds = {
+        x: obj.x,
+        y: obj.y,
+        width: obj.width || 100,
+        height: obj.height || 60
+      }
+      
+      if (this.rectanglesIntersect(rect, objBounds)) {
+        if (isCtrlOrMeta && this.selectedObjects.has(obj.id)) {
+          this.selectedObjects.delete(obj.id)
+        } else {
+          this.selectedObjects.add(obj.id)
+        }
+      }
+    })
+    
+    this.transformer.visible(false)
+    this.scheduleRender(false)
+  }
+  
+  rectanglesIntersect(a, b) {
+    return !(a.x + a.width < b.x ||
+              b.x + b.width < a.x ||
+              a.y + a.height < b.y ||
+              b.y + b.height < a.y)
   }
   
   executeCommand(command) {
