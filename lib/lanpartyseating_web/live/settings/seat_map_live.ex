@@ -18,7 +18,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
      socket
      |> assign(:page_title, "Seat Map Editor")
      |> assign_editor_payload(payload)
-     |> assign(:stale_draft, false)}
+     |> assign(:stale_draft, false)
+     |> assign(:ignore_stale_until_next_render, false)}
   end
 
   def handle_event("save_draft_preview", %{"map" => %{"revision" => revision} = map}, socket) do
@@ -30,6 +31,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
          socket
          |> assign_editor_payload(payload)
          |> assign(:stale_draft, false)
+         |> assign(:ignore_stale_until_next_render, true)
          |> put_flash(:info, "Draft saved / Brouillon enregistre")}
 
       {:error, :stale_draft} ->
@@ -172,12 +174,16 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
   def handle_info({:seat_map_updated, _payload}, socket) do
     payload = load_editor_payload()
-    stale_draft = payload["revision"] != socket.assigns.revision
+
+    stale_draft =
+      payload["revision"] != socket.assigns.revision and
+        not socket.assigns[:ignore_stale_until_next_render]
 
     socket =
       socket
       |> assign(:published_revision, payload["published_revision"] || socket.assigns.published_revision)
       |> assign(:stale_draft, stale_draft)
+      |> assign(:ignore_stale_until_next_render, false)
 
     socket =
       if stale_draft do
