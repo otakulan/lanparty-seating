@@ -35,71 +35,83 @@ defmodule LanpartyseatingWeb.SeatMapLive do
 
   def render(assigns) do
     ~H"""
-    <div
-      class="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f5efe5_0%,#efe6d8_38%,#e9e1d5_100%)] text-[#21313c]"
-      style="font-family: 'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;"
-    >
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.78),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(134,168,155,0.16),transparent_26%),linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.35)_48%,transparent_100%)]">
-      </div>
-
-      <div class="relative h-screen p-4 md:p-6">
+    <div class="min-h-screen bg-[#0d1117]">
+      <div class="h-screen p-3 md:p-4">
         <SeatMap.canvas id="interactive-seat-map" hook="SeatMapCanvas" payload={@map_payload} mode="view" class="h-full">
           <:toolbar>
-            <div class="flex flex-wrap items-center gap-3 lg:gap-5">
-              <div class="pr-1">
-                <p class="text-[0.65rem] uppercase tracking-[0.32em] text-[#967552]">Interactive room map</p>
-                <h1 class="text-[1.55rem] font-semibold tracking-[-0.04em] text-[#26333c]">LAN Party Seating</h1>
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex items-center gap-2">
+                <div class="h-2 w-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+                <div>
+                  <p class="text-[0.6rem] uppercase tracking-[0.2em] text-[#8b949e]">Interactive</p>
+                  <h1 class="text-lg font-bold text-[#e6edf3]">LAN Party Seating</h1>
+                </div>
               </div>
 
-              <div class="hidden h-10 w-px bg-[#ddd2c1] lg:block"></div>
+              <div class="h-6 w-px bg-[#30363d]"></div>
 
               <div class="flex items-center gap-2">
-                <button type="button" data-seat-map-command="zoom-out" class="btn btn-sm rounded-2xl border-0 bg-[#f3ece1] text-[#31424d] shadow-none hover:bg-[#eadfce]">-</button>
-                <button type="button" data-seat-map-command="zoom-in" class="btn btn-sm rounded-2xl border-0 bg-[#f3ece1] text-[#31424d] shadow-none hover:bg-[#eadfce]">+</button>
-                <button type="button" data-seat-map-command="reset-view" class="btn btn-sm rounded-2xl border-0 bg-[#2f4350] text-white shadow-none hover:bg-[#24343e]">Reset / Recentrer</button>
+                <button type="button" data-seat-map-command="zoom-out" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">-</button>
+                <button type="button" data-seat-map-command="zoom-in" class="btn btn-sm border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:bg-[#8b949e]/10">+</button>
+                <button type="button" data-seat-map-command="reset-view" class="btn btn-sm border border-[#06b6d4] bg-[#06b6d4]/10 text-[#06b6d4] hover:bg-[#06b6d4]/20">Reset</button>
               </div>
 
-              <SeatMap.legend class="hidden xl:flex" />
+              <SeatMap.legend class="hidden lg:flex" />
             </div>
           </:toolbar>
 
           <:details>
             <%= if @selected_seat do %>
               <div class="space-y-3">
-                <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center justify-between gap-3">
                   <div>
-                    <p class="text-[0.68rem] uppercase tracking-[0.28em] text-[#8d7357]">Poste / Seat</p>
-                    <h2 class="text-4xl font-semibold tracking-[-0.05em] text-[#24313a]">{@selected_seat["label"]}</h2>
+                    <div class="flex items-center gap-2">
+                      <div class="h-1.5 w-1.5 rounded-full bg-[#06b6d4]"></div>
+                      <span class="text-[0.6rem] uppercase tracking-[0.2em] text-[#8b949e]">Seat</span>
+                    </div>
+                    <h2 class="text-3xl font-bold text-[#e6edf3]">{@selected_seat["label"]}</h2>
                   </div>
-                  <span class="rounded-full bg-[#f4ece1] px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#5c5043]">
-                    {String.capitalize(@selected_seat["status"])}
+                  <span class={[
+                    "rounded border px-2 py-1 text-xs font-mono uppercase tracking-wider",
+                    status_classes(@selected_seat["status"])
+                  ]}>
+                    {status_text(@selected_seat["status"])}
                   </span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                  <div class="rounded-2xl bg-[#f7f2ea] px-3 py-2 text-[#55646d]">
-                    <p class="text-[0.62rem] uppercase tracking-[0.22em] text-[#9a7d5d]">PC asset</p>
-                    <p class="mt-1 font-semibold text-[#31414b]">{@selected_seat["pc_asset_code"]}</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="rounded border border-[#30363d] bg-[#161b22] p-2">
+                    <p class="text-[0.6rem] uppercase tracking-[0.15em] text-[#8b949e]">PC Asset</p>
+                    <p class="font-mono text-[#22c55e]">{@selected_seat["pc_asset_code"]}</p>
                   </div>
-                  <div class="rounded-2xl bg-[#f1f5f5] px-3 py-2 text-[#55646d]">
-                    <p class="text-[0.62rem] uppercase tracking-[0.22em] text-[#6a8b87]">Host</p>
-                    <p class="mt-1 truncate font-semibold text-[#31414b]">{@selected_seat["pc_hostname"]}</p>
+                  <div class="rounded border border-[#30363d] bg-[#161b22] p-2">
+                    <p class="text-[0.6rem] uppercase tracking-[0.15em] text-[#8b949e]">Host</p>
+                    <p class="font-mono text-[#06b6d4] truncate">{@selected_seat["pc_hostname"]}</p>
                   </div>
                 </div>
 
                 <%= if @selected_seat["reservation_end_date"] do %>
-                  <p class="rounded-2xl bg-[#fff6df] px-3 py-2 text-sm font-semibold text-[#8a5a0a]">
-                    Reservee jusqu'a / Reserved until {format_iso_datetime(@selected_seat["reservation_end_date"])}
-                  </p>
+                  <div class="rounded border border-[#f59e0b]/50 bg-[#f59e0b]/10 p-2">
+                    <p class="text-xs text-[#fbbf24]">
+                      Reserved until / Reservee jusqu'a {format_iso_datetime(@selected_seat["reservation_end_date"])}
+                    </p>
+                  </div>
                 <% else %>
-                  <p class="rounded-2xl bg-[#f4f6f7] px-3 py-2 text-sm text-[#52616a]">Touchez un poste pour le detail / Tap any seat for details.</p>
+                  <div class="rounded border border-[#30363d] bg-[#161b22] p-2">
+                    <p class="text-xs text-[#8b949e]">Tap a seat for details / Touchez un poste pour le detail</p>
+                  </div>
                 <% end %>
               </div>
             <% else %>
               <div class="space-y-3">
-                <p class="text-[0.68rem] uppercase tracking-[0.28em] text-[#8d7357]">Carte interactive / Interactive map</p>
-                <h2 class="text-[2rem] font-semibold leading-tight tracking-[-0.05em] text-[#24313a]">Touchez un poste pour voir son etat.</h2>
-                <p class="text-sm leading-6 text-[#52616a]">Tap a station to inspect its state, countdown, and assigned PC, then pinch or scroll to explore the room.</p>
+                <div class="flex items-center gap-2">
+                  <div class="h-2 w-2 rounded-full bg-[#06b6d4] shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+                  <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Interactive Map</span>
+                </div>
+                <h2 class="text-xl font-bold text-[#e6edf3]">Tap a seat to inspect</h2>
+                <p class="text-xs text-[#8b949e]">
+                  Tap any station to see its status, countdown, and assigned PC. Pinch or scroll to explore the room.
+                </p>
               </div>
             <% end %>
           </:details>
@@ -109,11 +121,29 @@ defmodule LanpartyseatingWeb.SeatMapLive do
     """
   end
 
+  defp status_classes("available"), do: "border-[#22c55e] bg-[#22c55e]/10 text-[#4ade80]"
+  defp status_classes("occupied"), do: "border-[#f59e0b] bg-[#f59e0b]/10 text-[#fbbf24]"
+  defp status_classes("reserved"), do: "border-[#6b7280] bg-[#6b7280]/10 text-[#9ca3af]"
+  defp status_classes("unavailable"), do: "border-[#ef4444] bg-[#ef4444]/10 text-[#f87171]"
+  defp status_classes("tournament"), do: "border-[#06b6d4] bg-[#06b6d4]/10 text-[#22d3ee]"
+  defp status_classes(_), do: "border-[#30363d] bg-[#161b22] text-[#8b949e]"
+
+  defp status_text("available"), do: "Available"
+  defp status_text("occupied"), do: "Occupied"
+  defp status_text("reserved"), do: "Reserved"
+  defp status_text("unavailable"), do: "Offline"
+  defp status_text("tournament"), do: "Tournament"
+  defp status_text(status), do: String.capitalize(status)
+
   defp format_iso_datetime(iso_value) do
     case DateTime.from_iso8601(iso_value) do
-      {:ok, datetime, _offset} -> format_datetime(datetime)
+      {:ok, datetime, _offset} -> format_time_only(datetime)
       _ -> iso_value
     end
+  end
+
+  defp format_time_only(datetime) do
+    Calendar.strftime(datetime, "%H:%M")
   end
 
   defp load_published_payload do

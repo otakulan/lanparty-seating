@@ -1,241 +1,173 @@
 defmodule LanpartyseatingWeb.DisplayLive do
   use LanpartyseatingWeb, :live_view
   alias Lanpartyseating.PubSub
-  alias Lanpartyseating.TournamentsLogic
-  alias Lanpartyseating.SettingsLogic
-  alias Lanpartyseating.StationLogic
-
-  defp assign_stations(socket, station_list) do
-    {stations, {columns, rows}} = StationLogic.stations_by_xy(station_list)
-
-    # Calculate stats for "next available" indicator
-    station_values = Map.values(stations)
-    total_stations = length(station_values)
-    available_count = Enum.count(station_values, fn s -> s.status == :available end)
-
-    # Find next available station (earliest end_date among occupied)
-    next_available =
-      station_values
-      |> Enum.filter(fn s -> s.status == :occupied and length(s.station.reservations) > 0 end)
-      |> Enum.map(fn s ->
-        reservation = List.first(s.station.reservations)
-        %{station_number: s.station.station_number, end_date: reservation.end_date}
-      end)
-      |> Enum.min_by(fn r -> DateTime.to_unix(r.end_date) end, fn -> nil end)
-
-    socket
-    |> assign(:columns, columns)
-    |> assign(:rows, rows)
-    |> assign(:stations, stations)
-    |> assign(:total_stations, total_stations)
-    |> assign(:available_count, available_count)
-    |> assign(:next_available, next_available)
-  end
+  alias Lanpartyseating.SeatMapsLogic
+  alias LanpartyseatingWeb.Components.SeatMap
 
   def mount(_params, _session, socket) do
-    settings = SettingsLogic.get_settings()
-    {:ok, station_list} = StationLogic.get_all_stations()
-    {:ok, tournaments} = TournamentsLogic.get_upcoming_tournaments()
-
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(PubSub, "station_update")
-      Phoenix.PubSub.subscribe(PubSub, "tournament_update")
+      Phoenix.PubSub.subscribe(PubSub, "seat_map_update")
     end
 
-    socket =
-      socket
-      |> assign(:colpad, settings.column_padding)
-      |> assign(:rowpad, settings.row_padding)
-      |> assign_stations(station_list)
-      |> assign(:tournaments, tournaments)
+    payload = load_published_payload()
+    total = Enum.count(payload.seats)
+    available = Enum.count(payload.seats, &(&1["status"] == "available"))
 
-    {:ok, socket}
+    {:ok,
+     socket
+     |> assign(:page_title, "LAN Party Seating")
+     |> assign(:map_payload, payload)
+     |> assign(:total_seats, total)
+     |> assign(:available_seats, available)
+     |> assign(:selected_seat, nil)}
   end
 
-  def handle_info({:tournaments, tournaments}, socket) do
-    {:noreply, assign(socket, :tournaments, tournaments)}
+  def handle_event("seat_selected", %{"seat_slot_id" => seat_slot_id}, socket) do
+    seat_slot_id = if is_binary(seat_slot_id), do: String.to_integer(seat_slot_id), else: seat_slot_id
+
+    selected_seat =
+      case SeatMapsLogic.get_seat_slot(seat_slot_id) do
+        {:ok, seat} -> stringify_map(seat)
+        _ -> nil
+      end
+
+    {:noreply, assign(socket, :selected_seat, selected_seat)}
   end
 
-  def handle_info({:stations, station_list}, socket) do
-    # Reload settings in case padding/gaps changed
-    settings = SettingsLogic.get_settings()
+  def handle_info({:seat_map_updated, _payload}, socket) do
+    payload = load_published_payload()
 
-    socket =
-      socket
-      |> assign(:colpad, settings.column_padding)
-      |> assign(:rowpad, settings.row_padding)
-      |> assign_stations(station_list)
-
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:map_payload, payload)
+     |> assign(:total_seats, Enum.count(payload.seats))
+     |> assign(:available_seats, Enum.count(payload.seats, &(&1["status"] == "available")))}
   end
 
   def render(assigns) do
     ~H"""
-    <div class="flex flex-row">
-      <div class="flex flex-col w-2/3 pr-5">
-        <%!-- STATION MAP --%>
-        <div class="flex items-center justify-between mb-2">
-          <h1 class="text-3xl font-bold">Stations</h1>
-          <%= if @available_count > 0 do %>
-            <div class="text-sm text-base-content/70">
-              {@available_count} / {@total_stations} available
+    <div class="flex flex-row h-[calc(100vh-4rem)] bg-[#0d1117]" style="font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;">
+      <div class="flex-1 p-2 min-w-0 overflow-hidden">
+        <SeatMap.canvas id="main-seat-map" hook="SeatMapKiosk" payload={@map_payload} mode="kiosk" class="h-full">
+          <:toolbar>
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center gap-2">
+                <div class="h-2 w-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+                <div>
+                  <p class="text-[0.55rem] uppercase tracking-[0.18em] text-[#8b949e]">Status</p>
+                  <h1 class="text-lg font-bold text-[#e6edf3]">LAN Party</h1>
+                </div>
+              </div>
+
+              <div class="h-5 w-px bg-[#30363d]"></div>
+
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-2xl font-bold text-[#22c55e]">{@available_seats}</span>
+                <div class="flex flex-col">
+                  <span class="text-sm font-semibold text-[#e6edf3]">disponibles</span>
+                  <span class="text-xs text-[#8b949e]">available</span>
+                </div>
+              </div>
+
+              <div class="text-sm text-[#8b949e]">
+                <span class="font-semibold text-[#e6edf3]">{@total_seats}</span> postes / seats
+              </div>
+
+              <SeatMap.legend class="hidden lg:flex" />
             </div>
-          <% else %>
-            <%= if @next_available do %>
-              <div
-                id={"next-available-#{DateTime.to_unix(@next_available.end_date)}"}
-                class="text-sm text-base-content/70"
-                x-data={"{ endTime: new Date('#{DateTime.to_iso8601(@next_available.end_date)}'), remaining: '', intervalId: null }"}
-                x-init="
-                  const update = () => {
-                    const now = new Date();
-                    const diff = Math.max(0, endTime - now);
-                    const mins = Math.floor(diff / 60000);
-                    const secs = Math.floor((diff % 60000) / 1000);
-                    if (mins > 0) {
-                      remaining = mins + 'm' + secs + 's';
-                    } else {
-                      remaining = secs + 's';
-                    }
-                  };
-                  update();
-                  intervalId = setInterval(update, 1000);
-                "
-                @destroy="clearInterval(intervalId)"
-              >
-                Next available: <span class="font-bold">Station {@next_available.station_number}</span> in <span class="font-mono font-bold" x-text="remaining"></span>
-              </div>
-            <% else %>
-              <div class="text-sm text-base-content/70">
-                No stations available
-              </div>
-            <% end %>
-          <% end %>
-        </div>
+          </:toolbar>
 
-        <%!-- LEGEND --%>
-        <.station_legend />
-
-        <.station_grid
-          stations={@stations}
-          rows={@rows}
-          columns={@columns}
-          rowpad={@rowpad}
-          colpad={@colpad}
-        >
-          <:cell :let={station_data}>
-            <LanpartyseatingWeb.Components.DisplayModal.modal
-              reservation={station_data.reservation}
-              station={station_data.station}
-              status={station_data.status}
-            />
-          </:cell>
-        </.station_grid>
-
-        <%!-- TOURNAMENTS --%>
-        <h1 class="text-2xl font-bold mt-6 mb-3">Upcoming Tournaments / Tournois à venir</h1>
-
-        <%!-- Next tournament countdown --%>
-        <%= if length(@tournaments) > 0 do %>
-          <% next_tournament = List.first(@tournaments) %>
-          <div class="p-4 mb-4 bg-base-200 rounded-lg">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="text-sm text-base-content/70">Next Tournament / Prochain Tournoi</div>
-                <div class="text-xl font-bold">{next_tournament.name}</div>
+          <:details>
+            <div class="space-y-2">
+              <div class="flex items-center gap-1.5">
+                <div class="h-2 w-2 rounded-full bg-[#06b6d4] shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+                <span class="text-[0.6rem] uppercase tracking-[0.18em] text-[#8b949e]">Statuts</span>
               </div>
-              <div class="text-right">
-                <div class="text-sm text-base-content/70">Starts in / Commence dans</div>
-                <.countdown_long start_date={next_tournament.start_date} class="countdown-timer" />
-              </div>
+              <SeatMap.legend class="grid gap-1 [&>div]:justify-start" />
             </div>
-          </div>
-        <% end %>
-
-        <%= if length(@tournaments) > 0 do %>
-          <div class="overflow-x-auto border border-base-300 rounded-lg">
-            <table class="table">
-              <thead>
-                <tr class="bg-base-200">
-                  <th class="text-base-content font-semibold">Name / Nom</th>
-                  <th class="text-base-content font-semibold">Day / Jour</th>
-                  <th class="text-base-content font-semibold">Start / Début</th>
-                  <th class="text-base-content font-semibold">End / Fin</th>
-                </tr>
-              </thead>
-              <tbody>
-                <%= for tournament <- @tournaments do %>
-                  <tr class="hover:bg-base-200/50">
-                    <td class="font-medium">{tournament.name}</td>
-                    <td>
-                      {Calendar.strftime(
-                        tournament.start_date |> Timex.to_datetime("America/Toronto"),
-                        "%A"
-                      )}
-                    </td>
-                    <td class="font-mono">
-                      {Calendar.strftime(
-                        tournament.start_date |> Timex.to_datetime("America/Toronto"),
-                        "%H:%M"
-                      )}
-                    </td>
-                    <td class="font-mono">
-                      {Calendar.strftime(
-                        tournament.end_date |> Timex.to_datetime("America/Toronto"),
-                        "%H:%M"
-                      )}
-                    </td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          </div>
-        <% else %>
-          <p class="text-base-content/50 py-4">No upcoming tournaments / Aucun tournoi à venir</p>
-        <% end %>
+          </:details>
+        </SeatMap.canvas>
       </div>
-      <div class="flex flex-col grow pl-4 border-l border-base-300">
-        <h1 class="text-3xl font-bold mb-4">Rules and Information</h1>
-        <ul class="list-disc pl-5 space-y-2 text-lg">
-          <li>
-            <b class="text-warning">No spectators</b>. You need a reservation to be inside and to seat at a station
+
+      <div class="w-72 border-l border-[#30363d] bg-[#161b22] p-3 overflow-y-auto flex-shrink-0">
+        <h2 class="text-xl font-bold text-[#e6edf3] mb-1">Règlements</h2>
+        <h3 class="text-base text-[#8b949e] mb-3">Rules and Information</h3>
+
+        <ul class="space-y-2">
+          <li class="rounded border border-[#ef4444]/50 bg-[#ef4444]/10 p-2">
+            <p class="text-base font-semibold text-[#fbbf24]">Pas de spectateurs</p>
+            <p class="text-sm text-[#f87171]">No spectators</p>
+            <p class="text-xs text-[#8b949e] mt-1">Vous devez avoir une réservation pour être dans la zone.</p>
           </li>
-          <li>
-            <b class="text-warning">No free accounts</b>. You need to your own account to play games
+          <li class="rounded border border-[#ef4444]/50 bg-[#ef4444]/10 p-2">
+            <p class="text-base font-semibold text-[#fbbf24]">Pas de comptes gratuits</p>
+            <p class="text-sm text-[#f87171]">No free accounts</p>
+            <p class="text-xs text-[#8b949e] mt-1">Vous devez posséder vos propres comptes de jeu.</p>
           </li>
-          <li><b class="text-warning">No OSU</b> for music copyright reasons</li>
-          <li>
-            <b class="text-warning">Tournaments</b>:
-            <ul class="list-disc pl-5 mt-1 space-y-1 text-base">
-              <li>Complete teams will be prioritized</li>
-              <li>Register your team or as a solo player at the info desk located at the room's entrance</li>
-              <li>All tournaments are single elimination with prizes for the winning team</li>
-            </ul>
+          <li class="rounded border border-[#ef4444]/50 bg-[#ef4444]/10 p-2">
+            <p class="text-base font-semibold text-[#fbbf24]">Pas de OSU</p>
+            <p class="text-sm text-[#f87171]">No OSU</p>
+            <p class="text-xs text-[#8b949e] mt-1">Pour des raisons de droits d'auteur.</p>
           </li>
         </ul>
 
-        <h1 class="text-3xl font-bold mt-8 mb-4">Règlements et informations</h1>
-        <ul class="list-disc pl-5 space-y-2 text-lg">
-          <li>
-            <b class="text-warning">Pas de spectateurs</b>. Il est nécessaire de faire une réservation avant d'entrer dans la zone et de s'asseoir
+        <h2 class="text-xl font-bold text-[#e6edf3] mt-4 mb-1">Tournois</h2>
+        <h3 class="text-base text-[#8b949e] mb-3">Tournaments</h3>
+
+        <ul class="space-y-1.5 text-sm">
+          <li class="rounded border border-[#30363d] bg-[#0d1117] p-2">
+            <p class="text-[#e6edf3]">Les équipes complètes seront priorisées</p>
+            <p class="text-xs text-[#8b949e]">Complete teams will be prioritized</p>
           </li>
-          <li>
-            <b class="text-warning">Pas de comptes de jeu gratuit</b>. Vous devez posséder des comptes pour jouer aux jeux
+          <li class="rounded border border-[#30363d] bg-[#0d1117] p-2">
+            <p class="text-[#e6edf3]">Enregistrez-vous au bureau d'information</p>
+            <p class="text-xs text-[#8b949e]">Register at the info desk at the entrance</p>
           </li>
-          <li>
-            <b class="text-warning">Pas de OSU</b> pour des raisons de droits d'auteur
-          </li>
-          <li>
-            <b class="text-warning">Tournois</b>:
-            <ul class="list-disc pl-5 mt-1 space-y-1 text-base">
-              <li>Les équipes complètes seront priorisées</li>
-              <li>Enregistrez-vous ou votre équipe au bureau d'information à l'entrée de la salle</li>
-              <li>Tous les tournois sont à élimination simple avec des prix pour l'équipe gagnante</li>
-            </ul>
+          <li class="rounded border border-[#30363d] bg-[#0d1117] p-2">
+            <p class="text-[#e6edf3]">Élimination simple avec prix pour les gagnants</p>
+            <p class="text-xs text-[#8b949e]">Single elimination with prizes for winners</p>
           </li>
         </ul>
       </div>
     </div>
     """
+  end
+
+  defp status_classes("available"), do: "border-[#22c55e] bg-[#22c55e]/10 text-[#4ade80]"
+  defp status_classes("occupied"), do: "border-[#f59e0b] bg-[#f59e0b]/10 text-[#fbbf24]"
+  defp status_classes("reserved"), do: "border-[#6b7280] bg-[#6b7280]/10 text-[#9ca3af]"
+  defp status_classes("unavailable"), do: "border-[#ef4444] bg-[#ef4444]/10 text-[#f87171]"
+  defp status_classes("tournament"), do: "border-[#06b6d4] bg-[#06b6d4]/10 text-[#22d3ee]"
+  defp status_classes(_), do: "border-[#30363d] bg-[#161b22] text-[#8b949e]"
+
+  defp status_text("available"), do: "Disponible"
+  defp status_text("occupied"), do: "Occupé"
+  defp status_text("reserved"), do: "Réservé"
+  defp status_text("unavailable"), do: "Hors service"
+  defp status_text("tournament"), do: "Tournoi"
+  defp status_text(status), do: String.capitalize(status)
+
+  defp format_iso_datetime(iso_value) do
+    case DateTime.from_iso8601(iso_value) do
+      {:ok, datetime, _offset} -> format_time_only(datetime)
+      _ -> iso_value
+    end
+  end
+
+  defp format_time_only(datetime) do
+    Calendar.strftime(datetime, "%H:%M")
+  end
+
+  defp load_published_payload do
+    case SeatMapsLogic.get_map_payload("published") do
+      {:ok, payload} -> payload
+      _ -> %{width: 1920, height: 1080, meta: %{}, seats: [], objects: [], groups: [], team_assignments: []}
+    end
+  end
+
+  defp stringify_map(map) when is_map(map) do
+    map
+    |> Enum.map(fn {key, value} -> {to_string(key), value} end)
+    |> Map.new()
   end
 end
