@@ -1,13 +1,14 @@
-import SeatMapRuntime from "./seat_map_runtime"
+import SeatMapEditor from "./seat_map_editor_class"
 
 export default {
   mounted() {
-    this.runtime = new SeatMapRuntime(this, { mode: "editor", editable: true })
+    this.runtime = new SeatMapEditor(this)
     this.runtime.mount()
   },
 
   updated() {
     this.runtime.update()
+    this.runtime.scheduleRender(false)
   },
 
   destroyed() {

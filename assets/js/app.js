@@ -5,6 +5,7 @@ import focus from "@alpinejs/focus"
 import BluetoothProvisioning from "./hooks/bluetooth_provisioning"
 import SeatMapCanvas from "./hooks/seat_map_canvas"
 import SeatMapEditor from "./hooks/seat_map_editor"
+import SeatMapKiosk from "./hooks/seat_map_kiosk"
 
 window.Alpine = Alpine
 Alpine.plugin(focus)
@@ -14,7 +15,8 @@ Alpine.start()
 let Hooks = {
   BluetoothProvisioning,
   SeatMapCanvas,
-  SeatMapEditor
+  SeatMapEditor,
+  SeatMapKiosk
 }
 
 // Auto-focus input when mounted (used for modal badge inputs)
