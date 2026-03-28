@@ -82,6 +82,21 @@ function renderEditorSeat(seatGroup, seat, palette, scale, showKeyboard = true, 
     fill: palette.text,
     perfectDrawEnabled: false
   }))
+  
+  if (isSelected) {
+    seatGroup.add(new Konva.Rect({
+      x: -w * 0.55,
+      y: -h * 0.65,
+      width: w * 1.1,
+      height: h * 1.1,
+      cornerRadius: 8,
+      stroke: THEME.accentCyan,
+      strokeWidth: 2,
+      dash: [4, 4],
+      fill: "rgba(6, 182, 212, 0.1)",
+      perfectDrawEnabled: false
+    }))
+  }
 }
 
 export default class SeatMapEditor extends SeatMapBase {
