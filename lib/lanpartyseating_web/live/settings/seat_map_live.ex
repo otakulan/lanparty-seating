@@ -260,6 +260,16 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
                       <span class="ml-2 font-mono text-[#06b6d4]">{@published_revision}</span>
                     </div>
                   </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="rounded border border-[#30363d] bg-[#161b22] px-3 py-2">
+                      <span class="text-[0.6rem] uppercase tracking-[0.15em] text-[#8b949e]">Width</span>
+                      <span class="ml-2 font-mono text-[#e6edf3]">{@map_payload["width"]}</span>
+                    </div>
+                    <div class="rounded border border-[#30363d] bg-[#161b22] px-3 py-2">
+                      <span class="text-[0.6rem] uppercase tracking-[0.15em] text-[#8b949e]">Height</span>
+                      <span class="ml-2 font-mono text-[#e6edf3]">{@map_payload["height"]}</span>
+                    </div>
+                  </div>
                   <%= if @stale_draft do %>
                     <div class="rounded border border-[#f59e0b]/50 bg-[#f59e0b]/10 px-3 py-2 text-sm text-[#fbbf24]">
                       Draft is stale / Brouillon obsolete
