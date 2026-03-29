@@ -86,13 +86,13 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
 
             <%= if Map.get(bar, :with_zoom_buttons, false) do %>
               <div class="flex items-center gap-1">
-                <button type="button" data-seat-map-command="zoom-out" class="btn btn-xs btn-ghost btn-square" title="Zoom out">
+                <button type="button" data-seat-map-command="zoom-out" class="btn btn-xs btn-square" title="Zoom out">
                   <.magnifying_glass_minus class="w-4 h-4" />
                 </button>
-                <button type="button" data-seat-map-command="zoom-in" class="btn btn-xs btn-ghost btn-square" title="Zoom in">
+                <button type="button" data-seat-map-command="zoom-in" class="btn btn-xs btn-square" title="Zoom in">
                   <.magnifying_glass_plus class="w-4 h-4" />
                 </button>
-                <button type="button" data-seat-map-command="reset-view" class="btn btn-xs btn-ghost btn-square" title="Fit to view">
+                <button type="button" data-seat-map-command="reset-view" class="btn btn-xs btn-square" title="Fit to view">
                   <.arrows_pointing_in class="w-4 h-4" />
                 </button>
               </div>

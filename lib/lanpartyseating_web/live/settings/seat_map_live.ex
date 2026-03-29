@@ -232,35 +232,43 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
             <SeatMap.canvas id="editor-seat-map" hook="SeatMapEditor" payload={@map_payload} mode="editor" class="min-h-[60vh]" stage_class="h-[60vh]" phx-ignore>
               <:toolbar with_zoom_buttons={true}>
                 <div class="mx-1 h-4 w-px bg-base-300"></div>
-                <button type="button" data-seat-map-command="add-seat" class="btn btn-xs btn-ghost text-success gap-1">
-                  <Icons.plus class="w-3 h-3" /> Seat
-                </button>
-                <button type="button" data-seat-map-command="add-table" class="btn btn-xs btn-ghost text-info gap-1">
-                  <Icons.plus class="w-3 h-3" /> Table
-                </button>
-                <button type="button" data-seat-map-command="add-label" class="btn btn-xs btn-ghost text-warning gap-1">
-                  <Icons.plus class="w-3 h-3" /> Label
-                </button>
+                <div class="flex flex-wrap gap-1">
+                  <button type="button" data-seat-map-command="add-seat" class="btn btn-xs btn-success gap-1">
+                    <Icons.plus class="w-3 h-3" /> Seat
+                  </button>
+                  <button type="button" data-seat-map-command="add-table" class="btn btn-xs btn-info gap-1">
+                    <Icons.plus class="w-3 h-3" /> Table
+                  </button>
+                  <button type="button" data-seat-map-command="add-label" class="btn btn-xs btn-warning gap-1">
+                    <Icons.plus class="w-3 h-3" /> Label
+                  </button>
+                </div>
                 <div class="mx-1 h-4 w-px bg-base-300"></div>
-                <button type="button" data-seat-map-command="group-selection" class="btn btn-xs btn-ghost text-base-content/60">
-                  Group
-                </button>
-                <button type="button" data-seat-map-command="delete-selection" class="btn btn-xs btn-ghost text-error gap-1" title="Delete selection">
-                  <Icons.trash class="w-4 h-4" />
-                </button>
+                <div class="flex flex-wrap gap-1">
+                  <button type="button" data-seat-map-command="group-selection" class="btn btn-xs">
+                    Group
+                  </button>
+                  <button type="button" data-seat-map-command="delete-selection" class="btn btn-xs btn-error" title="Delete selection">
+                    <Icons.trash class="w-4 h-4" />
+                  </button>
+                </div>
                 <div class="mx-1 h-4 w-px bg-base-300"></div>
-                <button type="button" data-seat-map-command="undo" class="btn btn-xs btn-ghost text-base-content/60" title="Undo (Ctrl+Z)">↶</button>
-                <button type="button" data-seat-map-command="redo" class="btn btn-xs btn-ghost text-base-content/60" title="Redo (Ctrl+Shift+Z)">↷</button>
+                <div class="flex flex-wrap gap-1">
+                  <button type="button" data-seat-map-command="undo" class="btn btn-xs" title="Undo (Ctrl+Z)">↶</button>
+                  <button type="button" data-seat-map-command="redo" class="btn btn-xs" title="Redo (Ctrl+Shift+Z)">↷</button>
+                </div>
                 <div class="mx-1 h-4 w-px bg-base-300"></div>
-                <button type="button" phx-click="reset_draft" class="btn btn-xs btn-ghost text-base-content/60 gap-1" title="Revert to saved">
-                  <Icons.arrow_path class="w-4 h-4" /> Revert
-                </button>
-                <button type="button" data-seat-map-command="save-draft" class="btn btn-xs btn-ghost text-success gap-1">
-                  <Icons.cloud_arrow_up class="w-4 h-4" /> Save
-                </button>
-                <button type="button" data-seat-map-command="publish-preview" class="btn btn-xs btn-ghost text-warning gap-1">
-                  <Icons.rocket_launch class="w-4 h-4" /> Publish
-                </button>
+                <div class="flex flex-wrap gap-1">
+                  <button type="button" phx-click="reset_draft" class="btn btn-xs" title="Revert to saved">
+                    <Icons.arrow_path class="w-4 h-4" /> Revert
+                  </button>
+                  <button type="button" data-seat-map-command="save-draft" class="btn btn-xs btn-success">
+                    <Icons.cloud_arrow_up class="w-4 h-4" /> Save
+                  </button>
+                  <button type="button" data-seat-map-command="publish-preview" class="btn btn-xs btn-warning">
+                    <Icons.rocket_launch class="w-4 h-4" /> Publish
+                  </button>
+                </div>
               </:toolbar>
             </SeatMap.canvas>
 
