@@ -1,8 +1,8 @@
 defmodule LanpartyseatingWeb.Components.Icons do
   @moduledoc """
-  Icon components - Heroicons (outline style, 24px).
-  SVGs sourced from heroicons.com v2.1
-  """
+             Icon components - Heroicons (outline style, 24px).
+             SVGs sourced from heroicons.com v2.1
+             """
   use Phoenix.Component
 
   attr :class, :string, default: "w-6 h-6"
@@ -294,6 +294,135 @@ defmodule LanpartyseatingWeb.Components.Icons do
     ~H"""
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def sun(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 3v2.25m6.364.386-1.591 1.591c.174.174.34.346.498.515l1.591-1.591A9.026 9.026 0 0 0 12 3Zm0 18v-2.25m6.364-.386-1.591-1.591c-.174.174-.34.346-.498.515l1.591 1.591A9.026 9.026 0 0 1 12 21ZM5.636 5.636l1.591 1.591c.174-.174.346-.34.515-.498L6.151 5.143A9.026 9.026 0 0 1 12 3Zm13.5 6.75h-2.25m-11.25 0H3m16.5 0a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"
+      />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def moon(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.334.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"
+      />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def magnifying_glass_plus(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def magnifying_glass_minus(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM7.5 10.5h6" />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def arrow_path(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"
+      />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def cloud_arrow_up(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 16.5V9.75m0 0 3 3m-3-3-3 3m6.75 6.75a4.5 4.5 0 0 0 4.5-4.5c0-.893-.261-1.729-.709-2.434a5.25 5.25 0 0 0-9.082-2.352A4.5 4.5 0 0 0 3.75 15a4.5 4.5 0 0 0 4.5 4.5H18a3 3 0 0 0 3-3"
+      />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def rocket_launch(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41a5.02 5.02 0 0 0-.5 9.37 5.02 5.02 0 0 0 5.46-3.41Z"
+      />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 12.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM9.75 9.75a.75.75 0 0 0 0 1.5h.008a.75.75 0 0 0 0-1.5H9.75Z" />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def trash(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0h-.998c-2.748 0-5.458.177-8.136.523M6.228 6.228A10.5 10.5 0 0 0 4.5 12c0 1.56.434 3.02 1.188 4.26m13.062-5.862a10.5 10.5 0 0 0-1.188-4.26M5.25 5.25l13.5 13.5"
+      />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def arrows_pointing_in(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+    </svg>
+    """
+  end
+
+  attr :class, :string, default: "w-5 h-5"
+
+  def archive_box_x_mark(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
+      />
     </svg>
     """
   end

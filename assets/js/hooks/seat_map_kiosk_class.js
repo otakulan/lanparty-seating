@@ -1,16 +1,10 @@
 import Konva from "konva"
-import {
-  SeatMapBase,
-  STATUS_COLORS,
-  THEME,
-  clamp,
-  groupBounds
-} from "./seat_map_base"
+import { SeatMapBase, clamp, groupBounds } from "./seat_map_base"
 
 const SEAT_WIDTH = 64
 const SEAT_HEIGHT = 64
 
-function renderSeatShapeSimple(seatGroup, seat, palette, scale, showKeyboard = true) {
+function renderSeatShapeSimple(seatGroup, seat, palette, scale, theme, showKeyboard = true) {
   const w = SEAT_WIDTH * scale
   const h = SEAT_HEIGHT * scale
   
@@ -37,8 +31,8 @@ function renderSeatShapeSimple(seatGroup, seat, palette, scale, showKeyboard = t
     width: w * 0.76,
     height: h * 0.4,
     cornerRadius: 3,
-    fill: "rgba(96, 165, 250, 0.15)",
-    stroke: "rgba(96, 165, 250, 0.3)",
+    fill: theme.monitorFill,
+    stroke: theme.monitorStroke,
     strokeWidth: 1,
     perfectDrawEnabled: false
   }))
@@ -58,8 +52,8 @@ function renderSeatShapeSimple(seatGroup, seat, palette, scale, showKeyboard = t
       width: w * 0.9,
       height: h * 0.28,
       cornerRadius: 4,
-      fill: "rgba(139, 148, 158, 0.12)",
-      stroke: "rgba(139, 148, 158, 0.25)",
+      fill: theme.keyboardFill,
+      stroke: theme.keyboardStroke,
       strokeWidth: 1,
       perfectDrawEnabled: false
     }))
@@ -70,11 +64,14 @@ export default class SeatMapKiosk extends SeatMapBase {
   constructor(hook, options = {}) {
     super(hook, options)
     this.showKeyboard = options.showKeyboard !== false
+    this.pickable = options.pickable === true
     this.renderFrame = null
   }
   
   mount() {
+    this.pickable = this.hook.el.dataset.pickable === "true"
     this.buildStage()
+    this.setupThemeListener()
     this.renderScene(true)
   }
   
@@ -88,10 +85,12 @@ export default class SeatMapKiosk extends SeatMapBase {
     
     this.backgroundLayer = new Konva.Layer({ listening: false })
     this.sceneLayer = new Konva.Layer({ listening: false })
+    this.hitLayer = this.pickable ? new Konva.Layer() : null
     this.overlayLayer = new Konva.Layer({ listening: false })
     
     this.stage.add(this.backgroundLayer)
     this.stage.add(this.sceneLayer)
+    if (this.hitLayer) this.stage.add(this.hitLayer)
     this.stage.add(this.overlayLayer)
     
     this.handleResize = () => {
@@ -106,7 +105,7 @@ export default class SeatMapKiosk extends SeatMapBase {
   destroy() {
     window.removeEventListener("resize", this.handleResize)
     if (this.renderFrame) window.cancelAnimationFrame(this.renderFrame)
-    if (this.stage) this.stage.destroy()
+    super.destroy()
   }
   
   scheduleRender(resetView = false) {
@@ -121,6 +120,7 @@ export default class SeatMapKiosk extends SeatMapBase {
   renderScene(resetView) {
     this.backgroundLayer.destroyChildren()
     this.sceneLayer.destroyChildren()
+    if (this.hitLayer) this.hitLayer.destroyChildren()
     this.overlayLayer.destroyChildren()
     
     const width = this.state.width || 1920
@@ -139,6 +139,7 @@ export default class SeatMapKiosk extends SeatMapBase {
   }
   
   renderBackdrop(width, height) {
+    const theme = this.theme
     const backdrop = new Konva.Rect({
       x: 0,
       y: 0,
@@ -146,8 +147,8 @@ export default class SeatMapKiosk extends SeatMapBase {
       height,
       fillLinearGradientStartPoint: { x: 0, y: 0 },
       fillLinearGradientEndPoint: { x: width, y: height },
-      fillLinearGradientColorStops: [0, THEME.backgroundGradientStart, 1, THEME.backgroundGradientEnd],
-      stroke: THEME.borderColor,
+      fillLinearGradientColorStops: [0, theme.backgroundGradientStart, 1, theme.backgroundGradientEnd],
+      stroke: theme.borderColor,
       strokeWidth: 2
     })
     
@@ -156,7 +157,7 @@ export default class SeatMapKiosk extends SeatMapBase {
     const gridSize = 40
     const gridLines = new Konva.Shape({
       sceneFunc: (context) => {
-        context.strokeStyle = THEME.gridColor
+        context.strokeStyle = theme.gridColor
         context.lineWidth = 0.5
         
         for (let x = 0; x <= width; x += gridSize) {
@@ -195,11 +196,13 @@ export default class SeatMapKiosk extends SeatMapBase {
     }
   }
   
-  renderSeats() {
+renderSeats() {
     const scale = 1.1
+    const theme = this.theme
+    const statusColors = this.statusColors
     
     ;(this.state.seats || []).forEach((seat) => {
-      const palette = STATUS_COLORS[seat.status] || STATUS_COLORS.available
+      const palette = statusColors[seat.status] || statusColors.available
       const seatGroup = new Konva.Group({
         x: seat.x,
         y: seat.y,
@@ -207,7 +210,7 @@ export default class SeatMapKiosk extends SeatMapBase {
         listening: false
       })
       
-      renderSeatShapeSimple(seatGroup, seat, palette, scale, this.showKeyboard)
+      renderSeatShapeSimple(seatGroup, seat, palette, scale, theme, this.showKeyboard)
       
       seatGroup.add(new Konva.Text({
         x: -SEAT_WIDTH * 0.4,
@@ -217,16 +220,45 @@ export default class SeatMapKiosk extends SeatMapBase {
         text: seat.label,
         fontSize: 12,
         fontStyle: "600",
-        fontFamily: THEME.fontFamily,
+        fontFamily: theme.fontFamily,
         fill: palette.text,
-        perfectDrawEnabled: false
+        perfectDrawEnabled: false,
+        listening: false
       }))
       
       this.sceneLayer.add(seatGroup)
+      
+      if (this.pickable && this.hitLayer) {
+        const hitTarget = new Konva.Rect({
+          x: seat.x - SEAT_WIDTH * 0.6 * scale,
+          y: seat.y - SEAT_HEIGHT * 0.6 * scale,
+          width: SEAT_WIDTH * 1.2 * scale,
+          height: SEAT_HEIGHT * 1.3 * scale,
+          cornerRadius: 8,
+          fill: "rgba(0,0,0,0.01)",
+          strokeWidth: 0,
+          perfectDrawEnabled: false
+        })
+        
+        hitTarget.on("click tap", () => this.handleSeatClick(seat))
+        this.hitLayer.add(hitTarget)
+      }
     })
   }
   
+  handleSeatClick(seat) {
+    if (this.pickable) {
+      this.hook.pushEvent("seat_selected", {
+        seat_slot_id: seat.seat_slot_id,
+        label: seat.label,
+        status: seat.status
+      })
+    }
+  }
+  
   renderGroups() {
+    const theme = this.theme
+    
     ;(this.state.groups || []).forEach((group) => {
       const memberSeats = (group.seat_slot_ids || [])
         .map((seatId) => (this.state.seats || []).find((seat) => seat.seat_slot_id === seatId))
@@ -257,10 +289,10 @@ export default class SeatMapKiosk extends SeatMapBase {
       if (!hasTeamAssignment && group.name) {
         const text = new Konva.Text({
           text: group.name,
-          fontFamily: THEME.fontFamily,
+          fontFamily: theme.fontFamily,
           fontSize: 10,
           fontStyle: "600",
-          fill: THEME.textPrimary,
+          fill: theme.textPrimary,
           listening: false
         })
         
@@ -292,6 +324,8 @@ export default class SeatMapKiosk extends SeatMapBase {
   }
   
   renderTeamLabels() {
+    const theme = this.theme
+    
     ;(this.state.team_assignments || []).forEach((assignment) => {
       const group = (this.state.groups || []).find((entry) => entry.id === assignment.group_id)
       const memberSeats = group
@@ -306,10 +340,10 @@ export default class SeatMapKiosk extends SeatMapBase {
       
       const text = new Konva.Text({
         text: `${assignment.team_name} · ${assignment.tournament_name}`,
-        fontFamily: THEME.fontFamily,
+        fontFamily: theme.fontFamily,
         fontSize: 12,
         fontStyle: "600",
-        fill: THEME.textPrimary,
+        fill: theme.textPrimary,
         perfectDrawEnabled: false,
         listening: false
       })

@@ -146,16 +146,14 @@ defmodule Lanpartyseating.SeatMapsLogic do
       case sync_slots_and_build_data(seat_map.id, attrs["data"] || %{}) do
         {:ok, synced_data, touched_slot_ids} ->
           draft
-          |> SeatMapVersion.changeset(
-            %{
-              name: attrs["name"] || draft.name,
-              width: attrs["width"] || draft.width,
-              height: attrs["height"] || draft.height,
-              background_kind: attrs["background_kind"] || draft.background_kind,
-              background_value: attrs["background_value"],
-              data: synced_data,
-            }
-          )
+          |> SeatMapVersion.changeset(%{
+            name: attrs["name"] || draft.name,
+            width: attrs["width"] || draft.width,
+            height: attrs["height"] || draft.height,
+            background_kind: attrs["background_kind"] || draft.background_kind,
+            background_value: attrs["background_value"],
+            data: synced_data,
+          })
           |> Repo.update()
           |> case do
             {:ok, version} ->
@@ -182,16 +180,14 @@ defmodule Lanpartyseating.SeatMapsLogic do
     with {:ok, draft} <- get_draft_version(),
          {:ok, published} <- get_published_version() do
       draft
-      |> SeatMapVersion.changeset(
-        %{
-          name: "Working Draft",
-          width: published.width,
-          height: published.height,
-          background_kind: published.background_kind,
-          background_value: published.background_value,
-          data: published.data,
-        }
-      )
+      |> SeatMapVersion.changeset(%{
+        name: "Working Draft",
+        width: published.width,
+        height: published.height,
+        background_kind: published.background_kind,
+        background_value: published.background_value,
+        data: published.data,
+      })
       |> Repo.update()
       |> case do
         {:ok, updated_draft} ->
@@ -209,31 +205,27 @@ defmodule Lanpartyseating.SeatMapsLogic do
       attrs = stringify_map(attrs)
 
       %TournamentTeamAssignment{}
-      |> TournamentTeamAssignment.changeset(
-        %{
-          tournament_id: parse_int(attrs["tournament_id"]),
-          seat_map_version_id: draft.id,
-          group_id: attrs["group_id"],
-          team_name: attrs["team_name"],
-          color: attrs["color"],
-          label_x: parse_optional_int(attrs["label_x"]),
-          label_y: parse_optional_int(attrs["label_y"]),
-          deleted_at: nil,
-        }
-      )
+      |> TournamentTeamAssignment.changeset(%{
+        tournament_id: parse_int(attrs["tournament_id"]),
+        seat_map_version_id: draft.id,
+        group_id: attrs["group_id"],
+        team_name: attrs["team_name"],
+        color: attrs["color"],
+        label_x: parse_optional_int(attrs["label_x"]),
+        label_y: parse_optional_int(attrs["label_y"]),
+        deleted_at: nil,
+      })
       |> Repo.insert(
-        on_conflict:
-          [
-            set:
-              [
-                team_name: attrs["team_name"],
-                color: attrs["color"],
-                label_x: parse_optional_int(attrs["label_x"]),
-                label_y: parse_optional_int(attrs["label_y"]),
-                deleted_at: nil,
-                updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
-              ]
+        on_conflict: [
+          set: [
+            team_name: attrs["team_name"],
+            color: attrs["color"],
+            label_x: parse_optional_int(attrs["label_x"]),
+            label_y: parse_optional_int(attrs["label_y"]),
+            deleted_at: nil,
+            updated_at: DateTime.utc_now() |> DateTime.truncate(:second),
           ],
+        ],
         conflict_target: {:unsafe_fragment, "(tournament_id, group_id) WHERE deleted_at IS NULL"}
       )
       |> case do
@@ -405,19 +397,17 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
   defp create_empty_version(seat_map, status, name) do
     %SeatMapVersion{}
-    |> SeatMapVersion.changeset(
-      %{
-        seat_map_id: seat_map.id,
-        name: name,
-        status: status,
-        width: @default_canvas.width,
-        height: @default_canvas.height,
-        background_kind: "none",
-        background_value: nil,
-        data: empty_map_data(),
-        published_at: if(status == "published", do: DateTime.utc_now() |> DateTime.truncate(:second), else: nil),
-      }
-    )
+    |> SeatMapVersion.changeset(%{
+      seat_map_id: seat_map.id,
+      name: name,
+      status: status,
+      width: @default_canvas.width,
+      height: @default_canvas.height,
+      background_kind: "none",
+      background_value: nil,
+      data: empty_map_data(),
+      published_at: if(status == "published", do: DateTime.utc_now() |> DateTime.truncate(:second), else: nil),
+    })
     |> Repo.insert()
   end
 
@@ -432,31 +422,27 @@ defmodule Lanpartyseating.SeatMapsLogic do
     |> case do
       nil ->
         %SeatMapVersion{}
-        |> SeatMapVersion.changeset(
-          %{
-            seat_map_id: seat_map_id,
-            name: "Working Draft",
-            status: "draft",
-            width: published.width,
-            height: published.height,
-            background_kind: published.background_kind,
-            background_value: published.background_value,
-            data: published.data,
-          }
-        )
+        |> SeatMapVersion.changeset(%{
+          seat_map_id: seat_map_id,
+          name: "Working Draft",
+          status: "draft",
+          width: published.width,
+          height: published.height,
+          background_kind: published.background_kind,
+          background_value: published.background_value,
+          data: published.data,
+        })
         |> Repo.insert()
 
       draft ->
         draft
-        |> SeatMapVersion.changeset(
-          %{
-            width: published.width,
-            height: published.height,
-            background_kind: published.background_kind,
-            background_value: published.background_value,
-            data: published.data,
-          }
-        )
+        |> SeatMapVersion.changeset(%{
+          width: published.width,
+          height: published.height,
+          background_kind: published.background_kind,
+          background_value: published.background_value,
+          data: published.data,
+        })
         |> Repo.update()
     end
   end
@@ -469,22 +455,20 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
     seats =
       data["seats"]
-      |> Enum.map(
-        fn seat ->
-          seat_slot_id = value(seat, "seat_slot_id")
-          runtime = Map.get(seat_index, seat_slot_id, %{})
+      |> Enum.map(fn seat ->
+        seat_slot_id = value(seat, "seat_slot_id")
+        runtime = Map.get(seat_index, seat_slot_id, %{})
 
-          seat
-          |> stringify_map()
-          |> Map.put("seat_slot_id", seat_slot_id)
-          |> Map.put("label", runtime[:label] || value(seat, "label"))
-          |> Map.put("status", Atom.to_string(runtime[:status] || :available))
-          |> Map.put("reservation_end_date", datetime_to_iso(runtime[:reservation_end_date]))
-          |> Map.put("legacy_station_number", runtime[:legacy_station_number])
-          |> Map.put("pc_asset_code", runtime[:pc_asset_code])
-          |> Map.put("pc_hostname", runtime[:pc_hostname])
-        end
-      )
+        seat
+        |> stringify_map()
+        |> Map.put("seat_slot_id", seat_slot_id)
+        |> Map.put("label", runtime[:label] || value(seat, "label"))
+        |> Map.put("status", Atom.to_string(runtime[:status] || :available))
+        |> Map.put("reservation_end_date", datetime_to_iso(runtime[:reservation_end_date]))
+        |> Map.put("legacy_station_number", runtime[:legacy_station_number])
+        |> Map.put("pc_asset_code", runtime[:pc_asset_code])
+        |> Map.put("pc_hostname", runtime[:pc_hostname])
+      end)
 
     %{
       id: version.id,
@@ -617,30 +601,28 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
     SeatSlot
     |> where([seat_slot], is_nil(seat_slot.deleted_at))
-    |> preload(
-      [
-        :status,
-        assignment: :pc_asset,
-        reservations:
-          ^from(
-            reservation in Reservation,
-            where: is_nil(reservation.deleted_at),
-            where: reservation.start_date <= ^now,
-            where: reservation.end_date > ^now,
-            order_by: [desc: reservation.inserted_at]
-          ),
-        tournament_reservations:
-          ^from(
-            tr in TournamentReservation,
-            where: is_nil(tr.deleted_at),
-            join: t in assoc(tr, :tournament),
-            where: is_nil(t.deleted_at),
-            where: t.start_date < ^tournament_buffer,
-            where: t.end_date > ^now,
-            preload: [tournament: t]
-          ),
-      ]
-    )
+    |> preload([
+      :status,
+      assignment: :pc_asset,
+      reservations:
+        ^from(
+          reservation in Reservation,
+          where: is_nil(reservation.deleted_at),
+          where: reservation.start_date <= ^now,
+          where: reservation.end_date > ^now,
+          order_by: [desc: reservation.inserted_at]
+        ),
+      tournament_reservations:
+        ^from(
+          tr in TournamentReservation,
+          where: is_nil(tr.deleted_at),
+          join: t in assoc(tr, :tournament),
+          where: is_nil(t.deleted_at),
+          where: t.start_date < ^tournament_buffer,
+          where: t.end_date > ^now,
+          preload: [tournament: t]
+        ),
+    ])
     |> Repo.all()
     |> Enum.into(
       %{},
@@ -696,17 +678,16 @@ defmodule Lanpartyseating.SeatMapsLogic do
       join: tournament in assoc(team, :tournament),
       where: is_nil(tournament.deleted_at),
       order_by: [asc: tournament.start_date, asc: team.group_id],
-      select:
-        %{
-          id: team.id,
-          group_id: team.group_id,
-          tournament_id: team.tournament_id,
-          team_name: team.team_name,
-          color: team.color,
-          label_x: team.label_x,
-          label_y: team.label_y,
-          tournament_name: tournament.name,
-        }
+      select: %{
+        id: team.id,
+        group_id: team.group_id,
+        tournament_id: team.tournament_id,
+        team_name: team.team_name,
+        color: team.color,
+        label_x: team.label_x,
+        label_y: team.label_y,
+        tournament_name: tournament.name,
+      }
     )
     |> Repo.all()
     |> Enum.map(&stringify_map/1)
@@ -755,23 +736,19 @@ defmodule Lanpartyseating.SeatMapsLogic do
       where: is_nil(team.deleted_at)
     )
     |> Repo.all()
-    |> Enum.each(
-      fn team ->
-        %TournamentTeamAssignment{}
-        |> TournamentTeamAssignment.changeset(
-          %{
-            tournament_id: team.tournament_id,
-            seat_map_version_id: target_version_id,
-            group_id: team.group_id,
-            team_name: team.team_name,
-            color: team.color,
-            label_x: team.label_x,
-            label_y: team.label_y,
-          }
-        )
-        |> Repo.insert!()
-      end
-    )
+    |> Enum.each(fn team ->
+      %TournamentTeamAssignment{}
+      |> TournamentTeamAssignment.changeset(%{
+        tournament_id: team.tournament_id,
+        seat_map_version_id: target_version_id,
+        group_id: team.group_id,
+        team_name: team.team_name,
+        color: team.color,
+        label_x: team.label_x,
+        label_y: team.label_y,
+      })
+      |> Repo.insert!()
+    end)
 
     :ok
   end
@@ -798,25 +775,21 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
         groups =
           data["groups"]
-          |> Enum.map(
-            fn group ->
-              seat_slot_ids =
-                group
-                |> value("seat_slot_ids", [])
-                |> Enum.map(
-                  fn id_or_label ->
-                    Map.get(slot_ids_by_key, id_or_label) || Map.get(slot_ids_by_key, normalize_label(id_or_label))
-                  end
-                )
-                |> Enum.reject(&is_nil/1)
-
+          |> Enum.map(fn group ->
+            seat_slot_ids =
               group
-              |> stringify_map()
-              |> Map.put("id", value(group, "id") || Ecto.UUID.generate())
-              |> Map.put("name", value(group, "name") || "Group")
-              |> Map.put("seat_slot_ids", Enum.uniq(seat_slot_ids))
-            end
-          )
+              |> value("seat_slot_ids", [])
+              |> Enum.map(fn id_or_label ->
+                Map.get(slot_ids_by_key, id_or_label) || Map.get(slot_ids_by_key, normalize_label(id_or_label))
+              end)
+              |> Enum.reject(&is_nil/1)
+
+            group
+            |> stringify_map()
+            |> Map.put("id", value(group, "id") || Ecto.UUID.generate())
+            |> Map.put("name", value(group, "name") || "Group")
+            |> Map.put("seat_slot_ids", Enum.uniq(seat_slot_ids))
+          end)
 
         {:ok,
          %{
@@ -938,15 +911,13 @@ defmodule Lanpartyseating.SeatMapsLogic do
     |> where([seat_slot], seat_slot.seat_map_id == ^seat_map_id and is_nil(seat_slot.deleted_at))
     |> order_by([seat_slot], asc: seat_slot.label)
     |> Repo.all()
-    |> Enum.map(
-      fn seat_slot ->
-        %{
-          id: seat_slot.id,
-          label: seat_slot.label,
-          legacy_station_number: seat_slot.legacy_station_number,
-        }
-      end
-    )
+    |> Enum.map(fn seat_slot ->
+      %{
+        id: seat_slot.id,
+        label: seat_slot.label,
+        legacy_station_number: seat_slot.legacy_station_number,
+      }
+    end)
   end
 
   defp empty_map_data do

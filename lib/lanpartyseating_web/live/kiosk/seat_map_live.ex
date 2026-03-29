@@ -1,4 +1,4 @@
-defmodule LanpartyseatingWeb.DisplaySeatMapLive do
+defmodule LanpartyseatingWeb.Kiosk.SeatMapLive do
   use LanpartyseatingWeb, :live_view
 
   alias Lanpartyseating.PubSub
@@ -16,7 +16,7 @@ defmodule LanpartyseatingWeb.DisplaySeatMapLive do
 
     {:ok,
      socket
-     |> assign(:page_title, "Display Seat Map")
+     |> assign(:page_title, "Kiosk Seat Map")
      |> assign(:map_payload, payload)
      |> assign(:total_seats, total)
      |> assign(:available_seats, available)}
@@ -34,7 +34,7 @@ defmodule LanpartyseatingWeb.DisplaySeatMapLive do
 
   def render(assigns) do
     ~H"""
-    <div class="h-screen bg-[#0d1117]">
+    <div class="h-screen bg-base-200">
       <div class="h-full p-3">
         <SeatMap.canvas
           id="kiosk-seat-map"
@@ -47,18 +47,21 @@ defmodule LanpartyseatingWeb.DisplaySeatMapLive do
             <div class="flex items-center gap-4">
               <div>
                 <div class="flex items-center gap-2">
-                  <div class="h-2 w-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
-                  <span class="text-[0.6rem] uppercase tracking-[0.2em] text-[#8b949e]">Room Map</span>
+                  <div class="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+                  <span class="text-tiny uppercase tracking-[0.2em] text-base-content/60">Room Map</span>
                 </div>
-                <h1 class="text-2xl font-bold text-[#e6edf3]">LAN Party Seating</h1>
+                <h1 class="text-2xl font-bold text-base-content">Seating</h1>
               </div>
-              <div class="h-8 w-px bg-[#30363d]"></div>
-              <div class="flex items-baseline gap-2">
-                <span class="text-4xl font-bold text-[#22c55e]">{@available_seats}</span>
-                <span class="text-sm uppercase tracking-[0.15em] text-[#8b949e]">available</span>
+              <div class="h-8 w-px bg-base-300"></div>
+              <div class="flex items-baseline gap-1">
+                <span class="text-4xl font-bold text-success">{@available_seats}</span>
+                <div class="flex flex-col leading-tight">
+                  <span class="text-sm font-semibold text-base-content">disponibles</span>
+                  <span class="text-xs text-base-content/60">available</span>
+                </div>
               </div>
-              <div class="text-sm uppercase tracking-[0.15em] text-[#8b949e]">
-                {@total_seats} seats
+              <div class="text-sm text-base-content/60">
+                <span class="font-semibold text-base-content">{@total_seats}</span> postes / seats
               </div>
             </div>
           </:toolbar>
@@ -66,8 +69,8 @@ defmodule LanpartyseatingWeb.DisplaySeatMapLive do
           <:details>
             <div class="space-y-2">
               <div class="flex items-center gap-2">
-                <div class="h-2 w-2 rounded-full bg-[#06b6d4] shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
-                <span class="text-[0.65rem] uppercase tracking-[0.2em] text-[#8b949e]">Status</span>
+                <div class="h-2 w-2 rounded-full bg-info shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+                <span class="text-tiny uppercase tracking-[0.2em] text-base-content/60">Status</span>
               </div>
               <SeatMap.legend class="grid gap-1.5 [&>div]:justify-start" />
             </div>

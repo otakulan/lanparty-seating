@@ -235,12 +235,11 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
       |> form(
         "#create-user-form",
         %{
-          "user" =>
-            %{
-              "name" => "New Test User",
-              "email" => "newuser@example.com",
-              "password" => "validpassword123",
-            },
+          "user" => %{
+            "name" => "New Test User",
+            "email" => "newuser@example.com",
+            "password" => "validpassword123",
+          },
         }
       )
       |> render_submit()
@@ -265,12 +264,11 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
       |> form(
         "#create-user-form",
         %{
-          "user" =>
-            %{
-              "name" => "Test User",
-              "email" => "not-an-email",
-              "password" => "validpassword123",
-            },
+          "user" => %{
+            "name" => "Test User",
+            "email" => "not-an-email",
+            "password" => "validpassword123",
+          },
         }
       )
       |> render_submit()
@@ -291,12 +289,11 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
       |> form(
         "#create-user-form",
         %{
-          "user" =>
-            %{
-              "name" => "Test User",
-              "email" => "test@example.com",
-              "password" => "short",
-            },
+          "user" => %{
+            "name" => "Test User",
+            "email" => "test@example.com",
+            "password" => "short",
+          },
         }
       )
       |> render_submit()

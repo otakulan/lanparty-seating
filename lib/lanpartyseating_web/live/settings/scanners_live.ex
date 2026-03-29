@@ -1,7 +1,7 @@
 defmodule LanpartyseatingWeb.Settings.ScannersLive do
   @moduledoc """
-             Settings page for external badge scanner management.
-             """
+  Settings page for external badge scanner management.
+  """
   use LanpartyseatingWeb, :live_view
   import LanpartyseatingWeb.Helpers, only: [format_relative_time: 1, format_changeset_errors: 1]
 

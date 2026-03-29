@@ -39,15 +39,13 @@ defmodule LanpartyseatingWeb.Api.V1.ReservationControllerTest do
     end_time = DateTime.add(now, 60, :minute)
 
     %Reservation{}
-    |> Reservation.changeset(
-      %{
-        badge: badge.serial_key,
-        station_id: station_number,
-        duration: 60,
-        start_date: now,
-        end_date: end_time,
-      }
-    )
+    |> Reservation.changeset(%{
+      badge: badge.serial_key,
+      station_id: station_number,
+      duration: 60,
+      start_date: now,
+      end_date: end_time,
+    })
     |> Repo.insert!()
   end
 

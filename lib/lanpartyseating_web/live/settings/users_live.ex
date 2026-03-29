@@ -1,8 +1,8 @@
 defmodule LanpartyseatingWeb.Settings.UsersLive do
   @moduledoc """
-             Settings page for admin user management.
-             Requires full user authentication (not badge auth).
-             """
+  Settings page for admin user management.
+  Requires full user authentication (not badge auth).
+  """
   use LanpartyseatingWeb, :live_view
   import LanpartyseatingWeb.Helpers, only: [format_datetime: 1, format_changeset_errors: 1]
 

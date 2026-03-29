@@ -1,69 +1,11 @@
 import Konva from "konva"
+import { THEME, STATUS_COLORS, getThemeColors, getStatusColors } from "./seat_map_theme"
 
 Konva.hitOnDragEnabled = false
 Konva.captureTouchEventsEnabled = true
 Konva.pixelRatio = 1
 
-export const STATUS_COLORS = {
-  available: { 
-    fill: "#0d1117", 
-    fillSecondary: "#161b22",
-    stroke: "#22c55e", 
-    text: "#22c55e", 
-    glow: "rgba(34, 197, 94, 0.35)",
-    accent: "#4ade80"
-  },
-  occupied: { 
-    fill: "#0d1117", 
-    fillSecondary: "#161b22",
-    stroke: "#f59e0b", 
-    text: "#f59e0b", 
-    glow: "rgba(245, 158, 11, 0.35)",
-    accent: "#fbbf24"
-  },
-  reserved: { 
-    fill: "#0d1117", 
-    fillSecondary: "#161b22",
-    stroke: "#6b7280", 
-    text: "#9ca3af", 
-    glow: "rgba(107, 114, 128, 0.3)",
-    accent: "#9ca3af"
-  },
-  unavailable: { 
-    fill: "#0d1117", 
-    fillSecondary: "#161b22",
-    stroke: "#ef4444", 
-    text: "#ef4444", 
-    glow: "rgba(239, 68, 68, 0.35)",
-    accent: "#f87171"
-  },
-  tournament: { 
-    fill: "#0d1117", 
-    fillSecondary: "#161b22",
-    stroke: "#06b6d4", 
-    text: "#06b6d4", 
-    glow: "rgba(6, 182, 212, 0.35)",
-    accent: "#22d3ee"
-  }
-}
-
-export const THEME = {
-  background: "#0d1117",
-  backgroundGradientStart: "#0d1117",
-  backgroundGradientEnd: "#161b22",
-  borderColor: "#30363d",
-  gridColor: "rgba(48, 54, 61, 0.4)",
-  panelBg: "rgba(22, 27, 34, 0.95)",
-  panelBorder: "#30363d",
-  textPrimary: "#e6edf3",
-  textSecondary: "#8b949e",
-  textMuted: "#6e7681",
-  accentGreen: "#22c55e",
-  accentCyan: "#06b6d4",
-  accentAmber: "#f59e0b",
-  fontFamily: "'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace",
-  displayFont: "'JetBrains Mono', 'SF Pro Display', -apple-system, sans-serif"
-}
+export { THEME, STATUS_COLORS, getThemeColors, getStatusColors }
 
 export const SCALE_BY = 1.08
 
@@ -131,6 +73,7 @@ export function createBaseLayers(stage) {
 }
 
 export function createEditorLayers(stage) {
+  const theme = getThemeColors()
   const backgroundLayer = new Konva.Layer({ listening: false })
   const objectLayer = new Konva.Layer()
   const groupLayer = new Konva.Layer({ listening: false })
@@ -139,9 +82,9 @@ export function createEditorLayers(stage) {
   
   const transformer = new Konva.Transformer({
     rotateEnabled: true,
-    borderStroke: THEME.accentCyan,
-    anchorStroke: THEME.accentCyan,
-    anchorFill: THEME.accentGreen,
+    borderStroke: theme.accentCyan,
+    anchorStroke: theme.accentCyan,
+    anchorFill: theme.accentGreen,
     anchorSize: 8,
     anchorCornerRadius: 3,
     visible: false,
@@ -160,6 +103,7 @@ export function createEditorLayers(stage) {
 }
 
 export function renderDarkBackdrop(layer, width, height) {
+  const theme = getThemeColors()
   const backdrop = new Konva.Rect({
     x: 0,
     y: 0,
@@ -167,8 +111,8 @@ export function renderDarkBackdrop(layer, width, height) {
     height,
     fillLinearGradientStartPoint: { x: 0, y: 0 },
     fillLinearGradientEndPoint: { x: width, y: height },
-    fillLinearGradientColorStops: [0, THEME.backgroundGradientStart, 1, THEME.backgroundGradientEnd],
-    stroke: THEME.borderColor,
+    fillLinearGradientColorStops: [0, theme.backgroundGradientStart, 1, theme.backgroundGradientEnd],
+    stroke: theme.borderColor,
     strokeWidth: 2
   })
   
@@ -177,7 +121,7 @@ export function renderDarkBackdrop(layer, width, height) {
   const gridSize = 40
   const gridLines = new Konva.Shape({
     sceneFunc: (context) => {
-      context.strokeStyle = THEME.gridColor
+      context.strokeStyle = theme.gridColor
       context.lineWidth = 0.5
       
       for (let x = 0; x <= width; x += gridSize) {
@@ -234,6 +178,57 @@ export function groupBounds(seats) {
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
 }
 
+export function getCorner(pivotX, pivotY, diffX, diffY, angle) {
+  const distance = Math.sqrt(diffX * diffX + diffY * diffY)
+  angle += Math.atan2(diffY, diffX)
+  const x = pivotX + distance * Math.cos(angle)
+  const y = pivotY + distance * Math.sin(angle)
+  return { x, y }
+}
+
+export function getClientRect(rotatedBox) {
+  const { x, y, width, height } = rotatedBox
+  const rad = rotatedBox.rotation || 0
+
+  const p1 = getCorner(x, y, 0, 0, rad)
+  const p2 = getCorner(x, y, width, 0, rad)
+  const p3 = getCorner(x, y, width, height, rad)
+  const p4 = getCorner(x, y, 0, height, rad)
+
+  const minX = Math.min(p1.x, p2.x, p3.x, p4.x)
+  const minY = Math.min(p1.y, p2.y, p3.y, p4.y)
+  const maxX = Math.max(p1.x, p2.x, p3.x, p4.x)
+  const maxY = Math.max(p1.y, p2.y, p3.y, p4.y)
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  }
+}
+
+export function getTotalBox(boxes) {
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+
+  boxes.forEach((box) => {
+    minX = Math.min(minX, box.x)
+    minY = Math.min(minY, box.y)
+    maxX = Math.max(maxX, box.x + box.width)
+    maxY = Math.max(maxY, box.y + box.height)
+  })
+  
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  }
+}
+
 export class SeatMapBase {
   constructor(hook, options = {}) {
     this.hook = hook
@@ -241,6 +236,49 @@ export class SeatMapBase {
     this.mode = options.mode || "view"
     this.stageContainer = this.el.querySelector("[data-seat-map-stage]")
     this.state = this.parsePayload()
+    
+    this._cachedTheme = null
+    this._cachedStatusColors = null
+    this._themeChangeListener = null
+  }
+  
+  get theme() {
+    if (!this._cachedTheme) {
+      this._cachedTheme = getThemeColors()
+    }
+    return this._cachedTheme
+  }
+  
+  get statusColors() {
+    if (!this._cachedStatusColors) {
+      this._cachedStatusColors = getStatusColors()
+    }
+    return this._cachedStatusColors
+  }
+  
+  clearThemeCache() {
+    this._cachedTheme = null
+    this._cachedStatusColors = null
+  }
+  
+  setupThemeListener() {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    this._themeChangeListener = () => {
+      this.clearThemeCache()
+      if (this.stage) {
+        this.scheduleRender(true)
+      }
+    }
+    mediaQuery.addEventListener('change', this._themeChangeListener)
+  }
+  
+  teardownThemeListener() {
+    if (this._themeChangeListener && typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      mediaQuery.removeEventListener('change', this._themeChangeListener)
+    }
   }
   
   parsePayload() {
@@ -252,6 +290,7 @@ export class SeatMapBase {
   }
   
   destroy() {
+    this.teardownThemeListener()
     if (this.stage) this.stage.destroy()
   }
 }

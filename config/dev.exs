@@ -2,9 +2,9 @@ import Config
 
 # Enable enhanced LiveView debugging in development
 config :phoenix_live_view,
-       debug_heex_annotations: true,
-       debug_attributes: true,
-       enable_expensive_runtime_checks: true
+  debug_heex_annotations: true,
+  debug_attributes: true,
+  enable_expensive_runtime_checks: true
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
@@ -15,37 +15,32 @@ config :phoenix_live_view,
 config :lanpartyseating,
        LanpartyseatingWeb.Endpoint,
        http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
-       https:
-         [
-           port: 4001,
-           ip: {0, 0, 0, 0, 0, 0, 0, 0},
-           certfile: "priv/cert/selfsigned.pem",
-           keyfile: "priv/cert/selfsigned_key.pem",
-           http_2_options: [enabled: false],
-           thousand_island_options:
-             [
-               transport_options:
-                 [
-                   versions: [:"tlsv1.2"],
-                 ],
-             ],
+       https: [
+         port: 4001,
+         ip: {0, 0, 0, 0, 0, 0, 0, 0},
+         certfile: "priv/cert/selfsigned.pem",
+         keyfile: "priv/cert/selfsigned_key.pem",
+         http_2_options: [enabled: false],
+         thousand_island_options: [
+           transport_options: [
+             versions: [:"tlsv1.2"],
+           ],
          ],
+       ],
        debug_errors: true,
        code_reloader: true,
        check_origin: false,
-       watchers:
-         [
-           npx:
-             [
-               "@tailwindcss/cli",
-               "--input=css/app.css",
-               "--output=../priv/static/css/app.css",
-               "--watch",
-               cd: Path.expand("../assets", __DIR__),
-             ],
-           # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
-           esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch --loader:.woff=file --loader:.woff2=file)]},
-         ]
+       watchers: [
+         npx: [
+           "@tailwindcss/cli",
+           "--input=css/app.css",
+           "--output=../priv/static/css/app.css",
+           "--watch",
+           cd: Path.expand("../assets", __DIR__),
+         ],
+         # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
+         esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch --loader:.woff=file --loader:.woff2=file)]},
+       ]
 
 # ## SSL Support
 #
@@ -66,15 +61,13 @@ config :lanpartyseating,
 # Watch static and templates for browser reloading.
 config :lanpartyseating,
        LanpartyseatingWeb.Endpoint,
-       live_reload:
-         [
-           patterns:
-             [
-               ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
-               ~r"priv/gettext/.*(po)$",
-               ~r"lib/lanpartyseating_web/(controllers|live|components)/.*(ex|heex)$",
-             ],
-         ]
+       live_reload: [
+         patterns: [
+           ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
+           ~r"priv/gettext/.*(po)$",
+           ~r"lib/lanpartyseating_web/(controllers|live|components)/.*(ex|heex)$",
+         ],
+       ]
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"

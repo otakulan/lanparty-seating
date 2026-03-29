@@ -1,18 +1,10 @@
 import Konva from "konva"
-import {
-  SeatMapBase,
-  STATUS_COLORS,
-  THEME,
-  SCALE_BY,
-  clamp,
-  countdownLabel,
-  groupBounds
-} from "./seat_map_base"
+import { SeatMapBase, SCALE_BY, clamp, countdownLabel, groupBounds } from "./seat_map_base"
 
 const SEAT_WIDTH = 64
 const SEAT_HEIGHT = 64
 
-function renderSeatShape(seatGroup, seat, palette, scale, showKeyboard = true) {
+function renderSeatShape(seatGroup, seat, palette, scale, theme, showKeyboard = true) {
   const w = SEAT_WIDTH * scale
   const h = SEAT_HEIGHT * scale
   
@@ -39,8 +31,8 @@ function renderSeatShape(seatGroup, seat, palette, scale, showKeyboard = true) {
     width: w * 0.76,
     height: h * 0.4,
     cornerRadius: 3,
-    fill: "rgba(96, 165, 250, 0.15)",
-    stroke: "rgba(96, 165, 250, 0.3)",
+    fill: theme.monitorFill,
+    stroke: theme.monitorStroke,
     strokeWidth: 1,
     perfectDrawEnabled: false
   }))
@@ -60,8 +52,8 @@ function renderSeatShape(seatGroup, seat, palette, scale, showKeyboard = true) {
       width: w * 0.9,
       height: h * 0.28,
       cornerRadius: 4,
-      fill: "rgba(139, 148, 158, 0.12)",
-      stroke: "rgba(139, 148, 158, 0.25)",
+      fill: theme.keyboardFill,
+      stroke: theme.keyboardStroke,
       strokeWidth: 1,
       perfectDrawEnabled: false
     }))
@@ -82,6 +74,7 @@ export default class SeatMapViewer extends SeatMapBase {
   mount() {
     this.buildStage()
     this.bindCommands()
+    this.setupThemeListener()
     this.startTicking()
     this.renderScene(true)
   }
@@ -104,7 +97,7 @@ export default class SeatMapViewer extends SeatMapBase {
     window.removeEventListener("resize", this.handleResize)
     clearInterval(this.renderTick)
     if (this.renderFrame) window.cancelAnimationFrame(this.renderFrame)
-    if (this.stage) this.stage.destroy()
+    super.destroy()
   }
   
   executeCommand(command) {
@@ -208,6 +201,7 @@ export default class SeatMapViewer extends SeatMapBase {
   }
   
   renderBackdrop(width, height) {
+    const theme = this.theme
     const backdrop = new Konva.Rect({
       x: 0,
       y: 0,
@@ -215,8 +209,8 @@ export default class SeatMapViewer extends SeatMapBase {
       height,
       fillLinearGradientStartPoint: { x: 0, y: 0 },
       fillLinearGradientEndPoint: { x: width, y: height },
-      fillLinearGradientColorStops: [0, THEME.backgroundGradientStart, 1, THEME.backgroundGradientEnd],
-      stroke: THEME.borderColor,
+      fillLinearGradientColorStops: [0, theme.backgroundGradientStart, 1, theme.backgroundGradientEnd],
+      stroke: theme.borderColor,
       strokeWidth: 2
     })
     
@@ -225,7 +219,7 @@ export default class SeatMapViewer extends SeatMapBase {
     const gridSize = 40
     const gridLines = new Konva.Shape({
       sceneFunc: (context) => {
-        context.strokeStyle = THEME.gridColor
+        context.strokeStyle = theme.gridColor
         context.lineWidth = 0.5
         
         for (let x = 0; x <= width; x += gridSize) {
@@ -271,9 +265,11 @@ export default class SeatMapViewer extends SeatMapBase {
   
   renderSeats() {
     const scale = 1
+    const theme = this.theme
+    const statusColors = this.statusColors
     
     ;(this.state.seats || []).forEach((seat) => {
-      const palette = STATUS_COLORS[seat.status] || STATUS_COLORS.available
+      const palette = statusColors[seat.status] || statusColors.available
       const seatGroup = new Konva.Group({
         x: seat.x,
         y: seat.y,
@@ -284,7 +280,7 @@ export default class SeatMapViewer extends SeatMapBase {
       seatGroup.setAttr("nodeType", "seat")
       seatGroup.setAttr("seatSlotId", seat.seat_slot_id)
       
-      renderSeatShape(seatGroup, seat, palette, scale, this.showKeyboard)
+      renderSeatShape(seatGroup, seat, palette, scale, theme, this.showKeyboard)
       
       seatGroup.add(new Konva.Text({
         x: -SEAT_WIDTH * 0.4,
@@ -294,7 +290,7 @@ export default class SeatMapViewer extends SeatMapBase {
         text: seat.label,
         fontSize: 11,
         fontStyle: "600",
-        fontFamily: THEME.fontFamily,
+        fontFamily: theme.fontFamily,
         fill: palette.text,
         perfectDrawEnabled: false,
         listening: false
@@ -308,7 +304,7 @@ export default class SeatMapViewer extends SeatMapBase {
         text: "",
         fontSize: 8,
         fontStyle: "bold",
-        fontFamily: THEME.fontFamily,
+        fontFamily: theme.fontFamily,
         fill: palette.accent,
         perfectDrawEnabled: false,
         listening: false,
@@ -343,6 +339,8 @@ export default class SeatMapViewer extends SeatMapBase {
   }
   
   renderGroups() {
+    const theme = this.theme
+    
     ;(this.state.groups || []).forEach((group) => {
       const memberSeats = (group.seat_slot_ids || [])
         .map((seatId) => (this.state.seats || []).find((seat) => seat.seat_slot_id === seatId))
@@ -374,10 +372,10 @@ export default class SeatMapViewer extends SeatMapBase {
       if (!hasTeamAssignment && group.name) {
         const text = new Konva.Text({
           text: group.name,
-          fontFamily: THEME.fontFamily,
+          fontFamily: theme.fontFamily,
           fontSize: 10,
           fontStyle: "600",
-          fill: THEME.textPrimary,
+          fill: theme.textPrimary,
           listening: false
         })
         
@@ -409,6 +407,8 @@ export default class SeatMapViewer extends SeatMapBase {
   }
   
   renderTeamLabels() {
+    const theme = this.theme
+    
     ;(this.state.team_assignments || []).forEach((assignment) => {
       const group = (this.state.groups || []).find((entry) => entry.id === assignment.group_id)
       const memberSeats = group
@@ -423,10 +423,10 @@ export default class SeatMapViewer extends SeatMapBase {
       
       const text = new Konva.Text({
         text: `${assignment.team_name} · ${assignment.tournament_name}`,
-        fontFamily: THEME.fontFamily,
+        fontFamily: theme.fontFamily,
         fontSize: 11,
         fontStyle: "600",
-        fill: THEME.textPrimary,
+        fill: theme.textPrimary,
         perfectDrawEnabled: false,
         listening: false
       })

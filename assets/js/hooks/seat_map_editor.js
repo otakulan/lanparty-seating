@@ -7,8 +7,17 @@ export default {
   },
 
   updated() {
-    this.runtime.update()
-    this.runtime.scheduleRender(false)
+    const container = this.el.querySelector('[data-seat-map-stage]')
+    const hasContent = container && container.querySelector('.konvajs-content')
+    
+    if (!hasContent) {
+      this.runtime.destroy()
+      this.runtime = new SeatMapEditor(this)
+      this.runtime.mount()
+    } else {
+      this.runtime.update()
+      this.runtime.scheduleRender(false)
+    }
   },
 
   destroyed() {

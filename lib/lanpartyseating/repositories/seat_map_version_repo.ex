@@ -31,7 +31,7 @@ defmodule Lanpartyseating.SeatMapVersion do
       :background_value,
       :data,
       :published_at,
-      :deleted_at
+      :deleted_at,
     ])
     |> validate_required([:seat_map_id, :name, :status, :width, :height, :background_kind, :data])
     |> validate_inclusion(:status, ["draft", "published"])

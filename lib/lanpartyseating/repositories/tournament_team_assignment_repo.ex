@@ -26,7 +26,7 @@ defmodule Lanpartyseating.TournamentTeamAssignment do
       :color,
       :label_x,
       :label_y,
-      :deleted_at
+      :deleted_at,
     ])
     |> validate_required([:tournament_id, :seat_map_version_id, :group_id, :team_name])
     |> validate_length(:group_id, min: 1, max: 255)

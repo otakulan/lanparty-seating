@@ -43,22 +43,20 @@ defmodule LanpartyseatingWeb.SeatMapDemo do
   defp seats(now) do
     row_layouts()
     |> Enum.with_index(1)
-    |> Enum.flat_map(
-      fn {row, row_index} ->
-        Enum.map(
-          1..10,
-          fn column ->
-            seat_id = (row_index - 1) * 10 + column
-            label = "#{row.letter}#{String.pad_leading(Integer.to_string(column), 2, "0")}"
-            x = row.x_start + (column - 1) * @seat_gap
-            y = row.y
-            {status, minutes} = status_for(seat_id)
+    |> Enum.flat_map(fn {row, row_index} ->
+      Enum.map(
+        1..10,
+        fn column ->
+          seat_id = (row_index - 1) * 10 + column
+          label = "#{row.letter}#{String.pad_leading(Integer.to_string(column), 2, "0")}"
+          x = row.x_start + (column - 1) * @seat_gap
+          y = row.y
+          {status, minutes} = status_for(seat_id)
 
-            seat(seat_id, label, x, y, status, now, minutes)
-          end
-        )
-      end
-    )
+          seat(seat_id, label, x, y, status, now, minutes)
+        end
+      )
+    end)
   end
 
   defp seat(id, label, x, y, status, now, minutes) do

@@ -5,6 +5,7 @@ defmodule LanpartyseatingWeb.Components.Nav do
   use Phoenix.Component
   use LanpartyseatingWeb, :verified_routes
   alias LanpartyseatingWeb.Components.Icons
+  alias LanpartyseatingWeb.Components.UI
 
   attr(:nav_menu, :list, required: true)
   attr(:admin_menu, :list, default: [])
@@ -48,6 +49,9 @@ defmodule LanpartyseatingWeb.Components.Nav do
               </details>
             </li>
           <% end %>
+          <li>
+            <UI.theme_toggle id="theme-toggle-desktop" class="btn-ghost btn-sm" />
+          </li>
           <%= if @is_authenticated do %>
             <li>
               <%= if @is_user_auth do %>
@@ -84,65 +88,68 @@ defmodule LanpartyseatingWeb.Components.Nav do
 
       <%!-- Mobile hamburger menu --%>
       <div class="navbar-end lg:hidden">
-        <div class="dropdown dropdown-end">
-          <label tabindex="0" class="btn btn-ghost">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </label>
-          <ul tabindex="0" class="menu dropdown-content mt-3 z-50 p-2 shadow-lg bg-neutral rounded-box w-52">
-            <%= for {menu_txt, path} <- @nav_menu do %>
-              <li>
-                <.link patch={path} class={"hover:bg-neutral-focus #{if path == @nav_menu_active_path, do: "bg-neutral-focus font-semibold", else: ""}"}>
-                  {menu_txt}
-                </.link>
-              </li>
-            <% end %>
-            <%= if @admin_menu != [] do %>
-              <li class="menu-title"><span>Admin</span></li>
-              <%= for {menu_txt, path} <- @admin_menu do %>
+        <div class="flex items-center gap-2">
+          <UI.theme_toggle id="theme-toggle-mobile" class="btn-ghost btn-sm" />
+          <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </label>
+            <ul tabindex="0" class="menu dropdown-content mt-3 z-50 p-2 shadow-lg bg-neutral rounded-box w-52">
+              <%= for {menu_txt, path} <- @nav_menu do %>
                 <li>
                   <.link patch={path} class={"hover:bg-neutral-focus #{if path == @nav_menu_active_path, do: "bg-neutral-focus font-semibold", else: ""}"}>
                     {menu_txt}
                   </.link>
                 </li>
               <% end %>
-            <% end %>
+              <%= if @admin_menu != [] do %>
+                <li class="menu-title"><span>Admin</span></li>
+                <%= for {menu_txt, path} <- @admin_menu do %>
+                  <li>
+                    <.link patch={path} class={"hover:bg-neutral-focus #{if path == @nav_menu_active_path, do: "bg-neutral-focus font-semibold", else: ""}"}>
+                      {menu_txt}
+                    </.link>
+                  </li>
+                <% end %>
+              <% end %>
 
-            <%= if @is_authenticated do %>
-              <li class="menu-title">
-                <span class="flex items-center gap-1">
-                  <Icons.user class="w-4 h-4" />
-                  {@current_scope.user.name}
-                  <%= if not @is_user_auth do %>
-                    <span class="badge badge-warning badge-sm">Badge</span>
-                  <% end %>
-                </span>
-              </li>
-              <%= if @is_user_auth do %>
+              <%= if @is_authenticated do %>
+                <li class="menu-title">
+                  <span class="flex items-center gap-1">
+                    <Icons.user class="w-4 h-4" />
+                    {@current_scope.user.name}
+                    <%= if not @is_user_auth do %>
+                      <span class="badge badge-warning badge-sm">Badge</span>
+                    <% end %>
+                  </span>
+                </li>
+                <%= if @is_user_auth do %>
+                  <li>
+                    <.link patch={~p"/profile"} class="hover:bg-neutral-focus">
+                      Profile / Profil
+                    </.link>
+                  </li>
+                <% end %>
                 <li>
-                  <.link patch={~p"/profile"} class="hover:bg-neutral-focus">
-                    Profile / Profil
+                  <form action={~p"/logout"} method="post">
+                    <input type="hidden" name="_method" value="delete" />
+                    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                    <button type="submit" class="hover:bg-neutral-focus w-full text-left">
+                      Logout
+                    </button>
+                  </form>
+                </li>
+              <% else %>
+                <li>
+                  <.link href={~p"/login"} class="hover:bg-neutral-focus">
+                    Admin Login
                   </.link>
                 </li>
               <% end %>
-              <li>
-                <form action={~p"/logout"} method="post">
-                  <input type="hidden" name="_method" value="delete" />
-                  <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
-                  <button type="submit" class="hover:bg-neutral-focus w-full text-left">
-                    Logout
-                  </button>
-                </form>
-              </li>
-            <% else %>
-              <li>
-                <.link href={~p"/login"} class="hover:bg-neutral-focus">
-                  Admin Login
-                </.link>
-              </li>
-            <% end %>
-          </ul>
+            </ul>
+          </div>
         </div>
       </div>
     </nav>

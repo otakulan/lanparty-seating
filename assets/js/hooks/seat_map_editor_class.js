@@ -1,18 +1,18 @@
 import Konva from "konva"
 import {
   SeatMapBase,
-  STATUS_COLORS,
-  THEME,
   SCALE_BY,
   clamp,
   randomId,
-  groupBounds
+  groupBounds,
+  getClientRect,
+  getTotalBox
 } from "./seat_map_base"
 
 const SEAT_WIDTH = 64
 const SEAT_HEIGHT = 64
 
-function renderEditorSeat(seatGroup, seat, palette, scale, showKeyboard = true, isSelected = false) {
+function renderEditorSeat(seatGroup, seat, palette, scale, theme, statusColors, showKeyboard = true, isSelected = false) {
   const w = SEAT_WIDTH * scale
   const h = SEAT_HEIGHT * scale
   
@@ -42,8 +42,8 @@ function renderEditorSeat(seatGroup, seat, palette, scale, showKeyboard = true, 
     width: w * 0.76,
     height: h * 0.4,
     cornerRadius: 3,
-    fill: "rgba(96, 165, 250, 0.15)",
-    stroke: "rgba(96, 165, 250, 0.3)",
+    fill: theme.monitorFill,
+    stroke: theme.monitorStroke,
     strokeWidth: 1,
     perfectDrawEnabled: false
   }))
@@ -63,8 +63,8 @@ function renderEditorSeat(seatGroup, seat, palette, scale, showKeyboard = true, 
       width: w * 0.9,
       height: h * 0.28,
       cornerRadius: 4,
-      fill: "rgba(139, 148, 158, 0.12)",
-      stroke: "rgba(139, 148, 158, 0.25)",
+      fill: theme.keyboardFill,
+      stroke: theme.keyboardStroke,
       strokeWidth: 1,
       perfectDrawEnabled: false
     }))
@@ -78,51 +78,56 @@ function renderEditorSeat(seatGroup, seat, palette, scale, showKeyboard = true, 
     text: seat.label,
     fontSize: 11,
     fontStyle: "600",
-    fontFamily: THEME.fontFamily,
+    fontFamily: theme.fontFamily,
     fill: palette.text,
     perfectDrawEnabled: false
   }))
   
   if (isSelected) {
     seatGroup.add(new Konva.Rect({
-      x: -w * 0.55,
-      y: -h * 0.65,
-      width: w * 1.1,
-      height: h * 1.1,
-      cornerRadius: 8,
-      stroke: THEME.accentCyan,
-      strokeWidth: 2,
-      dash: [4, 4],
-      fill: "rgba(6, 182, 212, 0.1)",
+      x: -w * 0.6,
+      y: -h * 0.7,
+      width: w * 1.2,
+      height: h * 1.2,
+      cornerRadius: 10,
+      stroke: theme.accentCyan,
+      strokeWidth: 3,
+      shadowColor: theme.accentCyan,
+      shadowBlur: 15,
+      shadowOpacity: 0.6,
       perfectDrawEnabled: false
     }))
   }
 }
 
 export default class SeatMapEditor extends SeatMapBase {
-  constructor(hook, options = {}) {
+constructor(hook, options = {}) {
     super(hook, options)
     this.showKeyboard = options.showKeyboard !== false
     this.selectedSeats = new Set()
     this.selectedObjects = new Set()
-    this.lastTouchCenter = null
-    this.lastTouchDistance = 0
-    this.renderFrame = null
+    this.history = []
+    this.historyIndex = -1
+    this.isUndoRedo = false
     this.isMarqueeActive = false
-    this.marqueeRect = null
     this.marqueeStartPos = null
-    this.marqueeStartPosTransformed = null
     this.lastSelectionModifier = null
-    this.isPanning = false
+    this.dragStartPosition = null
+    this.draggedSeatId = null
   }
   
   mount() {
     this.buildStage()
     this.bindCommands()
+    this.setupThemeListener()
+    this.pushHistory()
     this.renderScene(true)
+    this.stageContainer.focus()
   }
   
   buildStage() {
+    const theme = this.theme
+    
     this.stage = new Konva.Stage({
       container: this.stageContainer,
       width: this.stageContainer.clientWidth,
@@ -138,16 +143,67 @@ export default class SeatMapEditor extends SeatMapBase {
     
     this.transformer = new Konva.Transformer({
       rotateEnabled: true,
-      borderStroke: THEME.accentCyan,
-      anchorStroke: THEME.accentCyan,
-      anchorFill: THEME.accentGreen,
+      borderStroke: theme.accentCyan,
+      anchorStroke: theme.accentCyan,
+      anchorFill: theme.accentGreen,
       anchorSize: 8,
       anchorCornerRadius: 3,
       visible: false,
-      ignoreStroke: true
+      ignoreStroke: true,
+      boundBoxFunc: (oldBox, newBox) => {
+        const box = getClientRect(newBox)
+        const canvasWidth = this.state.width || 1920
+        const canvasHeight = this.state.height || 1080
+        
+        const isOut =
+          box.x < 0 ||
+          box.y < 0 ||
+          box.x + box.width > canvasWidth ||
+          box.y + box.height > canvasHeight
+
+        if (isOut) {
+          return oldBox
+        }
+        
+        return newBox
+      }
     })
     
     this.objectLayer.add(this.transformer)
+    
+    this.transformer.on("dragmove", () => {
+      const nodes = this.transformer.nodes()
+      if (nodes.length === 0) return
+      
+      const canvasWidth = this.state.width || 1920
+      const canvasHeight = this.state.height || 1080
+      
+      const boxes = nodes.map((node) => node.getClientRect())
+      const box = getTotalBox(boxes)
+      
+      nodes.forEach((node) => {
+        const absPos = node.getAbsolutePosition()
+        const offsetX = box.x - absPos.x
+        const offsetY = box.y - absPos.y
+        
+        const newAbsPos = { ...absPos }
+        
+        if (box.x < 0) {
+          newAbsPos.x = -offsetX
+        }
+        if (box.y < 0) {
+          newAbsPos.y = -offsetY
+        }
+        if (box.x + box.width > canvasWidth) {
+          newAbsPos.x = canvasWidth - box.width - offsetX
+        }
+        if (box.y + box.height > canvasHeight) {
+          newAbsPos.y = canvasHeight - box.height - offsetY
+        }
+        
+        node.setAbsolutePosition(newAbsPos)
+      })
+    })
     
     this.stage.add(this.backgroundLayer)
     this.stage.add(this.groupLayer)
@@ -159,6 +215,13 @@ export default class SeatMapEditor extends SeatMapBase {
     this.stage.on("touchmove", (event) => this.handleTouchMove(event))
     this.stage.on("touchend", () => this.handleTouchEnd())
     this.stage.on("click tap", (event) => this.handleStageClick(event))
+    this.stage.on("mousedown", (event) => {
+      this.stageContainer.focus()
+    })
+    
+    this.stage.on("dragmove", () => {
+      this.constrainStageDrag()
+    })
     
     this.stage.on("mousedown", (event) => {
       if (event.evt.altKey) {
@@ -210,6 +273,18 @@ export default class SeatMapEditor extends SeatMapBase {
           this.deleteSelection()
         }
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.target.closest('input, textarea')) {
+        e.preventDefault()
+        if (e.shiftKey) {
+          this.redo()
+        } else {
+          this.undo()
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "y" && !e.target.closest('input, textarea')) {
+        e.preventDefault()
+        this.redo()
+      }
     }
     
     const handleKeyUp = (e) => {
@@ -252,7 +327,7 @@ export default class SeatMapEditor extends SeatMapBase {
       this.stageContainer.removeEventListener("keyup", this.keyHandler.keyup)
     }
     if (this.renderFrame) window.cancelAnimationFrame(this.renderFrame)
-    if (this.stage) this.stage.destroy()
+    super.destroy()
   }
   
   scheduleRender(resetView = false) {
@@ -291,6 +366,21 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   renderBackdrop(width, height) {
+    const theme = this.theme
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    // Draw full-stage background first (fills entire container)
+    this.backgroundLayer.add(new Konva.Rect({
+      x: 0,
+      y: 0,
+      width: stageWidth,
+      height: stageHeight,
+      fill: theme.background,
+      listening: false
+    }))
+    
+    // Draw canvas area with gradient
     const backdrop = new Konva.Rect({
       x: 0,
       y: 0,
@@ -298,8 +388,8 @@ export default class SeatMapEditor extends SeatMapBase {
       height,
       fillLinearGradientStartPoint: { x: 0, y: 0 },
       fillLinearGradientEndPoint: { x: width, y: height },
-      fillLinearGradientColorStops: [0, THEME.backgroundGradientStart, 1, THEME.backgroundGradientEnd],
-      stroke: THEME.borderColor,
+      fillLinearGradientColorStops: [0, theme.backgroundGradientStart, 1, theme.backgroundGradientEnd],
+      stroke: theme.borderColor,
       strokeWidth: 2
     })
     
@@ -308,7 +398,7 @@ export default class SeatMapEditor extends SeatMapBase {
     const gridSize = 40
     const gridLines = new Konva.Shape({
       sceneFunc: (context) => {
-        context.strokeStyle = THEME.gridColor
+        context.strokeStyle = theme.gridColor
         context.lineWidth = 0.5
         
         for (let x = 0; x <= width; x += gridSize) {
@@ -349,6 +439,8 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   renderObjects() {
+    const theme = this.theme
+    
     ;(this.state.objects || []).forEach((object) => {
       const id = object.id || randomId("object")
       const isText = object.type === "text"
@@ -364,8 +456,8 @@ export default class SeatMapEditor extends SeatMapBase {
           text: object.text || "Label",
           fontSize: object.font_size || 24,
           fontStyle: "600",
-          fontFamily: THEME.fontFamily,
-          fill: object.fill || THEME.textPrimary,
+          fontFamily: theme.fontFamily,
+          fill: object.fill || theme.textPrimary,
           perfectDrawEnabled: false
         })
       } else {
@@ -376,7 +468,7 @@ export default class SeatMapEditor extends SeatMapBase {
           height: object.height,
           rotation: object.rotation || 0,
           fill: object.fill || "rgba(34, 197, 94, 0.2)",
-          stroke: object.stroke || THEME.accentGreen,
+          stroke: object.stroke || theme.accentGreen,
           strokeWidth: 2,
           cornerRadius: 12,
           shadowColor: "rgba(34, 197, 94, 0.3)",
@@ -392,6 +484,12 @@ export default class SeatMapEditor extends SeatMapBase {
       node.draggable(true)
       
       node.on("click tap", (event) => this.handleObjectSelection(event, node))
+      node.on("dragstart", () => this.pushHistory())
+      node.on("dragmove", () => {
+        const w = isText ? (object.width || 180) : (object.width || 120)
+        const h = isText ? (object.height || 36) : (object.height || 60)
+        this.constrainNodeDrag(node, w, h)
+      })
       node.on("dragend transformend", () => this.syncObjectNode(node))
       
       this.objectLayer.add(node)
@@ -399,6 +497,8 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   renderGroups() {
+    const theme = this.theme
+    
     ;(this.state.groups || []).forEach((group) => {
       const memberSeats = (group.seat_slot_ids || [])
         .map((seatId) => (this.state.seats || []).find((seat) => seat.seat_slot_id === seatId))
@@ -407,7 +507,7 @@ export default class SeatMapEditor extends SeatMapBase {
       if (memberSeats.length === 0) return
       
       const bounds = groupBounds(memberSeats)
-      const color = group.color || THEME.accentGreen
+      const color = group.color || theme.accentGreen
       
       this.groupLayer.add(new Konva.Rect({
         x: bounds.x - 12,
@@ -429,10 +529,10 @@ export default class SeatMapEditor extends SeatMapBase {
       if (!hasTeamAssignment && group.name) {
         const text = new Konva.Text({
           text: group.name,
-          fontFamily: THEME.fontFamily,
+          fontFamily: theme.fontFamily,
           fontSize: 10,
           fontStyle: "600",
-          fill: THEME.textPrimary,
+          fill: theme.textPrimary,
           listening: false
         })
         
@@ -465,9 +565,11 @@ export default class SeatMapEditor extends SeatMapBase {
   
   renderSeats() {
     const scale = 1
+    const theme = this.theme
+    const statusColors = this.statusColors
     
     ;(this.state.seats || []).forEach((seat) => {
-      const palette = STATUS_COLORS[seat.status] || STATUS_COLORS.available
+      const palette = statusColors[seat.status] || statusColors.available
       const isSelected = this.selectedSeats.has(seat.seat_slot_id)
       
       const seatGroup = new Konva.Group({
@@ -481,16 +583,75 @@ export default class SeatMapEditor extends SeatMapBase {
       seatGroup.setAttr("nodeType", "seat")
       seatGroup.setAttr("seatSlotId", seat.seat_slot_id)
       
-      renderEditorSeat(seatGroup, seat, palette, scale, this.showKeyboard, isSelected)
+      renderEditorSeat(seatGroup, seat, palette, scale, theme, statusColors, this.showKeyboard, isSelected)
       
       seatGroup.on("click tap", (event) => this.handleSeatClick(event, seat))
-      seatGroup.on("dragend", () => this.syncSeatNode(seatGroup, seat.seat_slot_id))
+      seatGroup.on("dragstart", () => {
+        this.pushHistory()
+        // If this seat is part of a multi-selection, store all positions
+        if (this.selectedSeats.size > 1 && this.selectedSeats.has(seat.seat_slot_id)) {
+          this.dragStartPosition = { x: seatGroup.x(), y: seatGroup.y() }
+          this.draggedSeatId = seat.seat_slot_id
+        }
+      })
+      seatGroup.on("dragmove", () => {
+        this.constrainNodeDrag(seatGroup, SEAT_WIDTH, SEAT_HEIGHT)
+        // If part of multi-selection, move all selected seats
+        if (this.selectedSeats.size > 1 && this.dragStartPosition && this.draggedSeatId === seat.seat_slot_id) {
+          const dx = seatGroup.x() - this.dragStartPosition.x
+          const dy = seatGroup.y() - this.dragStartPosition.y
+          this.moveSelectedSeats(dx, dy, seat.seat_slot_id)
+        }
+      })
+      seatGroup.on("dragend", () => {
+        this.syncSeatNode(seatGroup, seat.seat_slot_id)
+        // Sync all other selected seats
+        if (this.selectedSeats.size > 1 && this.draggedSeatId === seat.seat_slot_id) {
+          this.syncAllSelectedSeats()
+        }
+        this.dragStartPosition = null
+        this.draggedSeatId = null
+      })
       
       this.seatLayer.add(seatGroup)
     })
   }
   
+  moveSelectedSeats(dx, dy, excludeSeatId) {
+    // Move all selected seats except the one being dragged
+    const scale = this.stage.scaleX() || 1
+    
+    this.selectedSeats.forEach((seatSlotId) => {
+      if (seatSlotId === excludeSeatId) return
+      
+      const node = this.seatLayer.children.find(n => n.id() === `seat-${seatSlotId}`)
+      if (!node) return
+      
+      // Get the original position from state
+      const seat = (this.state.seats || []).find(s => s.seat_slot_id === seatSlotId)
+      if (!seat) return
+      
+      // Apply delta from original position
+      node.x(seat.x + dx)
+      node.y(seat.y + dy)
+    })
+    
+    this.seatLayer.batchDraw()
+  }
+  
+  syncAllSelectedSeats() {
+    // Sync all selected seats' positions to state
+    this.selectedSeats.forEach((seatSlotId) => {
+      const node = this.seatLayer.children.find(n => n.id() === `seat-${seatSlotId}`)
+      if (!node) return
+      
+      this.syncSeatNode(node, seatSlotId)
+    })
+  }
+  
   renderTeamLabels() {
+    const theme = this.theme
+    
     ;(this.state.team_assignments || []).forEach((assignment) => {
       const group = (this.state.groups || []).find((entry) => entry.id === assignment.group_id)
       const memberSeats = group
@@ -505,10 +666,10 @@ export default class SeatMapEditor extends SeatMapBase {
       
       const text = new Konva.Text({
         text: `${assignment.team_name} · ${assignment.tournament_name}`,
-        fontFamily: THEME.fontFamily,
+        fontFamily: theme.fontFamily,
         fontSize: 11,
         fontStyle: "600",
-        fill: THEME.textPrimary,
+        fill: theme.textPrimary,
         perfectDrawEnabled: false,
         listening: false
       })
@@ -545,7 +706,17 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   handleStageClick(event) {
-    if (this.isMarqueeActive && this.marqueeRect) {
+    // Don't clear selection if marquee was active (selection handled in handleMarqueeEnd)
+    if (this.marqueeRect && this.marqueeRect.width() > 5 && this.marqueeRect.height() > 5) {
+      return
+    }
+    
+    // Clear marquee if it exists but was just a click
+    if (this.marqueeRect) {
+      this.marqueeRect.destroy()
+      this.marqueeRect = null
+      this.overlayLayer.batchDraw()
+      this.isMarqueeActive = false
       return
     }
     
@@ -556,6 +727,7 @@ export default class SeatMapEditor extends SeatMapBase {
   
   handleSeatClick(event, seat) {
     event.cancelBubble = true
+    this.stageContainer.focus()
     
     const isMultiSelect = event.evt.shiftKey || event.evt.ctrlKey || event.evt.metaKey
     
@@ -574,8 +746,56 @@ export default class SeatMapEditor extends SeatMapBase {
     this.scheduleRender(false)
   }
   
+  constrainStageDrag() {
+    const scale = this.stage.scaleX() || 1
+    const canvasWidth = this.state.width || 1920
+    const canvasHeight = this.state.height || 1080
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    const scaledWidth = canvasWidth * scale
+    const scaledHeight = canvasHeight * scale
+    
+    let newX = this.stage.x()
+    let newY = this.stage.y()
+    
+    if (scaledWidth <= stageWidth) {
+      newX = (stageWidth - scaledWidth) / 2
+    } else {
+      const maxX = 0
+      const minX = stageWidth - scaledWidth
+      newX = clamp(newX, minX, maxX)
+    }
+    
+    if (scaledHeight <= stageHeight) {
+      newY = (stageHeight - scaledHeight) / 2
+    } else {
+      const maxY = 0
+      const minY = stageHeight - scaledHeight
+      newY = clamp(newY, minY, maxY)
+    }
+    
+    this.stage.position({ x: newX, y: newY })
+  }
+  
+  constrainNodeDrag(node, nodeWidth, nodeHeight) {
+    const canvasWidth = this.state.width || 1920
+    const canvasHeight = this.state.height || 1080
+    const halfWidth = (nodeWidth || 64) / 2
+    const halfHeight = (nodeHeight || 64) / 2
+    
+    let x = node.x()
+    let y = node.y()
+    
+    x = clamp(x, halfWidth, canvasWidth - halfWidth)
+    y = clamp(y, halfHeight, canvasHeight - halfHeight)
+    
+    node.position({ x, y })
+  }
+  
   handleObjectSelection(event, node) {
     event.cancelBubble = true
+    this.stageContainer.focus()
     
     const isMultiSelect = event.evt.shiftKey || event.evt.ctrlKey || event.evt.metaKey
     const objectId = node.getAttr("objectId")
@@ -657,6 +877,7 @@ export default class SeatMapEditor extends SeatMapBase {
   handleMarqueeMove(event) {
     if (!this.isMarqueeActive) return
     
+    const theme = this.theme
     const pos = this.stage.getPointerPosition()
     if (!pos) return
     
@@ -668,7 +889,7 @@ export default class SeatMapEditor extends SeatMapBase {
     if (!this.marqueeRect) {
       this.marqueeRect = new Konva.Rect({
         fill: "rgba(6, 182, 212, 0.15)",
-        stroke: THEME.accentCyan,
+        stroke: theme.accentCyan,
         strokeWidth: 2,
         dash: [4, 4],
         listening: false
@@ -699,13 +920,18 @@ export default class SeatMapEditor extends SeatMapBase {
         height: this.marqueeRect.height()
       }
       
-      if (marqueeBox.width > 5 && marqueeBox.height > 5) {
-        this.selectSeatsInRect(marqueeBox)
-      }
+      // Use setTimeout to ensure click event is processed first
+      setTimeout(() => {
+        if (this.marqueeRect) {
+          this.marqueeRect.destroy()
+          this.marqueeRect = null
+          this.overlayLayer.batchDraw()
+        }
+      })
       
-      this.marqueeRect.destroy()
-      this.marqueeRect = null
-      this.overlayLayer.batchDraw()
+      if (marqueeBox.width > 5 && marqueeBox.height > 5) {
+        this.selectItemsInRect(marqueeBox)
+      }
     }
     
     this.marqueeStartPos = null
@@ -713,7 +939,7 @@ export default class SeatMapEditor extends SeatMapBase {
     this.lastSelectionModifier = null
   }
   
-  selectSeatsInRect(rect) {
+  selectItemsInRect(rect) {
     const isCtrlOrMeta = this.lastSelectionModifier === 'ctrl' || this.lastSelectionModifier === 'meta'
     
     if (!isCtrlOrMeta) {
@@ -721,15 +947,25 @@ export default class SeatMapEditor extends SeatMapBase {
       this.selectedObjects.clear()
     }
     
-    (this.state.seats || []).forEach((seat) => {
-      const seatBounds = {
-        x: seat.x - SEAT_WIDTH / 2,
-        y: seat.y - SEAT_HEIGHT / 2,
-        width: SEAT_WIDTH,
-        height: SEAT_HEIGHT
+    // The marquee rect coordinates are already in canvas space
+    // (they were transformed in handleMarqueeMove by dividing by stage.scaleX())
+    const canvasRect = rect
+    
+    // Select seats
+    ;(this.state.seats || []).forEach((seat) => {
+      const seatX = seat.x
+      const seatY = seat.y
+      const halfW = (seat.width || 64) / 2
+      const halfH = (seat.height || 64) / 2
+      
+      const seatRect = {
+        x: seatX - halfW,
+        y: seatY - halfH,
+        width: halfW * 2,
+        height: halfH * 2
       }
       
-      if (this.rectanglesIntersect(rect, seatBounds)) {
+      if (this.rectanglesIntersect(canvasRect, seatRect)) {
         if (isCtrlOrMeta && this.selectedSeats.has(seat.seat_slot_id)) {
           this.selectedSeats.delete(seat.seat_slot_id)
         } else {
@@ -738,24 +974,35 @@ export default class SeatMapEditor extends SeatMapBase {
       }
     })
     
-    (this.state.objects || []).forEach((obj) => {
-      const objBounds = {
+    // Select objects using transformer
+    const nodesToSelect = []
+    ;(this.state.objects || []).forEach((obj) => {
+      const objRect = {
         x: obj.x,
         y: obj.y,
         width: obj.width || 100,
         height: obj.height || 60
       }
       
-      if (this.rectanglesIntersect(rect, objBounds)) {
+      if (this.rectanglesIntersect(canvasRect, objRect)) {
         if (isCtrlOrMeta && this.selectedObjects.has(obj.id)) {
           this.selectedObjects.delete(obj.id)
         } else {
           this.selectedObjects.add(obj.id)
+          const node = this.objectLayer.children.find(n => n.getAttr("objectId") === obj.id)
+          if (node) nodesToSelect.push(node)
         }
       }
     })
     
-    this.transformer.visible(false)
+    if (nodesToSelect.length > 0) {
+      this.transformer.nodes(nodesToSelect)
+      this.transformer.visible(true)
+    } else {
+      this.transformer.nodes([])
+      this.transformer.visible(false)
+    }
+    
     this.scheduleRender(false)
   }
   
@@ -764,6 +1011,65 @@ export default class SeatMapEditor extends SeatMapBase {
               b.x + b.width < a.x ||
               a.y + a.height < b.y ||
               b.y + b.height < a.y)
+  }
+  
+  pushHistory() {
+    if (this.isUndoRedo) return
+    
+    const state = JSON.stringify({
+      seats: this.state.seats || [],
+      objects: this.state.objects || [],
+      groups: this.state.groups || []
+    })
+    
+    if (this.historyIndex < this.history.length - 1) {
+      this.history = this.history.slice(0, this.historyIndex + 1)
+    }
+    
+    this.history.push(state)
+    this.historyIndex = this.history.length - 1
+    
+    if (this.history.length > 100) {
+      this.history.shift()
+      this.historyIndex -= 1
+    }
+  }
+  
+  canUndo() {
+    return this.historyIndex > 0
+  }
+  
+  canRedo() {
+    return this.historyIndex < this.history.length - 1
+  }
+  
+  undo() {
+    if (!this.canUndo()) return
+    
+    this.historyIndex -= 1
+    this.restoreFromHistory()
+  }
+  
+  redo() {
+    if (!this.canRedo()) return
+    
+    this.historyIndex += 1
+    this.restoreFromHistory()
+  }
+  
+  restoreFromHistory() {
+    const state = JSON.parse(this.history[this.historyIndex])
+    
+    this.isUndoRedo = true
+    this.state.seats = state.seats
+    this.state.objects = state.objects
+    this.state.groups = state.groups
+    this.selectedSeats.clear()
+    this.selectedObjects.clear()
+    this.transformer.nodes([])
+    this.transformer.visible(false)
+    this.scheduleRender(false)
+    this.isUndoRedo = false
   }
   
   executeCommand(command) {
@@ -792,6 +1098,12 @@ export default class SeatMapEditor extends SeatMapBase {
       case "delete-selection":
         this.deleteSelection()
         break
+      case "undo":
+        this.undo()
+        break
+      case "redo":
+        this.redo()
+        break
       case "export-json":
         this.updateExportTarget(true)
         break
@@ -805,6 +1117,7 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   addSeatAtViewportCenter() {
+    this.pushHistory()
     const point = this.viewportCenter()
     this.state.seats = [
       ...(this.state.seats || []),
@@ -825,6 +1138,8 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   addObject(type) {
+    this.pushHistory()
+    const theme = this.theme
     const point = this.viewportCenter()
     const base = {
       id: randomId(type),
@@ -834,8 +1149,8 @@ export default class SeatMapEditor extends SeatMapBase {
       width: type === "text" ? 180 : 120,
       height: type === "text" ? 36 : 60,
       rotation: 0,
-      fill: type === "text" ? THEME.textPrimary : "rgba(34, 197, 94, 0.2)",
-      stroke: type === "text" ? "transparent" : THEME.accentGreen,
+      fill: type === "text" ? theme.textPrimary : "rgba(34, 197, 94, 0.2)",
+      stroke: type === "text" ? "transparent" : theme.accentGreen,
       text: type === "text" ? "Label" : undefined
     }
     
@@ -846,19 +1161,23 @@ export default class SeatMapEditor extends SeatMapBase {
   createGroupFromSelection() {
     if (this.selectedSeats.size < 2) return
     
+    this.pushHistory()
+    const theme = this.theme
     this.state.groups = [
       ...(this.state.groups || []),
       {
         id: randomId("group"),
         name: `Group ${String((this.state.groups || []).length + 1).padStart(2, "0")}`,
         seat_slot_ids: Array.from(this.selectedSeats),
-        color: THEME.accentGreen
+        color: theme.accentGreen
       }
     ]
     this.scheduleRender(false)
   }
   
   deleteSelection() {
+    this.pushHistory()
+    
     if (this.selectedSeats.size > 0) {
       const selectedSeatIds = this.selectedSeats
       this.state.seats = (this.state.seats || []).filter((seat) => !selectedSeatIds.has(seat.seat_slot_id))
@@ -911,6 +1230,8 @@ export default class SeatMapEditor extends SeatMapBase {
       x: center.x - contentPoint.x * clampedScale,
       y: center.y - contentPoint.y * clampedScale
     })
+    
+    this.constrainStageDrag()
     this.stage.batchDraw()
   }
   
@@ -964,6 +1285,7 @@ export default class SeatMapEditor extends SeatMapBase {
       y: pointer.y - pointTo.y * clampedScale
     })
     
+    this.constrainStageDrag()
     this.stage.batchDraw()
   }
   

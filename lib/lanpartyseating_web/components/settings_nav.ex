@@ -1,20 +1,20 @@
 defmodule LanpartyseatingWeb.Components.SettingsNav do
   @moduledoc """
-             Shared sidebar navigation component for settings pages.
-             """
+  Shared sidebar navigation component for settings pages.
+  """
   use Phoenix.Component
   use LanpartyseatingWeb, :verified_routes
 
   alias LanpartyseatingWeb.Components.Icons
 
   @doc """
-       Renders the settings sidebar navigation.
+  Renders the settings sidebar navigation.
 
-       ## Attributes
+  ## Attributes
 
-         * `:current_page` - The current page atom (:seating, :reservations, :users, :badges, :scanners)
-         * `:is_user_auth` - Whether the user is authenticated via user login (not badge)
-       """
+    * `:current_page` - The current page atom (:seating, :reservations, :users, :badges, :scanners)
+    * `:is_user_auth` - Whether the user is authenticated via user login (not badge)
+  """
   attr :current_page, :atom, required: true
   attr :is_user_auth, :boolean, required: true
 

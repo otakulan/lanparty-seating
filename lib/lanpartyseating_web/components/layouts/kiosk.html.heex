@@ -1,6 +1,6 @@
 <%= if Phoenix.Flash.get(@flash, :info) do %>
   <div class="pointer-events-none fixed inset-x-4 top-4 z-50 flex justify-center">
-    <div class="pointer-events-auto rounded-full border border-white/60 bg-white/90 px-4 py-2 text-sm text-[#24313a] shadow-lg backdrop-blur">
+    <div class="pointer-events-auto rounded-full border border-white/60 bg-white/90 px-4 py-2 text-sm text-success shadow-lg backdrop-blur">
       {Phoenix.Flash.get(@flash, :info)}
     </div>
   </div>
@@ -8,7 +8,7 @@
 
 <%= if Phoenix.Flash.get(@flash, :error) do %>
   <div class="pointer-events-none fixed inset-x-4 top-4 z-50 flex justify-center">
-    <div class="pointer-events-auto rounded-full border border-[#f4c7cd] bg-[#fff1f2] px-4 py-2 text-sm text-[#7d2835] shadow-lg backdrop-blur">
+    <div class="pointer-events-auto rounded-full border border-[#f4c7cd] bg-[#fff1f2] px-4 py-2 text-sm text-error shadow-lg backdrop-blur">
       {Phoenix.Flash.get(@flash, :error)}
     </div>
   </div>

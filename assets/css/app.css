@@ -1,7 +1,11 @@
 @import "tailwindcss" source("../../lib") source("../js");
 
+@theme {
+  --text-tiny: 0.625rem;
+}
+
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
+  themes: light --default, dark --prefersdark, forest;
 }
 
 /* Custom animations for LAN Party Seating */

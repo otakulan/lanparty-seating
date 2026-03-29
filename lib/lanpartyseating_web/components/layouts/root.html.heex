@@ -15,6 +15,21 @@
     <link phx-track-static rel="stylesheet" href={~p"/css/app.css"} />
 
     <%!--
+      Theme Initialization (Prevents FOUC/FART)
+      ==========================================
+      Apply stored theme before any content renders to prevent flash of wrong theme.
+      Must be in <head> to execute before body content.
+    --%>
+    <script>
+      (function() {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = stored || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+
+    <%!--
       FOUC (Flash of Unstyled Content) Prevention
       ============================================
       When navigating between different LiveView sessions (e.g., public pages to admin pages),

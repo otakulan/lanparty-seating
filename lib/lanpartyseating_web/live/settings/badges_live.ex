@@ -1,9 +1,9 @@
 defmodule LanpartyseatingWeb.Settings.BadgesLive do
   @moduledoc """
-             Settings page for badge management.
-             Supports CSV import, paginated listing with search, and per-badge admin/ban toggles.
-             Requires full user authentication (not badge auth).
-             """
+  Settings page for badge management.
+  Supports CSV import, paginated listing with search, and per-badge admin/ban toggles.
+  Requires full user authentication (not badge auth).
+  """
   use LanpartyseatingWeb, :live_view
 
   alias Lanpartyseating.BadgesLogic
