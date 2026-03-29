@@ -324,3 +324,74 @@ export function startTimerUpdates(timerNodes, layer) {
   update()
   return setInterval(update, 1000)
 }
+
+export function createEditorSeatGroup(seat, palette, theme, options = {}) {
+  const { showKeyboard = true, isSelected = false } = options
+  
+  const group = new Konva.Group({
+    x: seat.x,
+    y: seat.y,
+    rotation: seat.rotation || 0,
+    listening: true
+  })
+  
+  addEditorSeatBody(group, palette, isSelected)
+  addSeatMonitor(group, theme)
+  addSeatAccent(group, palette)
+  
+  if (showKeyboard) {
+    addSeatKeyboard(group, theme)
+  }
+  
+  addSeatLabel(group, seat, theme, palette)
+  
+  if (isSelected) {
+    addSelectionHighlight(group, theme)
+  }
+  
+  group.setAttr("nodeType", "seat")
+  group.setAttr("seatSlotId", seat.seat_slot_id)
+  
+  return group
+}
+
+function addEditorSeatBody(group, palette, isSelected) {
+  const w = SEAT_WIDTH
+  const h = SEAT_HEIGHT
+  
+  group.add(new Konva.Rect({
+    x: -w / 2,
+    y: -h * 0.6,
+    width: w,
+    height: h * 0.75,
+    cornerRadius: 6,
+    fillLinearGradientStartPoint: { x: 0, y: 0 },
+    fillLinearGradientEndPoint: { x: w, y: h * 0.75 },
+    fillLinearGradientColorStops: [0, palette.fillSecondary, 0.5, palette.fill, 1, palette.fill],
+    stroke: isSelected ? palette.accent : palette.stroke,
+    strokeWidth: isSelected ? 3 : 2,
+    shadowColor: palette.glow,
+    shadowBlur: isSelected ? 20 : SHADOW_BLUR,
+    shadowOpacity: isSelected ? 1 : SHADOW_OPACITY,
+    perfectDrawEnabled: false
+  }))
+}
+
+function addSelectionHighlight(group, theme) {
+  const w = SEAT_WIDTH
+  const h = SEAT_HEIGHT
+  
+  group.add(new Konva.Rect({
+    x: -w * 0.6,
+    y: -h * 0.7,
+    width: w * 1.2,
+    height: h * 1.2,
+    cornerRadius: 10,
+    stroke: theme.accentCyan,
+    strokeWidth: 3,
+    shadowColor: theme.accentCyan,
+    shadowBlur: 15,
+    shadowOpacity: 0.6,
+    perfectDrawEnabled: false
+  }))
+}

@@ -8,100 +8,18 @@ import {
   getClientRect,
   getTotalBox
 } from "./seat_map_base"
-
-const SEAT_WIDTH = 64
-const SEAT_HEIGHT = 64
-
-function renderEditorSeat(seatGroup, seat, palette, scale, theme, statusColors, showKeyboard = true, isSelected = false) {
-  const w = SEAT_WIDTH * scale
-  const h = SEAT_HEIGHT * scale
-  
-  const strokeWidth = isSelected ? 3 : 2
-  const stroke = isSelected ? palette.accent : palette.stroke
-  
-  seatGroup.add(new Konva.Rect({
-    x: -w / 2,
-    y: -h * 0.6,
-    width: w,
-    height: h * 0.75,
-    cornerRadius: 6,
-    fillLinearGradientStartPoint: { x: 0, y: 0 },
-    fillLinearGradientEndPoint: { x: w, y: h * 0.75 },
-    fillLinearGradientColorStops: [0, palette.fillSecondary, 0.5, palette.fill, 1, palette.fill],
-    stroke,
-    strokeWidth,
-    shadowColor: palette.glow,
-    shadowBlur: isSelected ? 20 : 12,
-    shadowOpacity: isSelected ? 1 : 0.6,
-    perfectDrawEnabled: false
-  }))
-  
-  seatGroup.add(new Konva.Rect({
-    x: -w * 0.38,
-    y: -h * 0.5,
-    width: w * 0.76,
-    height: h * 0.4,
-    cornerRadius: 3,
-    fill: theme.monitorFill,
-    stroke: theme.monitorStroke,
-    strokeWidth: 1,
-    perfectDrawEnabled: false
-  }))
-  
-  seatGroup.add(new Konva.Circle({
-    x: w * 0.32,
-    y: -h * 0.05,
-    radius: 3,
-    fill: palette.accent,
-    perfectDrawEnabled: false
-  }))
-  
-  if (showKeyboard) {
-    seatGroup.add(new Konva.Rect({
-      x: -w * 0.45,
-      y: h * 0.22,
-      width: w * 0.9,
-      height: h * 0.28,
-      cornerRadius: 4,
-      fill: theme.keyboardFill,
-      stroke: theme.keyboardStroke,
-      strokeWidth: 1,
-      perfectDrawEnabled: false
-    }))
-  }
-  
-  seatGroup.add(new Konva.Text({
-    x: -w * 0.4,
-    y: h * 0.14,
-    width: w * 0.8,
-    align: "center",
-    text: seat.label,
-    fontSize: 11,
-    fontStyle: "600",
-    fontFamily: theme.fontFamily,
-    fill: palette.text,
-    perfectDrawEnabled: false
-  }))
-  
-  if (isSelected) {
-    seatGroup.add(new Konva.Rect({
-      x: -w * 0.6,
-      y: -h * 0.7,
-      width: w * 1.2,
-      height: h * 1.2,
-      cornerRadius: 10,
-      stroke: theme.accentCyan,
-      strokeWidth: 3,
-      shadowColor: theme.accentCyan,
-      shadowBlur: 15,
-      shadowOpacity: 0.6,
-      perfectDrawEnabled: false
-    }))
-  }
-}
+import {
+  SEAT_WIDTH,
+  SEAT_HEIGHT,
+  createEditorSeatGroup,
+  renderGroupBounds,
+  renderGroupLabel,
+  renderTeamLabel,
+  transparentColor
+} from "./seat_map_renderer"
 
 export default class SeatMapEditor extends SeatMapBase {
-constructor(hook, options = {}) {
+  constructor(hook, options = {}) {
     super(hook, options)
     this.showKeyboard = options.showKeyboard !== false
     this.selectedSeats = new Set()
@@ -135,7 +53,6 @@ constructor(hook, options = {}) {
       draggable: false
     })
     
-    this.backgroundLayer = new Konva.Layer({ listening: false })
     this.groupLayer = new Konva.Layer({ listening: false })
     this.seatLayer = new Konva.Layer()
     this.objectLayer = new Konva.Layer()
@@ -155,16 +72,11 @@ constructor(hook, options = {}) {
         const canvasWidth = this.state.width || 1920
         const canvasHeight = this.state.height || 1080
         
-        const isOut =
-          box.x < 0 ||
-          box.y < 0 ||
-          box.x + box.width > canvasWidth ||
-          box.y + box.height > canvasHeight
-
-        if (isOut) {
+        if (box.x < 0 || box.y < 0 || 
+            box.x + box.width > canvasWidth || 
+            box.y + box.height > canvasHeight) {
           return oldBox
         }
-        
         return newBox
       }
     })
@@ -177,62 +89,46 @@ constructor(hook, options = {}) {
       
       const canvasWidth = this.state.width || 1920
       const canvasHeight = this.state.height || 1080
-      
-      const boxes = nodes.map((node) => node.getClientRect())
+      const boxes = nodes.map(n => n.getClientRect())
       const box = getTotalBox(boxes)
       
-      nodes.forEach((node) => {
+      nodes.forEach(node => {
         const absPos = node.getAbsolutePosition()
         const offsetX = box.x - absPos.x
         const offsetY = box.y - absPos.y
-        
         const newAbsPos = { ...absPos }
         
-        if (box.x < 0) {
-          newAbsPos.x = -offsetX
-        }
-        if (box.y < 0) {
-          newAbsPos.y = -offsetY
-        }
-        if (box.x + box.width > canvasWidth) {
-          newAbsPos.x = canvasWidth - box.width - offsetX
-        }
-        if (box.y + box.height > canvasHeight) {
-          newAbsPos.y = canvasHeight - box.height - offsetY
-        }
+        if (box.x < 0) newAbsPos.x = -offsetX
+        if (box.y < 0) newAbsPos.y = -offsetY
+        if (box.x + box.width > canvasWidth) newAbsPos.x = canvasWidth - box.width - offsetX
+        if (box.y + box.height > canvasHeight) newAbsPos.y = canvasHeight - box.height - offsetY
         
         node.setAbsolutePosition(newAbsPos)
       })
     })
     
-    this.stage.add(this.backgroundLayer)
     this.stage.add(this.groupLayer)
     this.stage.add(this.seatLayer)
     this.stage.add(this.objectLayer)
     this.stage.add(this.overlayLayer)
     
-    this.stage.on("wheel", (event) => this.handleWheel(event))
-    this.stage.on("touchmove", (event) => this.handleTouchMove(event))
+    this.stage.on("wheel", e => this.handleWheel(e))
+    this.stage.on("touchmove", e => this.handleTouchMove(e))
     this.stage.on("touchend", () => this.handleTouchEnd())
-    this.stage.on("click tap", (event) => this.handleStageClick(event))
-    this.stage.on("mousedown", (event) => {
-      this.stageContainer.focus()
-    })
+    this.stage.on("click tap", e => this.handleStageClick(e))
+    this.stage.on("mousedown", () => this.stageContainer.focus())
+    this.stage.on("dragmove", () => this.constrainStageDrag())
     
-    this.stage.on("dragmove", () => {
-      this.constrainStageDrag()
-    })
-    
-    this.stage.on("mousedown", (event) => {
-      if (event.evt.altKey) {
+    this.stage.on("mousedown", e => {
+      if (e.evt.altKey) {
         this.isPanning = true
         this.stage.draggable(true)
         return
       }
       
-      if (event.target === this.stage && event.evt.button === 0) {
+      if (e.target === this.stage && e.evt.button === 0) {
         this.isMarqueeActive = true
-        this.lastSelectionModifier = event.evt.ctrlKey ? 'ctrl' : event.evt.metaKey ? 'meta' : event.evt.shiftKey ? 'shift' : null
+        this.lastSelectionModifier = e.evt.ctrlKey ? 'ctrl' : e.evt.metaKey ? 'meta' : e.evt.shiftKey ? 'shift' : null
         const pos = this.stage.getPointerPosition()
         this.marqueeStartPos = pos
         this.marqueeStartPosTransformed = pos ? {
@@ -242,31 +138,24 @@ constructor(hook, options = {}) {
       }
     })
     
-    this.stage.on("mousemove", (event) => {
-      if (this.isMarqueeActive && this.marqueeStartPos && event.target === this.stage) {
-        this.handleMarqueeMove(event)
+    this.stage.on("mousemove", e => {
+      if (this.isMarqueeActive && this.marqueeStartPos && e.target === this.stage) {
+        this.handleMarqueeMove(e)
       }
     })
     
-    this.stage.on("mouseup mouseleave", (event) => {
-      if (this.isMarqueeActive) {
-        this.handleMarqueeEnd()
-      }
+    this.stage.on("mouseup mouseleave", () => {
+      if (this.isMarqueeActive) this.handleMarqueeEnd()
       this.isMarqueeActive = false
-      
       if (this.isPanning) {
         this.isPanning = false
         this.stage.draggable(false)
       }
     })
     
-    const handleKeyDown = (e) => {
-      if (e.key === "Alt") {
-        this.stage.draggable(true)
-      }
-      if (e.key === "Escape") {
-        this.clearSelection()
-      }
+    const handleKeyDown = e => {
+      if (e.key === "Alt") this.stage.draggable(true)
+      if (e.key === "Escape") this.clearSelection()
       if ((e.key === "Delete" || e.key === "Backspace") && !e.target.closest('input, textarea')) {
         if (this.selectedSeats.size > 0 || this.selectedObjects.size > 0) {
           e.preventDefault()
@@ -275,11 +164,7 @@ constructor(hook, options = {}) {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.target.closest('input, textarea')) {
         e.preventDefault()
-        if (e.shiftKey) {
-          this.redo()
-        } else {
-          this.undo()
-        }
+        e.shiftKey ? this.redo() : this.undo()
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "y" && !e.target.closest('input, textarea')) {
         e.preventDefault()
@@ -287,10 +172,8 @@ constructor(hook, options = {}) {
       }
     }
     
-    const handleKeyUp = (e) => {
-      if (e.key === "Alt") {
-        this.stage.draggable(false)
-      }
+    const handleKeyUp = e => {
+      if (e.key === "Alt") this.stage.draggable(false)
     }
     
     this.stageContainer.addEventListener("keydown", handleKeyDown)
@@ -302,20 +185,16 @@ constructor(hook, options = {}) {
       this.stage.height(this.stageContainer.clientHeight)
       this.fitToStage(true)
     }
-    
     window.addEventListener("resize", this.handleResize)
   }
   
   bindCommands() {
-    this.handleCommandClick = (event) => {
-      const button = event.target.closest("[data-seat-map-command]")
-      
+    this.handleCommandClick = e => {
+      const button = e.target.closest("[data-seat-map-command]")
       if (!button || !this.el.contains(button)) return
-      
-      event.preventDefault()
+      e.preventDefault()
       this.executeCommand(button.dataset.seatMapCommand)
     }
-    
     this.el.addEventListener("click", this.handleCommandClick)
   }
   
@@ -326,21 +205,11 @@ constructor(hook, options = {}) {
       this.stageContainer.removeEventListener("keydown", this.keyHandler.keydown)
       this.stageContainer.removeEventListener("keyup", this.keyHandler.keyup)
     }
-    if (this.renderFrame) window.cancelAnimationFrame(this.renderFrame)
+    if (this.renderFrame) cancelAnimationFrame(this.renderFrame)
     super.destroy()
   }
   
-  scheduleRender(resetView = false) {
-    if (this.renderFrame) return
-    
-    this.renderFrame = requestAnimationFrame(() => {
-      this.renderFrame = null
-      this.renderScene(resetView)
-    })
-  }
-  
   renderScene(resetView) {
-    this.backgroundLayer.destroyChildren()
     this.groupLayer.destroyChildren()
     this.seatLayer.destroyChildren()
     this.objectLayer.destroyChildren()
@@ -348,10 +217,6 @@ constructor(hook, options = {}) {
     
     this.objectLayer.add(this.transformer)
     
-    const width = this.state.width || 1920
-    const height = this.state.height || 1080
-    
-    this.renderBackdrop(width, height)
     this.renderObjects()
     this.renderGroups()
     this.renderSeats()
@@ -365,83 +230,10 @@ constructor(hook, options = {}) {
     }
   }
   
-  renderBackdrop(width, height) {
-    const theme = this.theme
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-    
-    // Draw full-stage background first (fills entire container)
-    this.backgroundLayer.add(new Konva.Rect({
-      x: 0,
-      y: 0,
-      width: stageWidth,
-      height: stageHeight,
-      fill: theme.background,
-      listening: false
-    }))
-    
-    // Draw canvas area with gradient
-    const backdrop = new Konva.Rect({
-      x: 0,
-      y: 0,
-      width,
-      height,
-      fillLinearGradientStartPoint: { x: 0, y: 0 },
-      fillLinearGradientEndPoint: { x: width, y: height },
-      fillLinearGradientColorStops: [0, theme.backgroundGradientStart, 1, theme.backgroundGradientEnd],
-      stroke: theme.borderColor,
-      strokeWidth: 2
-    })
-    
-    this.backgroundLayer.add(backdrop)
-    
-    const gridSize = 40
-    const gridLines = new Konva.Shape({
-      sceneFunc: (context) => {
-        context.strokeStyle = theme.gridColor
-        context.lineWidth = 0.5
-        
-        for (let x = 0; x <= width; x += gridSize) {
-          context.beginPath()
-          context.moveTo(x, 0)
-          context.lineTo(x, height)
-          context.stroke()
-        }
-        
-        for (let y = 0; y <= height; y += gridSize) {
-          context.beginPath()
-          context.moveTo(0, y)
-          context.lineTo(width, y)
-          context.stroke()
-        }
-      },
-      listening: false
-    })
-    
-    this.backgroundLayer.add(gridLines)
-    
-    if (this.state.background_kind && this.state.background_kind !== "none" && this.state.background_value) {
-      const image = new window.Image()
-      image.onload = () => {
-        this.backgroundLayer.add(new Konva.Image({
-          image,
-          x: 0,
-          y: 0,
-          width,
-          height,
-          opacity: 0.15,
-          listening: false
-        }))
-        this.backgroundLayer.batchDraw()
-      }
-      image.src = this.state.background_value
-    }
-  }
-  
   renderObjects() {
     const theme = this.theme
     
-    ;(this.state.objects || []).forEach((object) => {
+    for (const object of this.state.objects || []) {
       const id = object.id || randomId("object")
       const isText = object.type === "text"
       let node
@@ -483,7 +275,7 @@ constructor(hook, options = {}) {
       node.setAttr("objectId", id)
       node.draggable(true)
       
-      node.on("click tap", (event) => this.handleObjectSelection(event, node))
+      node.on("click tap", e => this.handleObjectSelection(e, node))
       node.on("dragstart", () => this.pushHistory())
       node.on("dragmove", () => {
         const w = isText ? (object.width || 180) : (object.width || 120)
@@ -493,102 +285,40 @@ constructor(hook, options = {}) {
       node.on("dragend transformend", () => this.syncObjectNode(node))
       
       this.objectLayer.add(node)
-    })
+    }
   }
   
   renderGroups() {
     const theme = this.theme
+    const groups = this.state.groups || []
+    const seats = this.state.seats || []
+    const teamAssignments = this.state.team_assignments || []
     
-    ;(this.state.groups || []).forEach((group) => {
-      const memberSeats = (group.seat_slot_ids || [])
-        .map((seatId) => (this.state.seats || []).find((seat) => seat.seat_slot_id === seatId))
-        .filter(Boolean)
-      
-      if (memberSeats.length === 0) return
-      
-      const bounds = groupBounds(memberSeats)
-      const color = group.color || theme.accentGreen
-      
-      this.groupLayer.add(new Konva.Rect({
-        x: bounds.x - 12,
-        y: bounds.y - 16,
-        width: bounds.width + 24,
-        height: bounds.height + 32,
-        stroke: color,
-        strokeWidth: 2,
-        dash: [8, 6],
-        cornerRadius: 12,
-        fill: this.transparentColor(color, 0.1),
-        perfectDrawEnabled: false
-      }))
-      
-      const hasTeamAssignment = (this.state.team_assignments || []).some(
-        (assignment) => assignment.group_id === group.id
-      )
-      
-      if (!hasTeamAssignment && group.name) {
-        const text = new Konva.Text({
-          text: group.name,
-          fontFamily: theme.fontFamily,
-          fontSize: 10,
-          fontStyle: "600",
-          fill: theme.textPrimary,
-          listening: false
-        })
-        
-        const labelWidth = text.width() + 16
-        const labelHeight = 20
-        const labelGroup = new Konva.Group({
-          x: bounds.x + bounds.width / 2 - labelWidth / 2,
-          y: bounds.y + bounds.height / 2 - labelHeight / 2,
-          listening: false
-        })
-        
-        labelGroup.add(new Konva.Rect({
-          x: 0,
-          y: 0,
-          width: labelWidth,
-          height: labelHeight,
-          cornerRadius: 10,
-          fill: this.transparentColor(color, 0.9),
-          stroke: this.transparentColor("#ffffff", 0.2),
-          strokeWidth: 1,
-          perfectDrawEnabled: false
-        }))
-        
-        text.position({ x: 8, y: 5 })
-        labelGroup.add(text)
-        this.groupLayer.add(labelGroup)
-      }
-    })
+    for (const group of groups) {
+      renderGroupBounds(this.groupLayer, group, seats, theme)
+      renderGroupLabel(this.groupLayer, group, seats, teamAssignments, theme)
+    }
   }
   
   renderSeats() {
-    const scale = 1
     const theme = this.theme
     const statusColors = this.statusColors
     
-    ;(this.state.seats || []).forEach((seat) => {
+    for (const seat of this.state.seats || []) {
       const palette = statusColors[seat.status] || statusColors.available
       const isSelected = this.selectedSeats.has(seat.seat_slot_id)
       
-      const seatGroup = new Konva.Group({
-        x: seat.x,
-        y: seat.y,
-        rotation: seat.rotation || 0,
-        draggable: true
+      const seatGroup = createEditorSeatGroup(seat, palette, theme, {
+        showKeyboard: this.showKeyboard,
+        isSelected
       })
       
       seatGroup.id(`seat-${seat.seat_slot_id}`)
-      seatGroup.setAttr("nodeType", "seat")
-      seatGroup.setAttr("seatSlotId", seat.seat_slot_id)
+      seatGroup.draggable(true)
       
-      renderEditorSeat(seatGroup, seat, palette, scale, theme, statusColors, this.showKeyboard, isSelected)
-      
-      seatGroup.on("click tap", (event) => this.handleSeatClick(event, seat))
+      seatGroup.on("click tap", e => this.handleSeatClick(e, seat))
       seatGroup.on("dragstart", () => {
         this.pushHistory()
-        // If this seat is part of a multi-selection, store all positions
         if (this.selectedSeats.size > 1 && this.selectedSeats.has(seat.seat_slot_id)) {
           this.dragStartPosition = { x: seatGroup.x(), y: seatGroup.y() }
           this.draggedSeatId = seat.seat_slot_id
@@ -596,7 +326,6 @@ constructor(hook, options = {}) {
       })
       seatGroup.on("dragmove", () => {
         this.constrainNodeDrag(seatGroup, SEAT_WIDTH, SEAT_HEIGHT)
-        // If part of multi-selection, move all selected seats
         if (this.selectedSeats.size > 1 && this.dragStartPosition && this.draggedSeatId === seat.seat_slot_id) {
           const dx = seatGroup.x() - this.dragStartPosition.x
           const dy = seatGroup.y() - this.dragStartPosition.y
@@ -605,7 +334,6 @@ constructor(hook, options = {}) {
       })
       seatGroup.on("dragend", () => {
         this.syncSeatNode(seatGroup, seat.seat_slot_id)
-        // Sync all other selected seats
         if (this.selectedSeats.size > 1 && this.draggedSeatId === seat.seat_slot_id) {
           this.syncAllSelectedSeats()
         }
@@ -614,104 +342,42 @@ constructor(hook, options = {}) {
       })
       
       this.seatLayer.add(seatGroup)
-    })
+    }
   }
   
   moveSelectedSeats(dx, dy, excludeSeatId) {
-    // Move all selected seats except the one being dragged
-    const scale = this.stage.scaleX() || 1
-    
-    this.selectedSeats.forEach((seatSlotId) => {
+    this.selectedSeats.forEach(seatSlotId => {
       if (seatSlotId === excludeSeatId) return
-      
       const node = this.seatLayer.children.find(n => n.id() === `seat-${seatSlotId}`)
       if (!node) return
-      
-      // Get the original position from state
       const seat = (this.state.seats || []).find(s => s.seat_slot_id === seatSlotId)
       if (!seat) return
-      
-      // Apply delta from original position
       node.x(seat.x + dx)
       node.y(seat.y + dy)
     })
-    
     this.seatLayer.batchDraw()
   }
   
   syncAllSelectedSeats() {
-    // Sync all selected seats' positions to state
-    this.selectedSeats.forEach((seatSlotId) => {
+    this.selectedSeats.forEach(seatSlotId => {
       const node = this.seatLayer.children.find(n => n.id() === `seat-${seatSlotId}`)
-      if (!node) return
-      
-      this.syncSeatNode(node, seatSlotId)
+      if (node) this.syncSeatNode(node, seatSlotId)
     })
   }
   
   renderTeamLabels() {
     const theme = this.theme
+    const groups = this.state.groups || []
+    const seats = this.state.seats || []
     
-    ;(this.state.team_assignments || []).forEach((assignment) => {
-      const group = (this.state.groups || []).find((entry) => entry.id === assignment.group_id)
-      const memberSeats = group
-        ? (group.seat_slot_ids || [])
-            .map((seatId) => (this.state.seats || []).find((seat) => seat.seat_slot_id === seatId))
-            .filter(Boolean)
-        : []
-      
-      const bounds = memberSeats.length > 0 ? groupBounds(memberSeats) : null
-      const x = bounds ? bounds.x + bounds.width / 2 : (assignment.label_x || 0)
-      const y = bounds ? bounds.y + bounds.height / 2 - 12 : (assignment.label_y || 0)
-      
-      const text = new Konva.Text({
-        text: `${assignment.team_name} · ${assignment.tournament_name}`,
-        fontFamily: theme.fontFamily,
-        fontSize: 11,
-        fontStyle: "600",
-        fill: theme.textPrimary,
-        perfectDrawEnabled: false,
-        listening: false
-      })
-      
-      const width = text.width() + 20
-      const height = 22
-      const labelGroup = new Konva.Group({
-        x: x - width / 2,
-        y: y - height / 2,
-        listening: false
-      })
-      
-      labelGroup.add(new Konva.Rect({
-        x: 0,
-        y: 0,
-        width,
-        height,
-        cornerRadius: 10,
-        fill: this.transparentColor(assignment.color || "#06b6d4", 0.92),
-        stroke: this.transparentColor("#ffffff", 0.2),
-        strokeWidth: 1,
-        shadowColor: "rgba(0, 0, 0, 0.4)",
-        shadowBlur: 12,
-        shadowOffset: { x: 0, y: 4 },
-        shadowOpacity: 0.8,
-        perfectDrawEnabled: false
-      }))
-      
-      text.position({ x: 10, y: 6 })
-      labelGroup.add(text)
-      
-      this.overlayLayer.add(labelGroup)
-    })
+    for (const assignment of this.state.team_assignments || []) {
+      renderTeamLabel(this.overlayLayer, assignment, groups, seats, theme)
+    }
   }
   
   handleStageClick(event) {
-    // Don't clear selection if marquee was active (selection handled in handleMarqueeEnd)
-    if (this.marqueeRect && this.marqueeRect.width() > 5 && this.marqueeRect.height() > 5) {
-      return
-    }
+    if (this.marqueeRect && this.marqueeRect.width() > 5 && this.marqueeRect.height() > 5) return
     
-    // Clear marquee if it exists but was just a click
     if (this.marqueeRect) {
       this.marqueeRect.destroy()
       this.marqueeRect = null
@@ -720,9 +386,7 @@ constructor(hook, options = {}) {
       return
     }
     
-    if (event.target === this.stage) {
-      this.clearSelection()
-    }
+    if (event.target === this.stage) this.clearSelection()
   }
   
   handleSeatClick(event, seat) {
@@ -745,12 +409,9 @@ constructor(hook, options = {}) {
     this.transformer.visible(false)
     this.scheduleRender(false)
     
-    // Push selected seat info to LiveView for the details panel
     if (this.selectedSeats.size === 1) {
       const selectedSeat = (this.state.seats || []).find(s => s.seat_slot_id === seat.seat_slot_id)
-      if (selectedSeat) {
-        this.hook.pushEvent("seat_selected", { seat: selectedSeat })
-      }
+      if (selectedSeat) this.hook.pushEvent("seat_selected", { seat: selectedSeat })
     } else {
       this.hook.pushEvent("seat_selected", { seat: null })
     }
@@ -772,17 +433,13 @@ constructor(hook, options = {}) {
     if (scaledWidth <= stageWidth) {
       newX = (stageWidth - scaledWidth) / 2
     } else {
-      const maxX = 0
-      const minX = stageWidth - scaledWidth
-      newX = clamp(newX, minX, maxX)
+      newX = clamp(newX, stageWidth - scaledWidth, 0)
     }
     
     if (scaledHeight <= stageHeight) {
       newY = (stageHeight - scaledHeight) / 2
     } else {
-      const maxY = 0
-      const minY = stageHeight - scaledHeight
-      newY = clamp(newY, minY, maxY)
+      newY = clamp(newY, stageHeight - scaledHeight, 0)
     }
     
     this.stage.position({ x: newX, y: newY })
@@ -791,16 +448,13 @@ constructor(hook, options = {}) {
   constrainNodeDrag(node, nodeWidth, nodeHeight) {
     const canvasWidth = this.state.width || 1920
     const canvasHeight = this.state.height || 1080
-    const halfWidth = (nodeWidth || 64) / 2
-    const halfHeight = (nodeHeight || 64) / 2
+    const halfW = (nodeWidth || 64) / 2
+    const halfH = (nodeHeight || 64) / 2
     
-    let x = node.x()
-    let y = node.y()
-    
-    x = clamp(x, halfWidth, canvasWidth - halfWidth)
-    y = clamp(y, halfHeight, canvasHeight - halfHeight)
-    
-    node.position({ x, y })
+    node.position({
+      x: clamp(node.x(), halfW, canvasWidth - halfW),
+      y: clamp(node.y(), halfH, canvasHeight - halfH)
+    })
   }
   
   handleObjectSelection(event, node) {
@@ -813,8 +467,7 @@ constructor(hook, options = {}) {
     if (isMultiSelect) {
       if (this.selectedObjects.has(objectId)) {
         this.selectedObjects.delete(objectId)
-        const currentNodes = this.transformer.nodes()
-        this.transformer.nodes(currentNodes.filter(n => n !== node))
+        this.transformer.nodes(this.transformer.nodes().filter(n => n !== node))
       } else {
         this.selectedObjects.add(objectId)
         this.transformer.nodes([...this.transformer.nodes(), node])
@@ -832,11 +485,10 @@ constructor(hook, options = {}) {
   
   syncObjectNode(node) {
     const objectId = node.getAttr("objectId")
-    this.state.objects = (this.state.objects || []).map((object) => {
-      if (object.id !== objectId) return object
-      
+    this.state.objects = (this.state.objects || []).map(obj => {
+      if (obj.id !== objectId) return obj
       return {
-        ...object,
+        ...obj,
         x: Math.round(node.x()),
         y: Math.round(node.y()),
         width: Math.round(node.width() * node.scaleX()),
@@ -844,13 +496,12 @@ constructor(hook, options = {}) {
         rotation: Math.round(node.rotation())
       }
     })
-    
     node.scale({ x: 1, y: 1 })
     this.scheduleRender(false)
   }
   
   syncSeatNode(node, seatSlotId) {
-    this.state.seats = (this.state.seats || []).map((seat) => {
+    this.state.seats = (this.state.seats || []).map(seat => {
       if (seat.seat_slot_id !== seatSlotId) return seat
       return {
         ...seat,
@@ -868,20 +519,6 @@ constructor(hook, options = {}) {
     this.transformer.nodes([])
     this.transformer.visible(false)
     this.scheduleRender(false)
-  }
-  
-  handleSelectionStart(event) {
-    if (event.evt.button !== 0 && event.evt.touches?.length !== 1) return
-    if (event.target !== this.stage && event.target.parent !== this.seatLayer) return
-    
-    const pos = this.stage.getPointerPosition()
-    if (!pos) return
-    
-    this.isMarqueeSelecting = true
-    this.marqueeStartPos = {
-      x: (pos.x - this.stage.x()) / this.stage.scaleX(),
-      y: (pos.y - this.stage.y()) / this.stage.scaleY()
-    }
   }
   
   handleMarqueeMove(event) {
@@ -908,18 +545,17 @@ constructor(hook, options = {}) {
     }
     
     const startPos = this.marqueeStartPosTransformed || currentPos
-    const x = Math.min(startPos.x, currentPos.x)
-    const y = Math.min(startPos.y, currentPos.y)
-    const width = Math.abs(currentPos.x - startPos.x)
-    const height = Math.abs(currentPos.y - startPos.y)
-    
-    this.marqueeRect.setAttrs({ x, y, width, height })
+    this.marqueeRect.setAttrs({
+      x: Math.min(startPos.x, currentPos.x),
+      y: Math.min(startPos.y, currentPos.y),
+      width: Math.abs(currentPos.x - startPos.x),
+      height: Math.abs(currentPos.y - startPos.y)
+    })
     this.overlayLayer.batchDraw()
   }
   
   handleMarqueeEnd() {
     if (!this.isMarqueeActive) return
-    
     this.isMarqueeActive = false
     
     if (this.marqueeRect) {
@@ -930,7 +566,6 @@ constructor(hook, options = {}) {
         height: this.marqueeRect.height()
       }
       
-      // Use setTimeout to ensure click event is processed first
       setTimeout(() => {
         if (this.marqueeRect) {
           this.marqueeRect.destroy()
@@ -957,36 +592,27 @@ constructor(hook, options = {}) {
       this.selectedObjects.clear()
     }
     
-    // The marquee rect coordinates are already in canvas space
-    // (they were transformed in handleMarqueeMove by dividing by stage.scaleX())
-    const canvasRect = rect
-    
-    // Select seats
-    ;(this.state.seats || []).forEach((seat) => {
-      const seatX = seat.x
-      const seatY = seat.y
+    for (const seat of this.state.seats || []) {
       const halfW = (seat.width || 64) / 2
       const halfH = (seat.height || 64) / 2
-      
       const seatRect = {
-        x: seatX - halfW,
-        y: seatY - halfH,
+        x: seat.x - halfW,
+        y: seat.y - halfH,
         width: halfW * 2,
         height: halfH * 2
       }
       
-      if (this.rectanglesIntersect(canvasRect, seatRect)) {
+      if (this.rectanglesIntersect(rect, seatRect)) {
         if (isCtrlOrMeta && this.selectedSeats.has(seat.seat_slot_id)) {
           this.selectedSeats.delete(seat.seat_slot_id)
         } else {
           this.selectedSeats.add(seat.seat_slot_id)
         }
       }
-    })
+    }
     
-    // Select objects using transformer
     const nodesToSelect = []
-    ;(this.state.objects || []).forEach((obj) => {
+    for (const obj of this.state.objects || []) {
       const objRect = {
         x: obj.x,
         y: obj.y,
@@ -994,7 +620,7 @@ constructor(hook, options = {}) {
         height: obj.height || 60
       }
       
-      if (this.rectanglesIntersect(canvasRect, objRect)) {
+      if (this.rectanglesIntersect(rect, objRect)) {
         if (isCtrlOrMeta && this.selectedObjects.has(obj.id)) {
           this.selectedObjects.delete(obj.id)
         } else {
@@ -1003,24 +629,16 @@ constructor(hook, options = {}) {
           if (node) nodesToSelect.push(node)
         }
       }
-    })
-    
-    if (nodesToSelect.length > 0) {
-      this.transformer.nodes(nodesToSelect)
-      this.transformer.visible(true)
-    } else {
-      this.transformer.nodes([])
-      this.transformer.visible(false)
     }
     
+    this.transformer.nodes(nodesToSelect)
+    this.transformer.visible(nodesToSelect.length > 0)
     this.scheduleRender(false)
   }
   
   rectanglesIntersect(a, b) {
-    return !(a.x + a.width < b.x ||
-              b.x + b.width < a.x ||
-              a.y + a.height < b.y ||
-              b.y + b.height < a.y)
+    return !(a.x + a.width < b.x || b.x + b.width < a.x ||
+             a.y + a.height < b.y || b.y + b.height < a.y)
   }
   
   pushHistory() {
@@ -1045,24 +663,17 @@ constructor(hook, options = {}) {
     }
   }
   
-  canUndo() {
-    return this.historyIndex > 0
-  }
-  
-  canRedo() {
-    return this.historyIndex < this.history.length - 1
-  }
+  canUndo() { return this.historyIndex > 0 }
+  canRedo() { return this.historyIndex < this.history.length - 1 }
   
   undo() {
     if (!this.canUndo()) return
-    
     this.historyIndex -= 1
     this.restoreFromHistory()
   }
   
   redo() {
     if (!this.canRedo()) return
-    
     this.historyIndex += 1
     this.restoreFromHistory()
   }
@@ -1084,45 +695,19 @@ constructor(hook, options = {}) {
   
   executeCommand(command) {
     switch (command) {
-      case "zoom-in":
-        this.scaleStage(this.stage.scaleX() * SCALE_BY)
-        break
-      case "zoom-out":
-        this.scaleStage(this.stage.scaleX() / SCALE_BY)
-        break
-      case "reset-view":
-        this.fitToStage(true)
-        break
-      case "add-seat":
-        this.addSeatAtViewportCenter()
-        break
-      case "add-table":
-        this.addObject("rect")
-        break
-      case "add-label":
-        this.addObject("text")
-        break
-      case "group-selection":
-        this.createGroupFromSelection()
-        break
-      case "delete-selection":
-        this.deleteSelection()
-        break
-      case "undo":
-        this.undo()
-        break
-      case "redo":
-        this.redo()
-        break
-      case "export-json":
-        this.updateExportTarget(true)
-        break
-      case "save-draft":
-        this.hook.pushEvent("save_draft_preview", { map: this.serializableState() })
-        break
-      case "publish-preview":
-        this.hook.pushEvent("publish_preview", { map: this.serializableState() })
-        break
+      case "zoom-in": this.scaleStage(this.stage.scaleX() * SCALE_BY); break
+      case "zoom-out": this.scaleStage(this.stage.scaleX() / SCALE_BY); break
+      case "reset-view": this.fitToStage(true); break
+      case "add-seat": this.addSeatAtViewportCenter(); break
+      case "add-table": this.addObject("rect"); break
+      case "add-label": this.addObject("text"); break
+      case "group-selection": this.createGroupFromSelection(); break
+      case "delete-selection": this.deleteSelection(); break
+      case "undo": this.undo(); break
+      case "redo": this.redo(); break
+      case "export-json": this.updateExportTarget(true); break
+      case "save-draft": this.hook.pushEvent("save_draft_preview", { map: this.serializableState() }); break
+      case "publish-preview": this.hook.pushEvent("publish_preview", { map: this.serializableState() }); break
     }
   }
   
@@ -1151,20 +736,22 @@ constructor(hook, options = {}) {
     this.pushHistory()
     const theme = this.theme
     const point = this.viewportCenter()
-    const base = {
-      id: randomId(type),
-      type,
-      x: Math.round(point.x - 60),
-      y: Math.round(point.y - 30),
-      width: type === "text" ? 180 : 120,
-      height: type === "text" ? 36 : 60,
-      rotation: 0,
-      fill: type === "text" ? theme.textPrimary : "rgba(34, 197, 94, 0.2)",
-      stroke: type === "text" ? "transparent" : theme.accentGreen,
-      text: type === "text" ? "Label" : undefined
-    }
     
-    this.state.objects = [...(this.state.objects || []), base]
+    this.state.objects = [
+      ...(this.state.objects || []),
+      {
+        id: randomId(type),
+        type,
+        x: Math.round(point.x - 60),
+        y: Math.round(point.y - 30),
+        width: type === "text" ? 180 : 120,
+        height: type === "text" ? 36 : 60,
+        rotation: 0,
+        fill: type === "text" ? theme.textPrimary : "rgba(34, 197, 94, 0.2)",
+        stroke: type === "text" ? "transparent" : theme.accentGreen,
+        text: type === "text" ? "Label" : undefined
+      }
+    ]
     this.scheduleRender(false)
   }
   
@@ -1189,18 +776,18 @@ constructor(hook, options = {}) {
     this.pushHistory()
     
     if (this.selectedSeats.size > 0) {
-      const selectedSeatIds = this.selectedSeats
-      this.state.seats = (this.state.seats || []).filter((seat) => !selectedSeatIds.has(seat.seat_slot_id))
-      this.state.groups = (this.state.groups || []).map((group) => ({
-        ...group,
-        seat_slot_ids: (group.seat_slot_ids || []).filter((id) => !selectedSeatIds.has(id))
+      const selectedIds = this.selectedSeats
+      this.state.seats = (this.state.seats || []).filter(s => !selectedIds.has(s.seat_slot_id))
+      this.state.groups = (this.state.groups || []).map(g => ({
+        ...g,
+        seat_slot_ids: (g.seat_slot_ids || []).filter(id => !selectedIds.has(id))
       }))
       this.selectedSeats.clear()
     }
     
     if (this.selectedObjects.size > 0) {
-      const selectedObjectIds = this.selectedObjects
-      this.state.objects = (this.state.objects || []).filter((object) => !selectedObjectIds.has(object.id))
+      const selectedIds = this.selectedObjects
+      this.state.objects = (this.state.objects || []).filter(o => !selectedIds.has(o.id))
       this.selectedObjects.clear()
       this.transformer.visible(false)
     }
@@ -1211,7 +798,6 @@ constructor(hook, options = {}) {
   updateExportTarget(selectText = false) {
     const target = document.querySelector(`[data-seat-map-export-for="${this.el.id}"]`)
     if (!target) return
-    
     target.value = JSON.stringify(this.serializableState(), null, 2)
     if (selectText) target.select()
   }
@@ -1220,9 +806,9 @@ constructor(hook, options = {}) {
     return {
       ...this.state,
       revision: parseInt(this.state.revision, 10) || 1,
-      seats: (this.state.seats || []).map((seat) => ({ ...seat })),
-      objects: (this.state.objects || []).map((object) => ({ ...object })),
-      groups: (this.state.groups || []).map((group) => ({ ...group }))
+      seats: (this.state.seats || []).map(s => ({ ...s })),
+      objects: (this.state.objects || []).map(o => ({ ...o })),
+      groups: (this.state.groups || []).map(g => ({ ...g }))
     }
   }
   
@@ -1230,15 +816,15 @@ constructor(hook, options = {}) {
     const clampedScale = clamp(nextScale, 0.3, 4)
     const center = { x: this.stage.width() / 2, y: this.stage.height() / 2 }
     const oldScale = this.stage.scaleX() || 1
-    const contentPoint = {
+    const pointTo = {
       x: (center.x - this.stage.x()) / oldScale,
       y: (center.y - this.stage.y()) / oldScale
     }
     
     this.stage.scale({ x: clampedScale, y: clampedScale })
     this.stage.position({
-      x: center.x - contentPoint.x * clampedScale,
-      y: center.y - contentPoint.y * clampedScale
+      x: center.x - pointTo.x * clampedScale,
+      y: center.y - pointTo.y * clampedScale
     })
     
     this.constrainStageDrag()
@@ -1349,40 +935,20 @@ constructor(hook, options = {}) {
     this.stage.draggable(true)
   }
   
-  handleDragStart() {
-    this.seatLayer.listening(false)
-    this.objectLayer.listening(false)
-  }
-  
-  handleDragEnd() {
-    this.seatLayer.listening(true)
-    this.objectLayer.listening(true)
-    this.stage.batchDraw()
-  }
-  
   nextSeatId() {
-    const ids = (this.state.seats || []).map((seat) => Number(seat.seat_slot_id) || 0)
+    const ids = (this.state.seats || []).map(s => Number(s.seat_slot_id) || 0)
     return Math.max(0, ...ids) + 1
   }
   
   nextSeatLabel() {
-    const labels = new Set((this.state.seats || []).map((seat) => seat.label))
-    for (let row = 0; row < 26; row += 1) {
+    const labels = new Set((this.state.seats || []).map(s => s.label))
+    for (let row = 0; row < 26; row++) {
       const prefix = String.fromCharCode(65 + row)
-      for (let column = 1; column <= 99; column += 1) {
-        const label = `${prefix}${String(column).padStart(2, "0")}`
+      for (let col = 1; col <= 99; col++) {
+        const label = `${prefix}${String(col).padStart(2, "0")}`
         if (!labels.has(label)) return label
       }
     }
     return `Z${String((this.state.seats || []).length + 1).padStart(2, "0")}`
-  }
-  
-  transparentColor(hexColor, alpha) {
-    const sanitized = (hexColor || "#22c55e").replace("#", "")
-    const value = sanitized.length === 3 ? sanitized.split("").map((part) => `${part}${part}`).join("") : sanitized
-    const red = parseInt(value.slice(0, 2), 16)
-    const green = parseInt(value.slice(2, 4), 16)
-    const blue = parseInt(value.slice(4, 6), 16)
-    return `rgba(${red}, ${green}, ${blue}, ${alpha})`
   }
 }
