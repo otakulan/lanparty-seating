@@ -31,6 +31,8 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
   attr :class, :string, default: nil
   attr :stage_class, :string, default: nil
   attr :pickable, :boolean, default: false
+  attr :background_kind, :string, default: "none"
+  attr :background_value, :string, default: nil
   attr :rest, :global
 
   slot :toolbar do
@@ -55,6 +57,21 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
       ]}
       {@rest}
     >
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute inset-0 bg-gradient-to-br from-base-100 to-base-200"></div>
+        <svg class="absolute inset-0 h-full w-full opacity-40">
+          <defs>
+            <pattern id={"grid-#{@id}"} width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" class="stroke-base-content/20" stroke-width="0.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill={"url(#grid-#{@id})"} />
+        </svg>
+        <%= if @background_kind == "svg" and @background_value do %>
+          <img src={@background_value} class="absolute inset-0 h-full w-full object-contain opacity-15" alt="" />
+        <% end %>
+      </div>
+
       <div data-seat-map-stage class={[@stage_class || "h-full w-full"]} tabindex="0" phx-ignore></div>
 
       <div

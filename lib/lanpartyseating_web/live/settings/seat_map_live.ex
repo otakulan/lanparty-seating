@@ -180,11 +180,13 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     case SeatMapsLogic.save_draft(payload, socket.assigns.revision) do
       {:ok, _version} ->
         refreshed = load_editor_payload()
-
         {:noreply,
          socket
          |> assign_editor_payload(refreshed)
          |> put_flash(:info, "Background updated / Arriere-plan mis a jour")}
+
+      {:error, :stale_draft} ->
+        {:noreply, put_flash(socket, :error, "Draft is stale / Ce brouillon n'est plus à jour")}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, format_error(reason))}
