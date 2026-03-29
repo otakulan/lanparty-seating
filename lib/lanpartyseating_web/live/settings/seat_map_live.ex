@@ -480,6 +480,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     end
   end
 
+  defp background_editor_value(_payload), do: nil
+
   defp update_selected_seat(socket, updates) do
     case socket.assigns.selected_seat do
       nil ->
