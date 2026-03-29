@@ -18,15 +18,18 @@ defmodule LanpartyseatingWeb.DisplayLive do
     settings = SettingsLogic.get_settings()
     seat_picking_enabled = Map.get(settings, :seat_picking_enabled_in_kiosk, false)
 
-    {:ok,
-     socket
-     |> assign(:page_title, "Seating")
-     |> assign(:map_payload, payload)
-     |> assign(:total_seats, total)
-     |> assign(:available_seats, available)
-     |> assign(:selected_seat, nil)
-     |> assign(:show_modal, false)
-     |> assign(:pickable, seat_picking_enabled)}
+    socket =
+      socket
+      |> assign(:page_title, "Seating")
+      |> assign(:map_payload, payload)
+      |> assign(:total_seats, total)
+      |> assign(:available_seats, available)
+      |> assign(:selected_seat, nil)
+      |> assign(:show_modal, false)
+      |> assign(:pickable, seat_picking_enabled)
+
+    socket = if connected?(socket), do: push_event(socket, "seat_map_init", %{map: payload}), else: socket
+    {:ok, socket}
   end
 
   def handle_event("seat_selected", %{"seat_slot_id" => seat_slot_id}, socket) do
@@ -52,7 +55,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
      socket
      |> assign(:map_payload, payload)
      |> assign(:total_seats, Enum.count(payload.seats))
-     |> assign(:available_seats, Enum.count(payload.seats, &(&1["status"] == "available")))}
+     |> assign(:available_seats, Enum.count(payload.seats, &(&1["status"] == "available")))
+     |> push_event("seat_map_update", %{map: payload})}
   end
 
   def render(assigns) do
