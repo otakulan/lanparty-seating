@@ -1,4 +1,4 @@
-import SeatMapKiosk from "./seat_map_kiosk_class"
+import SeatMapKiosk from "../seat_map/seat_map_kiosk_class"
 
 export default {
   mounted() {

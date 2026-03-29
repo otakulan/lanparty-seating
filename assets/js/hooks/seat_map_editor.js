@@ -1,4 +1,4 @@
-import SeatMapEditor from "./seat_map_editor_class"
+import SeatMapEditor from "../seat_map/seat_map_editor_class"
 
 export default {
   mounted() {
