@@ -11,12 +11,17 @@ defmodule LanpartyseatingWeb.SeatMapLive do
       Phoenix.PubSub.subscribe(PubSub, "seat_map_update")
     end
 
-    {:ok,
-     socket
-     |> assign(:page_title, "Seating")
-     |> assign(:map_payload, load_published_payload())
-     |> assign(:selected_seat, nil)
-     |> assign(:show_modal, false)}
+    payload = load_published_payload()
+
+    socket =
+      socket
+      |> assign(:page_title, "Seating")
+      |> assign(:map_payload, payload)
+      |> assign(:selected_seat, nil)
+      |> assign(:show_modal, false)
+
+    socket = if connected?(socket), do: push_event(socket, "seat_map_init", %{map: payload}), else: socket
+    {:ok, socket}
   end
 
   def handle_event("seat_selected", %{"seat_slot_id" => seat_slot_id}, socket) do
@@ -36,7 +41,8 @@ defmodule LanpartyseatingWeb.SeatMapLive do
   end
 
   def handle_info({:seat_map_updated, _payload}, socket) do
-    {:noreply, assign(socket, :map_payload, load_published_payload())}
+    payload = load_published_payload()
+    {:noreply, socket |> assign(:map_payload, payload) |> push_event("seat_map_update", %{map: payload})}
   end
 
   def render(assigns) do
@@ -44,8 +50,7 @@ defmodule LanpartyseatingWeb.SeatMapLive do
     <div class="h-dvh bg-base-200 flex flex-col">
       <div class="flex-1 p-3 md:p-4 min-h-0 relative">
         <SeatMap.canvas id="interactive-seat-map" hook="SeatMapCanvas" payload={@map_payload} mode="view" class="h-full" phx-ignore>
-          <:toolbar with_zoom_buttons with_legend with_theme_toggle>
-          </:toolbar>
+          <:toolbar with_zoom_buttons with_legend with_theme_toggle></:toolbar>
         </SeatMap.canvas>
       </div>
 

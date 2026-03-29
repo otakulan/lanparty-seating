@@ -25,7 +25,7 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
          * `:details` - Optional. Content rendered in the bottom details panel.
        """
   attr :id, :string, required: true
-  attr :payload, :map, required: true
+  attr :payload, :map, default: nil
   attr :mode, :string, required: true
   attr :hook, :string, default: "SeatMapCanvas"
   attr :class, :string, default: nil
@@ -50,7 +50,6 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
       phx-hook={@hook}
       data-mode={@mode}
       data-pickable={to_string(@pickable)}
-      data-seat-map={Jason.encode!(@payload)}
       class={[
         "relative overflow-hidden border border-base-300 bg-base-100 shadow-xl font-mono",
         @class

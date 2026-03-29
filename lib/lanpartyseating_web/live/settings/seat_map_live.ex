@@ -15,13 +15,16 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
     payload = load_editor_payload()
 
-    {:ok,
-     socket
-     |> assign(:page_title, "Seat Map Editor")
-     |> assign_editor_payload(payload)
-     |> assign(:stale_draft, false)
-     |> assign(:ignore_stale_until_next_render, false)
-     |> assign(:selected_seat, nil)}
+    socket =
+      socket
+      |> assign(:page_title, "Seat Map Editor")
+      |> assign_editor_payload(payload)
+      |> assign(:stale_draft, false)
+      |> assign(:ignore_stale_until_next_render, false)
+      |> assign(:selected_seat, nil)
+
+    socket = if connected?(socket), do: push_event(socket, "seat_map_init", %{map: payload}), else: socket
+    {:ok, socket}
   end
 
   def handle_event("seat_selected", %{"seat" => nil}, socket) do
@@ -57,6 +60,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
          |> assign_editor_payload(payload)
          |> assign(:stale_draft, false)
          |> assign(:ignore_stale_until_next_render, true)
+         |> push_event("seat_map_update", %{map: payload})
          |> put_flash(:info, "Draft saved / Brouillon enregistre")}
 
       {:error, :stale_draft} ->
@@ -80,6 +84,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
        socket
        |> assign_editor_payload(payload)
        |> assign(:stale_draft, false)
+       |> push_event("seat_map_update", %{map: payload})
        |> put_flash(:info, "Published layout activated / Nouveau plan activé")}
     else
       {:error, :stale_draft} ->
@@ -112,6 +117,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
          socket
          |> assign_editor_payload(payload)
          |> assign(:stale_draft, false)
+         |> push_event("seat_map_update", %{map: payload})
          |> put_flash(:info, "Draft reset from published map / Brouillon reinitialise depuis la carte publiee")}
 
       {:error, reason} ->
@@ -131,6 +137,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
         {:noreply,
          socket
          |> assign_editor_payload(payload)
+         |> push_event("seat_map_update", %{map: payload})
          |> put_flash(:info, "Team assignment saved / Attribution d'équipe enregistrée")}
 
       {:error, changeset} ->
@@ -145,6 +152,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     {:noreply,
      socket
      |> assign_editor_payload(payload)
+     |> push_event("seat_map_update", %{map: payload})
      |> put_flash(:info, "Team assignment removed / Attribution d'equipe supprimée")}
   end
 
@@ -157,6 +165,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
       {:noreply,
        socket
        |> assign_editor_payload(payload)
+       |> push_event("seat_map_update", %{map: payload})
        |> put_flash(:info, "JSON imported / JSON importé")}
     else
       {:error, %Jason.DecodeError{}} ->
@@ -180,9 +189,11 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     case SeatMapsLogic.save_draft(payload, socket.assigns.revision) do
       {:ok, _version} ->
         refreshed = load_editor_payload()
+
         {:noreply,
          socket
          |> assign_editor_payload(refreshed)
+         |> push_event("seat_map_update", %{map: refreshed})
          |> put_flash(:info, "Background updated / Arriere-plan mis a jour")}
 
       {:error, :stale_draft} ->

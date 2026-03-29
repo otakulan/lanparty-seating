@@ -153,7 +153,7 @@ export class SeatMapBase {
     this.el = hook.el
     this.mode = options.mode || "view"
     this.stageContainer = this.el.querySelector("[data-seat-map-stage]")
-    this.state = this.parsePayload()
+    this.state = {}
     this.renderFrame = null
     this._cachedTheme = null
     this._cachedStatusColors = null
@@ -199,12 +199,12 @@ export class SeatMapBase {
     }
   }
   
-  parsePayload() {
-    return clone(JSON.parse(this.el.dataset.seatMap || "{}"))
+  setPayload(payload) {
+    this.state = clone(payload || {})
   }
   
-  update() {
-    this.state = this.parsePayload()
+  update(payload) {
+    this.state = clone(payload || {})
   }
   
   scheduleRender(resetView = false) {

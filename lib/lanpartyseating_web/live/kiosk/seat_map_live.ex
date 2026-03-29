@@ -14,12 +14,15 @@ defmodule LanpartyseatingWeb.Kiosk.SeatMapLive do
     total = Enum.count(payload.seats)
     available = Enum.count(payload.seats, &(&1["status"] == "available"))
 
-    {:ok,
-     socket
-     |> assign(:page_title, "Kiosk Seat Map")
-     |> assign(:map_payload, payload)
-     |> assign(:total_seats, total)
-     |> assign(:available_seats, available)}
+    socket =
+      socket
+      |> assign(:page_title, "Kiosk Seat Map")
+      |> assign(:map_payload, payload)
+      |> assign(:total_seats, total)
+      |> assign(:available_seats, available)
+
+    socket = if connected?(socket), do: push_event(socket, "seat_map_init", %{map: payload}), else: socket
+    {:ok, socket}
   end
 
   def handle_info({:seat_map_updated, _payload}, socket) do
@@ -29,7 +32,8 @@ defmodule LanpartyseatingWeb.Kiosk.SeatMapLive do
      socket
      |> assign(:map_payload, payload)
      |> assign(:total_seats, Enum.count(payload.seats))
-     |> assign(:available_seats, Enum.count(payload.seats, &(&1["status"] == "available")))}
+     |> assign(:available_seats, Enum.count(payload.seats, &(&1["status"] == "available")))
+     |> push_event("seat_map_update", %{map: payload})}
   end
 
   def render(assigns) do
