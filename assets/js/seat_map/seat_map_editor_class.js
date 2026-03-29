@@ -386,6 +386,9 @@ export default class SeatMapEditor extends SeatMapBase {
       return
     }
     
+    const targetType = event.target?.parent?.getAttr?.("nodeType") || event.target?.getAttr?.("nodeType")
+    if (targetType === "seat" || targetType === "object") return
+    
     if (event.target === this.stage) this.clearSelection()
   }
   
