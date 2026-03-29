@@ -744,6 +744,16 @@ constructor(hook, options = {}) {
     
     this.transformer.visible(false)
     this.scheduleRender(false)
+    
+    // Push selected seat info to LiveView for the details panel
+    if (this.selectedSeats.size === 1) {
+      const selectedSeat = (this.state.seats || []).find(s => s.seat_slot_id === seat.seat_slot_id)
+      if (selectedSeat) {
+        this.hook.pushEvent("seat_selected", { seat: selectedSeat })
+      }
+    } else {
+      this.hook.pushEvent("seat_selected", { seat: null })
+    }
   }
   
   constrainStageDrag() {

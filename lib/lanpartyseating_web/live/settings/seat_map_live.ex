@@ -20,7 +20,31 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
      |> assign(:page_title, "Seat Map Editor")
      |> assign_editor_payload(payload)
      |> assign(:stale_draft, false)
-     |> assign(:ignore_stale_until_next_render, false)}
+     |> assign(:ignore_stale_until_next_render, false)
+     |> assign(:selected_seat, nil)}
+  end
+
+  def handle_event("seat_selected", %{"seat" => nil}, socket) do
+    {:noreply, assign(socket, :selected_seat, nil)}
+  end
+
+  def handle_event("seat_selected", %{"seat" => seat}, socket) do
+    {:noreply, assign(socket, :selected_seat, seat)}
+  end
+
+  def handle_event("update_seat_label", %{"value" => label}, socket) do
+    case update_selected_seat(socket, %{label: label}) do
+      {:ok, socket} -> {:noreply, socket}
+      {:error, socket} -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("update_seat_label", _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("clear_seat_selection", _params, socket) do
+    {:noreply, assign(socket, :selected_seat, nil)}
   end
 
   def handle_event("save_draft_preview", %{"map" => %{"revision" => revision} = map}, socket) do
@@ -245,9 +269,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
                 </div>
                 <div class="mx-1 h-4 w-px bg-base-300"></div>
                 <div class="flex flex-wrap gap-1">
-                  <button type="button" data-seat-map-command="group-selection" class="btn btn-xs">
-                    Group
-                  </button>
                   <button type="button" data-seat-map-command="delete-selection" class="btn btn-xs btn-error" title="Delete selection">
                     <Icons.trash class="w-4 h-4" />
                   </button>
@@ -270,6 +291,42 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
                   </button>
                 </div>
               </:toolbar>
+
+              <:details :if={@selected_seat}>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-tiny uppercase tracking-[0.15em] text-base-content/60">Selected</span>
+                    <button type="button" phx-click="clear_seat_selection" class="btn btn-xs btn-ghost btn-circle">
+                      <Icons.x class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <h3 class="text-lg font-bold text-base-content">{@selected_seat["label"]}</h3>
+                  <div class="form-control">
+                    <label class="label py-1">
+                      <span class="label-text text-tiny uppercase text-base-content/60">Label / Étiquette</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="label"
+                      value={@selected_seat["label"]}
+                      class="input input-bordered input-sm w-full bg-base-100 text-base-content"
+                      placeholder="Seat label"
+                      phx-blur="update_seat_label"
+                    />
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-tiny">
+                    <div>
+                      <span class="text-base-content/60">Status</span>
+                      <span class="ml-1 font-mono text-success">{@selected_seat["status"]}</span>
+                    </div>
+                    <div>
+                      <span class="text-base-content/60">ID</span>
+                      <span class="ml-1 font-mono text-base-content">{@selected_seat["seat_slot_id"]}</span>
+                    </div>
+                  </div>
+                  <p class="text-xs text-base-content/50">Click elsewhere to deselect / Cliquez ailleurs pour désélectionner</p>
+                </div>
+              </:details>
             </SeatMap.canvas>
 
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -423,8 +480,37 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     end
   end
 
-  defp background_editor_value(%{"background_value" => value}) when is_binary(value), do: value
-  defp background_editor_value(_payload), do: ""
+  defp update_selected_seat(socket, updates) do
+    case socket.assigns.selected_seat do
+      nil ->
+        {:error, socket}
+
+      selected_seat ->
+        seat_slot_id = selected_seat["seat_slot_id"]
+
+        updated_seats =
+          (socket.assigns.map_payload["seats"] || [])
+          |> Enum.map(
+            fn seat ->
+              if seat["seat_slot_id"] == seat_slot_id do
+                Map.merge(seat, updates)
+              else
+                seat
+              end
+            end
+          )
+
+        updated_payload =
+          socket.assigns.map_payload
+          |> Map.put("seats", updated_seats)
+
+        {:ok,
+         socket
+         |> assign(:map_payload, updated_payload)
+         |> assign(:selected_seat, Map.merge(selected_seat, updates))
+         |> push_event("seat_map_update", %{map: updated_payload})}
+    end
+  end
 
   defp normalize_background_value("svg", value) when is_binary(value) do
     trimmed = String.trim(value)
