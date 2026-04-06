@@ -48,25 +48,15 @@ defmodule LanpartyseatingWeb.Kiosk.SeatMapLive do
           class="h-full"
         >
           <:toolbar>
-            <div class="flex items-center gap-4">
-              <div>
-                <div class="flex items-center gap-2">
-                  <div class="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
-                  <span class="text-tiny uppercase tracking-[0.2em] text-base-content/60">Room Map</span>
-                </div>
-                <h1 class="text-2xl font-bold text-base-content">Seating</h1>
+            <div class="flex items-baseline gap-1">
+              <span class="text-4xl font-bold text-success">{@available_seats}</span>
+              <div class="flex flex-col leading-tight">
+                <span class="text-sm font-semibold text-base-content">disponibles</span>
+                <span class="text-xs text-base-content/60">available</span>
               </div>
-              <div class="h-8 w-px bg-base-300"></div>
-              <div class="flex items-baseline gap-1">
-                <span class="text-4xl font-bold text-success">{@available_seats}</span>
-                <div class="flex flex-col leading-tight">
-                  <span class="text-sm font-semibold text-base-content">disponibles</span>
-                  <span class="text-xs text-base-content/60">available</span>
-                </div>
-              </div>
-              <div class="text-sm text-base-content/60">
-                <span class="font-semibold text-base-content">{@total_seats}</span> postes / seats
-              </div>
+            </div>
+            <div class="text-sm text-base-content/60">
+              <span class="font-semibold text-base-content">{@total_seats}</span> postes / seats
             </div>
           </:toolbar>
 

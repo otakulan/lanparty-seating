@@ -2,6 +2,8 @@ defmodule Lanpartyseating.SeatSlot do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{}
+
   schema "seat_slots" do
     field :label, :string
     field :legacy_station_number, :integer

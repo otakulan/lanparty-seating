@@ -20,6 +20,15 @@ export default {
     })
   },
 
+  updated() {
+    const container = this.el.querySelector('[data-seat-map-stage]')
+    const hasContent = container && container.querySelector('.konvajs-content')
+    
+    if (!hasContent && this.initialized) {
+      this.runtime.mount()
+    }
+  },
+
   destroyed() {
     this.runtime.destroy()
   }

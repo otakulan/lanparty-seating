@@ -20,6 +20,17 @@ export default {
     })
   },
 
+  updated() {
+    // Check if the canvas container was destroyed and needs re-initialization
+    const container = this.el.querySelector('[data-seat-map-stage]')
+    const hasContent = container && container.querySelector('.konvajs-content')
+    
+    if (!hasContent && this.initialized) {
+      // Canvas was destroyed, re-mount it
+      this.runtime.mount()
+    }
+  },
+
   destroyed() {
     this.runtime.destroy()
   }

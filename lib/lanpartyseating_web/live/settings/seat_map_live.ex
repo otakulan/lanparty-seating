@@ -267,7 +267,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
           <div class="space-y-4">
             <SeatMap.canvas id="editor-seat-map" hook="SeatMapEditor" payload={@map_payload} mode="editor" class="min-h-[60vh]" stage_class="h-[60vh]" phx-ignore>
-              <:toolbar with_zoom_buttons={true}>
+              <:toolbar with_zoom_buttons>
                 <div class="mx-1 h-4 w-px bg-base-300"></div>
                 <div class="flex flex-wrap gap-1">
                   <button type="button" data-seat-map-command="add-seat" class="btn btn-xs btn-success gap-1">
@@ -470,17 +470,20 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
   end
 
   defp assign_editor_payload(socket, payload) do
+    tournaments = TournamentsLogic.get_all_tournaments()
+    json_payload = Jason.encode!(payload, pretty: true)
+
     socket
     |> assign(:map_payload, payload)
-    |> assign(:export_json, Jason.encode!(payload, pretty: true))
     |> assign(:draft_name, payload["name"] || "Working Draft")
     |> assign(:revision, payload["revision"] || 1)
     |> assign(:published_revision, payload["published_revision"] || 1)
-    |> assign(:import_json, Jason.encode!(payload, pretty: true))
-    |> assign(:tournaments, TournamentsLogic.get_all_tournaments())
     |> assign(:background_kind, payload["background_kind"] || "none")
+    |> assign(:export_json, json_payload)
+    |> assign(:import_json, json_payload)
+    |> assign(:tournaments, tournaments)
     |> assign(:background_value, background_editor_value(payload))
-    |> assign(:team_assignment_form, default_team_assignment_form(payload, TournamentsLogic.get_all_tournaments()))
+    |> assign(:team_assignment_form, default_team_assignment_form(payload, tournaments))
   end
 
   defp background_editor_value(%{"background_kind" => "svg", "background_value" => value}) when is_binary(value) do

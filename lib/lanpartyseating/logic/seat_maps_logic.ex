@@ -482,6 +482,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
       seats: seats,
       objects: data["objects"] || [],
       groups: groups,
+      revision: 0,
       team_assignments: Enum.map(team_assignments, &stringify_map/1),
     }
   end
