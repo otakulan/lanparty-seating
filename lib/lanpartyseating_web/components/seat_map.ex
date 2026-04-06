@@ -1,6 +1,7 @@
 defmodule LanpartyseatingWeb.Components.SeatMap do
   use Phoenix.Component
   alias LanpartyseatingWeb.Components.UI
+  alias LanpartyseatingWeb.Components.Icons
 
   @doc """
        A seat map canvas component that renders an interactive Konva.js-based seat map.
@@ -103,13 +104,13 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
             <%= if Map.get(bar, :with_zoom_buttons, false) do %>
               <div class="flex items-center gap-1">
                 <button type="button" data-seat-map-command="zoom-out" class="btn btn-xs btn-square" title="Zoom out">
-                  <.magnifying_glass_minus class="w-4 h-4" />
+                  <Icons.magnifying_glass_minus class="w-4 h-4" />
                 </button>
                 <button type="button" data-seat-map-command="zoom-in" class="btn btn-xs btn-square" title="Zoom in">
-                  <.magnifying_glass_plus class="w-4 h-4" />
+                  <Icons.magnifying_glass_plus class="w-4 h-4" />
                 </button>
                 <button type="button" data-seat-map-command="reset-view" class="btn btn-xs btn-square" title="Fit to view">
-                  <.arrows_pointing_in class="w-4 h-4" />
+                  <Icons.arrows_pointing_in class="w-4 h-4" />
                 </button>
               </div>
               <%!-- Separator --%>
@@ -168,35 +169,3 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
     </div>
     """
   end
-
-  # Icon helpers for this component
-  attr :class, :string, default: "w-5 h-5"
-
-  defp magnifying_glass_plus(assigns) do
-    ~H"""
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
-      <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
-    </svg>
-    """
-  end
-
-  attr :class, :string, default: "w-5 h-5"
-
-  defp magnifying_glass_minus(assigns) do
-    ~H"""
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
-      <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM7.5 10.5h6" />
-    </svg>
-    """
-  end
-
-  attr :class, :string, default: "w-5 h-5"
-
-  defp arrows_pointing_in(assigns) do
-    ~H"""
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={@class}>
-      <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
-    </svg>
-    """
-  end
-end
