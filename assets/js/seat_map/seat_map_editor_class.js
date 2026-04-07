@@ -452,6 +452,7 @@ buildStage() {
   }
   
   constrainStageDrag() {
+    const padding = 40
     const scale = this.stage.scaleX() || 1
     const canvasWidth = this.state.width || 1920
     const canvasHeight = this.state.height || 1080
@@ -464,16 +465,18 @@ buildStage() {
     let newX = this.stage.x()
     let newY = this.stage.y()
     
-    if (scaledWidth <= stageWidth) {
+    // When canvas fits within viewport (zoomed out)
+    if (scaledWidth <= stageWidth - padding * 2) {
       newX = (stageWidth - scaledWidth) / 2
     } else {
-      newX = clamp(newX, stageWidth - scaledWidth, 0)
+      // When zoomed in, allow pan but keep canvas bounds visible
+      newX = clamp(newX, stageWidth - scaledWidth - padding, padding)
     }
     
-    if (scaledHeight <= stageHeight) {
+    if (scaledHeight <= stageHeight - padding * 2) {
       newY = (stageHeight - scaledHeight) / 2
     } else {
-      newY = clamp(newY, stageHeight - scaledHeight, 0)
+      newY = clamp(newY, stageHeight - scaledHeight - padding, padding)
     }
     
     this.stage.position({ x: newX, y: newY })
