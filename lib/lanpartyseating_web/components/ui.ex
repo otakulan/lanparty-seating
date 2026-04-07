@@ -622,7 +622,7 @@ defmodule LanpartyseatingWeb.Components.UI do
 
   def theme_dropdown(assigns) do
     ~H"""
-    <details class="dropdown" id={@id} phx-hook="ThemeDropdown">
+    <details id={@id} phx-hook="ThemeDropdown">
       <summary class="btn-ghost rounded-lg">
         <Icons.swatch class="w-5 h-5" />
       </summary>
