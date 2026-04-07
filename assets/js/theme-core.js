@@ -1,36 +1,36 @@
-function getStoredTheme() {
+export function getStoredTheme() {
   return localStorage.getItem('theme')
 }
 
-function setStoredTheme(theme) {
+export function setStoredTheme(theme) {
   localStorage.setItem('theme', theme)
 }
 
-function getLastLightTheme() {
+export function getLastLightTheme() {
   return localStorage.getItem('lastLightTheme')
 }
 
-function setLastLightTheme(theme) {
+export function setLastLightTheme(theme) {
   localStorage.setItem('lastLightTheme', theme)
 }
 
-function getLastDarkTheme() {
+export function getLastDarkTheme() {
   return localStorage.getItem('lastDarkTheme')
 }
 
-function setLastDarkTheme(theme) {
+export function setLastDarkTheme(theme) {
   localStorage.setItem('lastDarkTheme', theme)
 }
 
-function getCurrentTheme() {
+export function getCurrentTheme() {
   return document.documentElement.getAttribute('data-theme')
 }
 
-function setCurrentTheme(theme) {
+export function setCurrentTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme)
 }
 
-function getThemesMeta() {
+export function getThemesMeta() {
   const meta = document.querySelector('meta[name="themes"]')
   if (!meta) return null
   
@@ -41,38 +41,38 @@ function getThemesMeta() {
   }
 }
 
-function getThemesConfig() {
+export function getThemesConfig() {
   const meta = getThemesMeta()
   if (meta) return meta
   
   return { light: ['light'], dark: ['dark'] }
 }
 
-function getAllThemes() {
+export function getAllThemes() {
   const config = getThemesConfig()
   return [...config.light, ...config.dark]
 }
 
-function getThemeCategory(theme) {
+export function getThemeCategory(theme) {
   const config = getThemesConfig()
   if (config.light.includes(theme)) return 'light'
   if (config.dark.includes(theme)) return 'dark'
   return null
 }
 
-function getDefaultTheme(category) {
+export function getDefaultTheme(category) {
   const config = getThemesConfig()
   return config[category]?.[0] || 'light'
 }
 
-function getLastUsedTheme(category) {
+export function getLastUsedTheme(category) {
   if (category === 'light') {
     return getLastLightTheme() || getDefaultTheme('light')
   }
   return getLastDarkTheme() || getDefaultTheme('dark')
 }
 
-function setLastUsedTheme(theme) {
+export function setLastUsedTheme(theme) {
   const category = getThemeCategory(theme)
   if (category === 'light') {
     setLastLightTheme(theme)
@@ -81,7 +81,7 @@ function setLastUsedTheme(theme) {
   }
 }
 
-function getOppositeCategoryTheme(currentTheme) {
+export function getOppositeCategoryTheme(currentTheme) {
   const category = getThemeCategory(currentTheme)
   if (category === 'light') {
     return getLastUsedTheme('dark')
@@ -92,12 +92,12 @@ function getOppositeCategoryTheme(currentTheme) {
   return getDefaultTheme('light')
 }
 
-function getSystemTheme() {
+export function getSystemTheme() {
   const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
   return getDefaultTheme(isDark ? 'dark' : 'light')
 }
 
-function getEffectiveTheme() {
+export function getEffectiveTheme() {
   const stored = getStoredTheme()
   if (stored) return stored
   
@@ -114,11 +114,11 @@ function getEffectiveTheme() {
   return getSystemTheme()
 }
 
-function isDarkTheme(theme) {
+export function isDarkTheme(theme) {
   return getThemeCategory(theme) === 'dark'
 }
 
-function updateAllToggleVisuals(theme) {
+export function updateAllToggleVisuals(theme) {
   const dark = isDarkTheme(theme)
   document.querySelectorAll('[phx-hook="ThemeToggle"]').forEach(el => {
     const checkbox = el.querySelector('.theme-controller')
@@ -127,7 +127,7 @@ function updateAllToggleVisuals(theme) {
   })
 }
 
-function updateAllDropdownVisuals(theme) {
+export function updateAllDropdownVisuals(theme) {
   document.querySelectorAll('[phx-hook="ThemeDropdown"]').forEach(el => {
     el.querySelectorAll('input[type="radio"]').forEach(radio => {
       radio.checked = radio.value === theme
@@ -135,7 +135,7 @@ function updateAllDropdownVisuals(theme) {
   })
 }
 
-function applyTheme(theme) {
+export function applyTheme(theme) {
   setCurrentTheme(theme)
   setStoredTheme(theme)
   setLastUsedTheme(theme)
@@ -143,7 +143,7 @@ function applyTheme(theme) {
   updateAllDropdownVisuals(theme)
 }
 
-function initLastUsedThemes() {
+export function initLastUsedThemes() {
   const config = getThemesConfig()
   const currentTheme = getStoredTheme()
   
@@ -159,33 +159,7 @@ function initLastUsedThemes() {
   }
 }
 
-function initTheme() {
+export function initTheme() {
   const theme = getEffectiveTheme()
   setCurrentTheme(theme)
-}
-
-export {
-  getStoredTheme,
-  setStoredTheme,
-  getLastLightTheme,
-  setLastLightTheme,
-  getLastDarkTheme,
-  setLastDarkTheme,
-  getCurrentTheme,
-  setCurrentTheme,
-  getThemesConfig,
-  getAllThemes,
-  getThemeCategory,
-  getDefaultTheme,
-  getLastUsedTheme,
-  setLastUsedTheme,
-  getOppositeCategoryTheme,
-  getSystemTheme,
-  getEffectiveTheme,
-  isDarkTheme,
-  updateAllToggleVisuals,
-  updateAllDropdownVisuals,
-  applyTheme,
-  initLastUsedThemes,
-  initTheme,
 }

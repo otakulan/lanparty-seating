@@ -71,6 +71,7 @@ export const ThemeToggle = {
 
 export const ThemeDropdown = {
   mounted() {
+    initLastUsedThemes()
     const theme = getEffectiveTheme()
     this.setCurrentRadio(theme)
     this.bindEvents()

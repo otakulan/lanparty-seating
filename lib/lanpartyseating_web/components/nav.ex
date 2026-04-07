@@ -1,7 +1,7 @@
 defmodule LanpartyseatingWeb.Components.Nav do
   @moduledoc """
-  Navigation bar component.
-  """
+             Navigation bar component.
+             """
   use Phoenix.Component
   use LanpartyseatingWeb, :verified_routes
   alias LanpartyseatingWeb.Components.Icons
@@ -50,9 +50,6 @@ defmodule LanpartyseatingWeb.Components.Nav do
             </li>
           <% end %>
           <li>
-            <UI.theme_toggle id="theme-toggle-desktop" class="btn-ghost btn-sm" />
-          </li>
-          <li>
             <UI.theme_dropdown id="theme-dropdown-desktop" />
           </li>
           <%= if @is_authenticated do %>
@@ -92,7 +89,6 @@ defmodule LanpartyseatingWeb.Components.Nav do
       <%!-- Mobile hamburger menu --%>
       <div class="navbar-end lg:hidden">
         <div class="flex items-center gap-1">
-          <UI.theme_toggle id="theme-toggle-mobile" class="btn-ghost btn-sm" />
           <UI.theme_dropdown id="theme-dropdown-mobile" />
           <div class="dropdown dropdown-end">
             <label tabindex="0" class="btn btn-ghost">
