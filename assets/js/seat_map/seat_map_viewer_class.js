@@ -308,17 +308,19 @@ fitToStage(resetPosition) {
     const maxScale = this.getMaxScale()
     const newScale = clamp(nextScale, minScale, maxScale)
     
-    // Zoom relative to pointer - position canvas point under cursor
+    // Zoom relative to pointer - keep canvas point under cursor
     this.stage.scale({ x: newScale, y: newScale })
     this.stage.position({
       x: pointer.x - canvasPoint.x * newScale,
       y: pointer.y - canvasPoint.y * newScale
     })
     
-    // Constrain to keep canvas visible, adjusting position while maintaining pointer-relative zoom
-    this.constrainZoom()
+    // Only constrain when zoomed out (canvas fits in viewport)
+    if (this.canvasFitsInViewport()) {
+      this.centerCanvas()
+    }
     
-    // Disable panning when canvas fits in viewport
+    // Update draggable state based on canvas fit
     this.stage.draggable(!this.canvasFitsInViewport())
     
     this.stage.batchDraw()
@@ -329,8 +331,7 @@ fitToStage(resetPosition) {
     })
   }
   
-  constrainZoom() {
-    const padding = 40
+  centerCanvas() {
     const scale = this.stage.scaleX() || 1
     const canvasWidth = this.state.width || 1920
     const canvasHeight = this.state.height || 1080
@@ -340,34 +341,11 @@ fitToStage(resetPosition) {
     const scaledWidth = canvasWidth * scale
     const scaledHeight = canvasHeight * scale
     
-    let newX = this.stage.x()
-    let newY = this.stage.y()
-    
-    // Calculate bounds: canvas should always have at least padding visible on each side
-    const minX = stageWidth - scaledWidth - padding
-    const maxX = padding
-    const minY = stageHeight - scaledHeight - padding
-    const maxY = padding
-    
-    // Constrain X
-    if (scaledWidth <= stageWidth - padding * 2) {
-      newX = (stageWidth - scaledWidth) / 2
-    } else if (newX < minX) {
-      newX = minX
-    } else if (newX > maxX) {
-      newX = maxX
-    }
-    
-    // Constrain Y
-    if (scaledHeight <= stageHeight - padding * 2) {
-      newY = (stageHeight - scaledHeight) / 2
-    } else if (newY < minY) {
-      newY = minY
-    } else if (newY > maxY) {
-      newY = maxY
-    }
-    
-    this.stage.position({ x: newX, y: newY })
+    // Center canvas in viewport
+    this.stage.position({
+      x: (stageWidth - scaledWidth) / 2,
+      y: (stageHeight - scaledHeight) / 2
+    })
   }
   
   handleTouchMove(event) {
