@@ -73,11 +73,20 @@ export default class SeatMapKiosk extends SeatMapBase {
     this.renderGroups()
     this.renderTeamLabels()
     
+    // Cache entire layers as single images for best performance
+    this.cacheLayers()
+    
     if (resetView) {
       this.fitToStage(true)
     } else {
       this.stage.batchDraw()
     }
+  }
+  
+  cacheLayers() {
+    // Kiosk is static - cache everything
+    this.sceneLayer.cache()
+    this.overlayLayer.cache()
   }
   
   renderSeats() {

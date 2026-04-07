@@ -10,6 +10,7 @@ import {
   updateAllDropdownVisuals,
   applyTheme,
   initLastUsedThemes,
+  dispatchThemeChange,
 } from '../theme-core.js'
 
 export const ThemeToggle = {
@@ -58,6 +59,7 @@ export const ThemeToggle = {
     
     document.documentElement.setAttribute('data-theme', event.newValue)
     updateAllToggleVisuals(event.newValue)
+    dispatchThemeChange(event.newValue)
   },
 
   handleSystemThemeChange() {
@@ -66,6 +68,7 @@ export const ThemeToggle = {
     const theme = getSystemTheme()
     document.documentElement.setAttribute('data-theme', theme)
     updateAllToggleVisuals(theme)
+    dispatchThemeChange(theme)
   },
 }
 
@@ -109,6 +112,7 @@ export const ThemeDropdown = {
   handleStorageChange(event) {
     if (event.key !== 'theme' || !event.newValue) return
     this.setCurrentRadio(event.newValue)
+    dispatchThemeChange(event.newValue)
   },
 }
 

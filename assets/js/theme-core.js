@@ -135,12 +135,34 @@ export function updateAllDropdownVisuals(theme) {
   })
 }
 
+export function onThemeChange(callback) {
+  if (typeof window === 'undefined') return () => {}
+  
+  const handler = (e) => callback(e.detail.theme, e.detail)
+  window.addEventListener('lanparty:themechange', handler)
+  return () => window.removeEventListener('lanparty:themechange', handler)
+}
+
+export function dispatchThemeChange(theme) {
+  if (typeof window === 'undefined') return
+  
+  const category = getThemeCategory(theme)
+  window.dispatchEvent(new CustomEvent('lanparty:themechange', {
+    detail: {
+      theme,
+      category,
+      isLight: category === 'light'
+    }
+  }))
+}
+
 export function applyTheme(theme) {
   setCurrentTheme(theme)
   setStoredTheme(theme)
   setLastUsedTheme(theme)
   updateAllToggleVisuals(theme)
   updateAllDropdownVisuals(theme)
+  dispatchThemeChange(theme)
 }
 
 export function initLastUsedThemes() {

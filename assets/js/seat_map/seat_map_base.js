@@ -1,9 +1,9 @@
 import Konva from "konva"
 import { getThemeColors, getStatusColors } from "./seat_map_theme"
+import { onThemeChange } from "../theme-core.js"
 
-Konva.hitOnDragEnabled = false
+Konva.hitOnDragEnabled = true
 Konva.captureTouchEventsEnabled = true
-Konva.pixelRatio = 1
 
 export { getThemeColors, getStatusColors }
 
@@ -147,6 +147,11 @@ export function getTotalBox(boxes) {
   }
 }
 
+export function rectsOverlap(r1, r2) {
+  return !(r1.x + r1.width <= r2.x || r2.x + r2.width <= r1.x ||
+           r1.y + r1.height <= r2.y || r2.y + r2.height <= r1.y)
+}
+
 export class SeatMapBase {
   constructor(hook, options = {}) {
     this.hook = hook
@@ -157,7 +162,7 @@ export class SeatMapBase {
     this.renderFrame = null
     this._cachedTheme = null
     this._cachedStatusColors = null
-    this._themeChangeListener = null
+    this._unsubscribeTheme = null
   }
   
   get theme() {
@@ -180,22 +185,18 @@ export class SeatMapBase {
   }
   
   setupThemeListener() {
-    if (typeof window === 'undefined' || !window.matchMedia) return
-    
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    this._themeChangeListener = () => {
+    this._unsubscribeTheme = onThemeChange(() => {
       this.clearThemeCache()
       if (this.stage) {
         this.scheduleRender(true)
       }
-    }
-    mediaQuery.addEventListener('change', this._themeChangeListener)
+    })
   }
   
   teardownThemeListener() {
-    if (this._themeChangeListener && typeof window !== 'undefined' && window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      mediaQuery.removeEventListener('change', this._themeChangeListener)
+    if (this._unsubscribeTheme) {
+      this._unsubscribeTheme()
+      this._unsubscribeTheme = null
     }
   }
   

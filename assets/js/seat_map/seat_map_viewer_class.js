@@ -152,13 +152,12 @@ export default class SeatMapViewer extends SeatMapBase {
       
       addSeatLabel(seatGroup, seat, theme, palette)
       
-      if (seat.reservation_end_date) {
+      const hasTimer = !!seat.reservation_end_date
+      
+      if (hasTimer) {
         const timerNode = createTimerNode(theme, palette)
         seatGroup.add(timerNode)
-        this.timerNodes.set(seat.seat_slot_id, {
-          node: timerNode,
-          endDate: seat.reservation_end_date
-        })
+        this.timerNodes.set(seat.seat_slot_id, { node: timerNode, endDate: seat.reservation_end_date })
       }
       
       this.sceneLayer.add(seatGroup)
@@ -221,8 +220,39 @@ export default class SeatMapViewer extends SeatMapBase {
     this.stage.batchDraw()
   }
   
+  constrainStageDrag() {
+    const scale = this.stage.scaleX() || 1
+    const canvasWidth = this.state.width || 1920
+    const canvasHeight = this.state.height || 1080
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    const scaledWidth = canvasWidth * scale
+    const scaledHeight = canvasHeight * scale
+    
+    let newX = this.stage.x()
+    let newY = this.stage.y()
+    
+    if (scaledWidth <= stageWidth) {
+      newX = (stageWidth - scaledWidth) / 2
+    } else {
+      newX = clamp(newX, stageWidth - scaledWidth, 0)
+    }
+    
+    if (scaledHeight <= stageHeight) {
+      newY = (stageHeight - scaledHeight) / 2
+    } else {
+      newY = clamp(newY, stageHeight - scaledHeight, 0)
+    }
+    
+    this.stage.position({ x: newX, y: newY })
+  }
+  
   handleWheel(event) {
     event.evt.preventDefault()
+    
+    // Disable hit layer during zoom for better performance
+    this.hitLayer.listening(false)
     
     const oldScale = this.stage.scaleX() || 1
     const pointer = this.stage.getPointerPosition()
@@ -241,7 +271,13 @@ export default class SeatMapViewer extends SeatMapBase {
       y: pointer.y - pointTo.y * clampedScale
     })
     
+    this.constrainStageDrag()
     this.stage.batchDraw()
+    
+    // Re-enable hit layer after frame
+    requestAnimationFrame(() => {
+      this.hitLayer.listening(true)
+    })
   }
   
   handleTouchMove(event) {

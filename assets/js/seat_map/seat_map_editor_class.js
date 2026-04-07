@@ -6,7 +6,8 @@ import {
   randomId,
   groupBounds,
   getClientRect,
-  getTotalBox
+  getTotalBox,
+  rectsOverlap
 } from "./seat_map_base"
 import {
   SEAT_WIDTH,
@@ -32,6 +33,7 @@ export default class SeatMapEditor extends SeatMapBase {
     this.lastSelectionModifier = null
     this.dragStartPosition = null
     this.draggedSeatId = null
+    this.dragLayer = null
   }
   
   mount() {
@@ -43,7 +45,7 @@ export default class SeatMapEditor extends SeatMapBase {
     this.stageContainer.focus()
   }
   
-  buildStage() {
+buildStage() {
     const theme = this.theme
     
     this.stage = new Konva.Stage({
@@ -56,6 +58,7 @@ export default class SeatMapEditor extends SeatMapBase {
     this.groupLayer = new Konva.Layer({ listening: false })
     this.seatLayer = new Konva.Layer()
     this.objectLayer = new Konva.Layer()
+    this.dragLayer = new Konva.Layer()
     this.overlayLayer = new Konva.Layer({ listening: false })
     
     this.transformer = new Konva.Transformer({
@@ -83,33 +86,10 @@ export default class SeatMapEditor extends SeatMapBase {
     
     this.objectLayer.add(this.transformer)
     
-    this.transformer.on("dragmove", () => {
-      const nodes = this.transformer.nodes()
-      if (nodes.length === 0) return
-      
-      const canvasWidth = this.state.width || 1920
-      const canvasHeight = this.state.height || 1080
-      const boxes = nodes.map(n => n.getClientRect())
-      const box = getTotalBox(boxes)
-      
-      nodes.forEach(node => {
-        const absPos = node.getAbsolutePosition()
-        const offsetX = box.x - absPos.x
-        const offsetY = box.y - absPos.y
-        const newAbsPos = { ...absPos }
-        
-        if (box.x < 0) newAbsPos.x = -offsetX
-        if (box.y < 0) newAbsPos.y = -offsetY
-        if (box.x + box.width > canvasWidth) newAbsPos.x = canvasWidth - box.width - offsetX
-        if (box.y + box.height > canvasHeight) newAbsPos.y = canvasHeight - box.height - offsetY
-        
-        node.setAbsolutePosition(newAbsPos)
-      })
-    })
-    
     this.stage.add(this.groupLayer)
     this.stage.add(this.seatLayer)
     this.stage.add(this.objectLayer)
+    this.stage.add(this.dragLayer)
     this.stage.add(this.overlayLayer)
     
     this.stage.on("wheel", e => this.handleWheel(e))
@@ -214,6 +194,7 @@ export default class SeatMapEditor extends SeatMapBase {
     this.seatLayer.destroyChildren()
     this.objectLayer.destroyChildren()
     this.overlayLayer.destroyChildren()
+    this.dragLayer.destroyChildren()
     
     this.objectLayer.add(this.transformer)
     
@@ -294,6 +275,7 @@ export default class SeatMapEditor extends SeatMapBase {
     const seats = this.state.seats || []
     const teamAssignments = this.state.team_assignments || []
     
+    // Don't cache in editor - zoom changes scale frequently and cached shapes look worse
     for (const group of groups) {
       renderGroupBounds(this.groupLayer, group, seats, theme)
       renderGroupLabel(this.groupLayer, group, seats, teamAssignments, theme)
@@ -319,6 +301,7 @@ export default class SeatMapEditor extends SeatMapBase {
       seatGroup.on("click tap", e => this.handleSeatClick(e, seat))
       seatGroup.on("dragstart", () => {
         this.pushHistory()
+        seatGroup.moveTo(this.dragLayer)
         if (this.selectedSeats.size > 1 && this.selectedSeats.has(seat.seat_slot_id)) {
           this.dragStartPosition = { x: seatGroup.x(), y: seatGroup.y() }
           this.draggedSeatId = seat.seat_slot_id
@@ -326,19 +309,28 @@ export default class SeatMapEditor extends SeatMapBase {
       })
       seatGroup.on("dragmove", () => {
         this.constrainNodeDrag(seatGroup, SEAT_WIDTH, SEAT_HEIGHT)
+        const constrained = this.constrainSeatCollision(
+          seatGroup.x(), seatGroup.y(),
+          SEAT_WIDTH, SEAT_HEIGHT,
+          seat.seat_slot_id
+        )
+        seatGroup.position(constrained)
         if (this.selectedSeats.size > 1 && this.dragStartPosition && this.draggedSeatId === seat.seat_slot_id) {
-          const dx = seatGroup.x() - this.dragStartPosition.x
-          const dy = seatGroup.y() - this.dragStartPosition.y
-          this.moveSelectedSeats(dx, dy, seat.seat_slot_id)
+          const dx = constrained.x - this.dragStartPosition.x
+          const dy = constrained.y - this.dragStartPosition.y
+          const movedPositions = this.moveSelectedSeats(dx, dy, seat.seat_slot_id)
+          this.constrainMultiSeatCollision(movedPositions, seat.seat_slot_id)
         }
       })
       seatGroup.on("dragend", () => {
+        seatGroup.moveTo(this.seatLayer)
         this.syncSeatNode(seatGroup, seat.seat_slot_id)
         if (this.selectedSeats.size > 1 && this.draggedSeatId === seat.seat_slot_id) {
           this.syncAllSelectedSeats()
         }
         this.dragStartPosition = null
         this.draggedSeatId = null
+        this.seatLayer.batchDraw()
       })
       
       this.seatLayer.add(seatGroup)
@@ -346,16 +338,55 @@ export default class SeatMapEditor extends SeatMapBase {
   }
   
   moveSelectedSeats(dx, dy, excludeSeatId) {
+    const positions = new Map()
     this.selectedSeats.forEach(seatSlotId => {
       if (seatSlotId === excludeSeatId) return
       const node = this.seatLayer.children.find(n => n.id() === `seat-${seatSlotId}`)
       if (!node) return
       const seat = (this.state.seats || []).find(s => s.seat_slot_id === seatSlotId)
       if (!seat) return
-      node.x(seat.x + dx)
-      node.y(seat.y + dy)
+      const newX = seat.x + dx
+      const newY = seat.y + dy
+      node.x(newX)
+      node.y(newY)
+      positions.set(seatSlotId, { x: newX, y: newY, node })
     })
     this.seatLayer.batchDraw()
+    return positions
+  }
+  
+  constrainMultiSeatCollision(positions, leadSeatId) {
+    let minDx = 0
+    let minDy = 0
+    
+    for (const [seatSlotId, pos] of positions) {
+      const seat = (this.state.seats || []).find(s => s.seat_slot_id === seatSlotId)
+      if (!seat) continue
+      
+      const constrained = this.constrainSeatCollision(
+        pos.x, pos.y,
+        seat.width || SEAT_WIDTH, seat.height || SEAT_HEIGHT,
+        seatSlotId
+      )
+      
+      const dx = constrained.x - pos.x
+      const dy = constrained.y - pos.y
+      
+      if (Math.abs(dx) > Math.abs(minDx)) minDx = dx
+      if (Math.abs(dy) > Math.abs(minDy)) minDy = dy
+    }
+    
+    if (minDx !== 0 || minDy !== 0) {
+      for (const [seatSlotId, pos] of positions) {
+        pos.node.x(pos.x + minDx)
+        pos.node.y(pos.y + minDy)
+      }
+      const leadNode = this.seatLayer.children.find(n => n.id() === `seat-${leadSeatId}`)
+      if (leadNode) {
+        leadNode.x(leadNode.x() + minDx)
+        leadNode.y(leadNode.y() + minDy)
+      }
+    }
   }
   
   syncAllSelectedSeats() {
@@ -458,6 +489,61 @@ export default class SeatMapEditor extends SeatMapBase {
       x: clamp(node.x(), halfW, canvasWidth - halfW),
       y: clamp(node.y(), halfH, canvasHeight - halfH)
     })
+  }
+  
+  constrainSeatCollision(newX, newY, width, height, excludeId) {
+    const halfW = width/ 2
+    const halfH = height / 2
+    const draggedRect = {
+      x: newX - halfW,
+      y: newY - halfH,
+      width: width,
+      height: height
+    }
+    
+    for (const seat of this.state.seats || []) {
+      if (seat.seat_slot_id === excludeId) continue
+      if (this.selectedSeats.has(seat.seat_slot_id)) continue
+      
+      const seatW = seat.width || SEAT_WIDTH
+      const seatH = seat.height || SEAT_HEIGHT
+      const seatHalfW = seatW / 2
+      const seatHalfH = seatH / 2
+      const seatRect = {
+        x: seat.x - seatHalfW,
+        y: seat.y - seatHalfH,
+        width: seatW,
+        height: seatH
+      }
+      
+      if (rectsOverlap(draggedRect, seatRect)) {
+        const overlapLeft = draggedRect.x + draggedRect.width - seatRect.x
+        const overlapRight = seatRect.x + seatRect.width - draggedRect.x
+        const overlapTop = draggedRect.y + draggedRect.height - seatRect.y
+        const overlapBottom = seatRect.y + seatRect.height - draggedRect.y
+        
+        const minOverlapX = Math.min(overlapLeft, overlapRight)
+        const minOverlapY = Math.min(overlapTop, overlapBottom)
+        
+        if (minOverlapX < minOverlapY) {
+          if (overlapLeft < overlapRight) {
+            newX = seatRect.x - halfW - 1
+          } else {
+            newX = seatRect.x + seatRect.width + halfW + 1
+          }
+          draggedRect.x = newX - halfW
+        } else {
+          if (overlapTop < overlapBottom) {
+            newY = seatRect.y - halfH - 1
+          } else {
+            newY = seatRect.y + seatRect.height + halfH + 1
+          }
+          draggedRect.y = newY - halfH
+        }
+      }
+    }
+    
+    return { x: newX, y: newY }
   }
   
   handleObjectSelection(event, node) {

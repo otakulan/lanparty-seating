@@ -50,7 +50,8 @@ function addSeatBody(group, palette) {
     shadowColor: palette.glow,
     shadowBlur: SHADOW_BLUR,
     shadowOpacity: SHADOW_OPACITY,
-    perfectDrawEnabled: false
+    perfectDrawEnabled: false,
+    shadowForStrokeEnabled: false
   }))
 }
 
@@ -180,7 +181,7 @@ export function renderGroupBounds(layer, group, seats, theme) {
   const bounds = calculateBounds(memberSeats)
   const color = group.color || "#22c55e"
   
-  layer.add(new Konva.Rect({
+  const rect = new Konva.Rect({
     x: bounds.x - 12,
     y: bounds.y - 16,
     width: bounds.width + 24,
@@ -191,8 +192,12 @@ export function renderGroupBounds(layer, group, seats, theme) {
     cornerRadius: 12,
     fill: transparentColor(color, 0.08),
     perfectDrawEnabled: false,
+    shadowForStrokeEnabled: false,
     listening: false
-  }))
+  })
+  
+  layer.add(rect)
+  return rect
 }
 
 export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
@@ -231,12 +236,15 @@ export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
     fill: transparentColor(color, 0.9),
     stroke: transparentColor("#ffffff", 0.2),
     strokeWidth: 1,
-    perfectDrawEnabled: false
+    perfectDrawEnabled: false,
+    shadowForStrokeEnabled: false
   }))
   
   text.position({ x: 8, y: 5 })
   labelGroup.add(text)
   layer.add(labelGroup)
+  
+  return labelGroup
 }
 
 export function renderTeamLabel(layer, assignment, groups, seats, theme) {
@@ -278,12 +286,15 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
     shadowBlur: 12,
     shadowOffset: { x: 0, y: 4 },
     shadowOpacity: 0.8,
-    perfectDrawEnabled: false
+    perfectDrawEnabled: false,
+    shadowForStrokeEnabled: false
   }))
   
   text.position({ x: 10, y: 6 })
   labelGroup.add(text)
   layer.add(labelGroup)
+  
+  return labelGroup
 }
 
 export function transparentColor(hexColor, alpha) {
@@ -373,7 +384,8 @@ function addEditorSeatBody(group, palette, isSelected) {
     shadowColor: palette.glow,
     shadowBlur: isSelected ? 20 : SHADOW_BLUR,
     shadowOpacity: isSelected ? 1 : SHADOW_OPACITY,
-    perfectDrawEnabled: false
+    perfectDrawEnabled: false,
+    shadowForStrokeEnabled: false
   }))
 }
 
@@ -392,6 +404,7 @@ function addSelectionHighlight(group, theme) {
     shadowColor: theme.accentCyan,
     shadowBlur: 15,
     shadowOpacity: 0.6,
-    perfectDrawEnabled: false
+    perfectDrawEnabled: false,
+    shadowForStrokeEnabled: false
   }))
 }
