@@ -100,7 +100,7 @@ buildStage() {
     this.stage.on("dragmove", () => this.constrainStageDrag())
     
     this.stage.on("mousedown", e => {
-      if (e.evt.altKey) {
+      if (e.evt.altKey && !this.canvasFitsInViewport()) {
         this.isPanning = true
         this.stage.draggable(true)
         return
@@ -134,7 +134,7 @@ buildStage() {
     })
     
     const handleKeyDown = e => {
-      if (e.key === "Alt") this.stage.draggable(true)
+      if (e.key === "Alt" && !this.canvasFitsInViewport()) this.stage.draggable(true)
       if (e.key === "Escape") this.clearSelection()
       if ((e.key === "Delete" || e.key === "Backspace") && !e.target.closest('input, textarea')) {
         if (this.selectedSeats.size > 0 || this.selectedObjects.size > 0) {
@@ -965,14 +965,28 @@ buildStage() {
     const stageHeight = this.stage.height()
     
     return Math.min(
-      (stageWidth - padding) / canvasWidth,
-      (stageHeight - padding) / canvasHeight,
+      (stageWidth - padding * 2) / canvasWidth,
+      (stageHeight - padding * 2) / canvasHeight,
       1
     )
   }
   
   getMaxScale() {
     return 4
+  }
+  
+  canvasFitsInViewport() {
+    const scale = this.stage.scaleX() || 1
+    const canvasWidth = this.state.width || 1920
+    const canvasHeight = this.state.height || 1080
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    const padding = 40
+    
+    const scaledWidth = canvasWidth * scale
+    const scaledHeight = canvasHeight * scale
+    
+    return scaledWidth <= stageWidth - padding * 2 && scaledHeight <= stageHeight - padding * 2
   }
   
   handleWheel(event) {

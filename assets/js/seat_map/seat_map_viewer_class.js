@@ -89,14 +89,28 @@ export default class SeatMapViewer extends SeatMapBase {
     const stageHeight = this.stage.height()
     
     return Math.min(
-      (stageWidth - padding) / canvasWidth,
-      (stageHeight - padding) / canvasHeight,
+      (stageWidth - padding * 2) / canvasWidth,
+      (stageHeight - padding * 2) / canvasHeight,
       1
     )
   }
   
   getMaxScale() {
     return 3
+  }
+  
+  canvasFitsInViewport() {
+    const scale = this.stage.scaleX() || 1
+    const canvasWidth = this.state.width || 1920
+    const canvasHeight = this.state.height || 1080
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    const padding = 40
+    
+    const scaledWidth = canvasWidth * scale
+    const scaledHeight = canvasHeight * scale
+    
+    return scaledWidth <= stageWidth - padding * 2 && scaledHeight <= stageHeight - padding * 2
   }
   
   buildStage() {
@@ -219,7 +233,7 @@ export default class SeatMapViewer extends SeatMapBase {
     })
   }
   
-  fitToStage(resetPosition) {
+fitToStage(resetPosition) {
     const padding = 60
     const width = this.state.width || 1920
     const height = this.state.height || 1080
@@ -240,6 +254,7 @@ export default class SeatMapViewer extends SeatMapBase {
       })
     }
     
+    this.stage.draggable(!this.canvasFitsInViewport())
     this.stage.batchDraw()
   }
   
@@ -300,6 +315,10 @@ export default class SeatMapViewer extends SeatMapBase {
     })
     
     this.constrainStageDrag()
+    
+    // Disable panning when canvas fits in viewport
+    this.stage.draggable(!this.canvasFitsInViewport())
+    
     this.stage.batchDraw()
     
     // Re-enable hit layer after frame
@@ -314,7 +333,6 @@ export default class SeatMapViewer extends SeatMapBase {
     
     if (touchOne && touchTwo) {
       event.evt.preventDefault()
-      this.stage.draggable(false)
       
       const pointOne = { x: touchOne.clientX, y: touchOne.clientY }
       const pointTwo = { x: touchTwo.clientX, y: touchTwo.clientY }
@@ -348,17 +366,20 @@ export default class SeatMapViewer extends SeatMapBase {
       
       this.constrainStageDrag()
       
+      // Disable panning when canvas fits in viewport
+      this.stage.draggable(!this.canvasFitsInViewport())
+      
       this.lastTouchCenter = center
       this.lastTouchDistance = distance
       this.stage.batchDraw()
     } else {
-      this.stage.draggable(true)
+      this.stage.draggable(!this.canvasFitsInViewport())
     }
   }
   
   handleTouchEnd() {
     this.lastTouchCenter = null
     this.lastTouchDistance = 0
-    this.stage.draggable(true)
+    this.stage.draggable(!this.canvasFitsInViewport())
   }
 }
