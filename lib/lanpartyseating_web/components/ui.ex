@@ -622,11 +622,11 @@ defmodule LanpartyseatingWeb.Components.UI do
 
   def theme_dropdown(assigns) do
     ~H"""
-    <span id={@id} phx-hook="ThemeDropdown" class={@class}>
-      <button type="button" class="btn btn-ghost btn-sm" popovertarget={"#{@id}-popover"}>
+    <details class="dropdown" id={@id} phx-hook="ThemeDropdown">
+      <summary class="btn-ghost rounded-lg">
         <Icons.swatch class="w-5 h-5" />
-      </button>
-      <ul id={"#{@id}-popover"} class="dropdown-content z-50 menu p-2 shadow-lg bg-base-200 rounded-box w-40" popover>
+      </summary>
+      <ul class="dropdown-content z-50 menu p-2 shadow-lg bg-base-200 rounded-box w-40">
         <li class="menu-title">
           <span class="text-xs opacity-60">Light</span>
         </li>
@@ -646,7 +646,7 @@ defmodule LanpartyseatingWeb.Components.UI do
           </label>
         </li>
       </ul>
-    </span>
+    </details>
     """
   end
 end

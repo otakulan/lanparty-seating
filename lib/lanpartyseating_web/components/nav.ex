@@ -35,9 +35,9 @@ defmodule LanpartyseatingWeb.Components.Nav do
           <% end %>
           <%= if @admin_menu != [] do %>
             <li>
-              <details>
-                <summary class="hover:bg-neutral-focus rounded-lg">Admin</summary>
-                <ul class="bg-neutral p-2 rounded-box shadow-lg z-50">
+              <details class="dropdown">
+                <summary class="btn-sm rounded-lg">Admin</summary>
+                <ul class="menu dropdown-content bg-neutral p-2 rounded-box shadow-lg z-50">
                   <%= for {menu_txt, path} <- @admin_menu do %>
                     <li>
                       <.link patch={path} class={"hover:bg-neutral-focus rounded-lg #{if path == @nav_menu_active_path, do: "bg-neutral-focus font-semibold", else: ""}"}>

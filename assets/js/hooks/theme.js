@@ -101,6 +101,9 @@ export const ThemeDropdown = {
     
     const theme = event.target.value
     applyTheme(theme)
+    
+    // Close the dropdown after selection
+    this.el.removeAttribute('open')
   },
 
   handleStorageChange(event) {
