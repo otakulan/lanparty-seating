@@ -9,7 +9,7 @@ export const SHADOW_OPACITY = 0.6
 export const ACCENT_RADIUS = 3
 
 export function createSeatGroup(seat, palette, theme, options = {}) {
-  const { showKeyboard = true } = options
+  const { showKeyboard = true, cacheBody = true } = options
   
   const group = new Konva.Group({
     x: seat.x,
@@ -18,18 +18,32 @@ export function createSeatGroup(seat, palette, theme, options = {}) {
     listening: false
   })
   
-  addSeatBody(group, palette)
-  addSeatMonitor(group, theme)
-  addSeatAccent(group, palette)
-  
-  if (showKeyboard) {
-    addSeatKeyboard(group, theme)
+  const bodyGroup = createSeatBodyGroup(palette, theme, { showKeyboard })
+  if (cacheBody) {
+    bodyGroup.cache()
   }
+  group.add(bodyGroup)
   
   group.setAttr("nodeType", "seat")
   group.setAttr("seatSlotId", seat.seat_slot_id)
   
   return group
+}
+
+export function createSeatBodyGroup(palette, theme, options = {}) {
+  const { showKeyboard = true } = options
+  
+  const bodyGroup = new Konva.Group({ listening: false })
+  
+  addSeatBody(bodyGroup, palette)
+  addSeatMonitor(bodyGroup, theme)
+  addSeatAccent(bodyGroup, palette)
+  
+  if (showKeyboard) {
+    addSeatKeyboard(bodyGroup, theme)
+  }
+  
+  return bodyGroup
 }
 
 function addSeatBody(group, palette) {
@@ -337,7 +351,7 @@ export function startTimerUpdates(timerNodes, layer) {
 }
 
 export function createEditorSeatGroup(seat, palette, theme, options = {}) {
-  const { showKeyboard = true, isSelected = false } = options
+  const { showKeyboard = true, isSelected = false, cacheBody = false } = options
   
   const group = new Konva.Group({
     x: seat.x,
@@ -346,13 +360,11 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
     listening: true
   })
   
-  addEditorSeatBody(group, palette, isSelected)
-  addSeatMonitor(group, theme)
-  addSeatAccent(group, palette)
-  
-  if (showKeyboard) {
-    addSeatKeyboard(group, theme)
+  const bodyGroup = createEditorSeatBodyGroup(palette, theme, { showKeyboard, isSelected })
+  if (cacheBody) {
+    bodyGroup.cache()
   }
+  group.add(bodyGroup)
   
   addSeatLabel(group, seat, theme, palette)
   
@@ -364,6 +376,22 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
   group.setAttr("seatSlotId", seat.seat_slot_id)
   
   return group
+}
+
+export function createEditorSeatBodyGroup(palette, theme, options = {}) {
+  const { showKeyboard = true, isSelected = false } = options
+  
+  const bodyGroup = new Konva.Group({ listening: false })
+  
+  addEditorSeatBody(bodyGroup, palette, isSelected)
+  addSeatMonitor(bodyGroup, theme)
+  addSeatAccent(bodyGroup, palette)
+  
+  if (showKeyboard) {
+    addSeatKeyboard(bodyGroup, theme)
+  }
+  
+  return bodyGroup
 }
 
 function addEditorSeatBody(group, palette, isSelected) {
