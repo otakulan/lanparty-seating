@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="description" content="" />
     <meta name="author" content="" />
+    <meta name="themes" content='{"light": ["light"], "dark": ["dark"]}' />
 
     <title>LAN Party Seating</title>
 
@@ -14,36 +15,15 @@
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/css/app.css"} />
 
-    <%!--
-      Theme Initialization (Prevents FOUC/FART)
-      ==========================================
-      Apply stored theme before any content renders to prevent flash of wrong theme.
-      Must be in <head> to execute before body content.
-    --%>
+    <script phx-track-static src={~p"/js/theme-core.js"}>
+    </script>
     <script>
       (function() {
-        const stored = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = stored || (prefersDark ? 'dark' : 'light');
+        var theme = ThemeCore.getEffectiveTheme();
         document.documentElement.setAttribute('data-theme', theme);
       })();
     </script>
 
-    <%!--
-      FOUC (Flash of Unstyled Content) Prevention
-      ============================================
-      When navigating between different LiveView sessions (e.g., public pages to admin pages),
-      Phoenix performs a full page reload. This can cause a brief flash where unstyled HTML
-      is visible before CSS is applied.
-
-      Solution:
-      1. Hide the body immediately with inline CSS (parsed before external CSS loads)
-      2. Reveal the body after the DOM is fully parsed (inline script at end of body)
-      3. Use a CSS transition for a smooth fade-in effect
-
-      The inline <style> must be in <head> to take effect before any content renders.
-      The reveal <script> must be at the end of <body> to run after all HTML is parsed.
-    --%>
     <style>
       body { opacity: 0; }
       body.ready { opacity: 1; transition: opacity 150ms ease-in; }

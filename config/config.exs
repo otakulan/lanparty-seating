@@ -7,31 +7,39 @@ import Config
 
 config :lanpartyseating,
        :scopes,
-       user: [
-         default: true,
-         module: Lanpartyseating.Accounts.Scope,
-         assign_key: :current_scope,
-         access_path: [:user, :id],
-         schema_key: :user_id,
-         schema_type: :id,
-         schema_table: :users,
-         test_data_fixture: Lanpartyseating.AccountsFixtures,
-         test_setup_helper: :register_and_log_in_user,
-       ]
+       user:
+         [
+           default: true,
+           module: Lanpartyseating.Accounts.Scope,
+           assign_key: :current_scope,
+           access_path: [:user, :id],
+           schema_key: :user_id,
+           schema_type: :id,
+           schema_table: :users,
+           test_data_fixture: Lanpartyseating.AccountsFixtures,
+           test_setup_helper: :register_and_log_in_user,
+         ]
 
 # esbuild config
 config :esbuild,
-  version: "0.12.18",
-  path: System.get_env("MIX_ESBUILD_PATH") || Path.expand("../assets/node_modules/.bin/esbuild", __DIR__),
-  default: [
-    args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/js --external:/images/*),
-    cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)},
-  ]
+       version: "0.12.18",
+       path: System.get_env("MIX_ESBUILD_PATH") || Path.expand("../assets/node_modules/.bin/esbuild", __DIR__),
+       default:
+         [
+           args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/js --external:/images/*),
+           cd: Path.expand("../assets", __DIR__),
+           env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)},
+         ],
+       theme_core:
+         [
+           args: ~w(js/theme-core.js --bundle --target=es2017 --format=iife --global-name=ThemeCore --outfile=../priv/static/js/theme-core.js),
+           cd: Path.expand("../assets", __DIR__),
+           env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)},
+         ]
 
 # General application configuration
 config :lanpartyseating,
-  ecto_repos: [Lanpartyseating.Repo]
+       ecto_repos: [Lanpartyseating.Repo]
 
 # Configures the endpoint
 config :lanpartyseating,
@@ -39,10 +47,11 @@ config :lanpartyseating,
        http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
        url: [host: "localhost"],
        secret_key_base: "Ao+QQ96siUJna1mFAy+I+gVIcbTq/iNm9htrJQI0LcNBAm9KiV+xsaoJimsFNEzn",
-       render_errors: [
-         formats: [html: LanpartyseatingWeb.ErrorHTML, json: LanpartyseatingWeb.ErrorJSON],
-         layout: false,
-       ],
+       render_errors:
+         [
+           formats: [html: LanpartyseatingWeb.ErrorHTML, json: LanpartyseatingWeb.ErrorJSON],
+           layout: false,
+         ],
        pubsub_server: Lanpartyseating.PubSub,
        live_view: [signing_salt: "pI2/ZGL+YxiVnXyV3tChX7ruYB8/etKY"],
        adapter: Bandit.PhoenixAdapter

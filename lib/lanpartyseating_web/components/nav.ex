@@ -52,6 +52,9 @@ defmodule LanpartyseatingWeb.Components.Nav do
           <li>
             <UI.theme_toggle id="theme-toggle-desktop" class="btn-ghost btn-sm" />
           </li>
+          <li>
+            <UI.theme_dropdown id="theme-dropdown-desktop" />
+          </li>
           <%= if @is_authenticated do %>
             <li>
               <%= if @is_user_auth do %>
@@ -88,8 +91,9 @@ defmodule LanpartyseatingWeb.Components.Nav do
 
       <%!-- Mobile hamburger menu --%>
       <div class="navbar-end lg:hidden">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1">
           <UI.theme_toggle id="theme-toggle-mobile" class="btn-ghost btn-sm" />
+          <UI.theme_dropdown id="theme-dropdown-mobile" />
           <div class="dropdown dropdown-end">
             <label tabindex="0" class="btn btn-ghost">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

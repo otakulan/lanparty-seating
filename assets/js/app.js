@@ -6,6 +6,7 @@ import BluetoothProvisioning from "./hooks/bluetooth_provisioning"
 import SeatMapCanvas from "./hooks/seat_map_canvas"
 import SeatMapEditor from "./hooks/seat_map_editor"
 import SeatMapKiosk from "./hooks/seat_map_kiosk"
+import { ThemeToggle, ThemeDropdown } from "./hooks/theme"
 
 window.Alpine = Alpine
 Alpine.plugin(focus)
@@ -17,54 +18,8 @@ let Hooks = {
   SeatMapCanvas,
   SeatMapEditor,
   SeatMapKiosk,
-  
-  ThemeToggle: {
-    mounted() {
-      const stored = localStorage.getItem('theme')
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      const theme = stored || (prefersDark ? 'dark' : 'light')
-      const checkbox = this.el.querySelector('.theme-controller')
-      
-      this.updateVisualState(theme)
-      
-      this.el.addEventListener('click', (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        
-        const currentTheme = document.documentElement.getAttribute('data-theme')
-        const themes = ['light', 'dark']
-        const currentIndex = themes.indexOf(currentTheme)
-        const nextIndex = (currentIndex + 1) % themes.length
-        const newTheme = themes[nextIndex]
-        
-        document.documentElement.setAttribute('data-theme', newTheme)
-        localStorage.setItem('theme', newTheme)
-        
-        // Update all theme toggles on the page
-        document.querySelectorAll('[phx-hook="ThemeToggle"]').forEach(el => {
-          const cb = el.querySelector('.theme-controller')
-          if (cb) cb.checked = (newTheme === 'dark')
-          if (newTheme === 'dark') {
-            el.classList.add('swap-active')
-          } else {
-            el.classList.remove('swap-active')
-          }
-        })
-      })
-    },
-    
-    updateVisualState(theme) {
-      const checkbox = this.el.querySelector('.theme-controller')
-      if (checkbox) {
-        checkbox.checked = (theme === 'dark')
-      }
-      if (theme === 'dark') {
-        this.el.classList.add('swap-active')
-      } else {
-        this.el.classList.remove('swap-active')
-      }
-    }
-  }
+  ThemeToggle,
+  ThemeDropdown,
 }
 
 // Auto-focus input when mounted (used for modal badge inputs)
