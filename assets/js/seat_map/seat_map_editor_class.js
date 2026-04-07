@@ -902,7 +902,9 @@ buildStage() {
   }
   
   scaleStage(nextScale) {
-    const clampedScale = clamp(nextScale, 0.3, 4)
+    const minScale = this.getMinScale()
+    const maxScale = this.getMaxScale()
+    const clampedScale = clamp(nextScale, minScale, maxScale)
     const center = { x: this.stage.width() / 2, y: this.stage.height() / 2 }
     const oldScale = this.stage.scaleX() || 1
     const pointTo = {
@@ -929,7 +931,9 @@ buildStage() {
       (this.stage.height() - padding) / height,
       1.5
     )
-    const clampedScale = clamp(scale, 0.3, 3)
+    const minScale = this.getMinScale()
+    const maxScale = this.getMaxScale()
+    const clampedScale = clamp(scale, minScale, maxScale)
     
     if (resetPosition) {
       this.stage.scale({ x: clampedScale, y: clampedScale })
@@ -950,6 +954,24 @@ buildStage() {
     }
   }
   
+  getMinScale() {
+    const padding = 40
+    const canvasWidth = this.state.width || 1920
+    const canvasHeight = this.state.height || 1080
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    return Math.min(
+      (stageWidth - padding) / canvasWidth,
+      (stageHeight - padding) / canvasHeight,
+      1
+    )
+  }
+  
+  getMaxScale() {
+    return 4
+  }
+  
   handleWheel(event) {
     event.evt.preventDefault()
     
@@ -962,7 +984,9 @@ buildStage() {
     
     const direction = event.evt.deltaY > 0 ? 1 : -1
     const nextScale = direction > 0 ? oldScale / SCALE_BY : oldScale * SCALE_BY
-    const clampedScale = clamp(nextScale, 0.3, 4)
+    const minScale = this.getMinScale()
+    const maxScale = this.getMaxScale()
+    const clampedScale = clamp(nextScale, minScale, maxScale)
     
     this.stage.scale({ x: clampedScale, y: clampedScale })
     this.stage.position({
@@ -994,7 +1018,9 @@ buildStage() {
       }
       
       const scale = this.stage.scaleX() * (distance / this.lastTouchDistance)
-      const clampedScale = clamp(scale, 0.3, 4)
+      const minScale = this.getMinScale()
+      const maxScale = this.getMaxScale()
+      const clampedScale = clamp(scale, minScale, maxScale)
       const pointTo = {
         x: (center.x - this.stage.x()) / this.stage.scaleX(),
         y: (center.y - this.stage.y()) / this.stage.scaleY()
@@ -1009,6 +1035,8 @@ buildStage() {
         x: center.x - pointTo.x * clampedScale + dx,
         y: center.y - pointTo.y * clampedScale + dy
       })
+      
+      this.constrainStageDrag()
       
       this.lastTouchCenter = center
       this.lastTouchDistance = distance
