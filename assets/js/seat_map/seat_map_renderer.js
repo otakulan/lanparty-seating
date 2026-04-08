@@ -116,7 +116,8 @@ function addSeatKeyboard(group, theme) {
   }))
 }
 
-export function addSeatLabel(group, seat, theme, palette) {
+export function addSeatLabel(group, seat, theme, palette, options = {}) {
+  const { listening = false } = options
   group.add(new Konva.Text({
     x: -SEAT_WIDTH * 0.4,
     y: SEAT_HEIGHT * 0.18,
@@ -128,7 +129,7 @@ export function addSeatLabel(group, seat, theme, palette) {
     fontFamily: theme.fontFamily,
     fill: palette.text,
     perfectDrawEnabled: false,
-    listening: false
+    listening
   }))
 }
 
@@ -360,27 +361,13 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
     listening: true
   })
   
-  // Invisible hit area for click detection (shapes have listening: false for performance)
-  const w = SEAT_WIDTH
-  const h = SEAT_HEIGHT
-  group.add(new Konva.Rect({
-    x: -w * 0.6,
-    y: -h * 0.7,
-    width: w * 1.2,
-    height: h * 1.4,
-    cornerRadius: 10,
-    fill: "rgba(0,0,0,0.01)",
-    strokeWidth: 0,
-    perfectDrawEnabled: false
-  }))
-  
   const bodyGroup = createEditorSeatBodyGroup(palette, theme, { showKeyboard, isSelected })
   if (cacheBody) {
     bodyGroup.cache()
   }
   group.add(bodyGroup)
   
-  addSeatLabel(group, seat, theme, palette)
+  addSeatLabel(group, seat, theme, palette, { listening: true })
   
   if (isSelected) {
     addSelectionHighlight(group, theme)
@@ -395,7 +382,7 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
 export function createEditorSeatBodyGroup(palette, theme, options = {}) {
   const { showKeyboard = true, isSelected = false } = options
   
-  const bodyGroup = new Konva.Group({ listening: false })
+  const bodyGroup = new Konva.Group({ listening: true })
   
   addEditorSeatBody(bodyGroup, palette, isSelected)
   addSeatMonitor(bodyGroup, theme)
