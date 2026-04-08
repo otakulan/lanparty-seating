@@ -390,7 +390,15 @@ buildStage() {
       return
     }
     
-    const targetType = event.target?.parent?.getAttr?.("nodeType") || event.target?.getAttr?.("nodeType")
+    // Traverse up parent chain to find nodeType (seat group contains nested bodyGroup)
+    let target = event.target
+    let targetType = null
+    while (target && target !== this.stage) {
+      targetType = target.getAttr?.("nodeType")
+      if (targetType) break
+      target = target.parent
+    }
+    
     if (targetType === "seat" || targetType === "object") return
     
     if (event.target === this.stage) this.clearSelection()
