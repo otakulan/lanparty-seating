@@ -116,33 +116,15 @@ export default class SeatMapKiosk extends SeatMapBase {
     }
   }
   
+  getMaxScale() {
+    return 3
+  }
+  
   fitToStage(resetPosition) {
-    const padding = 60
-    const bounds = this.getContentBounds()
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-    
-    if (bounds.width === 0 || bounds.height === 0) {
-      return
-    }
-    
-    const scale = Math.min(
-      (stageWidth - padding) / bounds.width,
-      (stageHeight - padding) / bounds.height,
-      1.2
-    )
-    const clampedScale = clamp(scale, 0.3, 3)
-    
-    if (resetPosition) {
-      this.stage.scale({ x: clampedScale, y: clampedScale })
-      const scaledWidth = bounds.width * clampedScale
-      const scaledHeight = bounds.height * clampedScale
-      this.stage.position({
-        x: (stageWidth - scaledWidth) / 2 - bounds.x * clampedScale,
-        y: (stageHeight - scaledHeight) / 2 - bounds.y * clampedScale
-      })
-    }
-    
-    this.stage.batchDraw()
+    super.fitToStage(resetPosition, {
+      maxVisibleScale: 1.2,
+      minScaleOverride: 0.3,
+      maxScaleOverride: 3
+    })
   }
 }

@@ -855,33 +855,7 @@ buildStage() {
   }
   
   fitToStage(resetPosition) {
-    const padding = 60
-    const bounds = this.getContentBounds()
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-    
-    if (bounds.width === 0 || bounds.height === 0) return
-    
-    const scale = Math.min(
-      (stageWidth - padding) / bounds.width,
-      (stageHeight - padding) / bounds.height,
-      1.5
-    )
-    const minScale = this.getMinScale()
-    const maxScale = this.getMaxScale()
-    const clampedScale = clamp(scale, minScale, maxScale)
-    
-    if (resetPosition) {
-      this.stage.scale({ x: clampedScale, y: clampedScale })
-      const scaledWidth = bounds.width * clampedScale
-      const scaledHeight = bounds.height * clampedScale
-      this.stage.position({
-        x: (stageWidth - scaledWidth) / 2 - bounds.x * clampedScale,
-        y: (stageHeight - scaledHeight) / 2 - bounds.y * clampedScale
-      })
-    }
-    
-    this.stage.batchDraw()
+    super.fitToStage(resetPosition)
   }
   
   viewportCenter() {
@@ -897,87 +871,17 @@ buildStage() {
   }
   
   handleWheel(event) {
-    event.evt.preventDefault()
-    
-    const oldScale = this.stage.scaleX() || 1
-    const pointer = this.stage.getPointerPosition()
-    const canvasPoint = {
-      x: (pointer.x - this.stage.x()) / oldScale,
-      y: (pointer.y - this.stage.y()) / oldScale
-    }
-    
-    const direction = event.evt.deltaY > 0 ? 1 : -1
-    const nextScale = direction > 0 ? oldScale / SCALE_BY : oldScale * SCALE_BY
-    const minScale = this.getMinScale()
-    const maxScale = this.getMaxScale()
-    const newScale = clamp(nextScale, minScale, maxScale)
-    
-    // Zoom relative to pointer - keep canvas point under cursor
-    this.stage.scale({ x: newScale, y: newScale })
-    this.stage.position({
-      x: pointer.x - canvasPoint.x * newScale,
-      y: pointer.y - canvasPoint.y * newScale
-    })
-    
-    // Only constrain when zoomed out (canvas fits in viewport)
-    if (this.canvasFitsInViewport()) {
-      this.centerCanvas()
-    }
-    
-    this.stage.batchDraw()
+    super.handleWheel(event)
   }
   
   handleTouchMove(event) {
-    const touchOne = event.evt.touches[0]
-    const touchTwo = event.evt.touches[1]
-    
-    if (touchOne && touchTwo) {
-      event.evt.preventDefault()
-      this.stage.draggable(false)
-      
-      const pointOne = { x: touchOne.clientX, y: touchOne.clientY }
-      const pointTwo = { x: touchTwo.clientX, y: touchTwo.clientY }
-      const center = { x: (pointOne.x + pointTwo.x) / 2, y: (pointOne.y + pointTwo.y) / 2 }
-      const distance = Math.hypot(pointTwo.x - pointOne.x, pointTwo.y - pointOne.y)
-      
-      if (!this.lastTouchCenter) {
-        this.lastTouchCenter = center
-        this.lastTouchDistance = distance
-        return
-      }
-      
-      const scale = this.stage.scaleX() * (distance / this.lastTouchDistance)
-      const minScale = this.getMinScale()
-      const maxScale = this.getMaxScale()
-      const clampedScale = clamp(scale, minScale, maxScale)
-      const pointTo = {
-        x: (center.x - this.stage.x()) / this.stage.scaleX(),
-        y: (center.y - this.stage.y()) / this.stage.scaleY()
-      }
-      
-      this.stage.scale({ x: clampedScale, y: clampedScale })
-      
-      const dx = center.x - this.lastTouchCenter.x
-      const dy = center.y - this.lastTouchCenter.y
-      
-      this.stage.position({
-        x: center.x - pointTo.x * clampedScale + dx,
-        y: center.y - pointTo.y * clampedScale + dy
-      })
-      
-      this.constrainStageDrag()
-      
-      this.lastTouchCenter = center
-      this.lastTouchDistance = distance
-      this.stage.batchDraw()
-    } else {
-      this.stage.draggable(true)
-    }
+    super.handleTouchMove(event)
+    // Re-enable panning after touch gesture in editor (Alt+drag for pan)
+    this.stage.draggable(true)
   }
   
   handleTouchEnd() {
-    this.lastTouchCenter = null
-    this.lastTouchDistance = 0
+    super.handleTouchEnd()
     this.stage.draggable(true)
   }
   

@@ -1,5 +1,5 @@
 import Konva from "konva"
-import { SeatMapBase, SCALE_BY, clamp, getCenter, getDistance } from "./seat_map_base"
+import { SeatMapBase, SCALE_BY, clamp } from "./seat_map_base"
 import {
   SEAT_WIDTH,
   SEAT_HEIGHT,
@@ -8,9 +8,6 @@ import {
   addSeatLabel,
   createTimerNode,
   createHitTarget,
-  renderGroupBounds,
-  renderGroupLabel,
-  renderTeamLabel,
   startTimerUpdates
 } from "./seat_map_renderer"
 
@@ -157,18 +154,34 @@ export default class SeatMapViewer extends SeatMapBase {
       seat_slot_id: seat.seat_slot_id,
       label: seat.label,
       status: seat.status
-    })
+})
   }
   
-fitToStage(resetPosition) {
-    const padding = 60
-    const bounds = this.getContentBounds()
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
+  fitToStage(resetPosition) {
+    super.fitToStage(resetPosition, { updateDraggable: true })
+  }
+  
+  handleWheel(event) {
+    super.handleWheel(event, { updateDraggable: true, hitLayer: this.hitLayer })
+  }
+  
+  handleTouchMove(event) {
+    super.handleTouchMove(event)
     
-    if (bounds.width === 0 || bounds.height === 0) {
-      return
+    if (event.evt.touches[0] && event.evt.touches[1]) {
+      // During pinch-zoom: update draggable state
+      this.stage.draggable(!this.canvasFitsInViewport())
+    } else {
+      // Single touch: restore draggable state
+      this.stage.draggable(!this.canvasFitsInViewport())
     }
+  }
+  
+  handleTouchEnd() {
+    super.handleTouchEnd()
+    this.stage.draggable(!this.canvasFitsInViewport())
+  }
+}
     
     const scale = Math.min(
       (stageWidth - padding) / bounds.width,
