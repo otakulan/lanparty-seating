@@ -528,6 +528,23 @@ export class SeatMapBase {
     }
   }
   
+  // Setup window resize handler to re-fit stage to container
+  setupResizeHandler() {
+    this.handleResize = () => {
+      this.stage.width(this.stageContainer.clientWidth)
+      this.stage.height(this.stageContainer.clientHeight)
+      this.fitToStage(true)
+    }
+    window.addEventListener("resize", this.handleResize)
+  }
+  
+  teardownResizeHandler() {
+    if (this.handleResize) {
+      window.removeEventListener("resize", this.handleResize)
+      this.handleResize = null
+    }
+  }
+  
   setPayload(payload) {
     this.state = clone(payload || {})
   }

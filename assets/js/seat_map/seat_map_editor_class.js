@@ -160,12 +160,7 @@ buildStage() {
     this.stageContainer.addEventListener("keyup", handleKeyUp)
     this.keyHandler = { keydown: handleKeyDown, keyup: handleKeyUp }
     
-    this.handleResize = () => {
-      this.stage.width(this.stageContainer.clientWidth)
-      this.stage.height(this.stageContainer.clientHeight)
-      this.fitToStage(true)
-    }
-    window.addEventListener("resize", this.handleResize)
+    this.setupResizeHandler()
   }
   
   bindCommands() {
@@ -180,7 +175,7 @@ buildStage() {
   
   destroy() {
     this.el.removeEventListener("click", this.handleCommandClick)
-    window.removeEventListener("resize", this.handleResize)
+    this.teardownResizeHandler()
     if (this.keyHandler) {
       this.stageContainer.removeEventListener("keydown", this.keyHandler.keydown)
       this.stageContainer.removeEventListener("keyup", this.keyHandler.keyup)

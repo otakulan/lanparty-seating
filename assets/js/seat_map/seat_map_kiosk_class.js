@@ -27,7 +27,7 @@ export default class SeatMapKiosk extends SeatMapBase {
   }
   
   destroy() {
-    window.removeEventListener("resize", this.handleResize)
+    this.teardownResizeHandler()
     if (this.renderFrame) cancelAnimationFrame(this.renderFrame)
     super.destroy()
   }
@@ -48,12 +48,7 @@ export default class SeatMapKiosk extends SeatMapBase {
     if (this.hitLayer) this.stage.add(this.hitLayer)
     this.stage.add(this.overlayLayer)
     
-    this.handleResize = () => {
-      this.stage.width(this.stageContainer.clientWidth)
-      this.stage.height(this.stageContainer.clientHeight)
-      this.fitToStage(true)
-    }
-    window.addEventListener("resize", this.handleResize)
+    this.setupResizeHandler()
   }
   
   renderScene(resetView) {

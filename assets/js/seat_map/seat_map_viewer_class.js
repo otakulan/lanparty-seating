@@ -28,7 +28,7 @@ export default class SeatMapViewer extends SeatMapBase {
   
   destroy() {
     this.el.removeEventListener("click", this.handleCommandClick)
-    window.removeEventListener("resize", this.handleResize)
+    this.teardownResizeHandler()
     if (this.timerInterval) clearInterval(this.timerInterval)
     if (this.renderFrame) cancelAnimationFrame(this.renderFrame)
     super.destroy()
@@ -88,12 +88,7 @@ export default class SeatMapViewer extends SeatMapBase {
       this.stage.batchDraw()
     })
     
-    this.handleResize = () => {
-      this.stage.width(this.stageContainer.clientWidth)
-      this.stage.height(this.stageContainer.clientHeight)
-      this.fitToStage(true)
-    }
-    window.addEventListener("resize", this.handleResize)
+    this.setupResizeHandler()
   }
   
   renderScene(resetView) {
