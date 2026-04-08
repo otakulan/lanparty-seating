@@ -13,9 +13,6 @@ import {
   SEAT_WIDTH,
   SEAT_HEIGHT,
   createEditorSeatGroup,
-  renderGroupBounds,
-  renderGroupLabel,
-  renderTeamLabel,
   transparentColor
 } from "./seat_map_renderer"
 

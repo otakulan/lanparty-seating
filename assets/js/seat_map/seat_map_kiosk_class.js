@@ -6,10 +6,7 @@ import {
   SEAT_SCALE,
   createSeatGroup,
   addSeatLabel,
-  createHitTarget,
-  renderGroupBounds,
-  renderGroupLabel,
-  renderTeamLabel
+  createHitTarget
 } from "./seat_map_renderer"
 
 export default class SeatMapKiosk extends SeatMapBase {
