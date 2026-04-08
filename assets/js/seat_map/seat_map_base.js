@@ -1,6 +1,7 @@
 import Konva from "konva"
 import { getThemeColors, getStatusColors } from "./seat_map_theme"
 import { onThemeChange } from "../theme-core.js"
+import { renderGroupBounds, renderGroupLabel, renderTeamLabel } from "./seat_map_renderer"
 
 Konva.hitOnDragEnabled = true
 Konva.captureTouchEventsEnabled = true
@@ -163,6 +164,192 @@ export class SeatMapBase {
     this._cachedTheme = null
     this._cachedStatusColors = null
     this._unsubscribeTheme = null
+  }
+  
+  getContentBounds() {
+    const seats = this.state.seats || []
+    const objects = this.state.objects || []
+    const defaultWidth = this.state.width || 1920
+    const defaultHeight = this.state.height || 1080
+    
+    if (seats.length === 0 && objects.length === 0) {
+      return { x: 0, y: 0, width: defaultWidth, height: defaultHeight }
+    }
+    
+    let minX = Infinity, minY = Infinity
+    let maxX = -Infinity, maxY = -Infinity
+    
+    for (const seat of seats) {
+      const halfW = (seat.width || 64) / 2
+      const halfH = (seat.height || 64) / 2
+      minX = Math.min(minX, seat.x - halfW)
+      maxX = Math.max(maxX, seat.x + halfW)
+      minY = Math.min(minY, seat.y - halfH)
+      maxY = Math.max(maxY, seat.y + halfH)
+    }
+    
+    for (const obj of objects) {
+      minX = Math.min(minX, obj.x)
+      maxX = Math.max(maxX, obj.x + (obj.width || 100))
+      minY = Math.min(minY, obj.y)
+      maxY = Math.max(maxY, obj.y + (obj.height || 60))
+    }
+    
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY
+    }
+  }
+  
+  // Constrain panning to keep at least one seat visible within center of viewport.
+  // When content fits: center it and disable panning.
+  // When content larger: allow pan within 40%-60% zone (center 20%).
+  constrainStageDrag() {
+    const scale = this.stage.scaleX() || 1
+    const bounds = this.getContentBounds()
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    if (bounds.width === 0 || bounds.height === 0) return
+    
+    const scaledWidth = bounds.width * scale
+    const scaledHeight = bounds.height * scale
+    const margin = 40
+    
+    const centerXMin = 0.4 * stageWidth
+    const centerXMax = 0.6 * stageWidth
+    const centerYMin = 0.4 * stageHeight
+    const centerYMax = 0.6 * stageHeight
+    
+    let newX = this.stage.x()
+    let newY = this.stage.y()
+    
+    if (scaledWidth <= stageWidth - margin * 2) {
+      // Content fits: center it
+      newX = (stageWidth - scaledWidth) / 2 - bounds.x * scale
+    } else {
+      // Constrain to keep last seat within center 40%-60% zone
+      const minX = centerXMin - (bounds.x + bounds.width) * scale
+      const maxX = centerXMax - bounds.x * scale
+      if (minX <= maxX) newX = clamp(newX, minX, maxX)
+    }
+    
+    if (scaledHeight <= stageHeight - margin * 2) {
+      newY = (stageHeight - scaledHeight) / 2 - bounds.y * scale
+    } else {
+      const minY = centerYMin - (bounds.y + bounds.height) * scale
+      const maxY = centerYMax - bounds.y * scale
+      if (minY <= maxY) newY = clamp(newY, minY, maxY)
+    }
+    
+    this.stage.position({ x: newX, y: newY })
+  }
+  
+  // Center content bounds in viewport (used when content fits)
+  centerCanvas() {
+    const scale = this.stage.scaleX() || 1
+    const bounds = this.getContentBounds()
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    const scaledWidth = bounds.width * scale
+    const scaledHeight = bounds.height * scale
+    
+    this.stage.position({
+      x: (stageWidth - scaledWidth) / 2 - bounds.x * scale,
+      y: (stageHeight - scaledHeight) / 2 - bounds.y * scale
+    })
+  }
+  
+  // Check if content fits entirely within viewport (with margin)
+  canvasFitsInViewport() {
+    const scale = this.stage.scaleX() || 1
+    const bounds = this.getContentBounds()
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    const margin = 40
+    
+    const scaledWidth = bounds.width * scale
+    const scaledHeight = bounds.height * scale
+    
+    return scaledWidth <= stageWidth - margin * 2 && scaledHeight <= stageHeight - margin * 2
+  }
+  
+  // Scale stage relative to center point (used by zoom buttons)
+  scaleStage(nextScale) {
+    const minScale = this.getMinScale()
+    const maxScale = this.getMaxScale()
+    const clampedScale = clamp(nextScale, minScale, maxScale)
+    const center = { x: this.stage.width() / 2, y: this.stage.height() / 2 }
+    const oldScale = this.stage.scaleX() || 1
+    
+    // Convert center point to canvas coordinates before zoom
+    const pointTo = {
+      x: (center.x - this.stage.x()) / oldScale,
+      y: (center.y - this.stage.y()) / oldScale
+    }
+    
+    this.stage.scale({ x: clampedScale, y: clampedScale })
+    this.stage.position({
+      x: center.x - pointTo.x * clampedScale,
+      y: center.y - pointTo.y * clampedScale
+    })
+    
+    this.constrainStageDrag()
+    this.stage.batchDraw()
+  }
+  
+  // Calculate minimum scale where content fits with 80px padding (40px each side)
+  getMinScale() {
+    const padding = 40
+    const bounds = this.getContentBounds()
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    if (bounds.width === 0 || bounds.height === 0) return 1
+    
+    return Math.min(
+      (stageWidth - padding * 2) / bounds.width,
+      (stageHeight - padding * 2) / bounds.height,
+      1
+    )
+  }
+  
+  // Maximum zoom level - subclasses must implement
+  getMaxScale() {
+    throw new Error('getMaxScale must be implemented by subclass')
+  }
+  
+  // Render group bounding boxes and labels (shared by all views)
+  renderGroups() {
+    const theme = this.theme
+    const groups = this.state.groups || []
+    const seats = this.state.seats || []
+    const teamAssignments = this.state.team_assignments || []
+    const groupLayer = this.getGroupLayer()
+    
+    for (const group of groups) {
+      renderGroupBounds(groupLayer, group, seats, theme)
+      renderGroupLabel(groupLayer, group, seats, teamAssignments, theme)
+    }
+  }
+  
+  // Render tournament team assignments (shared by all views)
+  renderTeamLabels() {
+    const theme = this.theme
+    const groups = this.state.groups || []
+    const seats = this.state.seats || []
+    
+    for (const assignment of this.state.team_assignments || []) {
+      renderTeamLabel(this.overlayLayer, assignment, groups, seats, theme)
+    }
+  }
+  
+  // Subclasses must implement to return their group layer
+  getGroupLayer() {
+    throw new Error('getGroupLayer must be implemented by subclass')
   }
   
   get theme() {

@@ -56,14 +56,6 @@ export default class SeatMapKiosk extends SeatMapBase {
     window.addEventListener("resize", this.handleResize)
   }
   
-  scheduleRender(resetView = false) {
-    if (this.renderFrame) return
-    this.renderFrame = requestAnimationFrame(() => {
-      this.renderFrame = null
-      this.renderScene(resetView)
-    })
-  }
-  
   renderScene(resetView) {
     this.sceneLayer.destroyChildren()
     if (this.hitLayer) this.hitLayer.destroyChildren()
@@ -73,7 +65,7 @@ export default class SeatMapKiosk extends SeatMapBase {
     this.renderGroups()
     this.renderTeamLabels()
     
-    // Cache entire layers as single images for best performance
+    // Cache entire layers as single images for best performance (kiosk is static)
     this.cacheLayers()
     
     if (resetView) {
@@ -84,7 +76,6 @@ export default class SeatMapKiosk extends SeatMapBase {
   }
   
   cacheLayers() {
-    // Kiosk is static - cache everything
     this.sceneLayer.cache()
     this.overlayLayer.cache()
   }
@@ -111,26 +102,8 @@ export default class SeatMapKiosk extends SeatMapBase {
     }
   }
   
-  renderGroups() {
-    const theme = this.theme
-    const groups = this.state.groups || []
-    const seats = this.state.seats || []
-    const teamAssignments = this.state.team_assignments || []
-    
-    for (const group of groups) {
-      renderGroupBounds(this.sceneLayer, group, seats, theme)
-      renderGroupLabel(this.sceneLayer, group, seats, teamAssignments, theme)
-    }
-  }
-  
-  renderTeamLabels() {
-    const theme = this.theme
-    const groups = this.state.groups || []
-    const seats = this.state.seats || []
-    
-    for (const assignment of this.state.team_assignments || []) {
-      renderTeamLabel(this.overlayLayer, assignment, groups, seats, theme)
-    }
+  getGroupLayer() {
+    return this.sceneLayer
   }
   
   handleSeatClick(seat) {
@@ -144,21 +117,29 @@ export default class SeatMapKiosk extends SeatMapBase {
   }
   
   fitToStage(resetPosition) {
-    const padding = 40
-    const width = this.state.width || 1920
-    const height = this.state.height || 1080
+    const padding = 60
+    const bounds = this.getContentBounds()
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    if (bounds.width === 0 || bounds.height === 0) {
+      return
+    }
+    
     const scale = Math.min(
-      (this.stage.width() - padding) / width,
-      (this.stage.height() - padding) / height,
+      (stageWidth - padding) / bounds.width,
+      (stageHeight - padding) / bounds.height,
       1.2
     )
     const clampedScale = clamp(scale, 0.3, 3)
     
     if (resetPosition) {
       this.stage.scale({ x: clampedScale, y: clampedScale })
+      const scaledWidth = bounds.width * clampedScale
+      const scaledHeight = bounds.height * clampedScale
       this.stage.position({
-        x: (this.stage.width() - width * clampedScale) / 2,
-        y: (this.stage.height() - height * clampedScale) / 2
+        x: (stageWidth - scaledWidth) / 2 - bounds.x * clampedScale,
+        y: (stageHeight - scaledHeight) / 2 - bounds.y * clampedScale
       })
     }
     

@@ -268,18 +268,9 @@ buildStage() {
       this.objectLayer.add(node)
     }
   }
-  
-  renderGroups() {
-    const theme = this.theme
-    const groups = this.state.groups || []
-    const seats = this.state.seats || []
-    const teamAssignments = this.state.team_assignments || []
-    
-    // Don't cache in editor - zoom changes scale frequently and cached shapes look worse
-    for (const group of groups) {
-      renderGroupBounds(this.groupLayer, group, seats, theme)
-      renderGroupLabel(this.groupLayer, group, seats, teamAssignments, theme)
-    }
+   
+  getGroupLayer() {
+    return this.groupLayer
   }
   
   renderSeats() {
@@ -396,16 +387,6 @@ buildStage() {
     })
   }
   
-  renderTeamLabels() {
-    const theme = this.theme
-    const groups = this.state.groups || []
-    const seats = this.state.seats || []
-    
-    for (const assignment of this.state.team_assignments || []) {
-      renderTeamLabel(this.overlayLayer, assignment, groups, seats, theme)
-    }
-  }
-  
   handleStageClick(event) {
     if (this.marqueeRect && this.marqueeRect.width() > 5 && this.marqueeRect.height() > 5) return
     
@@ -449,37 +430,6 @@ buildStage() {
     } else {
       this.hook.pushEvent("seat_selected", { seat: null })
     }
-  }
-  
-  constrainStageDrag() {
-    const padding = 40
-    const scale = this.stage.scaleX() || 1
-    const canvasWidth = this.state.width || 1920
-    const canvasHeight = this.state.height || 1080
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-    
-    const scaledWidth = canvasWidth * scale
-    const scaledHeight = canvasHeight * scale
-    
-    let newX = this.stage.x()
-    let newY = this.stage.y()
-    
-    // When canvas fits within viewport (zoomed out)
-    if (scaledWidth <= stageWidth - padding * 2) {
-      newX = (stageWidth - scaledWidth) / 2
-    } else {
-      // When zoomed in, allow pan but keep canvas bounds visible
-      newX = clamp(newX, stageWidth - scaledWidth - padding, padding)
-    }
-    
-    if (scaledHeight <= stageHeight - padding * 2) {
-      newY = (stageHeight - scaledHeight) / 2
-    } else {
-      newY = clamp(newY, stageHeight - scaledHeight - padding, padding)
-    }
-    
-    this.stage.position({ x: newX, y: newY })
   }
   
   constrainNodeDrag(node, nodeWidth, nodeHeight) {
@@ -904,34 +854,17 @@ buildStage() {
     }
   }
   
-  scaleStage(nextScale) {
-    const minScale = this.getMinScale()
-    const maxScale = this.getMaxScale()
-    const clampedScale = clamp(nextScale, minScale, maxScale)
-    const center = { x: this.stage.width() / 2, y: this.stage.height() / 2 }
-    const oldScale = this.stage.scaleX() || 1
-    const pointTo = {
-      x: (center.x - this.stage.x()) / oldScale,
-      y: (center.y - this.stage.y()) / oldScale
-    }
-    
-    this.stage.scale({ x: clampedScale, y: clampedScale })
-    this.stage.position({
-      x: center.x - pointTo.x * clampedScale,
-      y: center.y - pointTo.y * clampedScale
-    })
-    
-    this.constrainStageDrag()
-    this.stage.batchDraw()
-  }
-  
   fitToStage(resetPosition) {
     const padding = 60
-    const width = this.state.width || 1920
-    const height = this.state.height || 1080
+    const bounds = this.getContentBounds()
+    const stageWidth = this.stage.width()
+    const stageHeight = this.stage.height()
+    
+    if (bounds.width === 0 || bounds.height === 0) return
+    
     const scale = Math.min(
-      (this.stage.width() - padding) / width,
-      (this.stage.height() - padding) / height,
+      (stageWidth - padding) / bounds.width,
+      (stageHeight - padding) / bounds.height,
       1.5
     )
     const minScale = this.getMinScale()
@@ -940,9 +873,11 @@ buildStage() {
     
     if (resetPosition) {
       this.stage.scale({ x: clampedScale, y: clampedScale })
+      const scaledWidth = bounds.width * clampedScale
+      const scaledHeight = bounds.height * clampedScale
       this.stage.position({
-        x: (this.stage.width() - width * clampedScale) / 2,
-        y: (this.stage.height() - height * clampedScale) / 2
+        x: (stageWidth - scaledWidth) / 2 - bounds.x * clampedScale,
+        y: (stageHeight - scaledHeight) / 2 - bounds.y * clampedScale
       })
     }
     
@@ -957,36 +892,8 @@ buildStage() {
     }
   }
   
-  getMinScale() {
-    const padding = 40
-    const canvasWidth = this.state.width || 1920
-    const canvasHeight = this.state.height || 1080
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-    
-    return Math.min(
-      (stageWidth - padding * 2) / canvasWidth,
-      (stageHeight - padding * 2) / canvasHeight,
-      1
-    )
-  }
-  
   getMaxScale() {
     return 4
-  }
-  
-  canvasFitsInViewport() {
-    const scale = this.stage.scaleX() || 1
-    const canvasWidth = this.state.width || 1920
-    const canvasHeight = this.state.height || 1080
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-    const padding = 40
-    
-    const scaledWidth = canvasWidth * scale
-    const scaledHeight = canvasHeight * scale
-    
-    return scaledWidth <= stageWidth - padding * 2 && scaledHeight <= stageHeight - padding * 2
   }
   
   handleWheel(event) {
@@ -1018,23 +925,6 @@ buildStage() {
     }
     
     this.stage.batchDraw()
-  }
-  
-  centerCanvas() {
-    const scale = this.stage.scaleX() || 1
-    const canvasWidth = this.state.width || 1920
-    const canvasHeight = this.state.height || 1080
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-    
-    const scaledWidth = canvasWidth * scale
-    const scaledHeight = canvasHeight * scale
-    
-    // Center canvas in viewport
-    this.stage.position({
-      x: (stageWidth - scaledWidth) / 2,
-      y: (stageHeight - scaledHeight) / 2
-    })
   }
   
   handleTouchMove(event) {
