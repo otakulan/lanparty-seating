@@ -40,7 +40,7 @@ config :lanpartyseating,
              [
                ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
                ~r"priv/gettext/.*(po)$",
-               ~r"lib/lanpartyseating_web/(controllers|live|components,router)/?.*(ex|heex)$",
+               ~r"lib/lanpartyseating_web/(controllers|live|components|router)/?.*(ex|heex)$",
              ],
          ],
        watchers:
