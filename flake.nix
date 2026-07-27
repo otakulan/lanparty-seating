@@ -118,11 +118,12 @@
           devenv.shells.default = {
             languages.elixir.enable = true;
             languages.elixir.package = pkgs.beam.packages.erlang_28.elixir_1_19;
+            languages.elixir.lsp.package = pkgs.beam.packages.erlang_28.elixir-ls;
             languages.erlang.enable = true;
             languages.erlang.package = pkgs.beam.interpreters.erlang_28;
             languages.javascript.enable = true;
             languages.javascript.yarn.enable = true;
-            packages = [ pkgs.openssl ];
+            packages = [ pkgs.openssl pkgs.vscode-langservers-extracted ];
             services.postgres = {
               enable = true;
               initialDatabases = [ { name = "lanpartyseating_dev"; } ];
