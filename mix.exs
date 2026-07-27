@@ -51,6 +51,7 @@ defmodule Lanpartyseating.Mixfile do
       {:jason, "~> 1.4.0"},
       {:bandit, "~> 1.10"},
       {:timex, "~> 3.7.13"},
+      {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:lazy_html, ">= 0.0.0", only: :test},
       {:opentelemetry, "~> 1.7"},
@@ -80,7 +81,7 @@ defmodule Lanpartyseating.Mixfile do
     [
       "assets.deploy":
         [
-          "cmd --cd assets npm run deploy",
+          "tailwind default --minify",
           "esbuild default --minify",
           "esbuild theme_core --minify",
           "phx.digest",

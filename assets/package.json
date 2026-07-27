@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "deploy": "NODE_ENV=production npx @tailwindcss/cli --input=css/app.css --output=../priv/static/css/app.css --minify"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -13,14 +10,16 @@
     "@alpinejs/focus": "^3.15.4",
     "alpinejs": "^3.15.4",
     "esp-ble-prov": "^1.0.3",
-    "konva": "^10.2.3",
-    "theme-change": "^2.5.0"
+    "konva": "^10.2.3"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
     "daisyui": "^5.5.14",
-    "esbuild": "^0.12.18",
+    "esbuild": "^0.28.1",
     "tailwindcss": "^4.1.18"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
   }
 }

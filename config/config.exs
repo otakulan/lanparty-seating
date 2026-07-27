@@ -22,20 +22,31 @@ config :lanpartyseating,
 
 # esbuild config
 config :esbuild,
-       version: "0.12.18",
+       version_check: false,
        path: System.get_env("MIX_ESBUILD_PATH") || Path.expand("../assets/node_modules/.bin/esbuild", __DIR__),
        default:
          [
-           args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/js --external:/images/*),
+           args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets/js --external:/images/* --sourcemap),
            cd: Path.expand("../assets", __DIR__),
            env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)},
          ],
        theme_core:
          [
-           args: ~w(js/theme-core.js --bundle --target=es2017 --format=iife --global-name=ThemeCore --outfile=../priv/static/js/theme-core.js),
+           args: ~w(js/theme-core.js --bundle --target=es2017 --format=iife --global-name=ThemeCore --outfile=../priv/static/assets/js/theme-core.js --sourcemap),
            cd: Path.expand("../assets", __DIR__),
            env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)},
          ]
+
+config :tailwind,
+       version_check: false,
+       path: Path.expand("../assets/node_modules/.bin/tailwindcss", __DIR__),
+       default: [
+         args: ~w(
+           --input=assets/css/app.css
+           --output=priv/static/assets/css/app.css
+         ),
+         cd: Path.expand("..", __DIR__)
+       ]
 
 # General application configuration
 config :lanpartyseating,

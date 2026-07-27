@@ -33,19 +33,22 @@ config :lanpartyseating,
        debug_errors: true,
        code_reloader: true,
        check_origin: false,
+       # Watch static and templates for browser reloading.
+       live_reload:
+         [
+           patterns:
+             [
+               ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
+               ~r"priv/gettext/.*(po)$",
+               ~r"lib/lanpartyseating_web/(controllers|live|components,router)/?.*(ex|heex)$",
+             ],
+         ],
        watchers:
          [
-           npx:
-             [
-               "@tailwindcss/cli",
-               "--input=css/app.css",
-               "--output=../priv/static/css/app.css",
-               "--watch",
-               cd: Path.expand("../assets", __DIR__),
-             ],
            # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
            esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch --loader:.woff=file --loader:.woff2=file)]},
            esbuild_theme: {Esbuild, :install_and_run, [:theme_core, ~w(--sourcemap=inline --watch)]},
+           tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]},
          ]
 
 # ## SSL Support
@@ -63,19 +66,6 @@ config :lanpartyseating,
 # If desired, both `http:` and `https:` keys can be
 # configured to run both http and https servers on
 # different ports.
-
-# Watch static and templates for browser reloading.
-config :lanpartyseating,
-       LanpartyseatingWeb.Endpoint,
-       live_reload:
-         [
-           patterns:
-             [
-               ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
-               ~r"priv/gettext/.*(po)$",
-               ~r"lib/lanpartyseating_web/(controllers|live|components)/.*(ex|heex)$",
-             ],
-         ]
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
