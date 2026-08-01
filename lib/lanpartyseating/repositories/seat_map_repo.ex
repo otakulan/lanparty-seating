@@ -2,6 +2,8 @@ defmodule Lanpartyseating.SeatMap do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{}
+
   schema "seat_maps" do
     field :name, :string
     field :slug, :string
@@ -19,6 +21,6 @@ defmodule Lanpartyseating.SeatMap do
     |> validate_required([:name, :slug])
     |> validate_length(:name, min: 1, max: 255)
     |> validate_length(:slug, min: 1, max: 255)
-    |> unique_constraint(:slug)
+    |> unique_constraint([:deleted_at, :slug])
   end
 end

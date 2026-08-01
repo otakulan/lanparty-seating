@@ -17,13 +17,11 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
   @default_slug "main-room"
   @default_map_name "Main Room"
-  @default_canvas %{width: 1920, height: 1080}
 
   def get_or_create_main_map do
     case Repo.one(from(seat_map in SeatMap, where: seat_map.slug == ^@default_slug and is_nil(seat_map.deleted_at))) do
       nil ->
-        %SeatMap{}
-        |> SeatMap.changeset(%{name: @default_map_name, slug: @default_slug})
+        SeatMap.changeset(%{}, %{name: @default_map_name, slug: @default_slug})
         |> Repo.insert()
 
       seat_map ->
@@ -86,13 +84,13 @@ defmodule Lanpartyseating.SeatMapsLogic do
          height: draft.height,
          background_kind: draft.background_kind,
          background_value: draft.background_value,
-         meta: data["meta"] || %{},
-         seats: Enum.map(data["seats"], &editor_seat_payload(&1, label_index)),
-         objects: data["objects"] || [],
-         groups: data["groups"] || [],
+         meta: data.meta,
+         seats: Enum.map(data.seats, &editor_seat_payload(&1, label_index)),
+         objects: data.objects,
+         groups: data.groups,
          team_assignments: editor_team_assignment_index(draft.id),
-         revision: revision_for(draft),
-         published_revision: revision_for(published),
+         revision: draft.revision,
+         published_revision: published.revision,
        }}
     end
   end
@@ -121,16 +119,16 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
   def list_group_options(status \\ "published") do
     with {:ok, version} <- get_version(status) do
-      groups = normalize_map_data(version.data)["groups"] || []
+      groups = normalize_map_data(version.data).groups
 
       {:ok,
        Enum.map(
          groups,
          fn group ->
            %{
-             id: value(group, "id"),
-             name: value(group, "name") || value(group, "id"),
-             seat_slot_ids: value(group, "seat_slot_ids") || [],
+             id: group.id,
+             name: group.name || group.id,
+             seat_slot_ids: group.seat_slot_ids || [],
            }
          end
        )}
@@ -143,21 +141,29 @@ defmodule Lanpartyseating.SeatMapsLogic do
          :ok <- validate_revision(draft, expected_revision) do
       attrs = normalize_editor_attrs(attrs)
 
-      case sync_slots_and_build_data(seat_map.id, attrs["data"] || %{}) do
+      case sync_slots_and_build_data(seat_map.id, attrs[:data] || %{}) do
         {:ok, synced_data, touched_slot_ids} ->
-          draft
-          |> SeatMapVersion.changeset(%{
-            name: attrs["name"] || draft.name,
-            width: attrs["width"] || draft.width,
-            height: attrs["height"] || draft.height,
-            background_kind: attrs["background_kind"] || draft.background_kind,
-            background_value: attrs["background_value"],
-            data: synced_data,
-          })
-          |> Repo.update()
-          |> case do
+          result =
+            try do
+              draft
+              |> SeatMapVersion.changeset(
+                %{
+                  name: attrs[:name] || draft.name,
+                  width: attrs[:width] || draft.width,
+                  height: attrs[:height] || draft.height,
+                  background_kind: attrs[:background_kind] || draft.background_kind,
+                  background_value: attrs[:background_value],
+                  data: synced_data,
+                }
+              )
+              |> Repo.update()
+            rescue
+              Ecto.StaleEntryError -> {:error, :stale_draft}
+            end
+
+          case result do
             {:ok, version} ->
-              case replace_team_assignments(version.id, attrs["team_assignments"] || []) do
+              case replace_team_assignments(version.id, attrs[:team_assignments] || []) do
                 :ok ->
                   broadcast_map_update(version.id, touched_slot_ids)
                   {:ok, version}
@@ -179,17 +185,25 @@ defmodule Lanpartyseating.SeatMapsLogic do
   def reset_draft do
     with {:ok, draft} <- get_draft_version(),
          {:ok, published} <- get_published_version() do
-      draft
-      |> SeatMapVersion.changeset(%{
-        name: "Working Draft",
-        width: published.width,
-        height: published.height,
-        background_kind: published.background_kind,
-        background_value: published.background_value,
-        data: published.data,
-      })
-      |> Repo.update()
-      |> case do
+      result =
+        try do
+          draft
+          |> SeatMapVersion.changeset(
+            %{
+              name: "Working Draft",
+              width: published.width,
+              height: published.height,
+              background_kind: published.background_kind,
+              background_value: published.background_value,
+              data: published.data,
+            }
+          )
+          |> Repo.update()
+        rescue
+          Ecto.StaleEntryError -> {:error, :stale_draft}
+        end
+
+      case result do
         {:ok, updated_draft} ->
           replicate_team_assignments(published.id, updated_draft.id)
           {:ok, updated_draft}
@@ -202,30 +216,34 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
   def assign_team_assignment(attrs) when is_map(attrs) do
     with {:ok, draft} <- get_draft_version() do
-      attrs = stringify_map(attrs)
+      attrs = atomize_keys(attrs)
 
       %TournamentTeamAssignment{}
-      |> TournamentTeamAssignment.changeset(%{
-        tournament_id: parse_int(attrs["tournament_id"]),
-        seat_map_version_id: draft.id,
-        group_id: attrs["group_id"],
-        team_name: attrs["team_name"],
-        color: attrs["color"],
-        label_x: parse_optional_int(attrs["label_x"]),
-        label_y: parse_optional_int(attrs["label_y"]),
-        deleted_at: nil,
-      })
+      |> TournamentTeamAssignment.changeset(
+        %{
+          tournament_id: parse_int(attrs[:tournament_id]),
+          seat_map_version_id: draft.id,
+          group_id: attrs[:group_id],
+          team_name: attrs[:team_name],
+          color: attrs[:color],
+          label_x: parse_optional_int(attrs[:label_x]),
+          label_y: parse_optional_int(attrs[:label_y]),
+          deleted_at: nil,
+        }
+      )
       |> Repo.insert(
-        on_conflict: [
-          set: [
-            team_name: attrs["team_name"],
-            color: attrs["color"],
-            label_x: parse_optional_int(attrs["label_x"]),
-            label_y: parse_optional_int(attrs["label_y"]),
-            deleted_at: nil,
-            updated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        on_conflict:
+          [
+            set:
+              [
+                team_name: attrs[:team_name],
+                color: attrs[:color],
+                label_x: parse_optional_int(attrs[:label_x]),
+                label_y: parse_optional_int(attrs[:label_y]),
+                deleted_at: nil,
+                updated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+              ],
           ],
-        ],
         conflict_target: {:unsafe_fragment, "(tournament_id, group_id) WHERE deleted_at IS NULL"}
       )
       |> case do
@@ -255,29 +273,30 @@ defmodule Lanpartyseating.SeatMapsLogic do
     end
   end
 
-  def publish_draft(expected_revision \\ nil) do
-    with {:ok, draft} <- get_draft_version(),
+  def save_and_publish_draft(attrs, expected_revision) when is_map(attrs) do
+    with {:ok, seat_map} <- get_or_create_main_map(),
+         {:ok, draft} <- get_draft_version(),
          {:ok, published} <- get_published_version(),
-         :ok <- validate_revision(draft, expected_revision),
-         :ok <- ensure_publishable(published, draft) do
-      Multi.new()
-      |> Multi.update(
-        :retire_published,
-        SeatMapVersion.changeset(published, %{status: "draft", published_at: nil, name: published.name})
-      )
-      |> Multi.update(
-        :publish_draft,
-        SeatMapVersion.changeset(draft, %{status: "published", published_at: DateTime.utc_now()})
-      )
-      |> Repo.transaction()
-      |> case do
-        {:ok, %{publish_draft: version}} ->
-          create_draft_from_version(version.seat_map, version)
-          broadcast_map_update(version.id, [])
-          {:ok, version}
+         :ok <- validate_revision(draft, expected_revision) do
+      attrs = normalize_editor_attrs(attrs)
 
-        {:error, _operation, reason, _changes} ->
-          {:error, reason}
+      with {:ok, synced_data, touched_slot_ids} <-
+             sync_slots_and_build_data(seat_map.id, attrs[:data] || %{}),
+           :ok <- ensure_publishable_with_data(published, synced_data) do
+        team_assignments =
+          (attrs[:team_assignments] || [])
+          |> Enum.map(&normalize_team_assignment/1)
+          |> Enum.reject(&is_nil/1)
+
+        do_publish_with_data(
+          draft,
+          published,
+          synced_data,
+          attrs,
+          seat_map.id,
+          team_assignments,
+          touched_slot_ids
+        )
       end
     end
   end
@@ -368,9 +387,11 @@ defmodule Lanpartyseating.SeatMapsLogic do
     end
   end
 
-  def broadcast_map_update(version_id \\ nil, touched_slot_ids \\ []) do
+  @spec broadcast_map_update(integer(), [integer()]) :: :ok
+  def broadcast_map_update(version_id, touched_slot_ids) do
     payload = %{version_id: version_id, touched_slot_ids: Enum.uniq(touched_slot_ids)}
     Phoenix.PubSub.broadcast(PubSub, "seat_map_update", {:seat_map_updated, payload})
+    :ok
   end
 
   defp get_version(status) do
@@ -384,91 +405,83 @@ defmodule Lanpartyseating.SeatMapsLogic do
   end
 
   defp version_query(seat_map_id, status) do
-    from(
-      version in SeatMapVersion,
+    from version in SeatMapVersion,
       where: version.seat_map_id == ^seat_map_id,
       where: version.status == ^status,
       where: is_nil(version.deleted_at),
       preload: [:seat_map],
-      order_by: [desc: version.updated_at],
+      order_by: [desc: version.revision],
       limit: 1
-    )
   end
 
   defp create_empty_version(seat_map, status, name) do
     %SeatMapVersion{}
-    |> SeatMapVersion.changeset(%{
-      seat_map_id: seat_map.id,
-      name: name,
-      status: status,
-      width: @default_canvas.width,
-      height: @default_canvas.height,
-      background_kind: "none",
-      background_value: nil,
-      data: empty_map_data(),
-      published_at: if(status == "published", do: DateTime.utc_now() |> DateTime.truncate(:second), else: nil),
-    })
+    |> SeatMapVersion.changeset(
+      %{
+        seat_map_id: seat_map.id,
+        name: name,
+        status: status,
+        revision: 1,
+        background_kind: "none",
+        background_value: nil,
+        data: empty_map_data(),
+        published_at: if(status == "published", do: DateTime.utc_now() |> DateTime.truncate(:second), else: nil),
+      }
+    )
     |> Repo.insert()
   end
 
-  defp create_draft_from_version(%SeatMap{id: seat_map_id}, published) do
-    from(
-      version in SeatMapVersion,
-      where: version.seat_map_id == ^seat_map_id,
-      where: version.status == "draft",
-      where: is_nil(version.deleted_at)
+  # Creates a new draft by cloning `source_version`. Called by `get_draft_version/0`
+  # when no draft exists, and by the legacy publish path as a fallback.
+  # The new draft starts at source_version.revision + 1 so it is always ahead of
+  # the published version it was cloned from.
+  defp create_draft_from_version(%SeatMap{id: seat_map_id}, source_version) do
+    %SeatMapVersion{}
+    |> SeatMapVersion.changeset(
+      %{
+        seat_map_id: seat_map_id,
+        name: "Working Draft",
+        status: "draft",
+        revision: source_version.revision + 1,
+        width: source_version.width,
+        height: source_version.height,
+        background_kind: source_version.background_kind,
+        background_value: source_version.background_value,
+        data: source_version.data,
+      }
     )
-    |> Repo.one()
-    |> case do
-      nil ->
-        %SeatMapVersion{}
-        |> SeatMapVersion.changeset(%{
-          seat_map_id: seat_map_id,
-          name: "Working Draft",
-          status: "draft",
-          width: published.width,
-          height: published.height,
-          background_kind: published.background_kind,
-          background_value: published.background_value,
-          data: published.data,
-        })
-        |> Repo.insert()
-
-      draft ->
-        draft
-        |> SeatMapVersion.changeset(%{
-          width: published.width,
-          height: published.height,
-          background_kind: published.background_kind,
-          background_value: published.background_value,
-          data: published.data,
-        })
-        |> Repo.update()
-    end
+    |> Repo.insert()
   end
 
   defp build_payload(version, now) do
     data = normalize_map_data(version.data)
     seat_index = seat_status_index(now)
-    groups = data["groups"] || []
     team_assignments = team_assignment_index(version.id, now)
 
     seats =
-      data["seats"]
-      |> Enum.map(fn seat ->
-        seat_slot_id = value(seat, "seat_slot_id")
-        runtime = Map.get(seat_index, seat_slot_id, %{})
+      data.seats
+      |> Enum.map(
+        fn seat ->
+          seat_slot_id = seat.seat_slot_id
+          runtime = Map.get(seat_index, seat_slot_id, %{})
 
-        seat
-        |> stringify_map()
-        |> Map.put("seat_slot_id", seat_slot_id)
-        |> Map.put("label", runtime[:label] || value(seat, "label"))
-        |> Map.put("status", Atom.to_string(runtime[:status] || :available))
-        |> Map.put("reservation_end_date", datetime_to_iso(runtime[:reservation_end_date]))
-        |> Map.put("legacy_station_number", runtime[:legacy_station_number])
-        |> Map.put("pc_asset_code", runtime[:pc_asset_code])
-        |> Map.put("pc_hostname", runtime[:pc_hostname])
-      end)
+          %{
+            seat_slot_id: seat_slot_id,
+            label: runtime[:label] || seat.label,
+            x: seat.x,
+            y: seat.y,
+            width: seat.width,
+            height: seat.height,
+            rotation: seat.rotation,
+            shape: seat.shape,
+            status: Atom.to_string(runtime[:status] || :available),
+            reservation_end_date: datetime_to_iso(runtime[:reservation_end_date]),
+            legacy_station_number: runtime[:legacy_station_number],
+            pc_asset_code: runtime[:pc_asset_code],
+            pc_hostname: runtime[:pc_hostname],
+          }
+        end
+      )
 
     %{
       id: version.id,
@@ -478,51 +491,145 @@ defmodule Lanpartyseating.SeatMapsLogic do
       height: version.height,
       background_kind: version.background_kind,
       background_value: version.background_value,
-      meta: data["meta"] || %{},
+      meta: data.meta,
       seats: seats,
-      objects: data["objects"] || [],
-      groups: groups,
-      revision: 0,
-      team_assignments: Enum.map(team_assignments, &stringify_map/1),
+      objects: data.objects,
+      groups: data.groups,
+      revision: version.revision,
+      team_assignments: team_assignments,
     }
   end
 
-  defp seat_label_index(seat_map_id) do
-    SeatSlot
-    |> where([seat_slot], seat_slot.seat_map_id == ^seat_map_id and is_nil(seat_slot.deleted_at))
-    |> select([seat_slot], {seat_slot.id, seat_slot.label})
-    |> Repo.all()
-    |> Map.new()
-  end
+  defp do_publish_with_data(draft, published, synced_data, attrs, seat_map_id, team_assignments, touched_slot_ids) do
+    effective_width = attrs[:width] || draft.width
+    effective_height = attrs[:height] || draft.height
+    effective_bg_kind = attrs[:background_kind] || draft.background_kind
+    effective_bg_value = Map.get(attrs, :background_value, draft.background_value)
+    effective_name = attrs[:name] || draft.name
+    draft_id = draft.id
 
-  defp editor_seat_payload(seat, label_index) do
-    seat_slot_id = value(seat, "seat_slot_id")
+    Multi.new()
+    |> Multi.update(
+      :publish_draft,
+      SeatMapVersion.save_data_changeset(
+        draft,
+        %{
+          name: effective_name,
+          status: "published",
+          width: effective_width,
+          height: effective_height,
+          background_kind: effective_bg_kind,
+          background_value: effective_bg_value,
+          data: synced_data,
+          published_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        }
+      )
+    )
+    |> Multi.update(
+      :retire_published,
+      SeatMapVersion.status_changeset(published, %{status: "draft", published_at: nil})
+    )
+    |> Multi.insert(
+      :new_draft,
+      SeatMapVersion.changeset(
+        %SeatMapVersion{},
+        %{
+          seat_map_id: seat_map_id,
+          name: "Working Draft",
+          status: "draft",
+          revision: draft.revision + 1,
+          width: effective_width,
+          height: effective_height,
+          background_kind: effective_bg_kind,
+          background_value: effective_bg_value,
+          data: synced_data,
+        }
+      )
+    )
+    |> Multi.run(
+      :replace_draft_assignments,
+      fn repo, _changes ->
+        now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    seat
-    |> stringify_map()
-    |> Map.put("seat_slot_id", seat_slot_id)
-    |> Map.put("label", Map.get(label_index, seat_slot_id) || value(seat, "label"))
-    |> Map.put("status", "available")
-    |> Map.put("reservation_end_date", nil)
-  end
+        from(
+          team in TournamentTeamAssignment,
+          where: team.seat_map_version_id == ^draft_id,
+          where: is_nil(team.deleted_at)
+        )
+        |> repo.update_all(set: [deleted_at: now])
 
-  defp validate_revision(_draft, nil), do: :ok
+        team_assignments
+        |> Enum.reduce_while(
+          {:ok, nil},
+          fn assignment, {:ok, _} ->
+            changeset =
+              TournamentTeamAssignment.changeset(
+                %TournamentTeamAssignment{},
+                Map.put(assignment, :seat_map_version_id, draft_id)
+              )
 
-  defp validate_revision(draft, expected_revision) do
-    if revision_for(draft) == parse_int(expected_revision) do
-      :ok
-    else
-      {:error, :stale_draft}
+            case repo.insert(changeset) do
+              {:ok, _} -> {:cont, {:ok, nil}}
+              {:error, changeset} -> {:halt, {:error, changeset}}
+            end
+          end
+        )
+      end
+    )
+    |> Multi.run(
+      :replicate_assignments,
+      fn repo, %{publish_draft: published_version, new_draft: new_draft} ->
+        source_id = published_version.id
+        target_id = new_draft.id
+        now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+        from(
+          team in TournamentTeamAssignment,
+          where: team.seat_map_version_id == ^target_id,
+          where: is_nil(team.deleted_at)
+        )
+        |> repo.update_all(set: [deleted_at: now])
+
+        from(
+          team in TournamentTeamAssignment,
+          where: team.seat_map_version_id == ^source_id,
+          where: is_nil(team.deleted_at)
+        )
+        |> repo.all()
+        |> Enum.each(
+          fn team ->
+            %TournamentTeamAssignment{}
+            |> TournamentTeamAssignment.changeset(
+              %{
+                tournament_id: team.tournament_id,
+                seat_map_version_id: target_id,
+                group_id: team.group_id,
+                team_name: team.team_name,
+                color: team.color,
+                label_x: team.label_x,
+                label_y: team.label_y,
+              }
+            )
+            |> repo.insert!()
+          end
+        )
+
+        {:ok, :ok}
+      end
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{publish_draft: version}} ->
+        broadcast_map_update(version.id, touched_slot_ids)
+        {:ok, version}
+
+      {:error, _operation, reason, _changes} ->
+        {:error, reason}
     end
   end
 
-  defp revision_for(%SeatMapVersion{updated_at: updated_at}) do
-    DateTime.from_naive!(updated_at, "Etc/UTC")
-    |> DateTime.to_unix(:millisecond)
-  end
-
-  defp ensure_publishable(published, draft) do
-    changed_slot_ids = changed_slot_ids(published, draft)
+  defp ensure_publishable_with_data(published, new_data) do
+    changed_slot_ids = changed_slot_ids_from_data(published, new_data)
 
     active_ids = live_hold_slot_ids()
     conflicting_ids = MapSet.intersection(active_ids, changed_slot_ids)
@@ -534,17 +641,19 @@ defmodule Lanpartyseating.SeatMapsLogic do
     end
   end
 
-  defp changed_slot_ids(published, draft) do
-    published_seats = published.data |> normalize_map_data() |> Map.fetch!("seats") |> Map.new(&seat_signature/1)
-    draft_seats = draft.data |> normalize_map_data() |> Map.fetch!("seats") |> Map.new(&seat_signature/1)
+  defp changed_slot_ids_from_data(published, new_data) do
+    published_seats =
+      published.data |> normalize_map_data() |> Map.fetch!(:seats) |> Map.new(&seat_signature/1)
+
+    new_seats = new_data.seats |> Map.new(&seat_signature/1)
 
     Map.keys(published_seats)
-    |> Enum.concat(Map.keys(draft_seats))
+    |> Enum.concat(Map.keys(new_seats))
     |> Enum.uniq()
     |> Enum.reduce(
       MapSet.new(),
       fn seat_slot_id, acc ->
-        if Map.get(published_seats, seat_slot_id) == Map.get(draft_seats, seat_slot_id) do
+        if Map.get(published_seats, seat_slot_id) == Map.get(new_seats, seat_slot_id) do
           acc
         else
           MapSet.put(acc, seat_slot_id)
@@ -553,19 +662,51 @@ defmodule Lanpartyseating.SeatMapsLogic do
     )
   end
 
-  defp seat_signature(seat) do
-    seat = stringify_map(seat)
-    seat_slot_id = value(seat, "seat_slot_id")
+  defp seat_label_index(seat_map_id) do
+    SeatSlot
+    |> where([seat_slot], seat_slot.seat_map_id == ^seat_map_id and is_nil(seat_slot.deleted_at))
+    |> select([seat_slot], {seat_slot.id, seat_slot.label})
+    |> Repo.all()
+    |> Map.new()
+  end
 
-    {seat_slot_id,
+  defp editor_seat_payload(seat, label_index) do
+    %{
+      seat_slot_id: seat.seat_slot_id,
+      label: Map.get(label_index, seat.seat_slot_id) || seat.label,
+      x: seat.x,
+      y: seat.y,
+      width: seat.width,
+      height: seat.height,
+      rotation: seat.rotation,
+      shape: seat.shape,
+      status: "available",
+      reservation_end_date: nil,
+    }
+  end
+
+  defp validate_revision(_draft, nil), do: :ok
+
+  defp validate_revision(draft, expected_revision) do
+    if draft.revision == parse_int(expected_revision) do
+      :ok
+    else
+      {:error, :stale_draft}
+    end
+  end
+
+  defp seat_signature(seat) do
+    seat = normalize_seat(seat)
+
+    {seat.seat_slot_id,
      %{
-       label: value(seat, "label"),
-       x: parse_int(value(seat, "x")),
-       y: parse_int(value(seat, "y")),
-       width: parse_int(value(seat, "width")),
-       height: parse_int(value(seat, "height")),
-       rotation: parse_int(value(seat, "rotation")),
-       shape: value(seat, "shape"),
+       label: seat.label,
+       x: seat.x,
+       y: seat.y,
+       width: seat.width,
+       height: seat.height,
+       rotation: seat.rotation,
+       shape: seat.shape,
      }}
   end
 
@@ -602,28 +743,30 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
     SeatSlot
     |> where([seat_slot], is_nil(seat_slot.deleted_at))
-    |> preload([
-      :status,
-      assignment: :pc_asset,
-      reservations:
-        ^from(
-          reservation in Reservation,
-          where: is_nil(reservation.deleted_at),
-          where: reservation.start_date <= ^now,
-          where: reservation.end_date > ^now,
-          order_by: [desc: reservation.inserted_at]
-        ),
-      tournament_reservations:
-        ^from(
-          tr in TournamentReservation,
-          where: is_nil(tr.deleted_at),
-          join: t in assoc(tr, :tournament),
-          where: is_nil(t.deleted_at),
-          where: t.start_date < ^tournament_buffer,
-          where: t.end_date > ^now,
-          preload: [tournament: t]
-        ),
-    ])
+    |> preload(
+      [
+        :status,
+        assignment: :pc_asset,
+        reservations:
+          ^from(
+            reservation in Reservation,
+            where: is_nil(reservation.deleted_at),
+            where: reservation.start_date <= ^now,
+            where: reservation.end_date > ^now,
+            order_by: [desc: reservation.inserted_at]
+          ),
+        tournament_reservations:
+          ^from(
+            tr in TournamentReservation,
+            where: is_nil(tr.deleted_at),
+            join: t in assoc(tr, :tournament),
+            where: is_nil(t.deleted_at),
+            where: t.start_date < ^tournament_buffer,
+            where: t.end_date > ^now,
+            preload: [tournament: t]
+          ),
+      ]
+    )
     |> Repo.all()
     |> Enum.into(
       %{},
@@ -679,19 +822,19 @@ defmodule Lanpartyseating.SeatMapsLogic do
       join: tournament in assoc(team, :tournament),
       where: is_nil(tournament.deleted_at),
       order_by: [asc: tournament.start_date, asc: team.group_id],
-      select: %{
-        id: team.id,
-        group_id: team.group_id,
-        tournament_id: team.tournament_id,
-        team_name: team.team_name,
-        color: team.color,
-        label_x: team.label_x,
-        label_y: team.label_y,
-        tournament_name: tournament.name,
-      }
+      select:
+        %{
+          id: team.id,
+          group_id: team.group_id,
+          tournament_id: team.tournament_id,
+          team_name: team.team_name,
+          color: team.color,
+          label_x: team.label_x,
+          label_y: team.label_y,
+          tournament_name: tournament.name,
+        }
     )
     |> Repo.all()
-    |> Enum.map(&stringify_map/1)
   end
 
   defp replace_team_assignments(version_id, assignments) do
@@ -711,7 +854,10 @@ defmodule Lanpartyseating.SeatMapsLogic do
       :ok,
       fn assignment, :ok ->
         changeset =
-          TournamentTeamAssignment.changeset(%TournamentTeamAssignment{}, Map.put(assignment, "seat_map_version_id", version_id))
+          TournamentTeamAssignment.changeset(
+            %TournamentTeamAssignment{},
+            Map.put(assignment, :seat_map_version_id, version_id)
+          )
 
         case Repo.insert(changeset) do
           {:ok, _team_assignment} -> {:cont, :ok}
@@ -737,26 +883,30 @@ defmodule Lanpartyseating.SeatMapsLogic do
       where: is_nil(team.deleted_at)
     )
     |> Repo.all()
-    |> Enum.each(fn team ->
-      %TournamentTeamAssignment{}
-      |> TournamentTeamAssignment.changeset(%{
-        tournament_id: team.tournament_id,
-        seat_map_version_id: target_version_id,
-        group_id: team.group_id,
-        team_name: team.team_name,
-        color: team.color,
-        label_x: team.label_x,
-        label_y: team.label_y,
-      })
-      |> Repo.insert!()
-    end)
+    |> Enum.each(
+      fn team ->
+        %TournamentTeamAssignment{}
+        |> TournamentTeamAssignment.changeset(
+          %{
+            tournament_id: team.tournament_id,
+            seat_map_version_id: target_version_id,
+            group_id: team.group_id,
+            team_name: team.team_name,
+            color: team.color,
+            label_x: team.label_x,
+            label_y: team.label_y,
+          }
+        )
+        |> Repo.insert!()
+      end
+    )
 
     :ok
   end
 
   defp sync_slots_and_build_data(seat_map_id, data) do
     data = normalize_map_data(data)
-    seats = data["seats"] || []
+    seats = data.seats
 
     case upsert_slots(seat_map_id, seats) do
       {:ok, slot_ids_by_key, touched_slot_ids} ->
@@ -764,40 +914,36 @@ defmodule Lanpartyseating.SeatMapsLogic do
           Enum.map(
             seats,
             fn seat ->
-              label = seat |> value("label") |> normalize_label()
-              seat_slot_id = Map.get(slot_ids_by_key, value(seat, "seat_slot_id") || label)
-
-              seat
-              |> stringify_map()
-              |> Map.put("seat_slot_id", seat_slot_id)
-              |> Map.put("label", label)
+              label = normalize_label(seat.label)
+              seat_slot_id = Map.get(slot_ids_by_key, seat.seat_slot_id || label)
+              %{seat | seat_slot_id: seat_slot_id, label: label}
             end
           )
 
         groups =
-          data["groups"]
-          |> Enum.map(fn group ->
-            seat_slot_ids =
-              group
-              |> value("seat_slot_ids", [])
-              |> Enum.map(fn id_or_label ->
-                Map.get(slot_ids_by_key, id_or_label) || Map.get(slot_ids_by_key, normalize_label(id_or_label))
-              end)
-              |> Enum.reject(&is_nil/1)
+          Enum.map(
+            data.groups,
+            fn group ->
+              seat_slot_ids =
+                (group.seat_slot_ids || [])
+                |> Enum.map(
+                  fn id_or_label ->
+                    Map.get(slot_ids_by_key, id_or_label) ||
+                      Map.get(slot_ids_by_key, normalize_label(id_or_label))
+                  end
+                )
+                |> Enum.reject(&is_nil/1)
 
-            group
-            |> stringify_map()
-            |> Map.put("id", value(group, "id") || Ecto.UUID.generate())
-            |> Map.put("name", value(group, "name") || "Group")
-            |> Map.put("seat_slot_ids", Enum.uniq(seat_slot_ids))
-          end)
+              %{group | id: group.id || Ecto.UUID.generate(), name: group.name || "Group", seat_slot_ids: Enum.uniq(seat_slot_ids)}
+            end
+          )
 
         {:ok,
          %{
-           "meta" => stringify_map(data["meta"] || %{}),
-           "seats" => seats,
-           "objects" => Enum.map(data["objects"] || [], &stringify_map/1),
-           "groups" => groups,
+           meta: data.meta,
+           seats: seats,
+           objects: data.objects,
+           groups: groups,
          }, touched_slot_ids}
 
       error ->
@@ -818,8 +964,8 @@ defmodule Lanpartyseating.SeatMapsLogic do
       seats,
       {:ok, %{}, []},
       fn seat, {:ok, slot_ids_by_key, touched_slot_ids} ->
-        label = seat |> value("label") |> normalize_label()
-        seat_slot_id = value(seat, "seat_slot_id")
+        label = normalize_label(seat.label)
+        seat_slot_id = seat.seat_slot_id
 
         slot_result =
           cond do
@@ -912,99 +1058,101 @@ defmodule Lanpartyseating.SeatMapsLogic do
     |> where([seat_slot], seat_slot.seat_map_id == ^seat_map_id and is_nil(seat_slot.deleted_at))
     |> order_by([seat_slot], asc: seat_slot.label)
     |> Repo.all()
-    |> Enum.map(fn seat_slot ->
-      %{
-        id: seat_slot.id,
-        label: seat_slot.label,
-        legacy_station_number: seat_slot.legacy_station_number,
-      }
-    end)
+    |> Enum.map(
+      fn seat_slot ->
+        %{
+          id: seat_slot.id,
+          label: seat_slot.label,
+          legacy_station_number: seat_slot.legacy_station_number,
+        }
+      end
+    )
   end
 
   defp empty_map_data do
     %{
-      "meta" => %{"zoom" => 1, "minScale" => 0.4, "maxScale" => 4},
-      "seats" => [],
-      "objects" => [],
-      "groups" => [],
+      meta: %{zoom: 1, minScale: 0.4, maxScale: 4},
+      seats: [],
+      objects: [],
+      groups: [],
     }
   end
 
   defp normalize_editor_attrs(attrs) do
-    attrs = stringify_map(attrs)
+    attrs = atomize_keys(attrs)
 
     data =
-      Map.get(attrs, "data") ||
+      attrs[:data] ||
         %{
-          "meta" => attrs["meta"] || %{},
-          "seats" => attrs["seats"] || [],
-          "objects" => attrs["objects"] || [],
-          "groups" => attrs["groups"] || [],
+          meta: attrs[:meta] || %{},
+          seats: attrs[:seats] || [],
+          objects: attrs[:objects] || [],
+          groups: attrs[:groups] || [],
         }
 
     attrs
-    |> Map.put("data", data)
-    |> Map.update("width", nil, &parse_int/1)
-    |> Map.update("height", nil, &parse_int/1)
+    |> Map.put(:data, data)
+    |> Map.update(:width, nil, &parse_int/1)
+    |> Map.update(:height, nil, &parse_int/1)
   end
 
   defp normalize_map_data(nil), do: empty_map_data()
 
   defp normalize_map_data(data) when is_map(data) do
-    data = stringify_map(data)
+    data = atomize_keys(data)
 
     %{
-      "meta" => stringify_map(data["meta"] || %{}),
-      "seats" => Enum.map(data["seats"] || [], &normalize_seat/1),
-      "objects" => Enum.map(data["objects"] || [], &normalize_object/1),
-      "groups" => Enum.map(data["groups"] || [], &normalize_group/1),
+      meta: data[:meta] || %{},
+      seats: Enum.map(data.seats, &normalize_seat/1),
+      objects: Enum.map(data.objects, &normalize_object/1),
+      groups: Enum.map(data.groups, &normalize_group/1),
     }
   end
 
   defp normalize_seat(seat) do
-    seat = stringify_map(seat)
+    seat = atomize_keys(seat)
 
     %{
-      "seat_slot_id" => parse_optional_int(seat["seat_slot_id"]),
-      "label" => normalize_label(seat["label"] || "A01"),
-      "x" => parse_int(seat["x"] || 0),
-      "y" => parse_int(seat["y"] || 0),
-      "width" => parse_int(seat["width"] || 88),
-      "height" => parse_int(seat["height"] || 88),
-      "rotation" => parse_int(seat["rotation"] || 0),
-      "shape" => seat["shape"] || "rect",
+      seat_slot_id: parse_optional_int(seat[:seat_slot_id]),
+      label: normalize_label(seat.label),
+      x: seat.x,
+      y: seat.y,
+      width: seat.width,
+      height: seat.height,
+      rotation: seat.rotation,
+      shape: seat.shape,
     }
   end
 
   defp normalize_object(object) do
-    object = stringify_map(object)
+    object = atomize_keys(object)
 
     %{
-      "id" => object["id"] || Ecto.UUID.generate(),
-      "type" => object["type"] || "rect",
-      "x" => parse_int(object["x"] || 0),
-      "y" => parse_int(object["y"] || 0),
-      "width" => parse_int(object["width"] || 100),
-      "height" => parse_int(object["height"] || 100),
-      "rotation" => parse_int(object["rotation"] || 0),
-      "text" => object["text"],
-      "font_size" => parse_optional_int(object["font_size"]),
-      "fill" => object["fill"] || "#d1d5db",
-      "fill_secondary" => object["fill_secondary"],
-      "stroke" => object["stroke"] || "#475569",
+      id: object[:id] || Ecto.UUID.generate(),
+      type: object.type,
+      x: object.x,
+      y: object.y,
+      width: object.width,
+      height: object.height,
+      rotation: object.rotation,
+      text: object.text,
+      font_size: parse_optional_int(object.font_size),
+      fill: object.fill,
+      fill_secondary: object.fill_secondary,
+      stroke: object.stroke,
     }
   end
 
   defp normalize_group(group) do
-    group = stringify_map(group)
+    group = atomize_keys(group)
 
     %{
-      "id" => group["id"] || Ecto.UUID.generate(),
-      "name" => group["name"] || "Group",
-      "seat_slot_ids" => Enum.map(group["seat_slot_ids"] || [], &parse_group_member/1),
-      "color" => group["color"] || "#1d4ed8",
-      "label_x" => parse_optional_int(group["label_x"]),
-      "label_y" => parse_optional_int(group["label_y"]),
+      id: group[:id] || Ecto.UUID.generate(),
+      name: group.name,
+      seat_slot_ids: Enum.map(group.seat_slot_ids, &parse_group_member/1),
+      color: group.color,
+      label_x: group.label_x,
+      label_y: group.label_y,
     }
   end
 
@@ -1020,21 +1168,21 @@ defmodule Lanpartyseating.SeatMapsLogic do
   defp parse_group_member(value), do: value
 
   defp normalize_team_assignment(assignment) do
-    assignment = stringify_map(assignment)
-    tournament_id = parse_optional_int(assignment["tournament_id"])
-    group_id = assignment["group_id"]
-    team_name = assignment["team_name"]
+    assignment = atomize_keys(assignment)
+    tournament_id = parse_optional_int(assignment.tournament_id)
+    group_id = assignment.group_id
+    team_name = assignment.team_name
 
     if is_nil(tournament_id) or is_nil(group_id) or blank?(team_name) do
-      nil
+      raise ArgumentError, "Invalid team assignment: #{inspect(assignment)}"
     else
       %{
-        "tournament_id" => tournament_id,
-        "group_id" => group_id,
-        "team_name" => team_name,
-        "color" => assignment["color"],
-        "label_x" => parse_optional_int(assignment["label_x"]),
-        "label_y" => parse_optional_int(assignment["label_y"]),
+        tournament_id: tournament_id,
+        group_id: group_id,
+        team_name: team_name,
+        color: assignment[:color],
+        label_x: parse_optional_int(assignment[:label_x]),
+        label_y: parse_optional_int(assignment[:label_y]),
       }
     end
   end
@@ -1054,24 +1202,34 @@ defmodule Lanpartyseating.SeatMapsLogic do
   defp parse_int(value) when is_binary(value), do: value |> Float.parse() |> elem(0) |> round()
   defp parse_int(_value), do: 0
 
-  defp stringify_map(%_{} = struct), do: struct |> Map.from_struct() |> stringify_map()
+  defp atomize_keys(%_{} = struct), do: struct |> Map.from_struct() |> atomize_keys()
 
-  defp stringify_map(map) when is_map(map) do
-    map
-    |> Enum.map(fn {key, value} -> {to_string(key), stringify_value(value)} end)
-    |> Map.new()
+  defp atomize_keys(map) when is_map(map) do
+    Map.new(
+      map,
+      fn
+        {key, value} when is_binary(key) ->
+          atom =
+            try do
+              String.to_existing_atom(key)
+            rescue
+              ArgumentError -> key
+            end
+
+          {atom, atomize_value(value)}
+
+        {key, value} ->
+          {key, atomize_value(value)}
+      end
+    )
   end
 
-  defp stringify_map(other), do: other
+  defp atomize_keys(other), do: other
 
-  defp stringify_value(%_{} = struct), do: struct |> Map.from_struct() |> stringify_map()
-  defp stringify_value(value) when is_map(value), do: stringify_map(value)
-  defp stringify_value(value) when is_list(value), do: Enum.map(value, &stringify_value/1)
-  defp stringify_value(value), do: value
-
-  defp value(map, key, default \\ nil) when is_map(map) do
-    Map.get(map, key) || Map.get(map, String.to_atom(key), default)
-  end
+  defp atomize_value(%_{} = struct), do: struct |> Map.from_struct() |> atomize_keys()
+  defp atomize_value(value) when is_map(value), do: atomize_keys(value)
+  defp atomize_value(value) when is_list(value), do: Enum.map(value, &atomize_value/1)
+  defp atomize_value(value), do: value
 
   defp datetime_to_iso(nil), do: nil
   defp datetime_to_iso(%DateTime{} = datetime), do: DateTime.to_iso8601(datetime)

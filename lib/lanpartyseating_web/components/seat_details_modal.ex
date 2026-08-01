@@ -94,16 +94,11 @@ defmodule LanpartyseatingWeb.Components.SeatDetailsModal do
   defp status_classes(:tournament), do: "border-info bg-info/10 text-info"
   defp status_classes(_), do: "border-base-300 bg-base-200 text-base-content/60"
 
-  defp status_text(:available), do: "Disponible"
-  defp status_text(:occupied), do: "Occupé"
-  defp status_text(:reserved), do: "Réservé"
-  defp status_text(:unavailable), do: "Hors service"
-  defp status_text(:tournament), do: "Tournoi"
-  # defp status_text(:available), do: "Available"
-  # defp status_text(:occupied), do: "Occupied"
-  # defp status_text(:reserved), do: "Reserved"
-  # defp status_text(:unavailable), do: "Offline"
-  # defp status_text(:tournament), do: "Tournament"
+  defp status_text(:available), do: "Disponible / Available"
+  defp status_text(:occupied), do: "Occupé / Occupied"
+  defp status_text(:reserved), do: "Réservé / Reserved"
+  defp status_text(:unavailable), do: "Hors service / Unavailable"
+  defp status_text(:tournament), do: "Tournoi / Tournament"
   defp status_text(status) when is_binary(status), do: String.capitalize(status)
   defp status_text(_), do: "Unknown"
 

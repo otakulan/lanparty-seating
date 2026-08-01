@@ -69,8 +69,8 @@ buildStage() {
       ignoreStroke: true,
       boundBoxFunc: (oldBox, newBox) => {
         const box = getClientRect(newBox)
-        const canvasWidth = this.state.width || 1920
-        const canvasHeight = this.state.height || 1080
+        const canvasWidth = this.state.width
+        const canvasHeight = this.state.height
         
         if (box.x < 0 || box.y < 0 || 
             box.x + box.width > canvasWidth || 
@@ -206,8 +206,8 @@ buildStage() {
   renderObjects() {
     const theme = this.theme
     
-    for (const object of this.state.objects || []) {
-      const id = object.id || randomId("object")
+    for (const object of this.state.objects) {
+      const id = object.id
       const isText = object.type === "text"
       let node
       
@@ -217,12 +217,12 @@ buildStage() {
           y: object.y,
           width: object.width,
           height: object.height,
-          rotation: object.rotation || 0,
-          text: object.text || "Label",
-          fontSize: object.font_size || 24,
+          rotation: object.rotation,
+          text: object.text,
+          fontSize: object.font_size,
           fontStyle: "600",
           fontFamily: theme.fontFamily,
-          fill: object.fill || theme.textPrimary,
+          fill: object.fill,
           perfectDrawEnabled: false
         })
       } else {
@@ -231,9 +231,9 @@ buildStage() {
           y: object.y,
           width: object.width,
           height: object.height,
-          rotation: object.rotation || 0,
-          fill: object.fill || "rgba(34, 197, 94, 0.2)",
-          stroke: object.stroke || theme.accentGreen,
+          rotation: object.rotation,
+          fill: object.fill,
+          stroke: object.stroke,
           strokeWidth: 2,
           cornerRadius: 12,
           shadowColor: "rgba(34, 197, 94, 0.3)",
@@ -251,8 +251,8 @@ buildStage() {
       node.on("click tap", e => this.handleObjectSelection(e, node))
       node.on("dragstart", () => this.pushHistory())
       node.on("dragmove", () => {
-        const w = isText ? (object.width || 180) : (object.width || 120)
-        const h = isText ? (object.height || 36) : (object.height || 60)
+        const w = isText ? object.width : object.width
+        const h = isText ? object.height : object.height
         this.constrainNodeDrag(node, w, h)
       })
       node.on("dragend transformend", () => this.syncObjectNode(node))
@@ -269,7 +269,7 @@ buildStage() {
     const theme = this.theme
     const statusColors = this.statusColors
     
-    for (const seat of this.state.seats || []) {
+    for (const seat of this.state.seats) {
       const palette = statusColors[seat.status] || statusColors.available
       const isSelected = this.selectedSeats.has(seat.seat_slot_id)
       
@@ -288,6 +288,11 @@ buildStage() {
         if (this.selectedSeats.size > 1 && this.selectedSeats.has(seat.seat_slot_id)) {
           this.dragStartPosition = { x: seatGroup.x(), y: seatGroup.y() }
           this.draggedSeatId = seat.seat_slot_id
+        }
+        else if (this.selectedSeats.size === 1 && this.selectedSeats.has(seat.seat_slot_id)) {
+          const selectedSeat = this.state.seats.find(s => s.seat_slot_id === seat.seat_slot_id)
+          if (selectedSeat)
+            this.hook.pushEvent("seat_selected", { seat: selectedSeat })
         }
       })
       seatGroup.on("dragmove", () => {
@@ -326,7 +331,7 @@ buildStage() {
       if (seatSlotId === excludeSeatId) return
       const node = this.seatLayer.children.find(n => n.id() === `seat-${seatSlotId}`)
       if (!node) return
-      const seat = (this.state.seats || []).find(s => s.seat_slot_id === seatSlotId)
+      const seat = this.state.seats.find(s => s.seat_slot_id === seatSlotId)
       if (!seat) return
       const newX = seat.x + dx
       const newY = seat.y + dy
@@ -343,12 +348,12 @@ buildStage() {
     let minDy = 0
     
     for (const [seatSlotId, pos] of positions) {
-      const seat = (this.state.seats || []).find(s => s.seat_slot_id === seatSlotId)
+      const seat = this.state.seats.find(s => s.seat_slot_id === seatSlotId)
       if (!seat) continue
       
       const constrained = this.constrainSeatCollision(
         pos.x, pos.y,
-        seat.width || SEAT_WIDTH, seat.height || SEAT_HEIGHT,
+        seat.width, seat.height,
         seatSlotId
       )
       
@@ -425,7 +430,7 @@ buildStage() {
     this.scheduleRender(false)
     
     if (this.selectedSeats.size === 1) {
-      const selectedSeat = (this.state.seats || []).find(s => s.seat_slot_id === seat.seat_slot_id)
+      const selectedSeat = this.state.seats.find(s => s.seat_slot_id === seat.seat_slot_id)
       if (selectedSeat) this.hook.pushEvent("seat_selected", { seat: selectedSeat })
     } else {
       this.hook.pushEvent("seat_selected", { seat: null })
@@ -433,10 +438,10 @@ buildStage() {
   }
   
   constrainNodeDrag(node, nodeWidth, nodeHeight) {
-    const canvasWidth = this.state.width || 1920
-    const canvasHeight = this.state.height || 1080
-    const halfW = (nodeWidth || 64) / 2
-    const halfH = (nodeHeight || 64) / 2
+    const canvasWidth = this.state.width
+    const canvasHeight = this.state.height
+    const halfW = nodeWidth / 2
+    const halfH = nodeHeight / 2
     
     node.position({
       x: clamp(node.x(), halfW, canvasWidth - halfW),
@@ -445,7 +450,7 @@ buildStage() {
   }
   
   constrainSeatCollision(newX, newY, width, height, excludeId) {
-    const halfW = width/ 2
+    const halfW = width / 2
     const halfH = height / 2
     const draggedRect = {
       x: newX - halfW,
@@ -454,12 +459,12 @@ buildStage() {
       height: height
     }
     
-    for (const seat of this.state.seats || []) {
+    for (const seat of this.state.seats) {
       if (seat.seat_slot_id === excludeId) continue
       if (this.selectedSeats.has(seat.seat_slot_id)) continue
       
-      const seatW = seat.width || SEAT_WIDTH
-      const seatH = seat.height || SEAT_HEIGHT
+      const seatW = seat.width
+      const seatH = seat.height
       const seatHalfW = seatW / 2
       const seatHalfH = seatH / 2
       const seatRect = {
@@ -527,7 +532,7 @@ buildStage() {
   
   syncObjectNode(node) {
     const objectId = node.getAttr("objectId")
-    this.state.objects = (this.state.objects || []).map(obj => {
+    this.state.objects = this.state.objects.map(obj => {
       if (obj.id !== objectId) return obj
       return {
         ...obj,
@@ -543,7 +548,7 @@ buildStage() {
   }
   
   syncSeatNode(node, seatSlotId) {
-    this.state.seats = (this.state.seats || []).map(seat => {
+    this.state.seats = this.state.seats.map(seat => {
       if (seat.seat_slot_id !== seatSlotId) return seat
       return {
         ...seat,
@@ -634,9 +639,9 @@ buildStage() {
       this.selectedObjects.clear()
     }
     
-    for (const seat of this.state.seats || []) {
-      const halfW = (seat.width || 64) / 2
-      const halfH = (seat.height || 64) / 2
+    for (const seat of this.state.seats) {
+      const halfW = seat.width / 2
+      const halfH = seat.height / 2
       const seatRect = {
         x: seat.x - halfW,
         y: seat.y - halfH,
@@ -654,12 +659,12 @@ buildStage() {
     }
     
     const nodesToSelect = []
-    for (const obj of this.state.objects || []) {
+    for (const obj of this.state.objects) {
       const objRect = {
         x: obj.x,
         y: obj.y,
-        width: obj.width || 100,
-        height: obj.height || 60
+        width: obj.width,
+        height: obj.height
       }
       
       if (this.rectanglesIntersect(rect, objRect)) {
@@ -687,9 +692,9 @@ buildStage() {
     if (this.isUndoRedo) return
     
     const state = JSON.stringify({
-      seats: this.state.seats || [],
-      objects: this.state.objects || [],
-      groups: this.state.groups || []
+      seats: this.state.seats,
+      objects: this.state.objects,
+      groups: this.state.groups
     })
     
     if (this.historyIndex < this.history.length - 1) {
@@ -757,7 +762,7 @@ buildStage() {
     this.pushHistory()
     const point = this.viewportCenter()
     this.state.seats = [
-      ...(this.state.seats || []),
+      ...this.state.seats,
       {
         seat_slot_id: this.nextSeatId(),
         label: this.nextSeatLabel(),
@@ -780,7 +785,7 @@ buildStage() {
     const point = this.viewportCenter()
     
     this.state.objects = [
-      ...(this.state.objects || []),
+      ...this.state.objects,
       {
         id: randomId(type),
         type,
@@ -803,10 +808,10 @@ buildStage() {
     this.pushHistory()
     const theme = this.theme
     this.state.groups = [
-      ...(this.state.groups || []),
+      ...this.state.groups,
       {
         id: randomId("group"),
-        name: `Group ${String((this.state.groups || []).length + 1).padStart(2, "0")}`,
+        name: `Group ${String(this.state.groups.length + 1).padStart(2, "0")}`,
         seat_slot_ids: Array.from(this.selectedSeats),
         color: theme.accentGreen
       }
@@ -819,17 +824,17 @@ buildStage() {
     
     if (this.selectedSeats.size > 0) {
       const selectedIds = this.selectedSeats
-      this.state.seats = (this.state.seats || []).filter(s => !selectedIds.has(s.seat_slot_id))
-      this.state.groups = (this.state.groups || []).map(g => ({
+      this.state.seats = this.state.seats.filter(s => !selectedIds.has(s.seat_slot_id))
+      this.state.groups = this.state.groups.map(g => ({
         ...g,
-        seat_slot_ids: (g.seat_slot_ids || []).filter(id => !selectedIds.has(id))
+        seat_slot_ids: g.seat_slot_ids.filter(id => !selectedIds.has(id))
       }))
       this.selectedSeats.clear()
     }
     
     if (this.selectedObjects.size > 0) {
       const selectedIds = this.selectedObjects
-      this.state.objects = (this.state.objects || []).filter(o => !selectedIds.has(o.id))
+      this.state.objects = this.state.objects.filter(o => !selectedIds.has(o.id))
       this.selectedObjects.clear()
       this.transformer.visible(false)
     }
@@ -847,10 +852,10 @@ buildStage() {
   serializableState() {
     return {
       ...this.state,
-      revision: parseInt(this.state.revision, 10) || 1,
-      seats: (this.state.seats || []).map(s => ({ ...s })),
-      objects: (this.state.objects || []).map(o => ({ ...o })),
-      groups: (this.state.groups || []).map(g => ({ ...g }))
+      revision: this.state.revision,
+      seats: this.state.seats.map(s => ({ ...s })),
+      objects: this.state.objects.map(o => ({ ...o })),
+      groups: this.state.groups.map(g => ({ ...g }))
     }
   }
   
@@ -859,7 +864,7 @@ buildStage() {
   }
   
   viewportCenter() {
-    const scale = this.stage.scaleX() || 1
+    const scale = this.stage.scaleX()
     return {
       x: (this.stage.width() / 2 - this.stage.x()) / scale,
       y: (this.stage.height() / 2 - this.stage.y()) / scale
@@ -886,12 +891,12 @@ buildStage() {
   }
   
   nextSeatId() {
-    const ids = (this.state.seats || []).map(s => Number(s.seat_slot_id) || 0)
+    const ids = this.state.seats.map(s => Number(s.seat_slot_id) || 0)
     return Math.max(0, ...ids) + 1
   }
   
   nextSeatLabel() {
-    const labels = new Set((this.state.seats || []).map(s => s.label))
+    const labels = new Set(this.state.seats.map(s => s.label))
     for (let row = 0; row < 26; row++) {
       const prefix = String.fromCharCode(65 + row)
       for (let col = 1; col <= 99; col++) {
@@ -899,6 +904,6 @@ buildStage() {
         if (!labels.has(label)) return label
       }
     }
-    return `Z${String((this.state.seats || []).length + 1).padStart(2, "0")}`
+    return `Z${String(this.state.seats.length + 1).padStart(2, "0")}`
   }
 }

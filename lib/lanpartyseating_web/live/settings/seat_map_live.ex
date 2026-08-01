@@ -66,6 +66,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
         {:noreply,
          socket
          |> assign(:stale_draft, true)
+         |> clear_flash()
          |> put_flash(:error, "Draft is stale / Ce brouillon n'est plus a jour. Reload or reset the draft before saving.")}
 
       {:error, changeset} ->
@@ -73,19 +74,18 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     end
   end
 
-  def handle_event("publish_preview", %{"map" => map}, socket) do
-    with {:ok, _version} <- SeatMapsLogic.save_draft(map, socket.assigns.revision),
-         refreshed_payload = load_editor_payload(),
-         {:ok, _version} <- SeatMapsLogic.publish_draft(refreshed_payload["revision"]) do
-      payload = load_editor_payload()
+  def handle_event("publish_preview", %{"map" => %{"revision" => revision} = map}, socket) do
+    case SeatMapsLogic.save_and_publish_draft(map, revision) do
+      {:ok, _version} ->
+        payload = load_editor_payload()
 
-      {:noreply,
-       socket
-       |> assign_editor_payload(payload)
-       |> assign(:stale_draft, false)
-       |> push_event("seat_map_update", %{map: payload})
-       |> put_flash(:info, "Published layout activated / Nouveau plan activé")}
-    else
+        {:noreply,
+         socket
+         |> assign_editor_payload(payload)
+         |> assign(:stale_draft, false)
+         |> push_event("seat_map_update", %{map: payload})
+         |> put_flash(:info, "Published layout activated / Nouveau plan activé")}
+
       {:error, :stale_draft} ->
         {:noreply,
          socket
@@ -97,7 +97,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
         {:noreply,
          socket
-         |> put_flash(:error, "Cannot publish because active seats changed: #{labels} / Publication impossible car des postes actifs ont change.")}
+         |> put_flash(:error, "Cannot publish because active seats changed: #{labels} / Publication impossible car des postes actifs ont changé.")}
 
       {:error, changeset = %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
@@ -181,9 +181,9 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
   def handle_event("save_background", %{"background" => params}, socket) do
     payload =
       socket.assigns.map_payload
-      |> Map.put("background_kind", params["kind"])
-      |> Map.put("background_value", normalize_background_value(params["kind"], params["value"]))
-      |> Map.put("revision", socket.assigns.revision)
+      |> Map.put(:background_kind, params["kind"])
+      |> Map.put(:background_value, normalize_background_value(params["kind"], params["value"]))
+      |> Map.put(:revision, socket.assigns.revision)
 
     case SeatMapsLogic.save_draft(payload, socket.assigns.revision) do
       {:ok, _version} ->
@@ -207,12 +207,12 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     payload = load_editor_payload()
 
     stale_draft =
-      payload["revision"] != socket.assigns.revision and
+      payload.revision != socket.assigns.revision and
         not socket.assigns[:ignore_stale_until_next_render]
 
     socket =
       socket
-      |> assign(:published_revision, payload["published_revision"] || socket.assigns.published_revision)
+      |> assign(:published_revision, payload.published_revision || socket.assigns.published_revision)
       |> assign(:stale_draft, stale_draft)
       |> assign(:ignore_stale_until_next_render, false)
 
@@ -466,8 +466,21 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
   defp load_editor_payload do
     case SeatMapsLogic.get_editor_payload() do
-      {:ok, payload} -> payload
-      _ -> %{"width" => 1920, "height" => 1080, "meta" => %{}, "seats" => [], "objects" => [], "groups" => [], "team_assignments" => [], "revision" => 1, "published_revision" => 1}
+      {:ok, payload} ->
+        payload
+
+      _ ->
+        %{
+          width: 1400,
+          height: 800,
+          meta: %{},
+          seats: [],
+          objects: [],
+          groups: [],
+          team_assignments: [],
+          revision: 1,
+          published_revision: 1,
+        }
     end
   end
 
@@ -477,10 +490,10 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
     socket
     |> assign(:map_payload, payload)
-    |> assign(:draft_name, payload["name"] || "Working Draft")
-    |> assign(:revision, payload["revision"] || 1)
-    |> assign(:published_revision, payload["published_revision"] || 1)
-    |> assign(:background_kind, payload["background_kind"] || "none")
+    |> assign(:draft_name, payload.name || "Working Draft")
+    |> assign(:revision, payload.revision || 1)
+    |> assign(:published_revision, payload.published_revision || 1)
+    |> assign(:background_kind, payload.background_kind || "none")
     |> assign(:export_json, json_payload)
     |> assign(:import_json, json_payload)
     |> assign(:tournaments, tournaments)
@@ -488,7 +501,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     |> assign(:team_assignment_form, default_team_assignment_form(payload, tournaments))
   end
 
-  defp background_editor_value(%{"background_kind" => "svg", "background_value" => value}) when is_binary(value) do
+  defp background_editor_value(%{background_kind: "svg", background_value: value}) when is_binary(value) do
     if String.starts_with?(value, "data:image/svg+xml,") do
       value
       |> String.replace_prefix("data:image/svg+xml,", "")
@@ -509,25 +522,22 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
         seat_slot_id = selected_seat["seat_slot_id"]
 
         updated_seats =
-          (socket.assigns.map_payload["seats"] || [])
+          (socket.assigns.map_payload.seats || [])
           |> Enum.map(
             fn seat ->
-              if seat["seat_slot_id"] == seat_slot_id do
-                Map.merge(seat, updates)
-              else
-                seat
-              end
+              if seat.seat_slot_id == seat_slot_id, do: Map.merge(seat, updates), else: seat
             end
           )
 
-        updated_payload =
-          socket.assigns.map_payload
-          |> Map.put("seats", updated_seats)
+        updated_payload = Map.put(socket.assigns.map_payload, :seats, updated_seats)
+
+        # selected_seat is string-keyed (from JS event); convert atom updates for display
+        string_updates = Map.new(updates, fn {k, v} -> {to_string(k), v} end)
 
         {:ok,
          socket
          |> assign(:map_payload, updated_payload)
-         |> assign(:selected_seat, Map.merge(selected_seat, updates))
+         |> assign(:selected_seat, Map.merge(selected_seat, string_updates))
          |> push_event("seat_map_update", %{map: updated_payload})}
     end
   end
@@ -551,14 +561,14 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
   defp normalize_background_value(_kind, _value), do: nil
 
   defp default_team_assignment_form(payload, tournaments) do
-    first_group = payload["groups"] |> Kernel.||([]) |> List.first()
-    first_tournament = tournaments |> Kernel.||([]) |> List.first()
+    first_group = List.first(payload.groups || [])
+    first_tournament = List.first(tournaments || [])
 
     %{
-      "group_id" => first_group && first_group["id"],
+      "group_id" => first_group && first_group.id,
       "tournament_id" => first_tournament && first_tournament.id,
       "team_name" => "",
-      "color" => (first_group && first_group["color"]) || "#2563eb",
+      "color" => (first_group && first_group.color) || "#2563eb",
     }
   end
 

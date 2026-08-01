@@ -1,8 +1,6 @@
 import Konva from "konva"
-import { SeatMapBase, SCALE_BY, clamp } from "./seat_map_base"
+import { SeatMapBase, SCALE_BY } from "./seat_map_base"
 import {
-  SEAT_WIDTH,
-  SEAT_HEIGHT,
   SEAT_SCALE,
   createSeatGroup,
   addSeatLabel,
@@ -116,7 +114,7 @@ export default class SeatMapViewer extends SeatMapBase {
     const theme = this.theme
     const statusColors = this.statusColors
     
-    for (const seat of this.state.seats || []) {
+    for (const seat of this.state.seats) {
       const palette = statusColors[seat.status] || statusColors.available
       const seatGroup = createSeatGroup(seat, palette, theme, {
         showKeyboard: this.showKeyboard

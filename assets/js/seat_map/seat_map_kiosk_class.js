@@ -76,7 +76,7 @@ export default class SeatMapKiosk extends SeatMapBase {
     const theme = this.theme
     const statusColors = this.statusColors
     
-    for (const seat of this.state.seats || []) {
+    for (const seat of this.state.seats) {
       const palette = statusColors[seat.status] || statusColors.available
       const seatGroup = createSeatGroup(seat, palette, theme, {
         showKeyboard: this.showKeyboard

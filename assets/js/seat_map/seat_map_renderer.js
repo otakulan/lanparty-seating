@@ -14,7 +14,7 @@ export function createSeatGroup(seat, palette, theme, options = {}) {
   const group = new Konva.Group({
     x: seat.x,
     y: seat.y,
-    rotation: seat.rotation || 0,
+    rotation: seat.rotation,
     listening: false
   })
   
@@ -178,8 +178,8 @@ export function calculateBounds(seats) {
   
   const xs = seats.map(s => s.x)
   const ys = seats.map(s => s.y)
-  const widths = seats.map(s => s.width || SEAT_WIDTH)
-  const heights = seats.map(s => s.height || SEAT_HEIGHT)
+  const widths = seats.map(s => s.width)
+  const heights = seats.map(s => s.height)
   
   const minX = Math.min(...xs.map((x, i) => x - widths[i] / 2))
   const maxX = Math.max(...xs.map((x, i) => x + widths[i] / 2))
@@ -194,7 +194,7 @@ export function renderGroupBounds(layer, group, seats, theme) {
   if (memberSeats.length === 0) return
   
   const bounds = calculateBounds(memberSeats)
-  const color = group.color || "#22c55e"
+  const color = group.color
   
   const rect = new Konva.Rect({
     x: bounds.x - 12,
@@ -216,14 +216,14 @@ export function renderGroupBounds(layer, group, seats, theme) {
 }
 
 export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
-  const hasAssignment = (teamAssignments || []).some(a => a.group_id === group.id)
+  const hasAssignment = teamAssignments.some(a => a.group_id === group.id)
   if (hasAssignment || !group.name) return
   
   const memberSeats = getMemberSeats(group, seats)
   if (memberSeats.length === 0) return
   
   const bounds = calculateBounds(memberSeats)
-  const color = group.color || "#22c55e"
+  const color = group.color
   
   const text = new Konva.Text({
     text: group.name,
@@ -294,7 +294,7 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
     width,
     height,
     cornerRadius: 10,
-    fill: transparentColor(assignment.color || "#06b6d4", 0.92),
+    fill: transparentColor(assignment.color, 0.92),
     stroke: transparentColor("#ffffff", 0.2),
     strokeWidth: 1,
     shadowColor: "rgba(0, 0, 0, 0.4)",
@@ -313,7 +313,7 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
 }
 
 export function transparentColor(hexColor, alpha) {
-  const sanitized = (hexColor || "#22c55e").replace("#", "")
+  const sanitized = hexColor.replace("#", "")
   const value = sanitized.length === 3 
     ? sanitized.split("").map(c => c + c).join("") 
     : sanitized
@@ -357,7 +357,7 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
   const group = new Konva.Group({
     x: seat.x,
     y: seat.y,
-    rotation: seat.rotation || 0,
+    rotation: seat.rotation,
     listening: true
   })
   
