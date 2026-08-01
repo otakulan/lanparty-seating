@@ -50,7 +50,7 @@ defmodule LanpartyseatingWeb do
 
   def live_view do
     quote do
-      use Phoenix.LiveView
+      use Phoenix.LiveView, container: {:div, class: "flex flex-1 flex-col h-screen"}
 
       unquote(html_helpers())
     end
