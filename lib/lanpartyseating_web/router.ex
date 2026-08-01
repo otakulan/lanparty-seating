@@ -43,7 +43,7 @@ defmodule LanpartyseatingWeb.Router do
     live_session :kiosk,
       on_mount: [{LanpartyseatingWeb.UserAuth, :mount_current_scope}],
       layout: {LanpartyseatingWeb.Layouts, :kiosk} do
-      live("/map", SeatMapLive, :interactive)
+      live("/kiosk", Kiosk.SeatMapLive, :kiosk)
       live("/kiosk/map", Kiosk.SeatMapLive, :kiosk)
     end
 
@@ -54,6 +54,7 @@ defmodule LanpartyseatingWeb.Router do
       ],
       layout: {LanpartyseatingWeb.Layouts, :live} do
       live("/", DisplayLive, :index)
+      live("/map", SeatMapLive, :interactive)
       live("/stations", StationsLive, :index)
     end
   end
