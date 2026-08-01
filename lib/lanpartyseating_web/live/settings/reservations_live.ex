@@ -99,10 +99,10 @@ defmodule LanpartyseatingWeb.Settings.ReservationsLive do
 
   def render(assigns) do
     ~H"""
-    <div class="drawer lg:drawer-open">
+    <div class="drawer lg:drawer-open h-fill grid-rows-1 overflow-hidden">
       <input id="settings-drawer" type="checkbox" class="drawer-toggle" />
 
-      <div class="drawer-content">
+      <div class="drawer-content flex flex-col min-h-0 overflow-y-auto">
         <%!-- Mobile header with hamburger --%>
         <div class="lg:hidden navbar bg-base-200 border-b border-base-300">
           <label for="settings-drawer" class="btn btn-square btn-ghost">
@@ -127,7 +127,7 @@ defmodule LanpartyseatingWeb.Settings.ReservationsLive do
 
   defp reservations_content(assigns) do
     ~H"""
-    <div class="max-w-2xl">
+    <div class="max-w-4xl">
       <.page_header
         title="Reservation Settings"
         subtitle="Configure reservation duration and tournament buffer times"

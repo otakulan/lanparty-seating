@@ -26,7 +26,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
       <li>
         <.link
           navigate={~p"/settings/seat-map"}
-          class={["flex items-center gap-3", @current_page == :seat_map && "active"]}
+          class={["flex items-center gap-3", @current_page == :seat_map && "menu-active"]}
         >
           <Icons.columns_3_cog class="w-5 h-5" />
           <span>Seat Map Editor</span>
@@ -37,7 +37,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
       <li>
         <.link
           navigate={~p"/settings/reservations"}
-          class={["flex items-center gap-3", @current_page == :reservations && "active"]}
+          class={["flex items-center gap-3", @current_page == :reservations && "menu-active"]}
         >
           <Icons.clock class="w-5 h-5" />
           <span>Reservations</span>
@@ -49,7 +49,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
         <li>
           <.link
             navigate={~p"/settings/users"}
-            class={["flex items-center gap-3", @current_page == :users && "active"]}
+            class={["flex items-center gap-3", @current_page == :users && "menu-active"]}
           >
             <Icons.users class="w-5 h-5" />
             <span>Users</span>
@@ -58,7 +58,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
         <li>
           <.link
             navigate={~p"/settings/badges"}
-            class={["flex items-center gap-3", @current_page == :badges && "active"]}
+            class={["flex items-center gap-3", @current_page == :badges && "menu-active"]}
           >
             <Icons.id_card_lanyard class="w-5 h-5" />
             <span>Badges</span>
@@ -67,7 +67,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
         <li>
           <.link
             navigate={~p"/settings/scanners"}
-            class={["flex items-center gap-3", @current_page == :scanners && "active"]}
+            class={["flex items-center gap-3", @current_page == :scanners && "menu-active"]}
           >
             <Icons.scan_barcode class="w-5 h-5" />
             <span>Scanners</span>

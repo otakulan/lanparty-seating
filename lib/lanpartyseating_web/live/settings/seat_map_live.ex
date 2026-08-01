@@ -228,19 +228,20 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
   def render(assigns) do
     ~H"""
-    <div class="drawer lg:drawer-open">
+    <div class="drawer lg:drawer-open h-fill grid-rows-1 overflow-hidden">
       <input id="settings-drawer" type="checkbox" class="drawer-toggle" />
 
-      <div class="drawer-content bg-base-100">
-        <div class="lg:hidden navbar border-b border-base-300 bg-base-200">
+      <div class="drawer-content flex flex-col min-h-0 overflow-y-auto">
+        <div class="lg:hidden navbar shrink-0 border-b border-base-300 bg-base-200">
           <label for="settings-drawer" class="btn btn-square btn-ghost text-base-content/60">
             <Icons.menu />
           </label>
           <span class="text-lg font-bold font-mono text-base-content">Seat Map Editor</span>
         </div>
 
-        <div class="p-4 lg:p-6">
-          <div class="mb-4 flex items-center justify-between">
+        <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:p-6">
+          <%!-- Header --%>
+          <div class="mb-4 flex items-center justify-between shrink-0">
             <div>
               <h1 class="text-xl font-bold text-base-content">Seat Map Editor</h1>
               <p class="text-sm text-base-content/60">

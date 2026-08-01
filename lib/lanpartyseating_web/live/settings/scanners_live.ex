@@ -283,10 +283,10 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
 
   def render(assigns) do
     ~H"""
-    <div class="drawer lg:drawer-open">
+    <div class="drawer lg:drawer-open h-fill grid-rows-1 overflow-hidden">
       <input id="settings-drawer" type="checkbox" class="drawer-toggle" />
 
-      <div class="drawer-content">
+      <div class="drawer-content flex flex-col min-h-0 overflow-y-auto">
         <%!-- Mobile header with hamburger --%>
         <div class="lg:hidden navbar bg-base-200 border-b border-base-300">
           <label for="settings-drawer" class="btn btn-square btn-ghost">
@@ -301,7 +301,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
         </div>
       </div>
 
-      <div class="drawer-side z-40">
+      <div class="drawer-side z-40 h-full">
         <label for="settings-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
         <SettingsNav.settings_nav current_page={:scanners} is_user_auth={@is_user_auth} />
       </div>
