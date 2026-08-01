@@ -598,7 +598,30 @@ defmodule LanpartyseatingWeb.Components.UI do
 
   def theme_toggle(assigns) do
     ~H"""
-    <label class={["swap swap-rotate btn", @class]} id={@id} phx-hook="ThemeToggle">
+    <label class={["toggle text-base-content", @class]} id={@id} phx-hook="ThemeToggle">
+      <input type="checkbox" class="theme-controller" value="dark" />
+      <Icons.sun class="w-4 h-4 fill-current" />
+      <Icons.moon class="w-4 h-4 fill-current" />
+    </label>
+    """
+  end
+
+  @doc """
+        Renders a theme swap button with animated sun/moon icons.
+
+        Cycles between the last used light theme and last used dark theme.
+
+        ## Examples
+
+            <.theme_toggle />
+            <.theme_toggle class="btn-ghost" />
+        """
+  attr :class, :string, default: ""
+  attr :id, :string, default: "theme-swap-desktop"
+
+  def theme_swap(assigns) do
+    ~H"""
+    <label class={["swap swap-rotate", @class]} id={@id} phx-hook="ThemeToggle">
       <input type="checkbox" class="theme-controller" value="dark" />
       <Icons.sun class="swap-off fill-current w-5 h-5" />
       <Icons.moon class="swap-on fill-current w-5 h-5" />
