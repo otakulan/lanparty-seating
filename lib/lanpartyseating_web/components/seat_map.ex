@@ -1,7 +1,5 @@
 defmodule LanpartyseatingWeb.Components.SeatMap do
-  use Phoenix.Component
-  alias LanpartyseatingWeb.Components.UI
-  alias LanpartyseatingWeb.Components.Icons
+  use LanpartyseatingWeb, :html
 
   @doc """
        A seat map canvas component that renders an interactive Konva.js-based seat map.
@@ -104,13 +102,13 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
             <%= if Map.get(bar, :with_zoom_buttons, false) do %>
               <div class="flex items-center gap-1">
                 <button type="button" data-seat-map-command="zoom-out" class="btn btn-xs btn-square" title="Zoom out">
-                  <Icons.magnifying_glass_minus class="w-4 h-4" />
+                  <Icons.zoom_out class="w-4 h-4" />
                 </button>
                 <button type="button" data-seat-map-command="zoom-in" class="btn btn-xs btn-square" title="Zoom in">
-                  <Icons.magnifying_glass_plus class="w-4 h-4" />
+                  <Icons.zoom_in class="w-4 h-4" />
                 </button>
                 <button type="button" data-seat-map-command="reset-view" class="btn btn-xs btn-square" title="Fit to view">
-                  <Icons.arrows_pointing_in class="w-4 h-4" />
+                  <Icons.move class="w-4 h-4" />
                 </button>
               </div>
               <%!-- Separator --%>

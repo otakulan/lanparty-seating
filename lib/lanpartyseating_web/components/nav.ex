@@ -1,10 +1,8 @@
 defmodule LanpartyseatingWeb.Components.Nav do
   @moduledoc """
-             Navigation bar component.
-             """
-  use Phoenix.Component
-  use LanpartyseatingWeb, :verified_routes
-  alias LanpartyseatingWeb.Components.Icons
+  Navigation bar component.
+  """
+  use LanpartyseatingWeb, :html
   alias LanpartyseatingWeb.Components.UI
 
   attr(:nav_menu, :list, required: true)

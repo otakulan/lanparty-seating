@@ -139,7 +139,7 @@ defmodule LanpartyseatingWeb.Settings.UsersLive do
           <.form for={@form} id="create-user-form" phx-submit="create_user" class="space-y-4">
             <%= if @form_error do %>
               <div class="alert alert-error">
-                <Icons.x_circle class="w-6 h-6" />
+                <Icons.circle_x class="w-6 h-6" />
                 <span>{@form_error}</span>
               </div>
             <% end %>

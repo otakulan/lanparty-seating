@@ -322,7 +322,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
       <%= case @bluetooth_status do %>
         <% :requires_https -> %>
           <div class="alert alert-warning mb-6">
-            <Icons.exclamation_triangle class="w-6 h-6" />
+            <Icons.triangle_alert class="w-6 h-6" />
             <div>
               <h3 class="font-bold">HTTPS Required for Bluetooth</h3>
               <div class="text-sm">
@@ -332,7 +332,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
           </div>
         <% :not_available -> %>
           <div class="alert alert-warning mb-6">
-            <Icons.exclamation_triangle class="w-6 h-6" />
+            <Icons.triangle_alert class="w-6 h-6" />
             <div>
               <h3 class="font-bold">WebBluetooth Not Supported</h3>
               <div class="text-sm">
@@ -347,14 +347,14 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
       <.admin_section title="WiFi Configuration">
         <%= if not @can_edit_wifi do %>
           <div class="alert alert-warning mb-4">
-            <Icons.lock_closed class="w-5 h-5" />
+            <Icons.lock class="w-5 h-5" />
             <span>WiFi settings are locked while scanners exist. Delete all scanners to modify.</span>
           </div>
         <% end %>
 
         <%= if @wifi_form_error do %>
           <div class="alert alert-error mb-4">
-            <Icons.x_circle class="w-5 h-5" />
+            <Icons.circle_x class="w-5 h-5" />
             <span>{@wifi_form_error}</span>
           </div>
         <% end %>
@@ -411,7 +411,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
       <.admin_section title="Add Scanner">
         <%= if not @wifi_configured do %>
           <div class="alert alert-info">
-            <Icons.information_circle class="w-5 h-5" />
+            <Icons.info class="w-5 h-5" />
             <span>Configure WiFi settings above before adding scanners.</span>
           </div>
         <% else %>
@@ -419,7 +419,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
             <.form for={@scanner_form} id="create-scanner-form" phx-submit="create_scanner" class="space-y-4">
               <%= if @scanner_form_error do %>
                 <div class="alert alert-error">
-                  <Icons.x_circle class="w-5 h-5" />
+                  <Icons.circle_x class="w-5 h-5" />
                   <span>{@scanner_form_error}</span>
                 </div>
               <% end %>
@@ -491,7 +491,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
                         phx-value-id={scanner.id}
                         disabled={@bluetooth_status != :supported}
                       >
-                        <Icons.signal class="w-4 h-4" /> Provision
+                        <Icons.radio_tower class="w-4 h-4" /> Provision
                       </button>
                       <button
                         class="btn btn-sm btn-error"
@@ -527,7 +527,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
         <div class="collapse collapse-arrow bg-base-200 mb-2">
           <input type="checkbox" />
           <div class="collapse-title font-medium">
-            <Icons.question_mark_circle class="w-5 h-5 inline mr-2" /> How to factory reset a scanner
+            <Icons.circle_question_mark class="w-5 h-5 inline mr-2" /> How to factory reset a scanner
           </div>
           <div class="collapse-content">
             <div class="prose prose-sm max-w-none pt-2">
@@ -548,7 +548,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
         <div class="collapse collapse-arrow bg-base-200">
           <input type="checkbox" />
           <div class="collapse-title font-medium">
-            <Icons.information_circle class="w-5 h-5 inline mr-2" /> API Information
+            <Icons.info class="w-5 h-5 inline mr-2" /> API Information
           </div>
           <div class="collapse-content">
             <div class="prose prose-sm max-w-none pt-2">
@@ -595,7 +595,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
         <div class="space-y-4">
           <%!-- Instructions --%>
           <div class="alert alert-info">
-            <Icons.information_circle class="w-5 h-5" />
+            <Icons.info class="w-5 h-5" />
             <div>
               <p class="font-semibold">Put the scanner in provisioning mode</p>
               <p class="text-sm">The LED should be pulsing cyan. Hold BOOT for 5s during power-on to reset.</p>
@@ -647,11 +647,11 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
           <div class="flex gap-2">
             <%= if not @ble_connected do %>
               <button class="btn btn-primary" phx-click="ble_connect">
-                <Icons.signal class="w-4 h-4" /> Connect via Bluetooth
+                <Icons.radio_tower class="w-4 h-4" /> Connect via Bluetooth
               </button>
             <% else %>
               <button class="btn btn-success" phx-click="ble_provision">
-                <Icons.arrow_up_tray class="w-4 h-4" /> Send Configuration
+                <Icons.upload class="w-4 h-4" /> Send Configuration
               </button>
               <button class="btn btn-ghost" phx-click="ble_disconnect">
                 Disconnect

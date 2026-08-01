@@ -4,7 +4,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
   alias Lanpartyseating.PubSub
   alias Lanpartyseating.SeatMapsLogic
   alias Lanpartyseating.TournamentsLogic
-  alias LanpartyseatingWeb.Components.Icons
   alias LanpartyseatingWeb.Components.SeatMap
   alias LanpartyseatingWeb.Components.SettingsNav
 
@@ -265,189 +264,191 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
             </div>
           </div>
 
-          <div class="space-y-4">
-            <SeatMap.canvas id="editor-seat-map" hook="SeatMapEditor" payload={@map_payload} mode="editor" class="min-h-[60vh]" stage_class="h-[60vh]" phx-ignore>
-              <:toolbar with_zoom_buttons>
-                <div class="mx-1 h-4 w-px bg-base-300"></div>
-                <div class="flex flex-wrap gap-1">
-                  <button type="button" data-seat-map-command="add-seat" class="btn btn-xs btn-success gap-1">
-                    <Icons.plus class="w-3 h-3" /> Seat
-                  </button>
-                  <button type="button" data-seat-map-command="add-table" class="btn btn-xs btn-info gap-1">
-                    <Icons.plus class="w-3 h-3" /> Table
-                  </button>
-                  <button type="button" data-seat-map-command="add-label" class="btn btn-xs btn-warning gap-1">
-                    <Icons.plus class="w-3 h-3" /> Label
-                  </button>
-                </div>
-                <div class="mx-1 h-4 w-px bg-base-300"></div>
-                <div class="flex flex-wrap gap-1">
-                  <button type="button" data-seat-map-command="delete-selection" class="btn btn-xs btn-error" title="Delete selection">
-                    <Icons.trash class="w-4 h-4" />
-                  </button>
-                </div>
-                <div class="mx-1 h-4 w-px bg-base-300"></div>
-                <div class="flex flex-wrap gap-1">
-                  <button type="button" data-seat-map-command="undo" class="btn btn-xs" title="Undo (Ctrl+Z)">↶</button>
-                  <button type="button" data-seat-map-command="redo" class="btn btn-xs" title="Redo (Ctrl+Shift+Z)">↷</button>
-                </div>
-                <div class="mx-1 h-4 w-px bg-base-300"></div>
-                <div class="flex flex-wrap gap-1">
-                  <button type="button" phx-click="reset_draft" class="btn btn-xs" title="Revert to saved">
-                    <Icons.arrow_path class="w-4 h-4" /> Revert
-                  </button>
-                  <button type="button" data-seat-map-command="save-draft" class="btn btn-xs btn-success">
-                    <Icons.cloud_arrow_up class="w-4 h-4" /> Save
-                  </button>
-                  <button type="button" data-seat-map-command="publish-preview" class="btn btn-xs btn-warning">
-                    <Icons.rocket_launch class="w-4 h-4" /> Publish
-                  </button>
-                </div>
-              </:toolbar>
+          <SeatMap.canvas id="editor-seat-map" hook="SeatMapEditor" payload={@map_payload} mode="editor" class="flex-1 min-h-100" stage_class="h-full" phx-ignore>
+            <:toolbar with_zoom_buttons>
+              <div class="flex flex-wrap gap-1">
+                <button type="button" data-seat-map-command="add-seat" class="btn btn-xs btn-success gap-1">
+                  <Icons.plus class="w-3 h-3" /> Seat
+                </button>
+                <button type="button" data-seat-map-command="add-table" class="btn btn-xs btn-info gap-1">
+                  <Icons.plus class="w-3 h-3" /> Table
+                </button>
+                <button type="button" data-seat-map-command="add-label" class="btn btn-xs btn-warning gap-1">
+                  <Icons.plus class="w-3 h-3" /> Label
+                </button>
+              </div>
+              <div class="mini-separator"></div>
+              <div class="flex flex-wrap gap-1">
+                <button type="button" data-seat-map-command="delete-selection" class="btn btn-xs btn-error" title="Delete selection">
+                  <Icons.trash class="w-4 h-4" />
+                </button>
+              </div>
+              <div class="mini-separator"></div>
+              <div class="flex flex-wrap gap-1">
+                <button type="button" data-seat-map-command="undo" class="btn btn-xs" title="Undo (Ctrl+Z)">
+                  <Icons.undo class="w-4 h-4"/>
+                </button>
+                <button type="button" data-seat-map-command="redo" class="btn btn-xs" title="Redo (Ctrl+Shift+Z)">
+                  <Icons.redo class="w-4 h-4"/>
+                </button>
+              </div>
+              <div class="mini-separator"></div>
+              <div class="flex flex-wrap gap-1">
+                <button type="button" phx-click="reset_draft" class="btn btn-xs" title="Revert to saved">
+                  <Icons.undo_2 class="w-4 h-4" /> Revert
+                </button>
+                <button type="button" data-seat-map-command="save-draft" class="btn btn-xs btn-success">
+                  <Icons.save class="w-4 h-4" /> Save
+                </button>
+                <button type="button" data-seat-map-command="publish-preview" class="btn btn-xs btn-warning" phx-disable-with="Publishing...">
+                  <Icons.send class="w-4 h-4" /> Publish
+                </button>
+              </div>
+            </:toolbar>
 
-              <:details :if={@selected_seat}>
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between">
-                    <span class="text-tiny uppercase tracking-[0.15em] text-base-content/60">Selected</span>
-                    <button type="button" phx-click="clear_seat_selection" class="btn btn-xs btn-ghost btn-circle">
-                      <Icons.x class="w-4 h-4" />
-                    </button>
-                  </div>
-                  <h3 class="text-lg font-bold text-base-content">{@selected_seat["label"]}</h3>
-                  <div class="form-control">
-                    <label class="label py-1">
-                      <span class="label-text text-tiny uppercase text-base-content/60">Label / Étiquette</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="label"
-                      value={@selected_seat["label"]}
-                      class="input input-bordered input-sm w-full bg-base-100 text-base-content"
-                      placeholder="Seat label"
-                      phx-blur="update_seat_label"
-                    />
-                  </div>
-                  <div class="grid grid-cols-2 gap-2 text-tiny">
-                    <div>
-                      <span class="text-base-content/60">Status</span>
-                      <span class="ml-1 font-mono text-success">{@selected_seat["status"]}</span>
-                    </div>
-                    <div>
-                      <span class="text-base-content/60">ID</span>
-                      <span class="ml-1 font-mono text-base-content">{@selected_seat["seat_slot_id"]}</span>
-                    </div>
-                  </div>
-                  <p class="text-xs text-base-content/50">Click elsewhere to deselect / Cliquez ailleurs pour désélectionner</p>
+            <:details :if={@selected_seat}>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-tiny uppercase tracking-[0.15em] text-base-content/60">Selected</span>
+                  <button type="button" phx-click="clear_seat_selection" class="btn btn-xs btn-ghost btn-circle">
+                    <Icons.x class="w-4 h-4" />
+                  </button>
                 </div>
-              </:details>
-            </SeatMap.canvas>
-
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-                <h3 class="text-sm font-semibold text-base-content mb-3 flex items-center gap-2">
-                  <Icons.arrow_up_tray class="w-4 h-4" /> Background
-                </h3>
-                <.form for={%{}} as={:background} phx-submit="save_background" class="space-y-2">
-                  <select name="background[kind]" class="select select-bordered select-sm w-full bg-base-100 text-base-content/70">
-                    <option value="none" selected={@background_kind == "none"}>None</option>
-                    <option value="svg" selected={@background_kind == "svg"}>SVG</option>
-                    <option value="image" selected={@background_kind == "image"}>Image URL</option>
-                  </select>
+                <h3 class="text-lg font-bold text-base-content">{@selected_seat["label"]}</h3>
+                <div class="form-control">
+                  <label class="label py-1">
+                    <span class="label-text text-tiny uppercase text-base-content/60">Label / Étiquette</span>
+                  </label>
                   <input
-                    name="background[value]"
-                    value={@background_value}
-                    class="input input-bordered input-sm w-full bg-base-100 text-base-content/70"
-                    placeholder="SVG or image URL"
+                    type="text"
+                    name="label"
+                    value={@selected_seat["label"]}
+                    class="input input-bordered input-sm w-full bg-base-100 text-base-content"
+                    placeholder="Seat label"
+                    phx-blur="update_seat_label"
                   />
-                  <button type="submit" class="btn btn-sm w-full btn-ghost text-warning hover:bg-warning/10">Set</button>
-                </.form>
-              </div>
-
-              <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-                <h3 class="text-sm font-semibold text-base-content mb-3 flex items-center gap-2">
-                  <Icons.users class="w-4 h-4" /> Tournament Teams
-                </h3>
-                <div class="space-y-2 mb-3 max-h-32 overflow-y-auto">
-                  <%= for assignment <- @map_payload["team_assignments"] || [] do %>
-                    <div class="flex items-center justify-between gap-2 rounded border border-base-300 bg-base-100 px-2 py-1.5">
-                      <div class="min-w-0">
-                        <p class="text-sm font-medium text-base-content truncate">{assignment["team_name"]}</p>
-                        <p class="text-xs text-base-content/60 truncate">{assignment["tournament_name"]}</p>
-                      </div>
-                      <button
-                        type="button"
-                        phx-click="remove_team_assignment"
-                        phx-value-group_id={assignment["group_id"]}
-                        phx-value-tournament_id={assignment["tournament_id"]}
-                        class="btn btn-xs btn-ghost btn-square text-error"
-                      >
-                        <Icons.x class="w-3 h-3" />
-                      </button>
-                    </div>
-                  <% end %>
-                  <%= if Enum.empty?(@map_payload["team_assignments"] || []) do %>
-                    <p class="text-xs text-base-content/50">No team labels</p>
-                  <% end %>
                 </div>
-                <.form for={%{}} as={:team_assignment} phx-submit="assign_team" class="space-y-2">
-                  <select name="team_assignment[group_id]" class="select select-bordered select-sm w-full bg-base-100 text-base-content/70">
-                    <%= for group <- @map_payload["groups"] || [] do %>
-                      <option value={group["id"]} selected={@team_assignment_form["group_id"] == group["id"]}>{group["name"]}</option>
-                    <% end %>
-                  </select>
-                  <div class="flex gap-2">
-                    <input
-                      name="team_assignment[team_name]"
-                      value={@team_assignment_form["team_name"]}
-                      class="input input-bordered input-sm flex-1 bg-base-100 text-base-content/70"
-                      placeholder="Name"
-                    />
-                    <input
-                      name="team_assignment[color]"
-                      value={@team_assignment_form["color"]}
-                      class="input input-bordered input-sm w-20 bg-base-100 text-base-content/70"
-                      placeholder="#2563eb"
-                    />
+                <div class="grid grid-cols-2 gap-2 text-tiny">
+                  <div>
+                    <span class="text-base-content/60">Status</span>
+                    <span class="ml-1 font-mono text-success">{@selected_seat["status"]}</span>
                   </div>
-                  <button type="submit" class="btn btn-sm w-full btn-ghost text-success hover:bg-success/10">Add</button>
+                  <div>
+                    <span class="text-base-content/60">ID</span>
+                    <span class="ml-1 font-mono text-base-content">{@selected_seat["seat_slot_id"]}</span>
+                  </div>
+                </div>
+                <%!-- <p class="text-xs text-base-content/50">Click elsewhere to deselect / Cliquez ailleurs pour désélectionner</p> --%>
+              </div>
+            </:details>
+          </SeatMap.canvas>
+
+          <%!-- Bottom panels --%>
+          <div class="grid gap-4 shrink-0 md:grid-cols-2 lg:grid-cols-3">
+            <div class="rounded-lg border border-base-300 bg-base-200 p-4">
+              <h3 class="text-sm font-semibold text-base-content mb-3 flex items-center gap-2">
+                <Icons.upload class="w-4 h-4" /> Background
+              </h3>
+              <.form for={%{}} as={:background} phx-submit="save_background" class="space-y-2">
+                <select name="background[kind]" class="select select-bordered select-sm w-full bg-base-100 text-base-content/70">
+                  <option value="none" selected={@background_kind == "none"}>None</option>
+                  <option value="svg" selected={@background_kind == "svg"}>SVG</option>
+                  <option value="image" selected={@background_kind == "image"}>Image URL</option>
+                </select>
+                <input
+                  name="background[value]"
+                  value={@background_value}
+                  class="input input-bordered input-sm w-full bg-base-100 text-base-content/70"
+                  placeholder="SVG or image URL"
+                />
+                <button type="submit" class="btn btn-sm w-full btn-ghost text-warning hover:bg-warning/10">Set</button>
+              </.form>
+            </div>
+
+            <div class="rounded-lg border border-base-300 bg-base-200 p-4">
+              <h3 class="text-sm font-semibold text-base-content mb-3 flex items-center gap-2">
+                <Icons.users class="w-4 h-4" /> Tournament Teams
+              </h3>
+              <div class="space-y-2 mb-3 max-h-32 overflow-y-auto">
+                <%= for assignment <- @map_payload.team_assignments || [] do %>
+                  <div class="flex items-center justify-between gap-2 rounded border border-base-300 bg-base-100 px-2 py-1.5">
+                    <div class="min-w-0">
+                      <p class="text-sm font-medium text-base-content truncate">{assignment.team_name}</p>
+                      <p class="text-xs text-base-content/60 truncate">{assignment.tournament_name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      phx-click="remove_team_assignment"
+                      phx-value-group_id={assignment.group_id}
+                      phx-value-tournament_id={assignment.tournament_id}
+                      class="btn btn-xs btn-ghost btn-square text-error"
+                    >
+                      <Icons.x class="w-3 h-3" />
+                    </button>
+                  </div>
+                <% end %>
+                <%= if Enum.empty?(@map_payload.team_assignments || []) do %>
+                  <p class="text-xs text-base-content/50">No team labels</p>
+                <% end %>
+              </div>
+              <.form for={%{}} as={:team_assignment} phx-submit="assign_team" class="space-y-2">
+                <select name="team_assignment[group_id]" class="select select-bordered select-sm w-full bg-base-100 text-base-content/70">
+                  <%= for group <- @map_payload.groups || [] do %>
+                    <option value={group.id} selected={@team_assignment_form["group_id"] == group.id}>{group.name}</option>
+                  <% end %>
+                </select>
+                <div class="flex gap-2">
+                  <input
+                    name="team_assignment[team_name]"
+                    value={@team_assignment_form["team_name"]}
+                    class="input input-bordered input-sm flex-1 bg-base-100 text-base-content/70"
+                    placeholder="Name"
+                  />
+                  <input
+                    name="team_assignment[color]"
+                    value={@team_assignment_form["color"]}
+                    class="input input-bordered input-sm w-20 bg-base-100 text-base-content/70"
+                    placeholder="#2563eb"
+                  />
+                </div>
+                <button type="submit" class="btn btn-sm w-full btn-ghost text-success hover:bg-success/10">Add</button>
+              </.form>
+            </div>
+
+            <div class="rounded-lg border border-base-300 bg-base-200 p-4">
+              <h3 class="text-sm font-semibold text-base-content mb-3 flex items-center gap-2">
+                <Icons.refresh_cw class="w-4 h-4" /> Import / Export
+              </h3>
+              <div class="space-y-2">
+                <button
+                  type="button"
+                  phx-click="copy_export_json"
+                  class="btn btn-sm w-full btn-ghost text-base-content/70 hover:bg-base-content/10"
+                >
+                  Copy JSON to clipboard
+                </button>
+                <.form for={%{}} as={:import} phx-submit="import_json">
+                  <input
+                    type="hidden"
+                    name="import[json]"
+                    value={@import_json}
+                  />
+                  <button type="submit" class="btn btn-sm w-full btn-ghost text-info hover:bg-info/10">
+                    Reset from JSON
+                  </button>
                 </.form>
               </div>
-
-              <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-                <h3 class="text-sm font-semibold text-base-content mb-3 flex items-center gap-2">
-                  <Icons.refresh class="w-4 h-4" /> Import / Export
-                </h3>
-                <div class="space-y-2">
-                  <button
-                    type="button"
-                    phx-click="copy_export_json"
-                    class="btn btn-sm w-full btn-ghost text-base-content/70 hover:bg-base-content/10"
-                  >
-                    Copy JSON to clipboard
-                  </button>
-                  <.form for={%{}} as={:import} phx-submit="import_json">
-                    <input
-                      type="hidden"
-                      name="import[json]"
-                      value={@import_json}
-                    />
-                    <button type="submit" class="btn btn-sm w-full btn-ghost text-info hover:bg-info/10">
-                      Reset from JSON
-                    </button>
-                  </.form>
-                </div>
-                <div class="mt-3">
-                  <details class="group">
-                    <summary class="cursor-pointer text-xs text-base-content/50 hover:text-base-content/70">
-                      Show raw JSON
-                    </summary>
-                    <textarea
-                      data-seat-map-export-for="editor-seat-map"
-                      class="textarea textarea-bordered mt-2 h-32 w-full bg-base-100 font-mono text-xs text-base-content/70"
-                      readonly
-                    >{@export_json}</textarea>
-                  </details>
-                </div>
+              <div class="mt-3">
+                <details class="group">
+                  <summary class="cursor-pointer text-xs text-base-content/50 hover:text-base-content/70">
+                    Show raw JSON
+                  </summary>
+                  <textarea
+                    data-seat-map-export-for="editor-seat-map"
+                    class="textarea textarea-bordered mt-2 h-32 w-full bg-base-100 font-mono text-xs text-base-content/70"
+                    readonly
+                  >{@export_json}</textarea>
+                </details>
               </div>
             </div>
           </div>

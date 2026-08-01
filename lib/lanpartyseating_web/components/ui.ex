@@ -7,7 +7,7 @@ defmodule LanpartyseatingWeb.Components.UI do
              """
   use Phoenix.Component
   import LanpartyseatingWeb.Helpers
-  alias LanpartyseatingWeb.Components.Icons
+  use LanpartyseatingWeb.Components.Icons
 
   # ============================================================================
   # Station Legend Component

@@ -10,9 +10,7 @@ defmodule LanpartyseatingWeb.Components.StationModal do
   single shared modal, which is controlled via LiveView assigns for proper
   integration with Phoenix LiveView's lifecycle.
   """
-  use Phoenix.Component
-  import LanpartyseatingWeb.Components.UI, only: [countdown: 1]
-  alias LanpartyseatingWeb.Components.Icons
+  use LanpartyseatingWeb, :html
 
   # ============================================================================
   # Station Button Component
@@ -159,7 +157,7 @@ defmodule LanpartyseatingWeb.Components.StationModal do
       <%= if @duplicate_warning do %>
         <%!-- Duplicate reservation warning --%>
         <div class="alert alert-warning mb-4">
-          <Icons.exclamation_triangle class="shrink-0 h-6 w-6" />
+          <Icons.triangle_alert class="shrink-0 h-6 w-6" />
           <div>
             <p class="font-bold">
               This badge already has an active reservation at station {@duplicate_warning.station_number}!

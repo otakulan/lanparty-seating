@@ -2,10 +2,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
   @moduledoc """
   Shared sidebar navigation component for settings pages.
   """
-  use Phoenix.Component
-  use LanpartyseatingWeb, :verified_routes
-
-  alias LanpartyseatingWeb.Components.Icons
+  use LanpartyseatingWeb, :html
 
   @doc """
   Renders the settings sidebar navigation.
@@ -31,7 +28,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
           navigate={~p"/settings/seat-map"}
           class={["flex items-center gap-3", @current_page == :seat_map && "active"]}
         >
-          <Icons.squares_2x2 class="w-5 h-5" />
+          <Icons.columns_3_cog class="w-5 h-5" />
           <span>Seat Map Editor</span>
         </.link>
       </li>
@@ -63,7 +60,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
             navigate={~p"/settings/badges"}
             class={["flex items-center gap-3", @current_page == :badges && "active"]}
           >
-            <Icons.identification class="w-5 h-5" />
+            <Icons.id_card_lanyard class="w-5 h-5" />
             <span>Badges</span>
           </.link>
         </li>
@@ -72,7 +69,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
             navigate={~p"/settings/scanners"}
             class={["flex items-center gap-3", @current_page == :scanners && "active"]}
           >
-            <Icons.qr_code class="w-5 h-5" />
+            <Icons.scan_barcode class="w-5 h-5" />
             <span>Scanners</span>
           </.link>
         </li>

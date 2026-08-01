@@ -405,7 +405,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
             class="btn btn-primary"
             phx-click="open_import_modal"
           >
-            <Icons.arrow_up_tray class="w-4 h-4" /> Import CSV
+            <Icons.upload class="w-4 h-4" /> Import CSV
           </button>
         </div>
       </div>
@@ -528,7 +528,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
           </div>
         <% else %>
           <div class="alert alert-warning mb-4">
-            <Icons.exclamation_triangle class="w-5 h-5" />
+            <Icons.triangle_alert class="w-5 h-5" />
             <div>
               <p class="font-semibold">Warning: Import will replace ALL existing badges</p>
               <p class="text-sm">Admin status and ban flags will be reset. Make note of admin badges before importing.</p>
@@ -575,7 +575,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
 
               <div class="flex gap-2">
                 <button type="button" class="btn btn-error" phx-click="confirm_import">
-                  <Icons.exclamation_triangle class="w-4 h-4" /> Replace All & Import
+                  <Icons.triangle_alert class="w-4 h-4" /> Replace All & Import
                 </button>
                 <button type="button" class="btn btn-ghost" phx-click="close_import_modal">
                   Cancel
@@ -597,14 +597,14 @@ defmodule LanpartyseatingWeb.Settings.BadgesLive do
 
               <%= if @upload_error do %>
                 <div class="alert alert-error">
-                  <Icons.x_circle class="w-5 h-5" />
+                  <Icons.circle_x class="w-5 h-5" />
                   <span>{@upload_error}</span>
                 </div>
               <% end %>
 
               <%= for entry <- @uploads.csv_file.entries do %>
                 <div class="flex items-center gap-2 text-sm">
-                  <Icons.arrow_up_tray class="w-4 h-4" />
+                  <Icons.upload class="w-4 h-4" />
                   <span>{entry.client_name}</span>
                   <span class="text-base-content/50">({format_file_size(entry.client_size)})</span>
                 </div>
