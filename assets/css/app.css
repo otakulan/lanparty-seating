@@ -119,3 +119,15 @@ See: https://tailwindcss.com/docs/dark-mode#using-a-data-attribute
   }
 }
 
+/* Collapse adjacent separators: hide the second when two appear consecutively */
+@layer utilities {
+  .divider {
+    & + .divider {
+      @apply hidden;
+    }
+    /* Also hide if .divider is the last child of its parent */
+    &:last-child {
+      @apply hidden;
+    }
+  }
+}
