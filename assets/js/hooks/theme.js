@@ -1,118 +1,82 @@
 import {
-  getStoredTheme,
   getCurrentTheme,
-  getThemesConfig,
-  getDefaultTheme,
   getOppositeCategoryTheme,
-  getSystemTheme,
   getEffectiveTheme,
-  updateAllToggleVisuals,
-  updateAllDropdownVisuals,
+  isDarkTheme,
   applyTheme,
   initLastUsedThemes,
-  dispatchThemeChange,
+  onThemeChange,
 } from '../theme-core.js'
 
 export const ThemeToggle = {
   mounted() {
-    this.prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
-    
     initLastUsedThemes()
-    this.initTheme()
+    this.updateVisual(getEffectiveTheme())
     this.bindEvents()
   },
 
-  initTheme() {
-    const theme = getEffectiveTheme()
-    document.documentElement.setAttribute('data-theme', theme)
-    updateAllToggleVisuals(theme)
+  // Toggled (on/checked) means that the theme is set to "dark"
+  updateVisual(theme) {
+    const dark = isDarkTheme(theme)
+    const checkbox = this.el.querySelector('.theme-controller')
+    if (checkbox) checkbox.checked = dark
+    this.el.classList.toggle('swap-active', dark)
   },
 
   bindEvents() {
     this.clickHandler = (e) => this.handleClick(e)
-    this.storageHandler = (e) => this.handleStorageChange(e)
-    this.systemThemeHandler = (e) => this.handleSystemThemeChange(e)
-    
+    this.unsubscribeTheme = onThemeChange((theme) => this.updateVisual(theme))
+
     this.el.addEventListener('click', this.clickHandler)
-    window.addEventListener('storage', this.storageHandler)
-    this.prefersDark.addEventListener('change', this.systemThemeHandler)
   },
 
   destroyed() {
     this.el.removeEventListener('click', this.clickHandler)
-    window.removeEventListener('storage', this.storageHandler)
-    this.prefersDark.removeEventListener('change', this.systemThemeHandler)
+    if (this.unsubscribeTheme) this.unsubscribeTheme()
   },
 
   handleClick(event) {
     event.preventDefault()
     event.stopPropagation()
-    
+
     const currentTheme = getCurrentTheme()
     const nextTheme = getOppositeCategoryTheme(currentTheme)
-    
+
     applyTheme(nextTheme)
-  },
-
-  handleStorageChange(event) {
-    if (event.key !== 'theme' || !event.newValue) return
-    
-    document.documentElement.setAttribute('data-theme', event.newValue)
-    updateAllToggleVisuals(event.newValue)
-    dispatchThemeChange(event.newValue)
-  },
-
-  handleSystemThemeChange() {
-    if (getStoredTheme()) return
-    
-    const theme = getSystemTheme()
-    document.documentElement.setAttribute('data-theme', theme)
-    updateAllToggleVisuals(theme)
-    dispatchThemeChange(theme)
   },
 }
 
 export const ThemeDropdown = {
   mounted() {
-    initLastUsedThemes()
-    const theme = getEffectiveTheme()
-    this.setCurrentRadio(theme)
+    this.updateVisual(getEffectiveTheme())
     this.bindEvents()
   },
 
-  setCurrentRadio(theme) {
-    this.el.querySelectorAll('input[type="radio"]').forEach(radio => {
+  updateVisual(theme) {
+    this.el.querySelectorAll('input[type="radio"]').forEach((radio) => {
       radio.checked = radio.value === theme
     })
   },
 
   bindEvents() {
     this.changeHandler = (e) => this.handleChange(e)
-    this.storageHandler = (e) => this.handleStorageChange(e)
-    
+    this.unsubscribeTheme = onThemeChange((theme) => this.updateVisual(theme))
+
     this.el.addEventListener('change', this.changeHandler)
-    window.addEventListener('storage', this.storageHandler)
   },
 
   destroyed() {
     this.el.removeEventListener('change', this.changeHandler)
-    window.removeEventListener('storage', this.storageHandler)
+    if (this.unsubscribeTheme) this.unsubscribeTheme()
   },
 
   handleChange(event) {
     if (event.target.type !== 'radio') return
-    
-    const theme = event.target.value
-    applyTheme(theme)
-    
-    // Close the dropdown after selection
-    this.el.removeAttribute('open')
-  },
 
-  handleStorageChange(event) {
-    if (event.key !== 'theme' || !event.newValue) return
-    this.setCurrentRadio(event.newValue)
-    dispatchThemeChange(event.newValue)
+    applyTheme(event.target.value)
+
+    const panel = this.el.querySelector('[popover]')
+    if (panel?.matches(':popover-open')) panel.hidePopover()
   },
 }
 

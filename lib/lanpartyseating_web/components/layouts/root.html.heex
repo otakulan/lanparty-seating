@@ -21,6 +21,7 @@
       (function() {
         var theme = ThemeCore.getEffectiveTheme();
         document.documentElement.setAttribute('data-theme', theme);
+        ThemeCore.initGlobalThemeListeners();
       })();
     </script>
 

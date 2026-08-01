@@ -1,25 +1,25 @@
 export function getStoredTheme() {
-  return localStorage.getItem('theme')
+  return localStorage.theme
 }
 
 export function setStoredTheme(theme) {
-  localStorage.setItem('theme', theme)
+  localStorage.theme = theme
 }
 
 export function getLastLightTheme() {
-  return localStorage.getItem('lastLightTheme')
+  return localStorage.lastLightTheme
 }
 
 export function setLastLightTheme(theme) {
-  localStorage.setItem('lastLightTheme', theme)
+  localStorage.lastLightTheme = theme
 }
 
 export function getLastDarkTheme() {
-  return localStorage.getItem('lastDarkTheme')
+  return localStorage.lastDarkTheme
 }
 
 export function setLastDarkTheme(theme) {
-  localStorage.setItem('lastDarkTheme', theme)
+  localStorage.lastDarkTheme = theme
 }
 
 export function getCurrentTheme() {
@@ -33,7 +33,7 @@ export function setCurrentTheme(theme) {
 export function getThemesMeta() {
   const meta = document.querySelector('meta[name="themes"]')
   if (!meta) return null
-  
+
   try {
     return JSON.parse(meta.content)
   } catch {
@@ -44,7 +44,7 @@ export function getThemesMeta() {
 export function getThemesConfig() {
   const meta = getThemesMeta()
   if (meta) return meta
-  
+
   return { light: ['light'], dark: ['dark'] }
 }
 
@@ -100,17 +100,17 @@ export function getSystemTheme() {
 export function getEffectiveTheme() {
   const stored = getStoredTheme()
   if (stored) return stored
-  
+
   const lastLight = getLastLightTheme()
   const lastDark = getLastDarkTheme()
-  
+
   if (lastLight || lastDark) {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     if (isDark && lastDark) return lastDark
     if (!isDark && lastLight) return lastLight
     return isDark ? getDefaultTheme('dark') : getDefaultTheme('light')
   }
-  
+
   return getSystemTheme()
 }
 
@@ -118,26 +118,9 @@ export function isDarkTheme(theme) {
   return getThemeCategory(theme) === 'dark'
 }
 
-export function updateAllToggleVisuals(theme) {
-  const dark = isDarkTheme(theme)
-  document.querySelectorAll('[phx-hook="ThemeToggle"]').forEach(el => {
-    const checkbox = el.querySelector('.theme-controller')
-    if (checkbox) checkbox.checked = dark
-    el.classList.toggle('swap-active', dark)
-  })
-}
-
-export function updateAllDropdownVisuals(theme) {
-  document.querySelectorAll('[phx-hook="ThemeDropdown"]').forEach(el => {
-    el.querySelectorAll('input[type="radio"]').forEach(radio => {
-      radio.checked = radio.value === theme
-    })
-  })
-}
-
 export function onThemeChange(callback) {
   if (typeof window === 'undefined') return () => {}
-  
+
   const handler = (e) => callback(e.detail.theme, e.detail)
   window.addEventListener('lanparty:themechange', handler)
   return () => window.removeEventListener('lanparty:themechange', handler)
@@ -145,7 +128,7 @@ export function onThemeChange(callback) {
 
 export function dispatchThemeChange(theme) {
   if (typeof window === 'undefined') return
-  
+
   const category = getThemeCategory(theme)
   window.dispatchEvent(new CustomEvent('lanparty:themechange', {
     detail: {
@@ -160,15 +143,13 @@ export function applyTheme(theme) {
   setCurrentTheme(theme)
   setStoredTheme(theme)
   setLastUsedTheme(theme)
-  updateAllToggleVisuals(theme)
-  updateAllDropdownVisuals(theme)
   dispatchThemeChange(theme)
 }
 
 export function initLastUsedThemes() {
   const config = getThemesConfig()
   const currentTheme = getStoredTheme()
-  
+
   if (currentTheme) {
     setLastUsedTheme(currentTheme)
   } else {
@@ -184,4 +165,25 @@ export function initLastUsedThemes() {
 export function initTheme() {
   const theme = getEffectiveTheme()
   setCurrentTheme(theme)
+}
+
+export function initGlobalThemeListeners() {
+  if (typeof window === 'undefined') return
+
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
+
+  prefersDark.addEventListener('change', () => {
+    if (getStoredTheme()) return
+
+    const theme = getSystemTheme()
+    setCurrentTheme(theme)
+    dispatchThemeChange(theme)
+  })
+
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'theme' || !e.newValue) return
+
+    setCurrentTheme(e.newValue)
+    dispatchThemeChange(e.newValue)
+  })
 }
