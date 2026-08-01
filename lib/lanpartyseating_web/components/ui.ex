@@ -628,48 +628,4 @@ defmodule LanpartyseatingWeb.Components.UI do
     </label>
     """
   end
-
-  @doc """
-       Renders a theme dropdown with grouped light/dark theme options.
-
-       Uses a meta tag with name="themes" to determine available themes.
-       Format: `{"light": ["light"], "dark": ["dark"]}`
-
-       ## Examples
-
-           <.theme_dropdown />
-           <.theme_dropdown class="mt-2" />
-       """
-  attr :class, :string, default: ""
-  attr :id, :string, default: "theme-dropdown"
-
-  def theme_dropdown(assigns) do
-    ~H"""
-    <details id={@id} phx-hook="ThemeDropdown">
-      <summary class="btn-ghost rounded-lg">
-        <Icons.swatch class="w-5 h-5" />
-      </summary>
-      <ul class="dropdown-content z-50 menu p-2 shadow-lg bg-base-200 rounded-box w-40">
-        <li class="menu-title">
-          <span class="text-xs opacity-60">Light</span>
-        </li>
-        <li>
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="theme" value="light" class="radio radio-sm radio-primary" />
-            <span>Light</span>
-          </label>
-        </li>
-        <li class="menu-title mt-2">
-          <span class="text-xs opacity-60">Dark</span>
-        </li>
-        <li>
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="theme" value="dark" class="radio radio-sm radio-primary" />
-            <span>Dark</span>
-          </label>
-        </li>
-      </ul>
-    </details>
-    """
-  end
 end

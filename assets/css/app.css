@@ -21,6 +21,13 @@ See: https://tailwindcss.com/docs/dark-mode#using-a-data-attribute
 */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
+@utility h-fill {
+  height: 100%;                     /* Fallback 1: Standard percentage */
+  height: -moz-available;           /* Fallback 2: Old Firefox */
+  height: -webkit-fill-available;   /* Fallback 3: WebKit/Blink (Safari/Chrome) */
+  height: stretch;                  /* Target: Official modern standard */
+}
+
 /* Custom animations for LAN Party Seating */
 
 /* Subtle pulse animation for available stations */
