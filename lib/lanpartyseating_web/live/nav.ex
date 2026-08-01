@@ -6,8 +6,7 @@ defmodule LanpartyseatingWeb.Nav do
   defp public_menu do
     [
       {"Live Display", ~p"/"},
-      {"Seat Map", ~p"/map"},
-      {"Stations", ~p"/stations"},
+      {"Map", ~p"/map"},
     ]
   end
 
