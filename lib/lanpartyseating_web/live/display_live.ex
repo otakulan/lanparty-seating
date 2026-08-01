@@ -59,6 +59,10 @@ defmodule LanpartyseatingWeb.DisplayLive do
      |> push_event("seat_map_update", %{map: payload})}
   end
 
+  def handle_params(_params, _uri, socket) do
+    {:noreply, socket}
+  end
+
   def render(assigns) do
     ~H"""
     <div class="flex xl:flex-row flex-col gap-4 font-mono">
@@ -66,6 +70,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
         <SeatMap.canvas id="main-seat-map" hook="SeatMapKiosk" payload={@map_payload} mode="kiosk" pickable={@pickable} class="h-full">
           <:toolbar with_legend with_available_count={{@available_seats, @total_seats}}></:toolbar>
 
+          <%!--
           <:details>
             <div class="space-y-2">
               <div class="flex items-center gap-1.5">
@@ -75,6 +80,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
               <SeatMap.legend class="grid gap-1 [&>div]:justify-start" />
             </div>
           </:details>
+          --%>
         </SeatMap.canvas>
       </div>
 
