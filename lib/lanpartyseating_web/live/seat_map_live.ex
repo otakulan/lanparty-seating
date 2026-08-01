@@ -42,7 +42,10 @@ defmodule LanpartyseatingWeb.SeatMapLive do
 
   def handle_info({:seat_map_updated, _payload}, socket) do
     payload = load_published_payload()
-    {:noreply, socket |> assign(:map_payload, payload) |> push_event("seat_map_update", %{map: payload})}
+    socket = socket
+      |> assign(:map_payload, payload)
+      |> push_event("seat_map_update", %{map: payload})
+    {:noreply, socket}
   end
 
   def render(assigns) do
@@ -50,7 +53,7 @@ defmodule LanpartyseatingWeb.SeatMapLive do
     <div class="h-dvh bg-base-200 flex flex-col">
       <div class="flex-1 p-3 md:p-4 min-h-0 relative">
         <SeatMap.canvas id="interactive-seat-map" hook="SeatMapCanvas" payload={@map_payload} mode="view" class="h-full" phx-ignore>
-          <:toolbar with_zoom_buttons with_legend with_theme_toggle></:toolbar>
+          <:toolbar with_zoom_buttons with_legend></:toolbar>
         </SeatMap.canvas>
       </div>
 
