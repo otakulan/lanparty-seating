@@ -13,7 +13,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
     payload = load_published_payload()
     total = Enum.count(payload.seats)
-    available = Enum.count(payload.seats, &(&1["status"] == "available"))
+    available = Enum.count(payload.seats, &(&1.status == "available"))
 
     settings = SettingsLogic.get_settings()
     seat_picking_enabled = Map.get(settings, :seat_picking_enabled_in_kiosk, false)
@@ -55,32 +55,16 @@ defmodule LanpartyseatingWeb.DisplayLive do
      socket
      |> assign(:map_payload, payload)
      |> assign(:total_seats, Enum.count(payload.seats))
-     |> assign(:available_seats, Enum.count(payload.seats, &(&1["status"] == "available")))
+     |> assign(:available_seats, Enum.count(payload.seats, &(&1.status == "available")))
      |> push_event("seat_map_update", %{map: payload})}
   end
 
   def render(assigns) do
     ~H"""
-    <div class="flex flex-row font-mono">
-      <div class="flex-1 min-w-0 min-h-0 bg-base-200">
+    <div class="flex xl:flex-row flex-col gap-4 font-mono">
+      <div class="basis-3/4 grid grid-rows-1 grow min-h-[100cqh] bg-base-200">
         <SeatMap.canvas id="main-seat-map" hook="SeatMapKiosk" payload={@map_payload} mode="kiosk" pickable={@pickable} class="h-full">
-          <:toolbar with_legend>
-            <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold text-success">{@available_seats}</span>
-              <div class="flex flex-col leading-tight">
-                <span class="text-sm font-semibold text-base-content">disponibles</span>
-                <span class="text-xs text-base-content/60">available</span>
-              </div>
-            </div>
-
-            <div class="flex items-baseline gap-1 text-sm text-base-content/60">
-              <span class="font-semibold text-base-content">{@total_seats}</span>
-              <div class="flex flex-col leading-tight">
-                <span class="text-sm font-semibold text-base-content">postes</span>
-                <span class="text-xs text-base-content/60">seats</span>
-              </div>
-            </div>
-          </:toolbar>
+          <:toolbar with_legend with_available_count={{@available_seats, @total_seats}}></:toolbar>
 
           <:details>
             <div class="space-y-2">
@@ -94,46 +78,53 @@ defmodule LanpartyseatingWeb.DisplayLive do
         </SeatMap.canvas>
       </div>
 
-      <div class="w-72 border-l border-base-300 bg-base-100 overflow-y-auto flex-shrink-0">
+      <div class="basis-1/4 border-t-2 lg:border-t-0 lg:border-l-2 border-base-300 bg-base-100 overflow-y-auto shrink-0">
         <div class="p-3 space-y-3">
-          <h2 class="text-xl font-bold text-base-content mb-1">Règlements</h2>
-          <h3 class="text-base text-base-content/60 mb-3">Rules and Information</h3>
+          <div class="">
+            <h2 class="text-xl font-bold text-base-content mb-1">
+              <span>Règlements</span>
+              <span></span>
+            </h2>
+            <h3 class="text-base text-base-content/60 mb-3">Rules and Information</h3>
 
-          <ul class="space-y-2">
-            <li class="rounded border border-error/50 bg-error/10 p-2">
-              <p class="text-base font-semibold text-warning">Pas de spectateurs</p>
-              <p class="text-sm text-error">No spectators</p>
-              <p class="text-xs text-base-content/60 mt-1">Vous devez avoir une réservation pour être dans la zone.</p>
-            </li>
-            <li class="rounded border border-error/50 bg-error/10 p-2">
-              <p class="text-base font-semibold text-warning">Pas de comptes gratuits</p>
-              <p class="text-sm text-error">No free accounts</p>
-              <p class="text-xs text-base-content/60 mt-1">Vous devez posséder vos propres comptes de jeu.</p>
-            </li>
-            <li class="rounded border border-error/50 bg-error/10 p-2">
-              <p class="text-base font-semibold text-warning">Pas de OSU</p>
-              <p class="text-sm text-error">No OSU</p>
-              <p class="text-xs text-base-content/60 mt-1">Pour des raisons de droits d'auteur.</p>
-            </li>
-          </ul>
+            <ul class="space-y-2">
+              <li class="rounded border border-error/50 bg-error/10 p-2">
+                <p class="text-base font-semibold text-warning">Pas de spectateurs</p>
+                <p class="text-sm text-error">No spectators</p>
+                <p class="text-xs text-base-content/60 mt-1">Vous devez avoir une réservation pour être dans la zone.</p>
+              </li>
+              <li class="rounded border border-error/50 bg-error/10 p-2">
+                <p class="text-base font-semibold text-warning">Pas de comptes gratuits</p>
+                <p class="text-sm text-error">No free accounts</p>
+                <p class="text-xs text-base-content/60 mt-1">Vous devez posséder vos propres comptes de jeu.</p>
+              </li>
+              <li class="rounded border border-error/50 bg-error/10 p-2">
+                <p class="text-base font-semibold text-warning">Pas de OSU</p>
+                <p class="text-sm text-error">No OSU</p>
+                <p class="text-xs text-base-content/60 mt-1">Pour des raisons de droits d'auteur.</p>
+              </li>
+            </ul>
+          </div>
 
-          <h2 class="mt-4 text-xl font-bold text-base-content mb-1">Tournois</h2>
-          <h3 class="text-base text-base-content/60 mb-3">Tournaments</h3>
+          <div class="">
+            <h2 class="mt-4 text-xl font-bold text-base-content mb-1">Tournois</h2>
+            <h3 class="text-base text-base-content/60 mb-3">Tournaments</h3>
 
-          <ul class="space-y-1.5 text-sm">
-            <li class="rounded border border-base-300 bg-base-200 p-2">
-              <p class="text-base-content">Les équipes complètes seront priorisées</p>
-              <p class="text-xs text-base-content/60">Complete teams will be prioritized</p>
-            </li>
-            <li class="rounded border border-base-300 bg-base-200 p-2">
-              <p class="text-base-content">Enregistrez-vous au bureau d'information</p>
-              <p class="text-xs text-base-content/60">Register at the info desk at the entrance</p>
-            </li>
-            <li class="rounded border border-base-300 bg-base-200 p-2">
-              <p class="text-base-content">Élimination simple avec prix pour les gagnants</p>
-              <p class="text-xs text-base-content/60">Single elimination with prizes for winners</p>
-            </li>
-          </ul>
+            <ul class="space-y-1.5 text-sm">
+              <li class="rounded border border-base-300 bg-base-200 p-2">
+                <p class="text-base-content">Les équipes complètes seront priorisées</p>
+                <p class="text-xs text-base-content/60">Complete teams will be prioritized</p>
+              </li>
+              <li class="rounded border border-base-300 bg-base-200 p-2">
+                <p class="text-base-content">Enregistrez-vous au bureau d'information</p>
+                <p class="text-xs text-base-content/60">Register at the info desk at the entrance</p>
+              </li>
+              <li class="rounded border border-base-300 bg-base-200 p-2">
+                <p class="text-base-content">Élimination simple avec prix pour les gagnants</p>
+                <p class="text-xs text-base-content/60">Single elimination with prizes for winners</p>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
