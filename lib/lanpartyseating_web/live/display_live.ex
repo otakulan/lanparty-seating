@@ -65,8 +65,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def render(assigns) do
     ~H"""
-    <div class="flex xl:flex-row flex-col gap-4 font-mono">
-      <div class="basis-3/4 grid grid-rows-1 grow min-h-[100cqh] bg-base-200">
+    <div class="flex xl:flex-row flex-col gap-3 font-mono h-fill">
+      <div class="xl:basis-3/4 grid grid-rows-1 grow min-h-120 bg-base-200">
         <SeatMap.canvas id="main-seat-map" hook="SeatMapKiosk" payload={@map_payload} mode="kiosk" pickable={@pickable} class="h-full">
           <:toolbar with_legend with_available_count={{@available_seats, @total_seats}}></:toolbar>
 
@@ -84,9 +84,12 @@ defmodule LanpartyseatingWeb.DisplayLive do
         </SeatMap.canvas>
       </div>
 
-      <div class="basis-1/4 border-t-2 lg:border-t-0 lg:border-l-2 border-base-300 bg-base-100 overflow-y-auto shrink-0">
-        <div class="p-3 space-y-3">
-          <div class="">
+      <div class="divider xl:divider-horizontal max-xl:divider-vertical m-0 shrink-0"></div>
+
+      <%!-- Rules and information panel --%>
+      <div class="xl:basis-1/4 bg-base-100 overflow-y-auto shrink-0">
+        <div class="flex max-md:flex-col flex-row xl:flex-col gap-3">
+          <div class="flex-1 min-w-0 xl:flex-none">
             <h2 class="text-xl font-bold text-base-content mb-1">
               <span>Règlements</span>
               <span></span>
@@ -112,8 +115,10 @@ defmodule LanpartyseatingWeb.DisplayLive do
             </ul>
           </div>
 
-          <div class="">
-            <h2 class="mt-4 text-xl font-bold text-base-content mb-1">Tournois</h2>
+          <div class="divider max-xl:divider-horizontal xl:divider-vertical m-0 shrink-0"></div>
+
+          <div class="flex-1 min-w-0 xl:flex-none">
+            <h2 class="text-xl font-bold text-base-content mb-1">Tournois</h2>
             <h3 class="text-base text-base-content/60 mb-3">Tournaments</h3>
 
             <ul class="space-y-1.5 text-sm">
