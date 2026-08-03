@@ -13,16 +13,24 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
     * `:class` - Optional. CSS classes to apply to the container.
     * `:stage_class` - Optional. CSS classes for the stage container.
     * `:pickable` - Optional. When true, seats are clickable to show details.
+    * `:background_kind` - Optional. Background style for the canvas. One of `"none"`
+      (default), `"svg"` (renders `background_value` as a faint backdrop image), or any
+      other value interpreted by the attached hook.
+    * `:background_value` - Optional. URL/value used as the background when
+      `background_kind` is `"svg"`.
     * `:rest` - Global attributes passed through to the container.
 
   ## Slots
 
     * `:toolbar` - Optional. Content rendered in the top toolbar area.
-      - `:with_legend` - When true, includes the status legend.
+      - `:with_legend` - When true, includes the status legend (see `legend/1`, which
+        uses Lucide icons colored to match the canvas seats).
       - `:with_theme_toggle` - When true, includes the theme toggle button.
-      - `:with_zoom_buttons` - When true, includes zoom in/out buttons.
-      - `:with_available_count` - When provided, shows the count of available/total seats from a tuple like `{available, total}`.
-    * `:details` - Optional. Content rendered in the bottom details panel.
+      - `:with_zoom_buttons` - When true, includes zoom in/out and fit-to-view buttons.
+      - `:with_available_count` - When provided, shows the count of available/total seats
+        from a tuple like `{available, total}`.
+    * `:details` - Optional. Content rendered in the bottom details panel (e.g. the
+      selected seat's details).
   """
   attr :id, :string, required: true
   attr :payload, :map, default: nil
@@ -69,7 +77,7 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
         class="pointer-events-none absolute inset-x-3 top-3 z-10 flex"
       >
         <div class="pointer-events-auto flex rounded-lg border border-base-300 bg-base-100/95 px-3 py-2 shadow-xl backdrop-blur-sm">
-          <div class="flex flex-wrap items-center gap-2">
+          <div class="flex flex-wrap items-center gap-1">
             <div class="flex items-center gap-2">
               <div>
                 <h1 class="flex flex-nowrap shrink-0 gap-1 text-lg font-bold text-base-content">
@@ -79,6 +87,7 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
                 </h1>
               </div>
             </div>
+
             <div class="divider divider-horizontal m-0"></div>
 
             <%= if has_seat_count?(bar) do %>
@@ -107,10 +116,12 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
                   <Icons.move class="w-4 h-4" />
                 </button>
               </div>
-              <div class="divider divider-horizontal m-0"></div>
             <% end %>
 
+            <div class="divider divider-horizontal m-0"></div>
+
             {render_slot(@toolbar)}
+
             <div class="divider divider-horizontal m-0"></div>
 
             <%= if Map.get(bar, :with_legend, false) do %>
@@ -136,31 +147,44 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
   end
 
   @doc """
+  A status legend describing the seat (PC) states used on the seat map.
 
+  Each entry pairs a Lucide icon with its bilingual (French / English) label and
+  uses the same color coding as the canvas seats:
+
+    * Available / Disponible - `circle-check-big` (success)
+    * Occupied / Occupé - `clock` (warning)
+    * Unavailable / Hors service - `octagon-x` (error, e.g. broken hardware)
+    * Tournament / Tournoi - `trophy` (info, reserved for a tournament)
+    * Reserved / Réservé - `lock` (fuchsia, reserved for a custom reason)
+
+  ## Attributes
+
+    * `:class` - Optional. Extra CSS classes applied to the legend container.
   """
   attr :class, :string, default: nil
 
   def legend(assigns) do
     ~H"""
     <div class={["flex flex-wrap gap-2 text-tiny font-semibold uppercase text-base-content/60", @class]}>
-      <div class="flex items-baseline gap-1.5 rounded bg-success/10 px-2 py-1 border border-success/30">
-        <span class="status status-success shadow-[0_0_6px_var(--color-success)]/[0.8]"></span>
+      <div class="flex items-center gap-1.5 rounded bg-success/10 px-2 py-2 border border-success/30">
+        <Icons.circle_check_big class="w-3 h-3 text-success" />
         <span class="text-success">Disponible / Available</span>
       </div>
-      <div class="flex items-baseline gap-1.5 rounded bg-warning/10 px-2 py-1 border border-warning/30">
-        <span class="status status-warning shadow-[0_0_6px_var(--color-warning)]/[0.8]"></span>
+      <div class="flex items-center gap-1.5 rounded bg-warning/10 px-2 py-2 border border-warning/30">
+        <Icons.clock class="w-3 h-3 text-warning" />
         <span class="text-warning">Occupé / Occupied</span>
       </div>
-      <div class="flex items-baseline gap-1.5 rounded bg-error/10 px-2 py-1 border border-error/30">
-        <span class="status status-error shadow-[0_0_6px_var(--color-error)]/[0.8]"></span>
+      <div class="flex items-center gap-1.5 rounded bg-error/10 px-2 py-2 border border-error/30">
+        <Icons.octagon_x class="w-3 h-3 text-error" />
         <span class="text-error">Hors service / Unavailable</span>
       </div>
-      <div class="flex items-baseline gap-1.5 rounded bg-info/10 px-2 py-1 border border-info/30">
-        <span class="status status-info shadow-[0_0_6px_var(--color-info)]/[0.8]"></span>
+      <div class="flex items-center gap-1.5 rounded bg-info/10 px-2 py-2 border border-info/30">
+        <Icons.trophy class="w-3 h-3 text-info" />
         <span class="text-info">Tournoi / Tournament</span>
       </div>
-      <div class="flex items-baseline gap-1.5 rounded bg-fuchsia-400/10 px-2 py-1 border border-fuchsia-400/30">
-        <span class="status bg-fuchsia-400 shadow-[0_0_6px_var(--color-fuchsia-400)]/[0.6]"></span>
+      <div class="flex items-center gap-1.5 rounded bg-fuchsia-400/10 px-2 py-2 border border-fuchsia-400/30">
+        <Icons.lock class="w-3 h-3 text-fuchsia-400" />
         <span class="text-fuchsia-400">Réservé / Reserved</span>
       </div>
     </div>
