@@ -122,10 +122,11 @@ See: https://tailwindcss.com/docs/dark-mode#using-a-data-attribute
 /* Collapse adjacent separators: hide the second when two appear consecutively */
 @layer utilities {
   .divider {
-    & + .divider {
+    /* Hides the current divider if there's one after */
+    &:has(+ .divider) {
       @apply hidden;
     }
-    /* Also hide if .divider is the last child of its parent */
+    /* Hide the divider if we're the last child of our parent */
     &:last-child {
       @apply hidden;
     }
