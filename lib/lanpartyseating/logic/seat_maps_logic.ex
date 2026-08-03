@@ -1,6 +1,8 @@
 defmodule Lanpartyseating.SeatMapsLogic do
   import Ecto.Query
 
+  require Logger
+
   alias Ecto.Multi
   alias Lanpartyseating.PcAsset
   alias Lanpartyseating.PubSub
@@ -323,6 +325,11 @@ defmodule Lanpartyseating.SeatMapsLogic do
       error ->
         error
     end
+  end
+
+  def reserve_seat_slot(seat_slot_id, badge_uid) do
+    Logger.info("reserve_seat_slot seat_slot_id=#{inspect(seat_slot_id)} badge_uid=#{inspect(badge_uid)}")
+    {:ok, nil}
   end
 
   def current_pc_target_for_slot(seat_slot_id) do

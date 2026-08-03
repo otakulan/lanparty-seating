@@ -37,7 +37,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
     selected_seat =
       case SeatMapsLogic.get_seat_slot(seat_slot_id) do
-        {:ok, seat} -> stringify_map(seat)
+        {:ok, seat} -> seat
         _ -> nil
       end
 
@@ -45,7 +45,14 @@ defmodule LanpartyseatingWeb.DisplayLive do
   end
 
   def handle_event("close_modal", _params, socket) do
-    {:noreply, socket |> assign(:show_modal, false)}
+    {:noreply, close_modal(socket)}
+  end
+
+  def handle_info({:seat_reserved, _seat_slot_id}, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:info, "Poste réservé / Seat reserved")
+     |> close_modal()}
   end
 
   def handle_info({:seat_map_updated, _payload}, socket) do
@@ -61,6 +68,10 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def handle_params(_params, _uri, socket) do
     {:noreply, socket}
+  end
+
+  defp close_modal(socket) do
+    socket |> assign(:show_modal, false) |> assign(:selected_seat, nil)
   end
 
   def render(assigns) do
@@ -139,7 +150,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
         </div>
       </div>
 
-      <SeatDetailsModal.modal
+      <.live_component
+        module={SeatDetailsModal}
         id="seat-modal-kiosk"
         show={@show_modal}
         seat={@selected_seat}
@@ -151,14 +163,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   defp load_published_payload do
     case SeatMapsLogic.get_map_payload("published") do
-      {:ok, payload} -> payload
+      {:ok, payload} -> dbg(payload)
       _ -> %{width: 1920, height: 1080, meta: %{}, seats: [], objects: [], groups: [], team_assignments: []}
     end
-  end
-
-  defp stringify_map(map) when is_map(map) do
-    map
-    |> Enum.map(fn {key, value} -> {to_string(key), value} end)
-    |> Map.new()
   end
 end

@@ -29,7 +29,7 @@ defmodule LanpartyseatingWeb.SeatMapLive do
 
     selected_seat =
       case SeatMapsLogic.get_seat_slot(seat_slot_id) do
-        {:ok, seat} -> stringify_map(seat)
+        {:ok, seat} -> seat
         _ -> nil
       end
 
@@ -37,7 +37,14 @@ defmodule LanpartyseatingWeb.SeatMapLive do
   end
 
   def handle_event("close_modal", _params, socket) do
-    {:noreply, socket |> assign(:show_modal, false)}
+    {:noreply, close_modal(socket)}
+  end
+
+  def handle_info({:seat_reserved, _seat_slot_id}, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:info, "Poste réservé / Seat reserved")
+     |> close_modal()}
   end
 
   def handle_info({:seat_map_updated, _payload}, socket) do
@@ -48,20 +55,26 @@ defmodule LanpartyseatingWeb.SeatMapLive do
     {:noreply, socket}
   end
 
+  defp close_modal(socket) do
+    socket |> assign(:show_modal, false) |> assign(:selected_seat, nil)
+  end
+
   def render(assigns) do
     ~H"""
-    <div class="h-dvh bg-base-200 flex flex-col">
+    <div class="h-fill bg-base-200 flex flex-col">
       <div class="flex-1 p-3 md:p-4 min-h-0 relative">
         <SeatMap.canvas id="interactive-seat-map" hook="SeatMapCanvas" payload={@map_payload} mode="view" class="h-full" phx-ignore>
           <:toolbar with_zoom_buttons with_legend></:toolbar>
         </SeatMap.canvas>
       </div>
 
-      <SeatDetailsModal.modal
+      <.live_component
+        module={SeatDetailsModal}
         id="seat-modal"
         show={@show_modal}
         seat={@selected_seat}
         on_close="close_modal"
+        badge_input
       />
     </div>
     """
@@ -72,11 +85,5 @@ defmodule LanpartyseatingWeb.SeatMapLive do
       {:ok, payload} -> payload
       _ -> %{width: 1920, height: 1080, meta: %{}, seats: [], objects: [], groups: [], team_assignments: []}
     end
-  end
-
-  defp stringify_map(map) when is_map(map) do
-    map
-    |> Enum.map(fn {key, value} -> {to_string(key), value} end)
-    |> Map.new()
   end
 end
