@@ -27,6 +27,7 @@ export function getCurrentTheme() {
 }
 
 export function setCurrentTheme(theme) {
+  console.debug(`setCurrentTheme(${theme})`)
   document.documentElement.setAttribute('data-theme', theme)
 }
 
@@ -164,7 +165,7 @@ export function initLastUsedThemes() {
 
 export function initTheme() {
   const theme = getEffectiveTheme()
-  setCurrentTheme(theme)
+  applyTheme(theme)
 }
 
 export function initGlobalThemeListeners() {
@@ -172,12 +173,10 @@ export function initGlobalThemeListeners() {
 
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
 
-  prefersDark.addEventListener('change', () => {
-    if (getStoredTheme()) return
-
-    const theme = getSystemTheme()
-    setCurrentTheme(theme)
-    dispatchThemeChange(theme)
+  prefersDark.addEventListener('change', (event) => {
+    const theme = event.matches ? getLastUsedTheme('dark') : getLastUsedTheme('light')
+    console.info("prefers-color-scheme change, applying new theme", theme)
+    applyTheme(theme)
   })
 
   window.addEventListener('storage', (e) => {
