@@ -4,7 +4,7 @@ import { onThemeChange } from "../theme-core.js"
 import { renderGroupBounds, renderGroupLabel, renderTeamLabel } from "./seat_map_renderer"
 
 Konva.hitOnDragEnabled = true
-Konva.captureTouchEventsEnabled = true
+Konva.capturePointerEventsEnabled = true
 
 export { getThemeColors, getStatusColors }
 
@@ -160,6 +160,7 @@ export class SeatMapBase {
     this.mode = options.mode || "view"
     this.stageContainer = this.el.querySelector("[data-seat-map-stage]")
     this.state = {}
+    this.stage = null
     this.renderFrame = null
     this._cachedTheme = null
     this._cachedStatusColors = null
