@@ -8,48 +8,62 @@ export const SHADOW_BLUR = 12
 export const SHADOW_OPACITY = 0.6
 export const ACCENT_RADIUS = 3
 
+const STATUS_ICON_SIZE = 26
+
+const STATUS_ICON_PATHS = {
+  occupied: "M12 2 A10 10 0 1 0 12 22 A10 10 0 1 0 12 2 Z M12 6 L12 12 L16 14",
+  unavailable:
+    "M2.586 16.726 A2 2 0 0 1 2 15.312 V8.688 A2 2 0 0 1 2.586 7.274 L7.274 2.586 A2 2 0 0 1 8.688 2 H15.312 A2 2 0 0 1 16.726 2.586 L21.414 7.274 A2 2 0 0 1 22 8.688 V15.312 A2 2 0 0 1 21.414 16.726 L16.726 21.414 A2 2 0 0 1 15.312 22 H8.688 A2 2 0 0 1 7.274 21.414 Z M15 9 L9 15 M9 9 L15 15",
+  tournament:
+    "M10 14.66 V17 a1 1 0 0 1-1 1 2 2 0 0 0-2 2 v2 M14 14.66 V17 a1 1 0 0 0 1 1 2 2 0 0 1 2 2 v2 M17.916 10 H19.5 A2.5 2.5 0 0 0 22 7.5 V5 a1 1 0 0 0-1-1 h-3 M4 22 h16 M6 9 a6 6 0 0 0 12 0 V3 a1 1 0 0 0-1-1 H7 a1 1 0 0 0-1 1 z M6.084 10 H4.5 A2.5 2.5 0 0 1 2 7.5 V5 a1 1 0 0 1 1-1 h3",
+  reserved:
+    "M5 11 H19 A2 2 0 0 1 21 13 V20 A2 2 0 0 1 19 22 H5 A2 2 0 0 1 3 20 V13 A2 2 0 0 1 5 11 Z M7 11 V7 A5 5 0 0 1 17 7 V11"
+}
+
 export function createSeatGroup(seat, palette, theme, options = {}) {
   const { showKeyboard = true, cacheBody = true } = options
-  
+
   const group = new Konva.Group({
     x: seat.x,
     y: seat.y,
     rotation: seat.rotation,
     listening: false
   })
-  
+
   const bodyGroup = createSeatBodyGroup(palette, theme, { showKeyboard })
   if (cacheBody) {
     bodyGroup.cache()
   }
   group.add(bodyGroup)
-  
+
+  addSeatStatusIcon(group, seat, palette)
+
   group.setAttr("nodeType", "seat")
   group.setAttr("seatSlotId", seat.seat_slot_id)
-  
+
   return group
 }
 
 export function createSeatBodyGroup(palette, theme, options = {}) {
   const { showKeyboard = true } = options
-  
+
   const bodyGroup = new Konva.Group({ listening: false })
-  
+
   addSeatBody(bodyGroup, palette)
   addSeatMonitor(bodyGroup, theme)
   addSeatAccent(bodyGroup, palette)
-  
+
   if (showKeyboard) {
     addSeatKeyboard(bodyGroup, theme)
   }
-  
+
   return bodyGroup
 }
 
 function addSeatBody(group, palette) {
   const w = SEAT_WIDTH
   const h = SEAT_HEIGHT
-  
+
   group.add(new Konva.Rect({
     x: -w / 2,
     y: -h * 0.6,
@@ -72,7 +86,7 @@ function addSeatBody(group, palette) {
 function addSeatMonitor(group, theme) {
   const w = SEAT_WIDTH
   const h = SEAT_HEIGHT
-  
+
   group.add(new Konva.Rect({
     x: -w * 0.38,
     y: -h * 0.5,
@@ -89,7 +103,7 @@ function addSeatMonitor(group, theme) {
 function addSeatAccent(group, palette) {
   const w = SEAT_WIDTH
   const h = SEAT_HEIGHT
-  
+
   group.add(new Konva.Circle({
     x: w * 0.32,
     y: -h * 0.05,
@@ -102,7 +116,7 @@ function addSeatAccent(group, palette) {
 function addSeatKeyboard(group, theme) {
   const w = SEAT_WIDTH
   const h = SEAT_HEIGHT
-  
+
   group.add(new Konva.Rect({
     x: -w * 0.45,
     y: h * 0.22,
@@ -113,6 +127,29 @@ function addSeatKeyboard(group, theme) {
     stroke: theme.keyboardStroke,
     strokeWidth: 1,
     perfectDrawEnabled: false
+  }))
+}
+
+export function addSeatStatusIcon(group, seat, palette) {
+  console.debug(seat, seat.status)
+  const data = STATUS_ICON_PATHS[seat.status]
+  if (!data) return
+
+  const centerX = 0
+  const centerY = -SEAT_HEIGHT * 0.6 + (SEAT_HEIGHT * 0.75) / 2
+
+  group.add(new Konva.Path({
+    x: centerX - STATUS_ICON_SIZE / 2,
+    y: centerY - STATUS_ICON_SIZE / 2,
+    scaleX: STATUS_ICON_SIZE / 24,
+    scaleY: STATUS_ICON_SIZE / 24,
+    data,
+    stroke: palette.accent,
+    strokeWidth: 2,
+    lineCap: "round",
+    lineJoin: "round",
+    perfectDrawEnabled: false,
+    listening: false
   }))
 }
 
@@ -175,27 +212,27 @@ export function calculateBounds(seats) {
   if (!seats || seats.length === 0) {
     return { x: 0, y: 0, width: 0, height: 0 }
   }
-  
+
   const xs = seats.map(s => s.x)
   const ys = seats.map(s => s.y)
   const widths = seats.map(s => s.width)
   const heights = seats.map(s => s.height)
-  
+
   const minX = Math.min(...xs.map((x, i) => x - widths[i] / 2))
   const maxX = Math.max(...xs.map((x, i) => x + widths[i] / 2))
   const minY = Math.min(...ys.map((y, i) => y - heights[i] / 2))
   const maxY = Math.max(...ys.map((y, i) => y + heights[i] / 2))
-  
+
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
 }
 
 export function renderGroupBounds(layer, group, seats, theme) {
   const memberSeats = getMemberSeats(group, seats)
   if (memberSeats.length === 0) return
-  
+
   const bounds = calculateBounds(memberSeats)
   const color = group.color
-  
+
   const rect = new Konva.Rect({
     x: bounds.x - 12,
     y: bounds.y - 16,
@@ -210,7 +247,7 @@ export function renderGroupBounds(layer, group, seats, theme) {
     shadowForStrokeEnabled: false,
     listening: false
   })
-  
+
   layer.add(rect)
   return rect
 }
@@ -218,13 +255,13 @@ export function renderGroupBounds(layer, group, seats, theme) {
 export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
   const hasAssignment = teamAssignments.some(a => a.group_id === group.id)
   if (hasAssignment || !group.name) return
-  
+
   const memberSeats = getMemberSeats(group, seats)
   if (memberSeats.length === 0) return
-  
+
   const bounds = calculateBounds(memberSeats)
   const color = group.color
-  
+
   const text = new Konva.Text({
     text: group.name,
     fontFamily: theme.fontFamily,
@@ -233,7 +270,7 @@ export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
     fill: theme.textPrimary,
     listening: false
   })
-  
+
   const labelWidth = text.width() + 16
   const labelHeight = 20
   const labelGroup = new Konva.Group({
@@ -241,7 +278,7 @@ export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
     y: bounds.y + bounds.height / 2 - labelHeight / 2,
     listening: false
   })
-  
+
   labelGroup.add(new Konva.Rect({
     x: 0,
     y: 0,
@@ -254,22 +291,22 @@ export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
     perfectDrawEnabled: false,
     shadowForStrokeEnabled: false
   }))
-  
+
   text.position({ x: 8, y: 5 })
   labelGroup.add(text)
   layer.add(labelGroup)
-  
+
   return labelGroup
 }
 
 export function renderTeamLabel(layer, assignment, groups, seats, theme) {
   const group = groups.find(g => g.id === assignment.group_id)
   const memberSeats = getMemberSeats(group, seats)
-  
+
   const bounds = memberSeats.length > 0 ? calculateBounds(memberSeats) : null
   const x = bounds ? bounds.x + bounds.width / 2 : (assignment.label_x || 0)
   const y = bounds ? bounds.y + bounds.height / 2 - 12 : (assignment.label_y || 0)
-  
+
   const text = new Konva.Text({
     text: `${assignment.team_name} · ${assignment.tournament_name}`,
     fontFamily: theme.fontFamily,
@@ -279,7 +316,7 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
     perfectDrawEnabled: false,
     listening: false
   })
-  
+
   const width = text.width() + 20
   const height = 22
   const labelGroup = new Konva.Group({
@@ -287,7 +324,7 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
     y: y - height / 2,
     listening: false
   })
-  
+
   labelGroup.add(new Konva.Rect({
     x: 0,
     y: 0,
@@ -304,18 +341,18 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
     perfectDrawEnabled: false,
     shadowForStrokeEnabled: false
   }))
-  
+
   text.position({ x: 10, y: 6 })
   labelGroup.add(text)
   layer.add(labelGroup)
-  
+
   return labelGroup
 }
 
 export function transparentColor(hexColor, alpha) {
   const sanitized = hexColor.replace("#", "")
-  const value = sanitized.length === 3 
-    ? sanitized.split("").map(c => c + c).join("") 
+  const value = sanitized.length === 3
+    ? sanitized.split("").map(c => c + c).join("")
     : sanitized
   const r = parseInt(value.slice(0, 2), 16)
   const g = parseInt(value.slice(2, 4), 16)
@@ -346,59 +383,61 @@ export function startTimerUpdates(timerNodes, layer) {
     })
     layer.batchDraw()
   }
-  
+
   update()
   return setInterval(update, 1000)
 }
 
 export function createEditorSeatGroup(seat, palette, theme, options = {}) {
   const { showKeyboard = true, isSelected = false, cacheBody = false } = options
-  
+
   const group = new Konva.Group({
     x: seat.x,
     y: seat.y,
     rotation: seat.rotation,
     listening: true
   })
-  
+
   const bodyGroup = createEditorSeatBodyGroup(palette, theme, { showKeyboard, isSelected })
   if (cacheBody) {
     bodyGroup.cache()
   }
   group.add(bodyGroup)
-  
+
+  addSeatStatusIcon(group, seat, palette)
+
   addSeatLabel(group, seat, theme, palette, { listening: true })
-  
+
   if (isSelected) {
     addSelectionHighlight(group, theme)
   }
-  
+
   group.setAttr("nodeType", "seat")
   group.setAttr("seatSlotId", seat.seat_slot_id)
-  
+
   return group
 }
 
 export function createEditorSeatBodyGroup(palette, theme, options = {}) {
   const { showKeyboard = true, isSelected = false } = options
-  
+
   const bodyGroup = new Konva.Group({ listening: true })
-  
+
   addEditorSeatBody(bodyGroup, palette, isSelected)
   addSeatMonitor(bodyGroup, theme)
   addSeatAccent(bodyGroup, palette)
-  
+
   if (showKeyboard) {
     addSeatKeyboard(bodyGroup, theme)
   }
-  
+
   return bodyGroup
 }
 
 function addEditorSeatBody(group, palette, isSelected) {
   const w = SEAT_WIDTH
   const h = SEAT_HEIGHT
-  
+
   group.add(new Konva.Rect({
     x: -w / 2,
     y: -h * 0.6,
@@ -421,7 +460,7 @@ function addEditorSeatBody(group, palette, isSelected) {
 function addSelectionHighlight(group, theme) {
   const w = SEAT_WIDTH
   const h = SEAT_HEIGHT
-  
+
   group.add(new Konva.Rect({
     x: -w * 0.6,
     y: -h * 0.7,
