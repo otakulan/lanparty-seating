@@ -127,12 +127,16 @@ buildStage() {
       draggable: false
     })
     
-    this.groupLayer = new Konva.Layer({ listening: false })
     this.seatLayer = new Konva.Layer()
     this.objectLayer = new Konva.Layer()
     this.objectLayerFront = new Konva.Layer()
     this.dragLayer = new Konva.Layer()
-    this.overlayLayer = new Konva.Layer({ listening: false })
+    // The shared base methods (renderGroups / renderTeamLabels) draw into
+    // `groupLayer` (behind everything) and `overlayLayer` (in front). Alias them
+    // onto the existing object layers so the stage stays within Konva's
+    // recommended layer count instead of adding two more layers.
+    this.groupLayer = this.objectLayer
+    this.overlayLayer = this.objectLayerFront
     
     this.transformer = new Konva.Transformer({
       rotateEnabled: true,
@@ -146,25 +150,47 @@ buildStage() {
       boundBoxFunc: (oldBox, newBox) => {
         const scale = this.stage.scaleX() || 1
         const minSize = this.transformerMinSize()
-        
+
         if (Math.abs(newBox.width) < minSize.width * scale ||
             Math.abs(newBox.height) < minSize.height * scale) {
           return oldBox
         }
-        
-        // Transformer boxes are in screen space, the canvas bounds are not.
-        const box = getClientRect(newBox)
-        const x = (box.x - this.stage.x()) / scale
-        const y = (box.y - this.stage.y()) / scale
-        const width = box.width / scale
-        const height = box.height / scale
-        
-        if (x < 0 || y < 0 || 
-            x + width > this.state.width || 
-            y + height > this.state.height) {
+
+        // Transformer boxes are in absolute (screen) coordinates; map the box
+        // corners back into canvas (content) coordinates with the stage's own
+        // inverse transform so rotation and zoom are handled correctly. Clamp
+        // each edge independently to the canvas so resizing stops cleanly at the
+        // boundary without ever overflowing it.
+        const toContent = this.stage.getAbsoluteTransform().copy().invert()
+        const toScreen = this.stage.getAbsoluteTransform()
+        const tl = toContent.point({ x: newBox.x, y: newBox.y })
+        const br = toContent.point({ x: newBox.x + newBox.width, y: newBox.y + newBox.height })
+        const left = Math.min(tl.x, br.x)
+        const top = Math.min(tl.y, br.y)
+        const right = Math.max(tl.x, br.x)
+        const bottom = Math.max(tl.y, br.y)
+
+        const cLeft = clamp(left, 0, this.state.width)
+        const cTop = clamp(top, 0, this.state.height)
+        const cRight = clamp(right, 0, this.state.width)
+        const cBottom = clamp(bottom, 0, this.state.height)
+
+        // Degenerate (inverted) box after clamping: reject rather than produce
+        // something invalid.
+        if (cRight - cLeft < minSize.width / scale ||
+            cBottom - cTop < minSize.height / scale) {
           return oldBox
         }
-        return newBox
+
+        const newTl = toScreen.point({ x: cLeft, y: cTop })
+        const newBr = toScreen.point({ x: cRight, y: cBottom })
+        return {
+          x: newTl.x,
+          y: newTl.y,
+          width: newBr.x - newTl.x,
+          height: newBr.y - newTl.y,
+          rotation: newBox.rotation
+        }
       }
     })
     
@@ -175,12 +201,10 @@ buildStage() {
     // cover a seat and steal its clicks), labels in front so they stay selectable
     // and editable. Either can be moved to the other layer via Bring to front /
     // Send to back.
-    this.stage.add(this.groupLayer)
     this.stage.add(this.objectLayer)
     this.stage.add(this.seatLayer)
     this.stage.add(this.objectLayerFront)
     this.stage.add(this.dragLayer)
-    this.stage.add(this.overlayLayer)
     
     this.stage.on("wheel", e => this.handleWheel(e))
     this.stage.on("touchmove", e => this.handleTouchMove(e))
@@ -285,6 +309,7 @@ buildStage() {
       this.stageContainer.removeEventListener("keyup", this.keyHandler.keyup)
     }
     if (this.renderFrame) cancelAnimationFrame(this.renderFrame)
+    if (this._recacheTimer) clearTimeout(this._recacheTimer)
     super.destroy()
   }
   
@@ -293,11 +318,9 @@ buildStage() {
     // its anchors, and a destroyed transformer throws on the next update().
     this.transformer.remove()
     
-    this.groupLayer.destroyChildren()
     this.seatLayer.destroyChildren()
     this.objectLayer.destroyChildren()
     this.objectLayerFront.destroyChildren()
-    this.overlayLayer.destroyChildren()
     this.dragLayer.destroyChildren()
     
     this.dragLayer.add(this.transformer)
@@ -401,6 +424,7 @@ buildStage() {
       }
       
        this.layerForObject(object).add(node)
+       node.cache({ pixelRatio: this.cachePixelRatio() })
        
        if (this.editingObjectId === id) node.hide()
        if (isLocked) this.addObjectLockBadge(object)
@@ -417,11 +441,46 @@ buildStage() {
      return [this.objectLayer, this.objectLayerFront]
    }
    
-   batchDrawObjectLayers() {
-     this.objectLayer.batchDraw()
-     this.objectLayerFront.batchDraw()
-   }
-   
+    batchDrawObjectLayers() {
+      this.objectLayer.batchDraw()
+      this.objectLayerFront.batchDraw()
+    }
+
+    // Cached nodes are rasterized at this pixel ratio so they stay crisp at the
+    // current zoom level (clamped to the max zoom to bound memory).
+    cachePixelRatio() {
+      return clamp(this.stage.scaleX() || 1, 1, this.getMaxScale())
+    }
+
+    // Re-rasterize every cached node at the current zoom after a zoom gesture
+    // settles, so shapes stay sharp without paying the vector cost per frame.
+    recacheScene() {
+      const pixelRatio = this.cachePixelRatio()
+
+      this.seatLayer.getChildren().forEach(seatGroup => {
+        const body = seatGroup.findOne(".seat-body")
+        if (body) body.cache({ pixelRatio })
+      })
+
+      this.objectLayers().forEach(layer => {
+        layer.getChildren().forEach(node => {
+          if (node.getAttr("nodeType") === "object") node.cache({ pixelRatio })
+        })
+      })
+
+      this.seatLayer.batchDraw()
+      this.batchDrawObjectLayers()
+    }
+
+    scheduleRecache() {
+      if (this._recacheTimer) clearTimeout(this._recacheTimer)
+      this._recacheTimer = setTimeout(() => {
+        this._recacheTimer = null
+        if (this.editingObjectId) return
+        this.recacheScene()
+      }, 150)
+    }
+
    addObjectLockBadge(object) {
      const holder = new Konva.Group({
        x: object.x,
@@ -498,7 +557,9 @@ buildStage() {
       const seatGroup = createEditorSeatGroup(seat, palette, theme, {
         showKeyboard: this.showKeyboard,
         isSelected,
-        isLocked
+        isLocked,
+        cacheBody: true,
+        cachePixelRatio: this.cachePixelRatio()
       })
       
       seatGroup.id(`seat-${seat.seat_slot_id}`)
@@ -673,8 +734,14 @@ buildStage() {
   // Objects are anchored top-left (unlike seats, which are centered), so clamp
   // their real bounding box - rotation included - inside the canvas.
   constrainObjectDrag(node) {
+    // Use the node's own layer as the coordinate origin: it is always an
+    // ancestor, so getClientRect returns content coordinates. Relative to a
+    // fixed layer (e.g. objectLayer) only yields content coords while the node
+    // is a descendant of it - after Bring to front the node lives on
+    // objectLayerFront, so the box would come back in screen coords and the
+    // clamp would silently stop constraining it.
     const box = node.getClientRect({
-      relativeTo: this.objectLayer,
+      relativeTo: node.getLayer(),
       skipShadow: true,
       skipStroke: true
     })
@@ -790,22 +857,42 @@ buildStage() {
     const minWidth = isText ? MIN_LABEL_WIDTH : SEAT_WIDTH
     const minHeight = isText ? MIN_LABEL_HEIGHT : SEAT_HEIGHT
     
+    const scaleX = node.scaleX()
+    const scaleY = node.scaleY()
+
     this.state.objects = this.state.objects.map(obj => {
       if (obj.id !== objectId) return obj
-      
+
       const next = {
         ...obj,
         x: Math.round(node.x()),
         y: Math.round(node.y()),
-        width: Math.max(minWidth, Math.round(node.width() * node.scaleX())),
-        height: Math.max(minHeight, Math.round(node.height() * node.scaleY())),
+        width: Math.max(minWidth, Math.round(node.width() * scaleX)),
+        height: Math.max(minHeight, Math.round(node.height() * scaleY)),
         rotation: Math.round(node.rotation())
       }
-      
+
       if (isText) next.font_size = Math.round(node.fontSize())
       return next
     })
-    node.scale({ x: 1, y: 1 })
+
+    // Bake the transformer's scale into the node's own size immediately so the
+    // live node keeps its resized look for the frame before scheduleRender
+    // rebuilds it. Without this it collapses to the pre-resize size and flashes.
+    node.scaleX(1)
+    node.scaleY(1)
+    node.width(Math.max(minWidth, Math.round(node.width() * scaleX)))
+    node.height(Math.max(minHeight, Math.round(node.height() * scaleY)))
+    // The cache was rasterized at the pre-resize geometry, so its bitmap and its
+    // internal offset no longer match the resized node - leaving a ghost of the
+    // old shape for a frame. Re-rasterize at the new geometry so the transitional
+    // frame draws correctly. A plain drag only translates the node, which keeps
+    // the cache valid, so skip this unless the transform actually scaled it.
+    if (scaleX !== 1 || scaleY !== 1) {
+      if (node.isCached()) node.clearCache()
+      node.cache({ pixelRatio: this.cachePixelRatio() })
+    }
+    node.getLayer()?.batchDraw()
     this.scheduleRender(false)
   }
   
@@ -1439,19 +1526,24 @@ buildStage() {
   addObject(type) {
     this.pushHistory()
     const theme = this.theme
-    const point = this.viewportCenter()
+    // Place at the canvas center, not the viewport center: when the canvas is
+    // larger than the viewport and panned, the viewport center maps to a point
+    // near a canvas edge, leaving no room to resize toward that edge.
     const isText = type === "text"
     const id = randomId(type)
-    
+    const halfW = isText ? 90 : 60
+    const halfH = isText ? 20 : 32
+    const point = { x: this.state.width / 2, y: this.state.height / 2 }
+
     this.state.objects = [
       ...this.state.objects,
       {
         id,
         type,
-        x: Math.round(point.x - 60),
-        y: Math.round(point.y - 30),
+        x: Math.round(point.x - halfW),
+        y: Math.round(point.y - halfH),
         width: isText ? 180 : 120,
-        height: isText ? 40 : 60,
+        height: isText ? 40 : 64,
         rotation: 0,
         // null (not undefined) so JSON keeps the keys the server normalizer expects
         font_size: isText ? DEFAULT_LABEL_FONT_SIZE : null,
@@ -1465,12 +1557,18 @@ buildStage() {
         front: isText ? true : false
       }
     ]
-    
+
+    this.ensureCanvasCenterVisible()
+
     if (!isText) {
+      const hadSeats = this.selectedSeats.size > 0
+      this.selectedSeats.clear()
+      this.selectedObjects = new Set([id])
+      if (hadSeats) this.hook.pushEvent("seat_selected", { seat: null })
       this.scheduleRender(false)
       return
     }
-    
+
     // New labels open straight into the inline editor, so render synchronously
     // to get a node to attach the textarea to.
     this.selectedSeats.clear()
@@ -1481,6 +1579,21 @@ buildStage() {
     }
     this.renderScene(false)
     this.startLabelEdit(id)
+  }
+
+  // Recenter the view on the canvas center only if it isn't already visible, so
+  // a freshly added object has room to resize in every direction without
+  // yanking the user's pan when they're already looking at the middle.
+  ensureCanvasCenterVisible() {
+    const scale = this.stage.scaleX() || 1
+    const cx = this.state.width / 2 * scale + this.stage.x()
+    const cy = this.state.height / 2 * scale + this.stage.y()
+    const margin = 40
+    const visible =
+      cx >= margin && cx <= this.stage.width() - margin &&
+      cy >= margin && cy <= this.stage.height() - margin
+
+    if (!visible) this.centerCanvas()
   }
   
   createGroupFromSelection() {
@@ -1543,6 +1656,7 @@ buildStage() {
   
   fitToStage(resetPosition) {
     super.fitToStage(resetPosition)
+    this.scheduleRecache()
   }
   
   // Editing happens inside the canvas rect, so it stays part of the viewport
@@ -1572,6 +1686,7 @@ buildStage() {
   handleWheel(event) {
     this.hideContextMenu()
     super.handleWheel(event)
+    this.scheduleRecache()
   }
   
   handleTouchMove(event) {

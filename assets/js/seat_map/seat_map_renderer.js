@@ -426,7 +426,7 @@ export function startTimerUpdates(timerNodes, layer) {
 }
 
 export function createEditorSeatGroup(seat, palette, theme, options = {}) {
-  const { showKeyboard = true, isSelected = false, isLocked = false, cacheBody = false } = options
+  const { showKeyboard = true, isSelected = false, isLocked = false, cacheBody = false, cachePixelRatio = 1 } = options
 
   const group = new Konva.Group({
     x: seat.x,
@@ -437,7 +437,8 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
 
   const bodyGroup = createSeatBodyGroup(palette, theme, { showKeyboard, isSelected, isLocked })
   if (cacheBody) {
-    bodyGroup.cache()
+    bodyGroup.name("seat-body")
+    bodyGroup.cache({ pixelRatio: cachePixelRatio })
   }
   group.add(bodyGroup)
 
