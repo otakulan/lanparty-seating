@@ -7,7 +7,7 @@ defmodule Lanpartyseating.SeatMap do
 
   @type t :: %__MODULE__{}
 
-  @crockford_alphabet '0123456789abcdefghjkmnpqrstvwxyz'
+  @crockford_alphabet ~c"0123456789abcdefghjkmnpqrstvwxyz"
 
   schema "seat_maps" do
     field :name, :string

@@ -188,10 +188,6 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
         <Icons.octagon_x class="w-3 h-3 text-error" />
         <span class="text-error">Hors service / Unavailable</span>
       </div>
-      <div class="flex items-center gap-1.5 rounded bg-info/10 px-2 py-2 border border-info/30">
-        <Icons.trophy class="w-3 h-3 text-info" />
-        <span class="text-info">Tournoi / Tournament</span>
-      </div>
       <div class="flex items-center gap-1.5 rounded bg-fuchsia-400/10 px-2 py-2 border border-fuchsia-400/30">
         <Icons.lock class="w-3 h-3 text-fuchsia-400" />
         <span class="text-fuchsia-400">Réservé / Reserved</span>

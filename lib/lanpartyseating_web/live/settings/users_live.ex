@@ -25,7 +25,7 @@ defmodule LanpartyseatingWeb.Settings.UsersLive do
       {:noreply,
        socket
        |> put_flash(:error, "Full admin access required")
-       |> push_navigate(to: ~p"/settings/seat-map", replace: true)}
+       |> push_navigate(to: ~p"/settings", replace: true)}
     end
   end
 

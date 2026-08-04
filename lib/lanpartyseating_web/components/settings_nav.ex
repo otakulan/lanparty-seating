@@ -22,14 +22,25 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
         Settings
       </li>
 
-      <%!-- Seat Map - available to all authenticated users --%>
+      <%!-- General - landing page, available to all authenticated users --%>
       <li>
         <.link
-          navigate={~p"/settings/seat-map"}
-          class={["flex items-center gap-3", @current_page == :seat_map && "menu-active"]}
+          navigate={~p"/settings"}
+          class={["flex items-center gap-3", @current_page == :general && "menu-active"]}
+        >
+          <Icons.settings class="w-5 h-5" />
+          <span>General</span>
+        </.link>
+      </li>
+
+      <%!-- Seat Maps catalogue - available to all authenticated users --%>
+      <li>
+        <.link
+          navigate={~p"/settings/seat-maps"}
+          class={["flex items-center gap-3", @current_page == :seat_maps && "menu-active"]}
         >
           <Icons.map class="w-5 h-5" />
-          <span>Seat Map Editor</span>
+          <span>Seat Maps</span>
         </.link>
       </li>
 

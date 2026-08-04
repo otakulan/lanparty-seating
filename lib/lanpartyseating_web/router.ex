@@ -92,8 +92,9 @@ defmodule LanpartyseatingWeb.Router do
       live("/maintenance", MaintenanceLive, :index)
 
       # Settings routes - separate LiveViews with shared sidebar navigation
-      live("/settings", Settings.SeatMapLive, :index)
-      live("/settings/seat-map", Settings.SeatMapLive, :index)
+      live("/settings", Settings.GeneralLive, :index)
+      live("/settings/seat-maps", Settings.SeatMapsLive, :index)
+      live("/settings/seat-maps/:public_id/edit", Settings.SeatMapEditorLive, :edit)
       live("/settings/reservations", Settings.ReservationsLive, :reservations)
       live("/settings/users", Settings.UsersLive, :users)
       live("/settings/badges", Settings.BadgesLive, :badges)

@@ -11,9 +11,10 @@ defmodule LanpartyseatingWeb.DisplayLive do
       Phoenix.PubSub.subscribe(PubSub, "seat_map_update")
     end
 
-    payload = load_published_payload()
-    total = Enum.count(payload.seats)
-    available = Enum.count(payload.seats, &(&1.status == "available"))
+    {payload, empty_state} = load_published_payload()
+
+    total = if empty_state, do: 0, else: Enum.count(payload.seats)
+    available = if empty_state, do: 0, else: Enum.count(payload.seats, &(&1.status == "available"))
 
     settings = SettingsLogic.get_settings()
     seat_picking_enabled = Map.get(settings, :seat_picking_enabled_in_kiosk, false)
@@ -22,13 +23,14 @@ defmodule LanpartyseatingWeb.DisplayLive do
       socket
       |> assign(:page_title, "Seating")
       |> assign(:map_payload, payload)
+      |> assign(:empty_state, empty_state)
       |> assign(:total_seats, total)
       |> assign(:available_seats, available)
       |> assign(:selected_seat, nil)
       |> assign(:show_modal, false)
       |> assign(:pickable, seat_picking_enabled)
 
-    socket = if connected?(socket), do: push_event(socket, "seat_map_init", %{map: payload}), else: socket
+    socket = if connected?(socket) and not empty_state, do: push_event(socket, "seat_map_init", %{map: payload}), else: socket
     {:ok, socket}
   end
 
@@ -56,14 +58,15 @@ defmodule LanpartyseatingWeb.DisplayLive do
   end
 
   def handle_info({:seat_map_updated, _payload}, socket) do
-    payload = load_published_payload()
+    {payload, empty_state} = load_published_payload()
 
     {:noreply,
-     socket
-     |> assign(:map_payload, payload)
-     |> assign(:total_seats, Enum.count(payload.seats))
-     |> assign(:available_seats, Enum.count(payload.seats, &(&1.status == "available")))
-     |> push_event("seat_map_update", %{map: payload})}
+      socket
+      |> assign(:map_payload, payload)
+      |> assign(:empty_state, empty_state)
+      |> assign(:total_seats, if(empty_state, do: 0, else: Enum.count(payload.seats)))
+      |> assign(:available_seats, if(empty_state, do: 0, else: Enum.count(payload.seats, &(&1.status == "available"))))
+      |> then(fn s -> if empty_state, do: s, else: push_event(s, "seat_map_update", %{map: payload}) end)}
   end
 
   def handle_params(_params, _uri, socket) do
@@ -76,6 +79,14 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def render(assigns) do
     ~H"""
+    <%= if @empty_state do %>
+      <div class="flex items-center justify-center h-full">
+        <div class="text-center">
+          <h2 class="text-2xl font-bold text-base-content mb-2">No map published / Aucune carte publiée</h2>
+          <p class="text-base-content/60">Create and publish a Seat Map to display it here. / Créez et publiez une carte pour l'afficher ici.</p>
+        </div>
+      </div>
+    <% else %>
     <div class="flex xl:flex-row flex-col gap-3 font-mono h-fill">
       <div class="xl:basis-3/4 grid grid-rows-1 grow min-h-120 bg-base-200">
         <SeatMap.canvas id="main-seat-map" hook="SeatMapKiosk" payload={@map_payload} mode="kiosk" pickable={@pickable} class="h-full">
@@ -158,13 +169,14 @@ defmodule LanpartyseatingWeb.DisplayLive do
         on_close="close_modal"
       />
     </div>
+    <% end %>
     """
   end
 
   defp load_published_payload do
-    case SeatMapsLogic.get_map_payload("published") do
-      {:ok, payload} -> dbg(payload)
-      _ -> %{width: 1920, height: 1080, meta: %{}, seats: [], objects: [], groups: [], team_assignments: []}
+    case SeatMapsLogic.get_map_payload() do
+      {:ok, payload} -> {payload, false}
+      {:error, _} -> {%{width: 1920, height: 1080, meta: %{}, seats: [], objects: []}, true}
     end
   end
 end

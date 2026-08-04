@@ -13,7 +13,7 @@ defmodule LanpartyseatingWeb.Nav do
   defp admin_menu do
     [
       {"Tournaments", ~p"/tournaments"},
-      {"Settings", ~p"/settings/seat-map"},
+      {"Settings", ~p"/settings"},
       {"Logs", ~p"/logs"},
       {"Maintenance", ~p"/maintenance"},
     ]

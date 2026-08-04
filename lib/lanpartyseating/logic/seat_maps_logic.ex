@@ -840,6 +840,17 @@ defmodule Lanpartyseating.SeatMapsLogic do
     |> repo.update_all(set: [deleted_at: now, incident: reason])
   end
 
+  @doc "Counts reservations currently in use (active), for the cross-map publish confirm modal."
+  def active_reservation_count do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    Reservation
+    |> where([r], is_nil(r.deleted_at))
+    |> where([r], r.start_date <= ^now and r.end_date > ^now)
+    |> where([r], not is_nil(r.seat_slot_id))
+    |> Repo.aggregate(:count, :id)
+  end
+
   defp sync_slots_and_build_data(room_id, data) do
     data = normalize_map_data(data)
     seats = data.seats
@@ -968,22 +979,6 @@ defmodule Lanpartyseating.SeatMapsLogic do
       {:ok, %{seat_slot: seat_slot}} -> {:ok, seat_slot}
       {:error, _op, reason, _changes} -> {:error, reason}
     end
-  end
-
-  defp list_slots_catalog(room_id) do
-    SeatSlot
-    |> where([seat_slot], seat_slot.room_id == ^room_id and is_nil(seat_slot.deleted_at))
-    |> order_by([seat_slot], asc: seat_slot.label)
-    |> Repo.all()
-    |> Enum.map(
-      fn seat_slot ->
-        %{
-          id: seat_slot.id,
-          label: seat_slot.label,
-          legacy_station_number: seat_slot.legacy_station_number
-        }
-      end
-    )
   end
 
   defp empty_map_data do

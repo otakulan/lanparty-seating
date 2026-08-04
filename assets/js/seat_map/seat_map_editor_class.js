@@ -1595,8 +1595,7 @@ buildStage() {
       case "undo": this.undo(); break
       case "redo": this.redo(); break
       case "export-json": this.updateExportTarget(true); break
-      case "save-draft": this.hook.pushEvent("save_draft_preview", { map: this.serializableState() }); break
-      case "publish-preview": this.hook.pushEvent("publish_preview", { map: this.serializableState() }); break
+      case "save": this.hook.pushEvent("save_version", { map: this.serializableState() }); break
     }
   }
   

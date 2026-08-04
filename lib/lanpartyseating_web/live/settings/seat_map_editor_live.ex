@@ -1,9 +1,8 @@
-defmodule LanpartyseatingWeb.Settings.SeatMapLive do
+defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
   use LanpartyseatingWeb, :live_view
 
   alias Lanpartyseating.PubSub
   alias Lanpartyseating.SeatMapsLogic
-  alias Lanpartyseating.TournamentsLogic
   alias LanpartyseatingWeb.Components.SeatMap
   alias LanpartyseatingWeb.Components.SettingsNav
 
@@ -12,18 +11,22 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
       Phoenix.PubSub.subscribe(PubSub, "seat_map_update")
     end
 
-    payload = load_editor_payload()
-
     socket =
       socket
       |> assign(:page_title, "Seat Map Editor")
-      |> assign_editor_payload(payload)
-      |> assign(:stale_draft, false)
+      |> assign(:stale_version, false)
       |> assign(:ignore_stale_until_next_render, false)
       |> assign(:selected_seat, nil)
 
-    socket = if connected?(socket), do: push_event(socket, "seat_map_init", %{map: payload}), else: socket
     {:ok, socket}
+  end
+
+  def handle_params(%{"public_id" => public_id}, _uri, socket) do
+    {:noreply, load_editor(socket, public_id)}
+  end
+
+  def handle_params(_params, _uri, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/settings/seat-maps")}
   end
 
   def handle_event("seat_selected", %{"seat" => nil}, socket) do
@@ -49,78 +52,41 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     {:noreply, assign(socket, :selected_seat, nil)}
   end
 
-  def handle_event("save_draft_preview", %{"map" => %{"revision" => revision} = map}, socket) do
-    case SeatMapsLogic.save_draft(map, revision) do
+  def handle_event("save_version", %{"map" => %{"revision" => revision} = map}, socket) do
+    case SeatMapsLogic.save_version(socket.assigns.seat_map_id, map, revision) do
       {:ok, _version} ->
-        payload = load_editor_payload()
+        payload = load_editor_payload(socket.assigns.public_id)
 
         {:noreply,
          socket
          |> assign_editor_payload(payload)
-         |> assign(:stale_draft, false)
+         |> assign(:stale_version, false)
          |> assign(:ignore_stale_until_next_render, true)
          |> push_event("seat_map_update", %{map: payload})
-         |> put_flash(:info, "Draft saved / Brouillon enregistre")}
+         |> put_flash(:info, "Version saved / Version enregistrée")}
 
-      {:error, :stale_draft} ->
+      {:error, {:stale, _latest}} ->
         {:noreply,
          socket
-         |> assign(:stale_draft, true)
+         |> assign(:stale_version, true)
          |> clear_flash()
-         |> put_flash(:error, "Draft is stale / Ce brouillon n'est plus a jour. Reload or reset the draft before saving.")}
+         |> put_flash(:error, "This map changed elsewhere. Reload before saving. / Cette carte a changé ailleurs. Rechargez avant d'enregistrer.")}
 
       {:error, changeset} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
     end
   end
 
-  def handle_event("publish_preview", %{"map" => %{"revision" => revision} = map}, socket) do
-    case SeatMapsLogic.save_and_publish_draft(map, revision) do
-      {:ok, _version} ->
-        payload = load_editor_payload()
+  def handle_event("rename_map", %{"name" => name}, socket) do
+    name = String.trim(name)
 
-        {:noreply,
-         socket
-         |> assign_editor_payload(payload)
-         |> assign(:stale_draft, false)
-         |> push_event("seat_map_update", %{map: payload})
-         |> put_flash(:info, "Published layout activated / Nouveau plan activé")}
+    case SeatMapsLogic.rename_seat_map(socket.assigns.seat_map_id, name) do
+      {:ok, _map} ->
+        {:noreply, assign(socket, :map_name, name) |> put_flash(:info, "Name updated / Nom mis à jour")}
 
-      {:error, :stale_draft} ->
-        {:noreply,
-         socket
-         |> assign(:stale_draft, true)
-         |> put_flash(:error, "Draft is stale / Ce brouillon n'est plus à jour. Reload or reset the draft before publishing.")}
-
-      {:error, {:active_reservations, seat_slot_ids}} ->
-        labels = active_labels(seat_slot_ids) |> Enum.join(", ")
-
-        {:noreply,
-         socket
-         |> put_flash(:error, "Cannot publish because active seats changed: #{labels} / Publication impossible car des postes actifs ont changé.")}
-
-      {:error, changeset = %Ecto.Changeset{}} ->
-        {:noreply, put_flash(socket, :error, format_error(changeset))}
-
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, inspect(reason))}
-    end
-  end
-
-  def handle_event("reset_draft", _params, socket) do
-    case SeatMapsLogic.reset_draft() do
-      {:ok, _draft} ->
-        payload = load_editor_payload()
-
-        {:noreply,
-         socket
-         |> assign_editor_payload(payload)
-         |> assign(:stale_draft, false)
-         |> push_event("seat_map_update", %{map: payload})
-         |> put_flash(:info, "Draft reset from published map / Brouillon reinitialise depuis la carte publiee")}
-
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, inspect(reason))}
+      {:error, changeset} ->
+        refreshed = load_editor_payload(socket.assigns.public_id)
+        {:noreply, assign(socket, :map_name, refreshed.name) |> put_flash(:error, format_error(changeset))}
     end
   end
 
@@ -128,38 +94,11 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
     {:noreply, push_event(socket, "copy_to_clipboard", %{text: socket.assigns.export_json})}
   end
 
-  def handle_event("assign_team", %{"team_assignment" => params}, socket) do
-    case SeatMapsLogic.assign_team_assignment(params) do
-      {:ok, _assignment} ->
-        payload = load_editor_payload()
-
-        {:noreply,
-         socket
-         |> assign_editor_payload(payload)
-         |> push_event("seat_map_update", %{map: payload})
-         |> put_flash(:info, "Team assignment saved / Attribution d'équipe enregistrée")}
-
-      {:error, changeset} ->
-        {:noreply, put_flash(socket, :error, format_error(changeset))}
-    end
-  end
-
-  def handle_event("remove_team_assignment", %{"group_id" => group_id, "tournament_id" => tournament_id}, socket) do
-    :ok = SeatMapsLogic.remove_team_assignment(group_id, tournament_id)
-    payload = load_editor_payload()
-
-    {:noreply,
-     socket
-     |> assign_editor_payload(payload)
-     |> push_event("seat_map_update", %{map: payload})
-     |> put_flash(:info, "Team assignment removed / Attribution d'equipe supprimée")}
-  end
-
   def handle_event("import_json", %{"import" => %{"json" => json}}, socket) do
     with {:ok, decoded} <- Jason.decode(json),
          merged <- Map.put(decoded, "revision", socket.assigns.revision),
-         {:ok, _version} <- SeatMapsLogic.save_draft(merged, socket.assigns.revision) do
-      payload = load_editor_payload()
+         {:ok, _version} <- SeatMapsLogic.save_version(socket.assigns.seat_map_id, merged, socket.assigns.revision) do
+      payload = load_editor_payload(socket.assigns.public_id)
 
       {:noreply,
        socket
@@ -170,8 +109,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
       {:error, %Jason.DecodeError{}} ->
         {:noreply, put_flash(socket, :error, "Invalid JSON / JSON invalide")}
 
-      {:error, :stale_draft} ->
-        {:noreply, put_flash(socket, :error, "Draft is stale / Ce brouillon n'est plus à jour")}
+      {:error, {:stale, _latest}} ->
+        {:noreply, put_flash(socket, :error, "This map changed elsewhere / Cette carte a changé ailleurs")}
 
       {:error, changeset} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
@@ -185,9 +124,9 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
       |> Map.put(:background_value, normalize_background_value(params["kind"], params["value"]))
       |> Map.put(:revision, socket.assigns.revision)
 
-    case SeatMapsLogic.save_draft(payload, socket.assigns.revision) do
+    case SeatMapsLogic.save_version(socket.assigns.seat_map_id, payload, socket.assigns.revision) do
       {:ok, _version} ->
-        refreshed = load_editor_payload()
+        refreshed = load_editor_payload(socket.assigns.public_id)
 
         {:noreply,
          socket
@@ -195,8 +134,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
          |> push_event("seat_map_update", %{map: refreshed})
          |> put_flash(:info, "Background updated / Arriere-plan mis a jour")}
 
-      {:error, :stale_draft} ->
-        {:noreply, put_flash(socket, :error, "Draft is stale / Ce brouillon n'est plus à jour")}
+      {:error, {:stale, _latest}} ->
+        {:noreply, put_flash(socket, :error, "This map changed elsewhere / Cette carte a changé ailleurs")}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, format_error(reason))}
@@ -204,21 +143,20 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
   end
 
   def handle_info({:seat_map_updated, _payload}, socket) do
-    payload = load_editor_payload()
+    payload = load_editor_payload(socket.assigns.public_id)
 
-    stale_draft =
+    stale_version =
       payload.revision != socket.assigns.revision and
         not socket.assigns[:ignore_stale_until_next_render]
 
     socket =
       socket
-      |> assign(:published_revision, payload.published_revision || socket.assigns.published_revision)
-      |> assign(:stale_draft, stale_draft)
+      |> assign(:stale_version, stale_version)
       |> assign(:ignore_stale_until_next_render, false)
 
     socket =
-      if stale_draft do
-        put_flash(socket, :error, "A newer draft or published map is available. Reload or reset before continuing. / Une version plus recente existe.")
+      if stale_version do
+        put_flash(socket, :error, "A newer version is available. Reload before continuing. / Une version plus récente existe.")
       else
         socket
       end
@@ -243,23 +181,34 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
           <%!-- Header --%>
           <div class="mb-4 flex items-center justify-between shrink-0">
             <div>
-              <h1 class="text-xl font-bold text-base-content">Seat Map Editor</h1>
+              <div class="flex items-center gap-2">
+                <.link navigate={~p"/settings/seat-maps"} class="text-base-content/60 hover:text-base-content" title="Back to catalogue / Retour au catalogue">
+                  <Icons.chevron_left class="w-4 h-4" />
+                </.link>
+                <h1 class="text-xl font-bold text-base-content">Seat Map Editor</h1>
+              </div>
               <p class="text-sm text-base-content/60">
                 Shift-click to multi-select / Maj-clic pour selection multiple
               </p>
             </div>
             <div class="flex items-center gap-4">
+              <div class="form-control">
+                <input
+                  type="text"
+                  name="name"
+                  value={@map_name}
+                  placeholder="Map name / Nom de la carte"
+                  phx-blur="rename_map"
+                  class="input input-bordered input-sm w-64 bg-base-100 text-base-content"
+                />
+              </div>
               <div class="flex items-center gap-2">
                 <span class="text-tiny uppercase tracking-[0.15em] text-base-content/60">Rev</span>
                 <span class="font-mono text-success">{@revision}</span>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="text-tiny uppercase tracking-[0.15em] text-base-content/60">Published</span>
-                <span class="font-mono text-info">{@published_revision}</span>
-              </div>
-              <%= if @stale_draft do %>
+              <%= if @stale_version do %>
                 <div class="rounded border border-warning/50 bg-warning/10 px-3 py-1 text-sm text-warning">
-                  Draft is stale
+                  Stale / Périmé
                 </div>
               <% end %>
             </div>
@@ -295,14 +244,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
               </div>
               <div class="mini-separator"></div>
               <div class="flex flex-wrap gap-1">
-                <button type="button" phx-click="reset_draft" class="btn btn-xs" title="Revert to saved">
-                  <Icons.undo_2 class="w-4 h-4" /> Revert
-                </button>
-                <button type="button" data-seat-map-command="save-draft" class="btn btn-xs btn-success">
+                <button type="button" data-seat-map-command="save" class="btn btn-xs btn-success">
                   <Icons.save class="w-4 h-4" /> Save
-                </button>
-                <button type="button" data-seat-map-command="publish-preview" class="btn btn-xs btn-warning" phx-disable-with="Publishing...">
-                  <Icons.send class="w-4 h-4" /> Publish
                 </button>
               </div>
             </:toolbar>
@@ -339,13 +282,12 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
                     <span class="ml-1 font-mono text-base-content">{@selected_seat["seat_slot_id"]}</span>
                   </div>
                 </div>
-                <%!-- <p class="text-xs text-base-content/50">Click elsewhere to deselect / Cliquez ailleurs pour désélectionner</p> --%>
               </div>
             </:details>
           </SeatMap.canvas>
 
           <%!-- Bottom panels --%>
-          <div class="grid gap-4 shrink-0 md:grid-cols-2 lg:grid-cols-3">
+          <div class="grid gap-4 shrink-0 md:grid-cols-2">
             <div class="rounded-lg border border-base-300 bg-base-200 p-4">
               <h3 class="text-sm font-semibold text-base-content mb-3 flex items-center gap-2">
                 <Icons.upload class="w-4 h-4" /> Background
@@ -363,56 +305,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
                   placeholder="SVG or image URL"
                 />
                 <button type="submit" class="btn btn-sm w-full btn-ghost text-warning hover:bg-warning/10">Set</button>
-              </.form>
-            </div>
-
-            <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-              <h3 class="text-sm font-semibold text-base-content mb-3 flex items-center gap-2">
-                <Icons.users class="w-4 h-4" /> Tournament Teams
-              </h3>
-              <div class="space-y-2 mb-3 max-h-32 overflow-y-auto">
-                <%= for assignment <- @map_payload.team_assignments || [] do %>
-                  <div class="flex items-center justify-between gap-2 rounded border border-base-300 bg-base-100 px-2 py-1.5">
-                    <div class="min-w-0">
-                      <p class="text-sm font-medium text-base-content truncate">{assignment.team_name}</p>
-                      <p class="text-xs text-base-content/60 truncate">{assignment.tournament_name}</p>
-                    </div>
-                    <button
-                      type="button"
-                      phx-click="remove_team_assignment"
-                      phx-value-group_id={assignment.group_id}
-                      phx-value-tournament_id={assignment.tournament_id}
-                      class="btn btn-xs btn-ghost btn-square text-error"
-                    >
-                      <Icons.x class="w-3 h-3" />
-                    </button>
-                  </div>
-                <% end %>
-                <%= if Enum.empty?(@map_payload.team_assignments || []) do %>
-                  <p class="text-xs text-base-content/50">No team labels</p>
-                <% end %>
-              </div>
-              <.form for={%{}} as={:team_assignment} phx-submit="assign_team" class="space-y-2">
-                <select name="team_assignment[group_id]" class="select select-bordered select-sm w-full bg-base-100 text-base-content/70">
-                  <%= for group <- @map_payload.groups || [] do %>
-                    <option value={group.id} selected={@team_assignment_form["group_id"] == group.id}>{group.name}</option>
-                  <% end %>
-                </select>
-                <div class="flex gap-2">
-                  <input
-                    name="team_assignment[team_name]"
-                    value={@team_assignment_form["team_name"]}
-                    class="input input-bordered input-sm flex-1 bg-base-100 text-base-content/70"
-                    placeholder="Name"
-                  />
-                  <input
-                    name="team_assignment[color]"
-                    value={@team_assignment_form["color"]}
-                    class="input input-bordered input-sm w-20 bg-base-100 text-base-content/70"
-                    placeholder="#2563eb"
-                  />
-                </div>
-                <button type="submit" class="btn btn-sm w-full btn-ghost text-success hover:bg-success/10">Add</button>
               </.form>
             </div>
 
@@ -458,47 +350,44 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
       <div class="drawer-side z-40">
         <label for="settings-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
-        <SettingsNav.settings_nav current_page={:seat_map} is_user_auth={@is_user_auth} />
+        <SettingsNav.settings_nav current_page={:seat_maps} is_user_auth={@is_user_auth} />
       </div>
     </div>
     """
   end
 
-  defp load_editor_payload do
-    case SeatMapsLogic.get_editor_payload() do
+  defp load_editor(socket, public_id) do
+    case load_editor_payload(public_id) do
       {:ok, payload} ->
-        payload
+        socket
+        |> assign(:public_id, public_id)
+        |> assign_editor_payload(payload)
+        |> push_event("seat_map_init", %{map: payload})
 
-      _ ->
-        %{
-          width: 1400,
-          height: 800,
-          meta: %{},
-          seats: [],
-          objects: [],
-          groups: [],
-          team_assignments: [],
-          revision: 1,
-          published_revision: 1,
-        }
+      {:error, :not_found} ->
+        push_navigate(socket, to: ~p"/settings/seat-maps")
+
+      {:error, _} ->
+        push_navigate(socket, to: ~p"/settings/seat-maps")
     end
   end
 
+  defp load_editor_payload(public_id) do
+    SeatMapsLogic.get_editor_payload(public_id)
+  end
+
   defp assign_editor_payload(socket, payload) do
-    tournaments = TournamentsLogic.get_all_tournaments()
     json_payload = Jason.encode!(payload, pretty: true)
 
     socket
+    |> assign(:seat_map_id, payload.seat_map_id)
     |> assign(:map_payload, payload)
-    |> assign(:draft_name, payload.name || "Working Draft")
+    |> assign(:map_name, payload.name || "Untitled")
     |> assign(:revision, payload.revision || 1)
-    |> assign(:published_revision, payload.published_revision || 1)
     |> assign(:background_kind, payload.background_kind || "none")
+    |> assign(:background_value, background_editor_value(payload))
     |> assign(:export_json, json_payload)
     |> assign(:import_json, json_payload)
-    |> assign(:tournaments, tournaments)
-    |> assign(:background_value, background_editor_value(payload))
-    |> assign(:team_assignment_form, default_team_assignment_form(payload, tournaments))
   end
 
   defp background_editor_value(%{background_kind: "svg", background_value: value}) when is_binary(value) do
@@ -531,7 +420,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
 
         updated_payload = Map.put(socket.assigns.map_payload, :seats, updated_seats)
 
-        # selected_seat is string-keyed (from JS event); convert atom updates for display
         string_updates = Map.new(updates, fn {k, v} -> {to_string(k), v} end)
 
         {:ok,
@@ -559,30 +447,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
   end
 
   defp normalize_background_value(_kind, _value), do: nil
-
-  defp default_team_assignment_form(payload, tournaments) do
-    first_group = List.first(payload.groups || [])
-    first_tournament = List.first(tournaments || [])
-
-    %{
-      "group_id" => first_group && first_group.id,
-      "tournament_id" => first_tournament && first_tournament.id,
-      "team_name" => "",
-      "color" => (first_group && first_group.color) || "#2563eb",
-    }
-  end
-
-  defp active_labels(seat_slot_ids) do
-    case SeatMapsLogic.list_slot_options() do
-      {:ok, slots} ->
-        slots
-        |> Enum.filter(&(&1.id in seat_slot_ids))
-        |> Enum.map(& &1.label)
-
-      _ ->
-        Enum.map(seat_slot_ids, &to_string/1)
-    end
-  end
 
   defp format_error(%Ecto.Changeset{} = changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} -> message end)
