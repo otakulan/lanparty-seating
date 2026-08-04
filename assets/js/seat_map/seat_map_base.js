@@ -5,6 +5,9 @@ import { renderGroupBounds, renderGroupLabel, renderTeamLabel } from "./seat_map
 
 Konva.hitOnDragEnabled = true
 Konva.capturePointerEventsEnabled = true
+// Without a drag threshold any pixel of wobble starts a drag, and Konva then
+// swallows the click event, so clicking a node would never select it.
+Konva.dragDistance = 4
 
 export { getThemeColors, getStatusColors }
 
