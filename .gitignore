@@ -31,3 +31,4 @@ assets/node_modules
 
 # Self-signed SSL certificates for development
 /priv/cert/
+.opencode/plans/*

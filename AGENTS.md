@@ -7,7 +7,7 @@
 
 Real-time web application for managing gaming station reservations at LAN party events. Handles badge scanning, tournaments, and live station availability displays.
 
-**Stack:** Elixir 1.16+ / Phoenix 1.7 / LiveView / Konva.js / Tailwind CSS / DaisyUI / PostgreSQL
+**Stack:** Elixir 1.16+ / Phoenix 1.8 / LiveView / Konva.js / Tailwind CSS / DaisyUI / PostgreSQL
 
 ## Quick Start
 
@@ -137,7 +137,7 @@ Topics: `"station_update"`, `"tournament_update"`
 
 All user-facing text must be in both French and English. Use inline bilingual text:
 - "Available / Disponible"
-- "Reserve / Réserver"
+- "Reserved / Réservé"
 
 ## Common Tasks
 
