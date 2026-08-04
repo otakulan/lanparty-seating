@@ -687,6 +687,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
       height: seat.height,
       rotation: seat.rotation,
       shape: seat.shape,
+      locked: seat.locked,
       status: "available",
       reservation_end_date: nil,
     }
@@ -1128,6 +1129,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
       height: seat.height,
       rotation: seat.rotation,
       shape: seat.shape,
+      locked: normalize_locked(seat[:locked]),
     }
   end
 
@@ -1142,13 +1144,23 @@ defmodule Lanpartyseating.SeatMapsLogic do
       width: object.width,
       height: object.height,
       rotation: object.rotation,
-      text: object.text,
-      font_size: parse_optional_int(object.font_size),
-      fill: object.fill,
-      fill_secondary: object.fill_secondary,
-      stroke: object.stroke,
+      text: object[:text],
+      font_size: parse_optional_int(object[:font_size]),
+      fill: object[:fill],
+      fill_secondary: object[:fill_secondary],
+      stroke: object[:stroke],
+      locked: normalize_locked(object[:locked]),
+      front: normalize_front(object[:front]),
     }
   end
+
+  defp normalize_locked(true), do: true
+  defp normalize_locked("true"), do: true
+  defp normalize_locked(_), do: false
+
+  defp normalize_front(true), do: true
+  defp normalize_front("true"), do: true
+  defp normalize_front(_), do: false
 
   defp normalize_group(group) do
     group = atomize_keys(group)
