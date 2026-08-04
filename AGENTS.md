@@ -49,7 +49,7 @@ Database (PostgreSQL via Ecto)
 - `lib/lanpartyseating/tasks/` - GenServer background tasks (expiration_kickstarter, expire_reservation, expire_tournament, start_tournament)
 - `lib/lanpartyseating/accounts/` - User authentication (phx.gen.auth generated)
 - `lib/lanpartyseating_web/live/` - LiveView pages (display, display_seat_map, logs, maintenance, profile, seat_map, settings, settings/seat_maps_live, settings/seat_map_editor_live, settings/general_live, stations, tournaments)
-- `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, room_onboarding, seat_map, settings_nav, station_modal, tournament_modal, ui)
+- `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, seat_map, settings_nav, station_modal, tournament_modal, ui)
 - `lib/lanpartyseating_web/controllers/api/v1/` - REST API controllers (reservation_controller for scanner badge cancellation)
 - `lib/lanpartyseating_web/plugs/` - Custom Plug modules (scanner_auth for bearer token authentication)
 
@@ -75,7 +75,7 @@ Database (PostgreSQL via Ecto)
 **Seat map components:**
 - Use `lib/lanpartyseating_web/components/seat_map.ex` for the shared viewer/editor shell.
 - Konva hooks live in `assets/js/hooks/seat_map_canvas.js`, `assets/js/hooks/seat_map_editor.js`, and `assets/js/hooks/seat_map_kiosk.js`.
-- Public routes are `/`, `/map`, `/kiosk` and `/kiosk/map` (there is no `/display/map`). The catalogue lives at `/settings/seat-maps`; the editor at `/settings/seat-maps/:public_id/edit`; General settings (Active Room selector, onboarding) at `/settings`.
+- Public routes are `/`, `/map`, `/kiosk` and `/kiosk/map` (there is no `/display/map`). The catalogue lives at `/settings/seat-maps`; the editor at `/settings/seat-maps/:public_id/edit`; General settings (Active Room selector) at `/settings`. The "New room" button in the catalogue creates a Room with a random animal name (see `SeatMapsLogic.random_room_name/0`).
 - Vocabulary and the seat map / rooms model are defined in `CONTEXT.md` and `docs/adr/` (see esp. ADR-0001..0005).
 
 **When to create components:**

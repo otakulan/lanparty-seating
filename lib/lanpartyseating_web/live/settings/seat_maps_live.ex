@@ -5,12 +5,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   """
   use LanpartyseatingWeb, :live_view
 
-  import Ecto.Query
-
   alias Lanpartyseating.PubSub
-  alias Lanpartyseating.Repo
   alias Lanpartyseating.SeatMapsLogic
-  alias LanpartyseatingWeb.Components.RoomOnboarding
   alias LanpartyseatingWeb.Components.SettingsNav
 
   def mount(_params, _session, socket) do
@@ -37,11 +33,11 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
         {:noreply, load(socket, String.to_integer(room_id))}
 
       {:ok, _room} ->
-        {:noreply, put_flash(load(socket, String.to_integer(room_id)), :info, "Active room updated / Salle active mise à jour")}
+        {:noreply, put_flash(load(socket, String.to_integer(room_id)), :info, "Active room updated")}
 
       {:error, {:tournament_in_progress, name}} ->
         {:noreply,
-         put_flash(socket, :error, "Cannot switch rooms while #{name} is underway / Impossible de changer de salle pendant le tournoi")}
+         put_flash(socket, :error, "Cannot switch rooms while #{name} is underway")}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, inspect(reason))}
@@ -53,9 +49,9 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   def handle_event("create_map", _params, socket) do
     room_id = socket.assigns.selected_room_id
 
-    case SeatMapsLogic.create_seat_map(%{room_id: room_id, name: "New Layout / Nouvelle disposition"}) do
+    case SeatMapsLogic.create_seat_map(%{room_id: room_id, name: "New Layout"}) do
       {:ok, _map} ->
-        {:noreply, put_flash(load(socket, room_id), :info, "Map created / Carte créée")}
+        {:noreply, put_flash(load(socket, room_id), :info, "Map created")}
 
       {:error, changeset = %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
@@ -65,10 +61,10 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
     end
   end
 
-  def handle_event("create_room", %{"room" => room_params}, socket) do
-    case SeatMapsLogic.create_room(room_params) do
-      {:ok, _room} ->
-        {:noreply, put_flash(load(socket, nil), :info, "Room created / Salle créée")}
+  def handle_event("new_room", _params, socket) do
+    case SeatMapsLogic.create_room(%{name: SeatMapsLogic.random_room_name()}) do
+      {:ok, room} ->
+        {:noreply, put_flash(load(socket, room.id), :info, "Room created")}
 
       {:error, changeset = %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
@@ -76,10 +72,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, inspect(reason))}
     end
-  end
-
-  def handle_event("toggle_new_room", _params, socket) do
-    {:noreply, assign(socket, :show_new_room, not socket.assigns.show_new_room)}
   end
 
   # --- Rename ----------------------------------------------------------------
@@ -128,19 +120,19 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
          socket
          |> assign(:publish_target, nil)
          |> load(socket.assigns.selected_room_id)
-         |> put_flash(:info, "Map published / Carte publiée")}
+         |> put_flash(:info, "Map published")}
 
       {:error, {:active_reservations, _ids}} ->
         {:noreply,
          socket
          |> assign(:publish_target, nil)
-         |> put_flash(:error, "Cannot publish: active seats changed / Publication impossible")}
+         |> put_flash(:error, "Cannot publish: active seats changed")}
 
       {:error, {:tournament_in_progress, name}} ->
         {:noreply,
          socket
          |> assign(:publish_target, nil)
-         |> put_flash(:error, "Cannot publish during #{name} / Publication impossible pendant le tournoi")}
+         |> put_flash(:error, "Cannot publish during #{name}")}
 
       {:error, reason} ->
         {:noreply, assign(socket, :publish_target, nil) |> put_flash(:error, inspect(reason))}
@@ -152,7 +144,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   def handle_event("duplicate_map", %{"map_id" => map_id, "version_id" => version_id}, socket) do
     case SeatMapsLogic.duplicate_seat_map(String.to_integer(map_id), String.to_integer(version_id)) do
       {:ok, _map} ->
-        {:noreply, put_flash(load(socket, socket.assigns.selected_room_id), :info, "Map duplicated / Carte dupliquée")}
+        {:noreply, put_flash(load(socket, socket.assigns.selected_room_id), :info, "Map duplicated")}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, inspect(reason))}
@@ -162,10 +154,10 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   def handle_event("delete_map", %{"map_id" => map_id}, socket) do
     case SeatMapsLogic.delete_seat_map(String.to_integer(map_id)) do
       {:ok, _map} ->
-        {:noreply, put_flash(load(socket, socket.assigns.selected_room_id), :info, "Map deleted / Carte supprimée")}
+        {:noreply, put_flash(load(socket, socket.assigns.selected_room_id), :info, "Map deleted")}
 
       {:error, :published} ->
-        {:noreply, put_flash(socket, :error, "Cannot delete the published map / Impossible de supprimer la carte publiée")}
+        {:noreply, put_flash(socket, :error, "Cannot delete the published map")}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, inspect(reason))}
@@ -186,41 +178,34 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
         </div>
 
         <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:p-6">
-          <.page_header title="Seat Maps / Cartes">
+          <.page_header title="Seat Maps">
             <:trailing>
               <div class="flex items-center gap-2">
                 <.form for={%{}} phx-change="set_active_room">
-                  <select :if={@rooms != []} name="room_id" class="select select-bordered select-sm bg-base-100 text-base-content/70">
-                    <option :for={room <- @rooms} value={room.id} selected={room.id == @selected_room_id}><%= room.name %></option>
+                  <select disabled={@rooms == []} name="room_id" class="select select-bordered select-sm bg-base-100 text-base-content/70">
+                    <%= if @rooms != [] do %>
+                      <option :for={room <- @rooms} value={room.id} selected={room.id == @selected_room_id}><%= room.name %></option>
+                    <% else %>
+                      <option selected>No room</option>
+                    <% end %>
                   </select>
                 </.form>
-                <button phx-click="toggle_new_room" class="btn btn-sm btn-ghost">
-                  <Icons.plus class="w-4 h-4" /> New room / Nouvelle salle
+                <button phx-click="new_room" class="btn btn-sm btn-ghost">
+                  <Icons.plus class="w-4 h-4" /> New room
                 </button>
                 <button phx-click="create_map" class="btn btn-sm btn-primary">
-                  <Icons.plus class="w-4 h-4" /> New map / Nouvelle carte
+                  <Icons.plus class="w-4 h-4" /> New map
                 </button>
               </div>
             </:trailing>
           </.page_header>
 
-          <%= if @show_new_room do %>
-            <.admin_section title="New room / Nouvelle salle">
-              <RoomOnboarding.room_onboarding
-                room={@onboarding_room}
-                seat_count={@seat_count}
-                first_map={@first_map}
-                has_published={@has_published}
-              />
-            </.admin_section>
-          <% end %>
-
-          <.admin_section title={"Seat Maps / Cartes — " <> @room_name}>
+          <.admin_section title={@room_name}>
             <div class="overflow-x-auto border border-base-300 rounded-lg">
               <table class="table">
                 <thead>
                   <tr class="border-b-2 border-base-300 bg-base-200">
-                    <th>Name / Nom</th>
+                    <th>Name</th>
                     <th>ID</th>
                     <th>Version</th>
                     <th>Status</th>
@@ -256,20 +241,20 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
                       </td>
                       <td>
                         <%= if map.published do %>
-                          <span class="badge badge-success gap-1"><Icons.check class="w-3 h-3" /> Published / Publiée</span>
+                          <span class="badge badge-success gap-1"><Icons.check class="w-3 h-3" /> Published</span>
                         <% else %>
-                          <span class="badge badge-ghost">Draft / Brouillon</span>
+                          <span class="badge badge-ghost">Draft</span>
                         <% end %>
                       </td>
                       <td class="text-right whitespace-nowrap">
                         <.link navigate={~p"/settings/seat-maps/#{map.public_id}/edit"} class="btn btn-xs btn-ghost">Edit</.link>
                         <button phx-click="open_publish" phx-value-map_id={map.id} class="btn btn-xs btn-primary">Publish</button>
                         <%
-                           extra_attrs =  if map.published, do: [disabled: "true", title: "Cannot delete the published map / Impossible de supprimer la carte publiée"], else: []
+                           extra_attrs =  if map.published, do: [disabled: "true", title: "Cannot delete the published map"], else: []
                         %>
                         <button
                           class={"btn btn-xs btn-error " <> if(map.published, do: "btn-disabled", else: "")}
-                          data-confirm={"Delete #{map.name}? / Supprimer #{map.name} ?"}
+                          data-confirm={"Delete #{map.name}?"}
                           phx-click={if(map.published, do: "", else: "delete_map")}
                           phx-value-map_id={map.id}
                           {extra_attrs}
@@ -300,16 +285,16 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
             <h3 class="text-lg font-bold mb-2">Publish "<%= @publish_target.name %>"?</h3>
             <%= if @publish_target.cross do %>
               <p class="text-sm text-base-content/70 mb-4">
-                This switches the Room to a different map. <%= @publish_target.reservation_count %> active reservation(s) will be cancelled and desktop clients disconnected. / Cette action annule les réservations actives et déconnecte les clients.
+                This switches the Room to a different map. <%= @publish_target.reservation_count %> active reservation(s) will be cancelled and desktop clients disconnected.
               </p>
             <% else %>
               <p class="text-sm text-base-content/70 mb-4">
-                This republishes the current map. / Cette action republie la carte actuelle.
+                This republishes the current map.
               </p>
             <% end %>
             <div class="modal-action">
-              <button phx-click="cancel_publish" class="btn btn-ghost">Cancel / Annuler</button>
-              <button phx-click="confirm_publish" class="btn btn-primary">Publish / Publier</button>
+              <button phx-click="cancel_publish" class="btn btn-ghost">Cancel</button>
+              <button phx-click="confirm_publish" class="btn btn-primary">Publish</button>
             </div>
           <% end %>
         </div>
@@ -335,8 +320,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
 
     versions_by_map = maps |> Enum.into(%{}, fn (map) -> {map.id, SeatMapsLogic.list_versions(map.id)} end)
 
-    onboarding = onboarding_state(selected_room_id)
-
     socket
     |> assign(:rooms, rooms)
     |> assign(:selected_room_id, selected_room_id)
@@ -344,11 +327,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
     |> assign(:maps, maps)
     |> assign(:versions_by_map, versions_by_map)
     |> assign(:publish_target, socket.assigns[:publish_target])
-    |> assign(:show_new_room, socket.assigns[:show_new_room] || false)
-    |> assign(:onboarding_room, onboarding.room)
-    |> assign(:seat_count, onboarding.seat_count)
-    |> assign(:first_map, onboarding.first_map)
-    |> assign(:has_published, onboarding.has_published)
   end
 
   defp active_room_id do
@@ -356,29 +334,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
       {:ok, room} -> room.id
       _ -> nil
     end
-  end
-
-  defp onboarding_state(nil) do
-    %{room: nil, seat_count: 0, first_map: nil, has_published: false}
-  end
-
-  defp onboarding_state(active_room_id) do
-    room = Lanpartyseating.Room |> Repo.get(active_room_id, [preload: [:published_version]])
-
-    seat_count =
-      Lanpartyseating.SeatSlot
-      |> where([s], s.room_id == ^active_room_id and is_nil(s.deleted_at))
-      |> Repo.aggregate(:count, :id)
-
-    maps = SeatMapsLogic.list_seat_maps(active_room_id)
-    first_map = List.first(maps)
-
-    %{
-      room: room,
-      seat_count: seat_count,
-      first_map: first_map && %{id: first_map.id, public_id: first_map.public_id},
-      has_published: not is_nil(room.published_version_id)
-    }
   end
 
   defp format_error(%Ecto.Changeset{} = changeset) do

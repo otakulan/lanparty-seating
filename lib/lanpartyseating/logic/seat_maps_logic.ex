@@ -26,7 +26,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
   @doc """
   Returns the Active Room the application currently serves, or `{:error, :no_room}` on a
-  fresh install with no Active Room set (so callers can show onboarding).
+  fresh install with no Active Room set (so callers can render an empty state).
   """
   def get_active_room do
     case SettingsLogic.get_settings() do
@@ -49,14 +49,41 @@ defmodule Lanpartyseating.SeatMapsLogic do
     |> Repo.all()
   end
 
+  @animals ~w(
+    alpaca anteater badger beaver bison bobcat buffalo camel cheetah chipmunk
+    cobra condor cougar coyote crane cricket crocodile dingo dolphin donkey
+    dragonfly eagle eel elephant elk falcon ferret flamingo fox frog gazelle
+    gecko gerbil gibbon giraffe gopher gorilla hamster hare hawk hedgehog heron
+    hippo hornet hummingbird hyena ibex iguana impala jackal jaguar jellyfish
+    kangaroo koala lemur leopard lion llama lynx macaw manatee marmot marten
+    meerkat mongoose moose moth narwhal newt ocelot octopus okapi opossum
+    orangutan orca ostrich otter owl panda pangolin panther parrot partridge
+    peacock pelican penguin pheasant pigeon platypus porcupine puma python
+    quail rabbit raccoon raven reindeer rhino roadrunner robin salamander
+    salmon scallop scorpion seagull seahorse seal shark sheep shrew skunk
+    sloth snail snake spider squid squirrel starfish stork swan tapir tarantula
+    tiger toad tortoise toucan turkey turtle vulture wallaby walrus warthog
+    weasel whale wildebeest wolf wolverine wombat woodpecker yak zebra
+  )
+
+  @doc """
+  Generates a memorable random room name from three animals, e.g. `"zebra-unicorn-goat"`.
+  """
+  def random_room_name do
+    @animals
+    |> Enum.shuffle()
+    |> Enum.take(3)
+    |> Enum.join("-")
+  end
+
   @doc """
   Creates a Room plus its first (unpublished, empty) Seat Map. Sets `active_room_id` on the
   settings singleton only when none was set, so the first Room becomes the Active Room.
   """
   def create_room(attrs) when is_map(attrs) do
     attrs = atomize_keys(attrs)
-    width = parse_int(attrs[:width]) || 1920
-    height = parse_int(attrs[:height]) || 1080
+    width = parse_dimension(attrs[:width], 1920)
+    height = parse_dimension(attrs[:height], 1080)
     first_map_name = attrs[:first_map_name] || "Main Layout"
 
     Multi.new()
@@ -1076,6 +1103,13 @@ defmodule Lanpartyseating.SeatMapsLogic do
   defp parse_int(value) when is_float(value), do: round(value)
   defp parse_int(value) when is_binary(value), do: value |> Float.parse() |> elem(0) |> round()
   defp parse_int(_value), do: 0
+
+  defp parse_dimension(value, default) do
+    case parse_int(value) do
+      parsed when is_integer(parsed) and parsed > 0 -> parsed
+      _ -> default
+    end
+  end
 
   defp atomize_keys(%_{} = struct), do: struct |> Map.from_struct() |> atomize_keys()
 

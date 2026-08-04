@@ -51,7 +51,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
     test "accessible with user auth", %{conn: conn} do
       conn = conn |> log_in_user(user_fixture())
       {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
-      assert has_element?(view, "h1", "Seat Maps / Cartes")
+      assert has_element?(view, "h1", "Seat Maps")
     end
   end
 
@@ -73,7 +73,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       assert has_element?(view, ~s|input[value="Main Layout"]|)
-      assert has_element?(view, ~s|tr .badge.badge-success|, "Published / Publiée")
+      assert has_element?(view, ~s|tr .badge.badge-success|, "Published")
     end
 
     test "rename updates the map name inline", %{conn: conn, room: room} do
@@ -120,7 +120,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
       |> render_click()
 
       # Second Layout is now the published one
-      assert has_element?(view, ~s|tr .badge.badge-success|, "Published / Publiée")
+      assert has_element?(view, ~s|tr .badge.badge-success|, "Published")
     end
 
     test "published map's delete is disabled", %{conn: conn, room: room} do
@@ -130,6 +130,29 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       assert has_element?(view, ~s|button[disabled]|)
+    end
+  end
+
+  # ============================================================================
+  # Room creation
+  # ============================================================================
+
+  describe "new room" do
+    setup %{conn: conn} do
+      {:ok, conn: log_in_user(conn, user_fixture())}
+    end
+
+    test "creates a room with a random animal name", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
+
+      view
+      |> element(~s|button[phx-click="new_room"]|)
+      |> render_click()
+
+      names = SeatMapsLogic.list_rooms() |> Enum.map(& &1.name)
+      assert [name] = Enum.filter(names, &String.match?(&1, ~r/^[a-z]+-[a-z]+-[a-z]+$/))
+
+      assert render(view) =~ name
     end
   end
 end

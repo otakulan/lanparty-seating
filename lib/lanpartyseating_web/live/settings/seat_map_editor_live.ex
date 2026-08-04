@@ -63,14 +63,14 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
          |> assign(:stale_version, false)
          |> assign(:ignore_stale_until_next_render, true)
          |> push_event("seat_map_update", %{map: payload})
-         |> put_flash(:info, "Version saved / Version enregistrée")}
+         |> put_flash(:info, "Version saved")}
 
       {:error, {:stale, _latest}} ->
         {:noreply,
          socket
          |> assign(:stale_version, true)
          |> clear_flash()
-         |> put_flash(:error, "This map changed elsewhere. Reload before saving. / Cette carte a changé ailleurs. Rechargez avant d'enregistrer.")}
+         |> put_flash(:error, "This map changed elsewhere. Reload before saving.")}
 
       {:error, changeset} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
@@ -82,7 +82,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
 
     case SeatMapsLogic.rename_seat_map(socket.assigns.seat_map_id, name) do
       {:ok, _map} ->
-        {:noreply, assign(socket, :map_name, name) |> put_flash(:info, "Name updated / Nom mis à jour")}
+        {:noreply, assign(socket, :map_name, name) |> put_flash(:info, "Name updated")}
 
       {:error, changeset} ->
         refreshed = load_editor_payload(socket.assigns.public_id)
@@ -104,13 +104,13 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
        socket
        |> assign_editor_payload(payload)
        |> push_event("seat_map_update", %{map: payload})
-       |> put_flash(:info, "JSON imported / JSON importé")}
+       |> put_flash(:info, "JSON imported")}
     else
       {:error, %Jason.DecodeError{}} ->
-        {:noreply, put_flash(socket, :error, "Invalid JSON / JSON invalide")}
+        {:noreply, put_flash(socket, :error, "Invalid JSON")}
 
       {:error, {:stale, _latest}} ->
-        {:noreply, put_flash(socket, :error, "This map changed elsewhere / Cette carte a changé ailleurs")}
+        {:noreply, put_flash(socket, :error, "This map changed elsewhere")}
 
       {:error, changeset} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
@@ -132,10 +132,10 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
          socket
          |> assign_editor_payload(refreshed)
          |> push_event("seat_map_update", %{map: refreshed})
-         |> put_flash(:info, "Background updated / Arriere-plan mis a jour")}
+         |> put_flash(:info, "Background updated")}
 
       {:error, {:stale, _latest}} ->
-        {:noreply, put_flash(socket, :error, "This map changed elsewhere / Cette carte a changé ailleurs")}
+        {:noreply, put_flash(socket, :error, "This map changed elsewhere")}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, format_error(reason))}
@@ -156,7 +156,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
 
     socket =
       if stale_version do
-        put_flash(socket, :error, "A newer version is available. Reload before continuing. / Une version plus récente existe.")
+        put_flash(socket, :error, "A newer version is available. Reload before continuing.")
       else
         socket
       end
@@ -182,13 +182,13 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
           <div class="mb-4 flex items-center justify-between shrink-0">
             <div>
               <div class="flex items-center gap-2">
-                <.link navigate={~p"/settings/seat-maps"} class="text-base-content/60 hover:text-base-content" title="Back to catalogue / Retour au catalogue">
+                <.link navigate={~p"/settings/seat-maps"} class="text-base-content/60 hover:text-base-content" title="Back to catalogue">
                   <Icons.chevron_left class="w-4 h-4" />
                 </.link>
                 <h1 class="text-xl font-bold text-base-content">Seat Map Editor</h1>
               </div>
               <p class="text-sm text-base-content/60">
-                Shift-click to multi-select / Maj-clic pour selection multiple
+                Shift-click to multi-select
               </p>
             </div>
             <div class="flex items-center gap-4">
@@ -197,7 +197,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
                   type="text"
                   name="name"
                   value={@map_name}
-                  placeholder="Map name / Nom de la carte"
+                  placeholder="Map name"
                   phx-blur="rename_map"
                   class="input input-bordered input-sm w-64 bg-base-100 text-base-content"
                 />
@@ -208,7 +208,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
               </div>
               <%= if @stale_version do %>
                 <div class="rounded border border-warning/50 bg-warning/10 px-3 py-1 text-sm text-warning">
-                  Stale / Périmé
+                  Stale
                 </div>
               <% end %>
             </div>
@@ -261,7 +261,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
                 <h3 class="text-lg font-bold text-base-content">{@selected_seat["label"]}</h3>
                 <div class="form-control">
                   <label class="label py-1">
-                    <span class="label-text text-tiny uppercase text-base-content/60">Label / Étiquette</span>
+                    <span class="label-text text-tiny uppercase text-base-content/60">Label</span>
                   </label>
                   <input
                     type="text"
