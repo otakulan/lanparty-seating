@@ -231,7 +231,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
                   <%= for map <- @maps do %>
                     <tr>
                       <td>
-                        <form phx-submit="rename_map" class="flex gap-1 items-center">
+                        <form id={"rename-map-#{map.id}"} phx-submit="rename_map" class="flex gap-1 items-center">
                           <input type="hidden" name="map_id" value={map.id} />
                           <input
                             type="text"
@@ -244,7 +244,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
                       </td>
                       <td class="font-mono text-base-content/50 text-xs"><%= map.public_id %></td>
                       <td>
-                        <.form for={%{}} phx-submit="duplicate_map" class="flex gap-1 items-center">
+                        <.form id={"duplicate-map-#{map.id}"} for={%{}} phx-submit="duplicate_map" class="flex gap-1 items-center">
                           <input type="hidden" name="map_id" value={map.id} />
                           <select name="version_id" class="select select-xs select-bordered bg-base-100">
                             <%= for version <- @versions_by_map[map.id] || [] do %>
