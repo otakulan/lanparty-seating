@@ -95,10 +95,8 @@ defmodule LanpartyseatingWeb.Settings.GeneralLive do
               The Active Room is the one the whole application currently serves. / La salle active est celle que toute l'application sert.
             </p>
             <.form for={%{}} phx-change="set_active_room" class="max-w-sm">
-              <select name="room_id" class="select select-bordered select-sm w-full bg-base-100 text-base-content/70">
-                <%= for room <- @rooms do %>
-                  <option value={room.id} selected={room.id == @active_room_id}><%= room.name %></option>
-                <% end %>
+              <select name="room_id" disabled={@rooms == []} class="select select-bordered select-sm w-full bg-base-100 text-base-content/70">
+                <option :for={room <- @rooms} value={room.id} selected={room.id == @active_room_id}><%= room.name %></option>
               </select>
             </.form>
           </.admin_section>

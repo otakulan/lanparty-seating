@@ -45,11 +45,11 @@ Database (PostgreSQL via Ecto)
 ## Directory Structure
 
 - `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, scanner, seat_maps, settings, station, tournaments)
-- `lib/lanpartyseating/repositories/` - Ecto schema definitions (badge_scanner, pc_asset, scanner_wifi_config, seat_map, seat_map_version, seat_slot, seat_slot_assignment, seat_slot_status, tournament_team_assignment)
+- `lib/lanpartyseating/repositories/` - Ecto schema definitions (badge_scanner, pc_asset, room, scanner_wifi_config, seat_map, seat_map_version, seat_slot, seat_slot_assignment, seat_slot_status)
 - `lib/lanpartyseating/tasks/` - GenServer background tasks (expiration_kickstarter, expire_reservation, expire_tournament, start_tournament)
 - `lib/lanpartyseating/accounts/` - User authentication (phx.gen.auth generated)
-- `lib/lanpartyseating_web/live/` - LiveView pages (display, display_seat_map, logs, maintenance, profile, seat_map, settings, stations, tournaments)
-- `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, seat_map, station_modal, tournament_modal, ui)
+- `lib/lanpartyseating_web/live/` - LiveView pages (display, display_seat_map, logs, maintenance, profile, seat_map, settings, settings/seat_maps_live, settings/seat_map_editor_live, settings/general_live, stations, tournaments)
+- `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, room_onboarding, seat_map, settings_nav, station_modal, tournament_modal, ui)
 - `lib/lanpartyseating_web/controllers/api/v1/` - REST API controllers (reservation_controller for scanner badge cancellation)
 - `lib/lanpartyseating_web/plugs/` - Custom Plug modules (scanner_auth for bearer token authentication)
 
@@ -74,8 +74,9 @@ Database (PostgreSQL via Ecto)
 
 **Seat map components:**
 - Use `lib/lanpartyseating_web/components/seat_map.ex` for the shared viewer/editor shell.
-- Konva hooks live in `assets/js/hooks/seat_map_canvas.js`, `assets/js/hooks/seat_map_editor.js`, and `assets/js/hooks/seat_map_runtime.js`.
-- Public routes are `/map` and `/display/map`; the admin editor lives at `/settings/seat-map`.
+- Konva hooks live in `assets/js/hooks/seat_map_canvas.js`, `assets/js/hooks/seat_map_editor.js`, and `assets/js/hooks/seat_map_kiosk.js`.
+- Public routes are `/`, `/map`, `/kiosk` and `/kiosk/map` (there is no `/display/map`). The catalogue lives at `/settings/seat-maps`; the editor at `/settings/seat-maps/:public_id/edit`; General settings (Active Room selector, onboarding) at `/settings`.
+- Vocabulary and the seat map / rooms model are defined in `CONTEXT.md` and `docs/adr/` (see esp. ADR-0001..0005).
 
 **When to create components:**
 - Extract to `ui.ex` when a pattern appears in 2+ places
@@ -204,8 +205,9 @@ ESP32-based exit badge scanners allow attendees to cancel reservations at exit p
 12. **Ecto Sandbox Isolation**: Each test runs in a transaction that rolls back. AI may query dev DB thinking it's test DB. Tests can't see each other's data due to transaction isolation.
 13. **Scanner Tokens**: Tokens are `lpss_` prefixed, stored as bcrypt hash. Only the prefix is visible in UI for identification.
 14. **HTTPS for WebBluetooth**: Dev provisioning requires HTTPS on port 4001. Certs must be generated with OpenSSL directly (not `mix phx.gen.cert`) due to OTP 28 + Chrome SSL compatibility issues.
-15. **Seat Identity vs Placement**: `seat_slot` is the attendee-facing physical location, while `pc_asset` is the remotely managed machine currently assigned to that slot.
-16. **Published Map Safety**: Only one published seat map version is active; publishing must not move or remap seats with active reservations or tournament holds.
+15. **Seat Identity vs Placement**: `seat_slot` is the attendee-facing physical location, owned by the Room (`seat_slots.room_id`), while `pc_asset` is the remotely managed machine currently assigned to that slot. A Seat Map only places Seats; it does not own them.
+16. **Append-only Versions**: `seat_map_versions` are immutable and numbered by `revision`. Saving appends a new Version; publishing points the Room's `published_version_id` at a map's newest Version. Seats reparent to the Room, and `settings.active_room_id` selects which Room the app serves.
+17. **Published Map Safety**: Publishing the currently published map keeps the per-seat guard (refused if it moves/removes a Seat with an active reservation or tournament hold). Publishing a *different* map cancels all reservations, broadcasts `seat_map_changed`, and is refused while a Tournament is underway or within its buffer.
 
 
 <!-- phoenix-gen-auth-start -->
