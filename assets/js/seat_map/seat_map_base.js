@@ -5,6 +5,9 @@ import { renderGroupBounds, renderGroupLabel, renderTeamLabel } from "./seat_map
 
 Konva.hitOnDragEnabled = true
 Konva.capturePointerEventsEnabled = true
+// Without a drag threshold any pixel of wobble starts a drag, and Konva then
+// swallows the click event, so clicking a node would never select it.
+Konva.dragDistance = 4
 
 export { getThemeColors, getStatusColors }
 
@@ -202,50 +205,6 @@ export class SeatMapBase {
     }
   }
 
-  // Constrain panning to keep at least one seat visible within center of viewport.
-  // When content fits: center it and disable panning.
-  // When content larger: allow pan within 40%-60% zone (center 20%).
-  constrainStageDrag() {
-    const scale = this.stage.scaleX()
-    const bounds = this.getContentBounds()
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-
-    if (bounds.width === 0 || bounds.height === 0) return
-
-    const scaledWidth = bounds.width * scale
-    const scaledHeight = bounds.height * scale
-    const margin = 40
-
-    const centerXMin = 0.4 * stageWidth
-    const centerXMax = 0.6 * stageWidth
-    const centerYMin = 0.4 * stageHeight
-    const centerYMax = 0.6 * stageHeight
-
-    let newX = this.stage.x()
-    let newY = this.stage.y()
-
-    if (scaledWidth <= stageWidth - margin * 2) {
-      // Content fits: center it
-      newX = (stageWidth - scaledWidth) / 2 - bounds.x * scale
-    } else {
-      // Constrain to keep last seat within center 40%-60% zone
-      const minX = centerXMin - (bounds.x + bounds.width) * scale
-      const maxX = centerXMax - bounds.x * scale
-      if (minX <= maxX) newX = clamp(newX, minX, maxX)
-    }
-
-    if (scaledHeight <= stageHeight - margin * 2) {
-      newY = (stageHeight - scaledHeight) / 2 - bounds.y * scale
-    } else {
-      const minY = centerYMin - (bounds.y + bounds.height) * scale
-      const maxY = centerYMax - bounds.y * scale
-      if (minY <= maxY) newY = clamp(newY, minY, maxY)
-    }
-
-    this.stage.position({ x: newX, y: newY })
-  }
-
   // Center content bounds in viewport (used when content fits)
   centerCanvas() {
     const scale = this.stage.scaleX()
@@ -296,7 +255,6 @@ export class SeatMapBase {
       y: center.y - pointTo.y * clampedScale
     })
 
-    this.constrainStageDrag()
     this.stage.batchDraw()
   }
 
@@ -392,7 +350,8 @@ export class SeatMapBase {
       y: pointer.y - canvasPoint.y * newScale
     })
 
-    // Only center when zoomed out (content fits in viewport)
+    // When fully zoomed out the canvas fits: center it. Otherwise panning is
+    // unconstrained - the user can recover with the reset-view button.
     if (this.canvasFitsInViewport()) {
       this.centerCanvas()
     }
@@ -448,8 +407,6 @@ export class SeatMapBase {
         x: center.x - pointTo.x * clampedScale + dx,
         y: center.y - pointTo.y * clampedScale + dy
       })
-
-      this.constrainStageDrag()
 
       this.lastTouchCenter = center
       this.lastTouchDistance = distance

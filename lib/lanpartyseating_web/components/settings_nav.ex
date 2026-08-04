@@ -28,7 +28,7 @@ defmodule LanpartyseatingWeb.Components.SettingsNav do
           navigate={~p"/settings/seat-map"}
           class={["flex items-center gap-3", @current_page == :seat_map && "menu-active"]}
         >
-          <Icons.columns_3_cog class="w-5 h-5" />
+          <Icons.map class="w-5 h-5" />
           <span>Seat Map Editor</span>
         </.link>
       </li>
