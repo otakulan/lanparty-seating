@@ -4,8 +4,6 @@
  * oklch, so the canvas follows the active theme (light / dark / forest) live.
  */
 
-import { getCurrentTheme, getThemeCategory } from "../theme-core.js"
-
 function getCSSVariable(name, fallback) {
   if (typeof window === 'undefined') return fallback
 
@@ -72,12 +70,6 @@ export function withAlpha(color, alpha) {
   return value
 }
 
-export function isLightTheme() {
-  if (typeof window === 'undefined') return false
-
-  return getThemeCategory(getCurrentTheme()) === 'light'
-}
-
 export function getThemeColors() {
   const base100 = getCSSVariable('--color-base-100', 'oklch(0.22 0.01 250)')
   const base200 = getCSSVariable('--color-base-200', 'oklch(0.19 0.01 250)')
@@ -138,47 +130,5 @@ export function getStatusColors() {
     reserved: palette(theme.textSecondary),
     unavailable: palette(theme.accentRed),
     tournament: palette(theme.accentCyan)
-  }
-}
-
-export const THEME = {
-  get background() { return getThemeColors().background },
-  get backgroundGradientStart() { return getThemeColors().backgroundGradientStart },
-  get backgroundGradientEnd() { return getThemeColors().backgroundGradientEnd },
-  get borderColor() { return getThemeColors().borderColor },
-  get gridColor() { return getThemeColors().gridColor },
-  get panelBg() { return getThemeColors().panelBg },
-  get panelBorder() { return getThemeColors().panelBorder },
-  get textPrimary() { return getThemeColors().textPrimary },
-  get textSecondary() { return getThemeColors().textSecondary },
-  get textMuted() { return getThemeColors().textMuted },
-  get accentGreen() { return getThemeColors().accentGreen },
-  get accentCyan() { return getThemeColors().accentCyan },
-  get accentAmber() { return getThemeColors().accentAmber },
-  get fontFamily() { return getThemeColors().fontFamily },
-  get displayFont() { return getThemeColors().displayFont },
-  get monitorFill() { return getThemeColors().monitorFill },
-  get monitorStroke() { return getThemeColors().monitorStroke },
-  get keyboardFill() { return getThemeColors().keyboardFill },
-  get keyboardStroke() { return getThemeColors().keyboardStroke },
-  get tableFill() { return getThemeColors().tableFill },
-  get tableStroke() { return getThemeColors().tableStroke },
-  get lockBadge() { return getThemeColors().lockBadge },
-  get lockBadgeBg() { return getThemeColors().lockBadgeBg }
-}
-
-export const STATUS_COLORS = {
-  get available() { return getStatusColors().available },
-  get occupied() { return getStatusColors().occupied },
-  get reserved() { return getStatusColors().reserved },
-  get unavailable() { return getStatusColors().unavailable },
-  get tournament() { return getStatusColors().tournament }
-}
-
-export function createThemeSnapshot() {
-  return {
-    theme: getThemeColors(),
-    statusColors: getStatusColors(),
-    isLight: isLightTheme()
   }
 }

@@ -50,11 +50,14 @@ export function createSeatGroup(seat, palette, theme, options = {}) {
 }
 
 export function createSeatBodyGroup(palette, theme, options = {}) {
-  const { showKeyboard = true } = options
+  const { showKeyboard = true, isSelected = false, isLocked = false } = options
 
-  const bodyGroup = new Konva.Group({ listening: false })
+  // Listening must stay on: in the editor the seat group is interactive and the
+  // body shapes need to be hittable. The viewer/kiosk seat group is itself
+  // listening:false, so this value is ignored there.
+  const bodyGroup = new Konva.Group({ listening: true })
 
-  addSeatBody(bodyGroup, palette)
+  addSeatBody(bodyGroup, palette, theme, { isSelected, isLocked })
   addSeatMonitor(bodyGroup, theme)
   addSeatAccent(bodyGroup, palette)
 
@@ -65,7 +68,8 @@ export function createSeatBodyGroup(palette, theme, options = {}) {
   return bodyGroup
 }
 
-function addSeatBody(group, palette) {
+function addSeatBody(group, palette, theme, options = {}) {
+  const { isSelected = false, isLocked = false } = options
   const w = SEAT_WIDTH
   const h = SEAT_HEIGHT
 
@@ -78,11 +82,12 @@ function addSeatBody(group, palette) {
     fillLinearGradientStartPoint: { x: 0, y: 0 },
     fillLinearGradientEndPoint: { x: w, y: h * 0.75 },
     fillLinearGradientColorStops: [0, palette.fillSecondary, 0.5, palette.fill, 1, palette.fill],
-    stroke: palette.stroke,
-    strokeWidth: 2,
+    stroke: isLocked ? theme.lockBadge : isSelected ? palette.accent : palette.stroke,
+    strokeWidth: isSelected ? 3 : 2,
+    dash: isLocked ? [6, 4] : undefined,
     shadowColor: palette.glow,
-    shadowBlur: SHADOW_BLUR,
-    shadowOpacity: SHADOW_OPACITY,
+    shadowBlur: isSelected ? 20 : SHADOW_BLUR,
+    shadowOpacity: isSelected ? 1 : SHADOW_OPACITY,
     perfectDrawEnabled: false,
     shadowForStrokeEnabled: false
   }))
@@ -136,7 +141,6 @@ function addSeatKeyboard(group, theme) {
 }
 
 export function addSeatStatusIcon(group, seat, palette) {
-  console.debug(seat, seat.status)
   const data = STATUS_ICON_PATHS[seat.status]
   if (!data) return
 
@@ -286,7 +290,7 @@ export function renderGroupBounds(layer, group, seats, theme) {
     strokeWidth: 2,
     dash: [8, 6],
     cornerRadius: 12,
-    fill: transparentColor(color, 0.08),
+    fill: withAlpha(color, 0.08),
     perfectDrawEnabled: false,
     shadowForStrokeEnabled: false,
     listening: false
@@ -329,8 +333,8 @@ export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
     width: labelWidth,
     height: labelHeight,
     cornerRadius: 10,
-    fill: transparentColor(color, 0.9),
-    stroke: transparentColor("#ffffff", 0.2),
+    fill: withAlpha(color, 0.9),
+    stroke: withAlpha("#ffffff", 0.2),
     strokeWidth: 1,
     perfectDrawEnabled: false,
     shadowForStrokeEnabled: false
@@ -375,8 +379,8 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
     width,
     height,
     cornerRadius: 10,
-    fill: transparentColor(assignment.color, 0.92),
-    stroke: transparentColor("#ffffff", 0.2),
+    fill: withAlpha(assignment.color, 0.92),
+    stroke: withAlpha("#ffffff", 0.2),
     strokeWidth: 1,
     shadowColor: "rgba(0, 0, 0, 0.4)",
     shadowBlur: 12,
@@ -391,11 +395,6 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
   layer.add(labelGroup)
 
   return labelGroup
-}
-
-// Accepts hex, rgb()/rgba() and oklch() colors (theme colors are oklch).
-export function transparentColor(color, alpha) {
-  return withAlpha(color, alpha)
 }
 
 export function countdownLabel(isoValue) {
@@ -436,7 +435,7 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
     listening: true
   })
 
-  const bodyGroup = createEditorSeatBodyGroup(palette, theme, { showKeyboard, isSelected, isLocked })
+  const bodyGroup = createSeatBodyGroup(palette, theme, { showKeyboard, isSelected, isLocked })
   if (cacheBody) {
     bodyGroup.cache()
   }
@@ -458,46 +457,6 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
   group.setAttr("seatSlotId", seat.seat_slot_id)
 
   return group
-}
-
-export function createEditorSeatBodyGroup(palette, theme, options = {}) {
-  const { showKeyboard = true, isSelected = false, isLocked = false } = options
-
-  const bodyGroup = new Konva.Group({ listening: true })
-
-  addEditorSeatBody(bodyGroup, palette, isSelected, isLocked, theme)
-  addSeatMonitor(bodyGroup, theme)
-  addSeatAccent(bodyGroup, palette)
-
-  if (showKeyboard) {
-    addSeatKeyboard(bodyGroup, theme)
-  }
-
-  return bodyGroup
-}
-
-function addEditorSeatBody(group, palette, isSelected, isLocked, theme) {
-  const w = SEAT_WIDTH
-  const h = SEAT_HEIGHT
-
-  group.add(new Konva.Rect({
-    x: -w / 2,
-    y: -h * 0.6,
-    width: w,
-    height: h * 0.75,
-    cornerRadius: 6,
-    fillLinearGradientStartPoint: { x: 0, y: 0 },
-    fillLinearGradientEndPoint: { x: w, y: h * 0.75 },
-    fillLinearGradientColorStops: [0, palette.fillSecondary, 0.5, palette.fill, 1, palette.fill],
-    stroke: isLocked ? theme.lockBadge : isSelected ? palette.accent : palette.stroke,
-    strokeWidth: isSelected ? 3 : 2,
-    dash: isLocked ? [6, 4] : undefined,
-    shadowColor: palette.glow,
-    shadowBlur: isSelected ? 20 : SHADOW_BLUR,
-    shadowOpacity: isSelected ? 1 : SHADOW_OPACITY,
-    perfectDrawEnabled: false,
-    shadowForStrokeEnabled: false
-  }))
 }
 
 function addSelectionHighlight(group, theme) {

@@ -13,9 +13,9 @@ import {
   SEAT_WIDTH,
   SEAT_HEIGHT,
   createEditorSeatGroup,
-  createLockBadge,
-  transparentColor
+  createLockBadge
 } from "./seat_map_renderer"
+import { withAlpha } from "./seat_map_theme"
 
 export const MIN_LABEL_WIDTH = 60
 export const MIN_LABEL_HEIGHT = 32
@@ -325,7 +325,7 @@ buildStage() {
       height: this.state.height,
       // base-content, not base-300: base-300 is nearly the background color on
       // both light and dark themes.
-      stroke: transparentColor(this.theme.textPrimary, 0.45),
+      stroke: withAlpha(this.theme.textPrimary, 0.45),
       strokeWidth: 2,
       dash: [12, 8],
       listening: false,
@@ -370,7 +370,7 @@ buildStage() {
           stroke: object.stroke,
           strokeWidth: 2,
           cornerRadius: 12,
-          shadowColor: transparentColor(object.stroke || theme.tableStroke, 0.3),
+          shadowColor: withAlpha(object.stroke || theme.tableStroke, 0.3),
           shadowBlur: 16,
           shadowOpacity: 0.6,
           perfectDrawEnabled: false
@@ -632,17 +632,11 @@ buildStage() {
       if (wasMarqueeDrag) return
     }
     
-    // Traverse up parent chain to find nodeType (seat group contains nested bodyGroup)
-    let target = event.target
-    let targetType = null
-    while (target && target !== this.stage) {
-      targetType = target.getAttr?.("nodeType")
-      if (targetType) break
-      target = target.parent
-    }
-    
-    if (targetType === "seat" || targetType === "object") return
-    
+    // A click on a seat or object is handled by its own handler; only an empty
+    // canvas click should clear the selection.
+    const target = this.resolveNodeTarget(event.target)
+    if (target) return
+
     if (event.target === this.stage) this.clearSelection()
   }
   
@@ -1252,7 +1246,7 @@ buildStage() {
     
     if (!this.marqueeRect) {
       this.marqueeRect = new Konva.Rect({
-        fill: transparentColor(theme.accentCyan, 0.15),
+        fill: withAlpha(theme.accentCyan, 0.15),
         stroke: theme.accentCyan,
         strokeWidth: 2,
         dash: [4, 4],
@@ -1319,7 +1313,7 @@ buildStage() {
         height: halfH * 2
       }
       
-      if (this.rectanglesIntersect(rect, seatRect)) {
+      if (rectsOverlap(rect, seatRect)) {
         if (isCtrlOrMeta && this.selectedSeats.has(seat.seat_slot_id)) {
           this.selectedSeats.delete(seat.seat_slot_id)
         } else {
@@ -1336,7 +1330,7 @@ buildStage() {
         height: obj.height
       }
       
-      if (this.rectanglesIntersect(rect, objRect)) {
+      if (rectsOverlap(rect, objRect)) {
         if (isCtrlOrMeta && this.selectedObjects.has(obj.id)) {
           this.selectedObjects.delete(obj.id)
         } else {
@@ -1347,11 +1341,6 @@ buildStage() {
     
     this.syncTransformer()
     this.scheduleRender(false)
-  }
-  
-  rectanglesIntersect(a, b) {
-    return !(a.x + a.width < b.x || b.x + b.width < a.x ||
-             a.y + a.height < b.y || b.y + b.height < a.y)
   }
   
   pushHistory() {
