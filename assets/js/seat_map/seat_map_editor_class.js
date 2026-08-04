@@ -23,6 +23,11 @@ export const MIN_LABEL_FONT_SIZE = 8
 export const MAX_LABEL_FONT_SIZE = 160
 export const DEFAULT_LABEL_FONT_SIZE = 18
 export const LABEL_PADDING = 8
+// The canvas rectangle can't be shrunk below this (content coordinates).
+export const MIN_CANVAS_SIZE = 200
+// While resizing, the canvas edge is blocked this far outside the content's
+// bounding box, so shrinking never pushes the border into (or past) an object.
+export const CANVAS_EDGE_BUFFER = 20
 
 // Lucide icon paths (lucide.dev) for the context menu, inline so they inherit
 // the button's `currentColor` (and turn red for the danger action).
@@ -340,21 +345,127 @@ buildStage() {
   }
   
   // Drag and resize are clamped to the canvas rect, so it has to be visible.
+  // Everything here lives on the front overlay layer so the frame and its resize
+  // handle stay grabbable above the seats/objects.
   renderCanvasBounds() {
-    this.groupLayer.add(new Konva.Rect({
+    const theme = this.theme
+    const layer = this.overlayLayer
+
+    this.canvasBorderRect = new Konva.Rect({
       x: 0,
       y: 0,
       width: this.state.width,
       height: this.state.height,
       // base-content, not base-300: base-300 is nearly the background color on
       // both light and dark themes.
-      stroke: withAlpha(this.theme.textPrimary, 0.45),
+      stroke: withAlpha(theme.textPrimary, 0.45),
       strokeWidth: 2,
       dash: [12, 8],
       listening: false,
       perfectDrawEnabled: false,
       shadowForStrokeEnabled: false
-    }))
+    })
+    layer.add(this.canvasBorderRect)
+
+    this.canvasBoundaryLabel = new Konva.Text({
+      text: "Room boundary",
+      x: this.state.width / 2,
+      y: 8,
+      fontSize: 14,
+      fontFamily: theme.fontFamily,
+      fontStyle: "600",
+      fill: withAlpha(theme.textPrimary, 0.5),
+      listening: false,
+      perfectDrawEnabled: false
+    })
+    this.canvasBoundaryLabel.offsetX(this.canvasBoundaryLabel.width() / 2)
+    layer.add(this.canvasBoundaryLabel)
+
+    const handleSize = 16
+    this.canvasResizeHandle = new Konva.Rect({
+      x: this.state.width,
+      y: this.state.height,
+      width: handleSize,
+      height: handleSize,
+      offsetX: handleSize / 2,
+      offsetY: handleSize / 2,
+      fill: theme.accentCyan,
+      cornerRadius: 4,
+      draggable: true,
+      perfectDrawEnabled: false
+    })
+    this.canvasResizeHandle.on("mouseenter", () => this.setCursor("nwse-resize"))
+    this.canvasResizeHandle.on("mouseleave", () => this.setCursor("default"))
+    this.canvasResizeHandle.on("dragstart", () => {
+      this.pushHistory()
+      this.setCursor("nwse-resize")
+    })
+    this.canvasResizeHandle.on("dragmove", () => this.resizeCanvasToHandle())
+    this.canvasResizeHandle.on("dragend", () => {
+      this.setCursor("default")
+      this.scheduleRender(false)
+    })
+    layer.add(this.canvasResizeHandle)
+  }
+
+  // The smallest the canvas may be shrunk to: the content's bounding box plus a
+  // buffer, so the border stops before reaching any seat or object. Computed
+  // per axis from the rightmost/bottommost content extent (the top-left stays
+  // anchored at the canvas origin).
+  minCanvasSizeForContent(buffer = CANVAS_EDGE_BUFFER) {
+    let maxX = 0
+    let maxY = 0
+
+    for (const seat of this.state.seats) {
+      maxX = Math.max(maxX, seat.x + seat.width / 2)
+      maxY = Math.max(maxY, seat.y + seat.height / 2)
+    }
+    for (const object of this.state.objects) {
+      maxX = Math.max(maxX, object.x + object.width)
+      maxY = Math.max(maxY, object.y + object.height)
+    }
+
+    return {
+      width: Math.max(MIN_CANVAS_SIZE, Math.ceil(maxX) + buffer),
+      height: Math.max(MIN_CANVAS_SIZE, Math.ceil(maxY) + buffer)
+    }
+  }
+
+  // The resize handle sits at the canvas corner; its position in content
+  // coordinates is the new canvas size. Update the border and label live so the
+  // frame follows the pointer without a full scene rebuild (which would destroy
+  // the handle mid-drag).
+  resizeCanvasToHandle() {
+    const handle = this.canvasResizeHandle
+    if (!handle) return
+
+    // The border can't cross into the buffer zone around content: block the
+    // resize at the content's bounding box plus CANVAS_EDGE_BUFFER on each axis.
+    const minSize = this.minCanvasSizeForContent()
+
+    let newWidth = Math.round(handle.x())
+    let newHeight = Math.round(handle.y())
+
+    if (newWidth < minSize.width) {
+      newWidth = minSize.width
+      handle.x(newWidth)
+    }
+    if (newHeight < minSize.height) {
+      newHeight = minSize.height
+      handle.y(newHeight)
+    }
+
+    this.state.width = newWidth
+    this.state.height = newHeight
+
+    if (this.canvasBorderRect) {
+      this.canvasBorderRect.size({ width: newWidth, height: newHeight })
+    }
+    if (this.canvasBoundaryLabel) {
+      this.canvasBoundaryLabel.x(newWidth / 2)
+      this.canvasBoundaryLabel.offsetX(this.canvasBoundaryLabel.width() / 2)
+    }
+    this.overlayLayer.batchDraw()
   }
   
   renderObjects() {
