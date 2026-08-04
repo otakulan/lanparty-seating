@@ -14,7 +14,7 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
         RETURN '0';
       END IF;
       WHILE v > 0 LOOP
-        result := substr(alphabet, (v % 32) + 1, 1) || result;
+        result := substr(alphabet, ((v % 32) + 1)::int, 1) || result;
         v := v / 32;
       END LOOP;
       RETURN result;
@@ -25,7 +25,7 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     # 1. rooms table -----------------------------------------------------------
     create table(:rooms) do
       add :name, :string, null: false
-      add :public_id, :string, null: false
+      add :public_id, :string
       add :width, :integer, null: false, default: 1920
       add :height, :integer, null: false, default: 1080
       add :published_version_id, references(:seat_map_versions, on_delete: :nilify_all), null: true
@@ -58,7 +58,7 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     execute("""
     UPDATE rooms
     SET published_version_id = (
-      SELECT id FROM seat_map_versions v
+      SELECT v.id FROM seat_map_versions v
       JOIN seat_maps sm ON sm.id = v.seat_map_id
       WHERE sm.slug = 'main-room' AND sm.deleted_at IS NULL
         AND v.status = 'published' AND v.deleted_at IS NULL
@@ -91,9 +91,10 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     execute("UPDATE seat_maps SET public_id = lpad(crockford32(id), 8, '0') WHERE public_id IS NULL")
 
     alter table(:seat_maps) do
-      modify :room_id, references(:rooms, on_delete: :delete_all), null: false
       modify :public_id, :string, null: false
     end
+
+    execute("ALTER TABLE seat_maps ALTER COLUMN room_id SET NOT NULL")
 
     create unique_index(:seat_maps, [:room_id, :name], where: "deleted_at IS NULL")
     create unique_index(:seat_maps, [:public_id], where: "deleted_at IS NULL")
@@ -117,9 +118,7 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     WHERE ss.seat_map_id = sm.id AND ss.deleted_at IS NULL
     """)
 
-    alter table(:seat_slots) do
-      modify :room_id, references(:rooms, on_delete: :delete_all), null: false
-    end
+    execute("ALTER TABLE seat_slots ALTER COLUMN room_id SET NOT NULL")
 
     create unique_index(:seat_slots, [:room_id, :label], where: "deleted_at IS NULL")
     create index(:seat_slots, [:room_id])
@@ -134,12 +133,10 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     UPDATE seat_map_versions d
     SET deleted_at = NOW()
     FROM seat_map_versions p
-    JOIN seat_maps sm ON sm.id = p.seat_map_id
     WHERE d.seat_map_id = p.seat_map_id
       AND d.status = 'draft' AND d.deleted_at IS NULL
       AND p.status = 'published' AND p.deleted_at IS NULL
       AND d.data = p.data
-      AND sm.slug = 'main-room'
     """)
 
     alter table(:seat_map_versions) do
