@@ -1,5 +1,5 @@
 import Konva from "konva"
-import { getThemeColors, getStatusColors } from "./seat_map_theme"
+import { getThemeColors, getStatusColors, withAlpha } from "./seat_map_theme"
 
 export const SEAT_WIDTH = 64
 export const SEAT_HEIGHT = 64
@@ -9,6 +9,11 @@ export const SHADOW_OPACITY = 0.6
 export const ACCENT_RADIUS = 3
 
 const STATUS_ICON_SIZE = 26
+const LOCK_BADGE_SIZE = 14
+const LOCK_BADGE_RADIUS = 10
+
+const LOCK_ICON_PATH =
+  "M5 11 H19 A2 2 0 0 1 21 13 V20 A2 2 0 0 1 19 22 H5 A2 2 0 0 1 3 20 V13 A2 2 0 0 1 5 11 Z M7 11 V7 A5 5 0 0 1 17 7 V11"
 
 const STATUS_ICON_PATHS = {
   occupied: "M12 2 A10 10 0 1 0 12 22 A10 10 0 1 0 12 2 Z M12 6 L12 12 L16 14",
@@ -153,18 +158,57 @@ export function addSeatStatusIcon(group, seat, palette) {
   }))
 }
 
-export function addSeatLabel(group, seat, theme, palette, options = {}) {
+// Editor-only badge marking a node as locked (not movable / not resizable).
+export function createLockBadge(theme, position = { x: 0, y: 0 }) {
+  const badge = new Konva.Group({
+    x: position.x,
+    y: position.y,
+    listening: false,
+    name: "lock-badge"
+  })
+
+  badge.add(new Konva.Circle({
+    radius: LOCK_BADGE_RADIUS,
+    fill: theme.lockBadgeBg,
+    stroke: theme.lockBadge,
+    strokeWidth: 1.5,
+    perfectDrawEnabled: false,
+    shadowForStrokeEnabled: false
+  }))
+
+  badge.add(new Konva.Path({
+    x: -LOCK_BADGE_SIZE / 2,
+    y: -LOCK_BADGE_SIZE / 2,
+    scaleX: LOCK_BADGE_SIZE / 24,
+    scaleY: LOCK_BADGE_SIZE / 24,
+    data: LOCK_ICON_PATH,
+    stroke: theme.lockBadge,
+    strokeWidth: 2.5,
+    lineCap: "round",
+    lineJoin: "round",
+    perfectDrawEnabled: false
+  }))
+
+  return badge
+}
+
+export function addSeatLabel(group, seat, theme, _palette, options = {}) {
   const { listening = false } = options
+  // Base content color instead of the status color: status is already carried by
+  // the seat body/icon and colored text is hard to read on some themes.
   group.add(new Konva.Text({
-    x: -SEAT_WIDTH * 0.4,
-    y: SEAT_HEIGHT * 0.18,
-    width: SEAT_WIDTH * 0.8,
+    x: -SEAT_WIDTH * 0.45,
+    // Vertically centered on the keyboard (y 0.22h..0.50h)
+    //y: SEAT_HEIGHT * 0.24,
+    // Centered on the monitor screen instead (y -0.50h..-0.10h):
+    y: -SEAT_HEIGHT * 0.42,
+    width: SEAT_WIDTH * 0.9,
     align: "center",
     text: seat.label,
-    fontSize: 11,
+    fontSize: 15,
     fontStyle: "600",
     fontFamily: theme.fontFamily,
-    fill: palette.text,
+    fill: theme.textPrimary,
     perfectDrawEnabled: false,
     listening
   }))
@@ -349,15 +393,9 @@ export function renderTeamLabel(layer, assignment, groups, seats, theme) {
   return labelGroup
 }
 
-export function transparentColor(hexColor, alpha) {
-  const sanitized = hexColor.replace("#", "")
-  const value = sanitized.length === 3
-    ? sanitized.split("").map(c => c + c).join("")
-    : sanitized
-  const r = parseInt(value.slice(0, 2), 16)
-  const g = parseInt(value.slice(2, 4), 16)
-  const b = parseInt(value.slice(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+// Accepts hex, rgb()/rgba() and oklch() colors (theme colors are oklch).
+export function transparentColor(color, alpha) {
+  return withAlpha(color, alpha)
 }
 
 export function countdownLabel(isoValue) {
@@ -389,7 +427,7 @@ export function startTimerUpdates(timerNodes, layer) {
 }
 
 export function createEditorSeatGroup(seat, palette, theme, options = {}) {
-  const { showKeyboard = true, isSelected = false, cacheBody = false } = options
+  const { showKeyboard = true, isSelected = false, isLocked = false, cacheBody = false } = options
 
   const group = new Konva.Group({
     x: seat.x,
@@ -398,7 +436,7 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
     listening: true
   })
 
-  const bodyGroup = createEditorSeatBodyGroup(palette, theme, { showKeyboard, isSelected })
+  const bodyGroup = createEditorSeatBodyGroup(palette, theme, { showKeyboard, isSelected, isLocked })
   if (cacheBody) {
     bodyGroup.cache()
   }
@@ -412,6 +450,10 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
     addSelectionHighlight(group, theme)
   }
 
+  if (isLocked) {
+    group.add(createLockBadge(theme, { x: SEAT_WIDTH * 0.42, y: -SEAT_HEIGHT * 0.56 }))
+  }
+
   group.setAttr("nodeType", "seat")
   group.setAttr("seatSlotId", seat.seat_slot_id)
 
@@ -419,11 +461,11 @@ export function createEditorSeatGroup(seat, palette, theme, options = {}) {
 }
 
 export function createEditorSeatBodyGroup(palette, theme, options = {}) {
-  const { showKeyboard = true, isSelected = false } = options
+  const { showKeyboard = true, isSelected = false, isLocked = false } = options
 
   const bodyGroup = new Konva.Group({ listening: true })
 
-  addEditorSeatBody(bodyGroup, palette, isSelected)
+  addEditorSeatBody(bodyGroup, palette, isSelected, isLocked, theme)
   addSeatMonitor(bodyGroup, theme)
   addSeatAccent(bodyGroup, palette)
 
@@ -434,7 +476,7 @@ export function createEditorSeatBodyGroup(palette, theme, options = {}) {
   return bodyGroup
 }
 
-function addEditorSeatBody(group, palette, isSelected) {
+function addEditorSeatBody(group, palette, isSelected, isLocked, theme) {
   const w = SEAT_WIDTH
   const h = SEAT_HEIGHT
 
@@ -447,8 +489,9 @@ function addEditorSeatBody(group, palette, isSelected) {
     fillLinearGradientStartPoint: { x: 0, y: 0 },
     fillLinearGradientEndPoint: { x: w, y: h * 0.75 },
     fillLinearGradientColorStops: [0, palette.fillSecondary, 0.5, palette.fill, 1, palette.fill],
-    stroke: isSelected ? palette.accent : palette.stroke,
+    stroke: isLocked ? theme.lockBadge : isSelected ? palette.accent : palette.stroke,
     strokeWidth: isSelected ? 3 : 2,
+    dash: isLocked ? [6, 4] : undefined,
     shadowColor: palette.glow,
     shadowBlur: isSelected ? 20 : SHADOW_BLUR,
     shadowOpacity: isSelected ? 1 : SHADOW_OPACITY,
