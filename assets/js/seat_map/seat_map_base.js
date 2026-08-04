@@ -13,6 +13,13 @@ export { getThemeColors, getStatusColors }
 
 export const SCALE_BY = 1.08
 
+// Minimum fraction of the *viewport* that must keep showing the canvas while
+// panning. Expressed against the viewport (not the canvas) so the boundary stays
+// reachable at any zoom - a fraction of the canvas would exceed the whole
+// viewport once the canvas is many viewport-widths wide and push the edge
+// permanently off-screen. Shared by both axes so X and Y panning match.
+export const MIN_VISIBLE_FRACTION = 0.7
+
 export function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
@@ -205,45 +212,35 @@ export class SeatMapBase {
     }
   }
 
-  // Constrain panning to keep at least one seat visible within center of viewport.
-  // When content fits: center it and disable panning.
-  // When content larger: allow pan within 40%-60% zone (center 20%).
+  // Constrain panning so at least MIN_VISIBLE_FRACTION of the canvas stays inside
+  // the viewport on every axis. When the canvas fits, center it; otherwise keep
+  // at least that fraction visible by clamping the stage position. The same
+  // fraction is used for X and Y so horizontal and vertical panning match.
   constrainStageDrag() {
     const scale = this.stage.scaleX()
-    const bounds = this.getContentBounds()
+    const canvasW = this.state.width * scale
+    const canvasH = this.state.height * scale
     const stageWidth = this.stage.width()
     const stageHeight = this.stage.height()
 
-    if (bounds.width === 0 || bounds.height === 0) return
-
-    const scaledWidth = bounds.width * scale
-    const scaledHeight = bounds.height * scale
-    const margin = 40
-
-    const centerXMin = 0.4 * stageWidth
-    const centerXMax = 0.6 * stageWidth
-    const centerYMin = 0.4 * stageHeight
-    const centerYMax = 0.6 * stageHeight
+    const f = MIN_VISIBLE_FRACTION
 
     let newX = this.stage.x()
     let newY = this.stage.y()
 
-    if (scaledWidth <= stageWidth - margin * 2) {
-      // Content fits: center it
-      newX = (stageWidth - scaledWidth) / 2 - bounds.x * scale
+    if (canvasW <= stageWidth) {
+      newX = (stageWidth - canvasW) / 2
     } else {
-      // Constrain to keep last seat within center 40%-60% zone
-      const minX = centerXMin - (bounds.x + bounds.width) * scale
-      const maxX = centerXMax - bounds.x * scale
-      if (minX <= maxX) newX = clamp(newX, minX, maxX)
+      // Keep at least f of the *viewport* showing canvas (zoom-independent): the
+      // boundary stays reachable at any zoom instead of being pushed off once
+      // the canvas is many viewport-widths wide.
+      newX = clamp(newX, f * stageWidth - canvasW, (1 - f) * stageWidth)
     }
 
-    if (scaledHeight <= stageHeight - margin * 2) {
-      newY = (stageHeight - scaledHeight) / 2 - bounds.y * scale
+    if (canvasH <= stageHeight) {
+      newY = (stageHeight - canvasH) / 2
     } else {
-      const minY = centerYMin - (bounds.y + bounds.height) * scale
-      const maxY = centerYMax - bounds.y * scale
-      if (minY <= maxY) newY = clamp(newY, minY, maxY)
+      newY = clamp(newY, f * stageHeight - canvasH, (1 - f) * stageHeight)
     }
 
     this.stage.position({ x: newX, y: newY })
