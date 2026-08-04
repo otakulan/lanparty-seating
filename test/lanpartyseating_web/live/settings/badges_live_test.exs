@@ -32,7 +32,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
     test "redirects badge auth users to seat map settings", %{conn: conn} do
       conn = conn |> log_in_badge(admin_badge_fixture())
 
-      assert {:error, {:live_redirect, %{to: "/settings/seat-map", flash: flash}}} =
+      assert {:error, {:live_redirect, %{to: "/settings", flash: flash}}} =
                live(conn, ~p"/settings/badges")
 
       assert flash["error"] == "Full admin access required"

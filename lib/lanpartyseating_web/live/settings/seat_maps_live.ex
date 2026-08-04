@@ -8,6 +8,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   import Ecto.Query
 
   alias Lanpartyseating.PubSub
+  alias Lanpartyseating.Repo
   alias Lanpartyseating.SeatMapsLogic
   alias LanpartyseatingWeb.Components.RoomOnboarding
   alias LanpartyseatingWeb.Components.SettingsNav
@@ -56,7 +57,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
       {:ok, _map} ->
         {:noreply, put_flash(load(socket, room_id), :info, "Map created / Carte créée")}
 
-      {:error, changeset} ->
+      {:error, changeset = %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
 
       {:error, reason} ->
@@ -69,7 +70,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
       {:ok, _room} ->
         {:noreply, put_flash(load(socket, nil), :info, "Room created / Salle créée")}
 
-      {:error, changeset} ->
+      {:error, changeset = %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
 
       {:error, reason} ->
@@ -189,10 +190,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
             <:trailing>
               <div class="flex items-center gap-2">
                 <.form for={%{}} phx-change="set_active_room">
-                  <select name="room_id" class="select select-bordered select-sm bg-base-100 text-base-content/70">
-                    <%= for room <- @rooms do %>
-                      <option value={room.id} selected={room.id == @selected_room_id}><%= room.name %></option>
-                    <% end %>
+                  <select :if={@rooms != []} name="room_id" class="select select-bordered select-sm bg-base-100 text-base-content/70">
+                    <option :for={room <- @rooms} value={room.id} selected={room.id == @selected_room_id}><%= room.name %></option>
                   </select>
                 </.form>
                 <button phx-click="toggle_new_room" class="btn btn-sm btn-ghost">
@@ -329,13 +328,12 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
         _ -> active_room_id()
       end
 
-    maps = SeatMapsLogic.list_seat_maps(selected_room_id)
+    maps = if is_nil(selected_room_id),
+            do: [],
+            else: SeatMapsLogic.list_seat_maps(selected_room_id)
     room_name = Enum.find_value(rooms, "—", &if(&1.id == selected_room_id, do: &1.name))
 
-    versions_by_map =
-      maps
-      |> Enum.map(fn map -> {map.id, SeatMapsLogic.list_versions(map.id)} end)
-      |> Map.new()
+    versions_by_map = maps |> Enum.into(%{}, fn (map) -> {map.id, SeatMapsLogic.list_versions(map.id)} end)
 
     onboarding = onboarding_state(selected_room_id)
 
@@ -365,12 +363,12 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   end
 
   defp onboarding_state(active_room_id) do
-    room = Lanpartyseating.Repo.get(Lanpartyseating.Room, active_room_id) |> Lanpartyseating.Repo.preload(:published_version)
+    room = Lanpartyseating.Room |> Repo.get(active_room_id, [preload: [:published_version]])
 
     seat_count =
       Lanpartyseating.SeatSlot
       |> where([s], s.room_id == ^active_room_id and is_nil(s.deleted_at))
-      |> Lanpartyseating.Repo.aggregate(:count, :id)
+      |> Repo.aggregate(:count, :id)
 
     maps = SeatMapsLogic.list_seat_maps(active_room_id)
     first_map = List.first(maps)

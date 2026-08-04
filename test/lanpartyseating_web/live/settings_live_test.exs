@@ -15,8 +15,8 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
       assert path == ~p"/login"
     end
 
-    test "redirects from /settings/seat-map to login", %{conn: conn} do
-      assert {:error, redirect} = live(conn, ~p"/settings/seat-map")
+    test "redirects from /settings/seat-maps to login", %{conn: conn} do
+      assert {:error, redirect} = live(conn, ~p"/settings/seat-maps")
       assert {:redirect, %{to: path}} = redirect
       assert path == ~p"/login"
     end
@@ -37,14 +37,14 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   describe "user auth - access control" do
     setup [:register_and_log_in_user]
 
-    test "/settings opens seat map editor", %{conn: conn} do
+    test "/settings opens general settings", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings")
-      assert has_element?(view, "h1", "Seat Map Editor")
+      assert has_element?(view, "h1", "General")
     end
 
-    test "can access /settings/seat-map", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/seat-map")
-      assert has_element?(view, "h1", "Seat Map Editor")
+    test "can access /settings/seat-maps", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
+      assert has_element?(view, "h1", "Seat Maps")
     end
 
     test "can access /settings/users", %{conn: conn} do
@@ -61,20 +61,20 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
   describe "badge auth - access control" do
     setup [:register_and_log_in_badge]
 
-    test "can access /settings/seat-map", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/seat-map")
-      assert has_element?(view, "h1", "Seat Map Editor")
+    test "can access /settings/seat-maps", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
+      assert has_element?(view, "h1", "Seat Maps")
     end
 
     test "redirected from /settings/users with error flash", %{conn: conn} do
       assert {:error, {:live_redirect, %{to: path, flash: flash}}} = live(conn, ~p"/settings/users")
-      assert path == ~p"/settings/seat-map"
+      assert path == ~p"/settings"
       assert flash["error"] == "Full admin access required"
     end
 
     test "redirected from /settings/badges with error flash", %{conn: conn} do
       assert {:error, {:live_redirect, %{to: path, flash: flash}}} = live(conn, ~p"/settings/badges")
-      assert path == ~p"/settings/seat-map"
+      assert path == ~p"/settings"
       assert flash["error"] == "Full admin access required"
     end
   end
@@ -87,17 +87,17 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
     setup [:register_and_log_in_user]
 
     test "shows all menu items", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/seat-map")
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       # Use the drawer-side menu specifically
-      assert has_element?(view, ".drawer-side a[href=\"/settings/seat-map\"]", "Seat Map Editor")
+      assert has_element?(view, ".drawer-side a[href=\"/settings/seat-maps\"]", "Seat Maps")
       assert has_element?(view, ".drawer-side a[href=\"/settings/users\"]", "Users")
       assert has_element?(view, ".drawer-side a[href=\"/settings/badges\"]", "Badges")
     end
 
     test "seat map link is active on seat map page", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/seat-map")
-      assert has_element?(view, ~s|.drawer-side a[href="/settings/seat-map"].active|)
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
+      assert has_element?(view, ~s|.drawer-side a[href="/settings/seat-maps"].active|)
     end
 
     test "users link is active on users page", %{conn: conn} do
@@ -115,9 +115,9 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
     setup [:register_and_log_in_badge]
 
     test "shows only seating link, not users or badges", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/seat-map")
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
-      assert has_element?(view, ~s|.drawer-side a[href="/settings/seat-map"]|, "Seat Map Editor")
+      assert has_element?(view, ~s|.drawer-side a[href="/settings/seat-maps"]|, "Seat Maps")
       refute has_element?(view, ~s|.drawer-side a[href="/settings/users"]|)
       refute has_element?(view, ~s|.drawer-side a[href="/settings/badges"]|)
     end
@@ -127,7 +127,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
     setup [:register_and_log_in_user]
 
     test "clicking Users link navigates to /settings/users", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/seat-map")
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       {:ok, view, _html} =
         view
@@ -139,7 +139,7 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
     end
 
     test "clicking Badges link navigates to /settings/badges", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/settings/seat-map")
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       {:ok, view, _html} =
         view
@@ -150,16 +150,16 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
       assert has_element?(view, "h1", "Badges")
     end
 
-    test "clicking Seat Map link navigates to /settings/seat-map", %{conn: conn} do
+    test "clicking Seat Map link navigates to /settings/seat-maps", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/users")
 
       {:ok, view, _html} =
         view
-        |> element(~s|.drawer-side a[href="/settings/seat-map"]|)
+        |> element(~s|.drawer-side a[href="/settings/seat-maps"]|)
         |> render_click()
         |> follow_redirect(conn)
 
-      assert has_element?(view, "h1", "Seat Map Editor")
+      assert has_element?(view, "h1", "Seat Maps")
     end
   end
 

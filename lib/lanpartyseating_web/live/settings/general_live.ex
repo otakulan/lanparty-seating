@@ -49,7 +49,7 @@ defmodule LanpartyseatingWeb.Settings.GeneralLive do
       {:ok, _room} ->
         {:noreply, put_flash(load(socket), :info, "Room created / Salle créée")}
 
-      {:error, changeset} ->
+      {:error, changeset = %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, format_error(changeset))}
 
       {:error, reason} ->
