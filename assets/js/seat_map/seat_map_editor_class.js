@@ -217,7 +217,6 @@ buildStage() {
     this.stage.on("click tap", e => this.handleStageClick(e))
     this.stage.on("contextmenu", e => this.handleContextMenu(e))
     this.stage.on("mousedown", () => this.stageContainer.focus())
-    this.stage.on("dragmove", () => this.constrainStageDrag())
     this.stage.on("dragstart", () => this.setCursor("grabbing"))
     this.stage.on("dragend", () => this.setCursor("default"))
     

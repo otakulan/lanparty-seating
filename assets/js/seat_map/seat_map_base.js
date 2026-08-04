@@ -13,13 +13,6 @@ export { getThemeColors, getStatusColors }
 
 export const SCALE_BY = 1.08
 
-// Minimum fraction of the *viewport* that must keep showing the canvas while
-// panning. Expressed against the viewport (not the canvas) so the boundary stays
-// reachable at any zoom - a fraction of the canvas would exceed the whole
-// viewport once the canvas is many viewport-widths wide and push the edge
-// permanently off-screen. Shared by both axes so X and Y panning match.
-export const MIN_VISIBLE_FRACTION = 0.7
-
 export function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
@@ -212,40 +205,6 @@ export class SeatMapBase {
     }
   }
 
-  // Constrain panning so at least MIN_VISIBLE_FRACTION of the canvas stays inside
-  // the viewport on every axis. When the canvas fits, center it; otherwise keep
-  // at least that fraction visible by clamping the stage position. The same
-  // fraction is used for X and Y so horizontal and vertical panning match.
-  constrainStageDrag() {
-    const scale = this.stage.scaleX()
-    const canvasW = this.state.width * scale
-    const canvasH = this.state.height * scale
-    const stageWidth = this.stage.width()
-    const stageHeight = this.stage.height()
-
-    const f = MIN_VISIBLE_FRACTION
-
-    let newX = this.stage.x()
-    let newY = this.stage.y()
-
-    if (canvasW <= stageWidth) {
-      newX = (stageWidth - canvasW) / 2
-    } else {
-      // Keep at least f of the *viewport* showing canvas (zoom-independent): the
-      // boundary stays reachable at any zoom instead of being pushed off once
-      // the canvas is many viewport-widths wide.
-      newX = clamp(newX, f * stageWidth - canvasW, (1 - f) * stageWidth)
-    }
-
-    if (canvasH <= stageHeight) {
-      newY = (stageHeight - canvasH) / 2
-    } else {
-      newY = clamp(newY, f * stageHeight - canvasH, (1 - f) * stageHeight)
-    }
-
-    this.stage.position({ x: newX, y: newY })
-  }
-
   // Center content bounds in viewport (used when content fits)
   centerCanvas() {
     const scale = this.stage.scaleX()
@@ -296,7 +255,6 @@ export class SeatMapBase {
       y: center.y - pointTo.y * clampedScale
     })
 
-    this.constrainStageDrag()
     this.stage.batchDraw()
   }
 
@@ -392,7 +350,8 @@ export class SeatMapBase {
       y: pointer.y - canvasPoint.y * newScale
     })
 
-    // Only center when zoomed out (content fits in viewport)
+    // When fully zoomed out the canvas fits: center it. Otherwise panning is
+    // unconstrained - the user can recover with the reset-view button.
     if (this.canvasFitsInViewport()) {
       this.centerCanvas()
     }
@@ -448,8 +407,6 @@ export class SeatMapBase {
         x: center.x - pointTo.x * clampedScale + dx,
         y: center.y - pointTo.y * clampedScale + dy
       })
-
-      this.constrainStageDrag()
 
       this.lastTouchCenter = center
       this.lastTouchDistance = distance

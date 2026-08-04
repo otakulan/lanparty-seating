@@ -79,7 +79,6 @@ export default class SeatMapViewer extends SeatMapBase {
     this.stage.on("wheel", (e) => this.handleWheel(e))
     this.stage.on("touchmove", (e) => this.handleTouchMove(e))
     this.stage.on("touchend", () => this.handleTouchEnd())
-    this.stage.on("dragmove", () => this.constrainStageDrag())
     this.stage.on("dragstart", () => this.hitLayer.listening(false))
     this.stage.on("dragend", () => {
       this.hitLayer.listening(true)
