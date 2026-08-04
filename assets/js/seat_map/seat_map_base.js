@@ -1,7 +1,6 @@
 import Konva from "konva"
 import { getThemeColors, getStatusColors } from "./seat_map_theme"
 import { onThemeChange } from "../theme-core.js"
-import { renderGroupBounds, renderGroupLabel, renderTeamLabel } from "./seat_map_renderer"
 
 Konva.hitOnDragEnabled = true
 Konva.capturePointerEventsEnabled = true
@@ -417,36 +416,6 @@ export class SeatMapBase {
   handleTouchEnd() {
     this.lastTouchCenter = null
     this.lastTouchDistance = 0
-  }
-
-  // Render group bounding boxes and labels (shared by all views)
-  renderGroups() {
-    const theme = this.theme
-    const groups = this.state.groups
-    const seats = this.state.seats
-    const teamAssignments = this.state.team_assignments
-    const groupLayer = this.getGroupLayer()
-
-    for (const group of groups) {
-      renderGroupBounds(groupLayer, group, seats, theme)
-      renderGroupLabel(groupLayer, group, seats, teamAssignments, theme)
-    }
-  }
-
-  // Render tournament team assignments (shared by all views)
-  renderTeamLabels() {
-    const theme = this.theme
-    const groups = this.state.groups
-    const seats = this.state.seats
-
-    for (const assignment of this.state.team_assignments) {
-      renderTeamLabel(this.overlayLayer, assignment, groups, seats, theme)
-    }
-  }
-
-  // Subclasses must implement to return their group layer
-  getGroupLayer() {
-    throw new Error('getGroupLayer must be implemented by subclass')
   }
 
   get theme() {

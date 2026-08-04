@@ -54,8 +54,6 @@ export default class SeatMapKiosk extends SeatMapBase {
     this.overlayLayer.destroyChildren()
 
     this.renderSeats()
-    this.renderGroups()
-    this.renderTeamLabels()
 
     // Cache entire layers as single images for best performance (kiosk is static)
     this.cacheLayers()
@@ -95,10 +93,6 @@ export default class SeatMapKiosk extends SeatMapBase {
         this.hitLayer.add(hitTarget)
       }
     }
-  }
-
-  getGroupLayer() {
-    return this.sceneLayer
   }
 
   handleSeatClick(seat) {

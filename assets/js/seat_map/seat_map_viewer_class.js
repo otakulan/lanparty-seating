@@ -95,8 +95,6 @@ export default class SeatMapViewer extends SeatMapBase {
     this.timerNodes.clear()
     
     this.renderSeats()
-    this.renderGroups()
-    this.renderTeamLabels()
     
     if (this.timerNodes.size > 0) {
       this.timerInterval = startTimerUpdates(this.timerNodes, this.sceneLayer)
@@ -135,10 +133,6 @@ export default class SeatMapViewer extends SeatMapBase {
       hitTarget.on("click tap", () => this.handleSeatClick(seat))
       this.hitLayer.add(hitTarget)
     }
-  }
-  
-  getGroupLayer() {
-    return this.sceneLayer
   }
   
   handleSeatClick(seat) {

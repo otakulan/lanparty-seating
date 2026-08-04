@@ -11,7 +11,6 @@ defmodule Lanpartyseating.Tournament do
     field :name, :string
     field :deleted_at, :utc_datetime
     has_many :tournament_reservations, Lanpartyseating.TournamentReservation
-    has_many :team_assignments, Lanpartyseating.TournamentTeamAssignment
     timestamps()
   end
 

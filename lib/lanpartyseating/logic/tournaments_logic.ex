@@ -14,6 +14,21 @@ defmodule Lanpartyseating.TournamentsLogic do
     |> Repo.all()
   end
 
+  @doc """
+  Returns true when any Tournament is underway or within its buffer window
+  (start_date <= now + tournament_buffer_minutes and end_date > now).
+  """
+  def tournament_underway? do
+    buffer_minutes = Lanpartyseating.SettingsLogic.get_settings().tournament_buffer_minutes
+    now = DateTime.utc_now()
+    tournament_buffer = DateTime.add(now, buffer_minutes, :minute)
+
+    Tournament
+    |> where([t], is_nil(t.deleted_at))
+    |> where([t], t.start_date < ^tournament_buffer and t.end_date > ^now)
+    |> Repo.exists?()
+  end
+
   def get_upcoming_tournaments do
     tournaments =
       from(t in Tournament,

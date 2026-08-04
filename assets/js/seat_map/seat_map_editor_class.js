@@ -136,11 +136,9 @@ buildStage() {
     this.objectLayer = new Konva.Layer()
     this.objectLayerFront = new Konva.Layer()
     this.dragLayer = new Konva.Layer()
-    // The shared base methods (renderGroups / renderTeamLabels) draw into
-    // `groupLayer` (behind everything) and `overlayLayer` (in front). Alias them
-    // onto the existing object layers so the stage stays within Konva's
-    // recommended layer count instead of adding two more layers.
-    this.groupLayer = this.objectLayer
+    // The shared base methods draw into `overlayLayer` (in front). Alias it onto
+    // the existing front object layer so the stage stays within Konva's
+    // recommended layer count instead of adding another layer.
     this.overlayLayer = this.objectLayerFront
     
     this.transformer = new Konva.Transformer({
@@ -331,9 +329,7 @@ buildStage() {
     
     this.renderCanvasBounds()
     this.renderObjects()
-    this.renderGroups()
     this.renderSeats()
-    this.renderTeamLabels()
     this.updateExportTarget()
     
     if (resetView || !this.stage.scaleX()) {
@@ -649,10 +645,6 @@ buildStage() {
   
   setCursor(cursor) {
     this.stageContainer.style.cursor = cursor
-  }
-   
-  getGroupLayer() {
-    return this.groupLayer
   }
   
   renderSeats() {
@@ -1545,8 +1537,7 @@ buildStage() {
     
     const state = JSON.stringify({
       seats: this.state.seats,
-      objects: this.state.objects,
-      groups: this.state.groups
+      objects: this.state.objects
     })
     
     if (this.historyIndex < this.history.length - 1) {
@@ -1584,7 +1575,6 @@ buildStage() {
     this.isUndoRedo = true
     this.state.seats = state.seats
     this.state.objects = state.objects
-    this.state.groups = state.groups
     this.selectedSeats.clear()
     this.selectedObjects.clear()
     this.transformer.nodes([])
@@ -1601,7 +1591,6 @@ buildStage() {
       case "add-seat": this.addSeatAtViewportCenter(); break
       case "add-table": this.addObject("rect"); break
       case "add-label": this.addObject("text"); break
-      case "group-selection": this.createGroupFromSelection(); break
       case "delete-selection": this.deleteSelection(); break
       case "undo": this.undo(); break
       case "redo": this.redo(); break
@@ -1706,23 +1695,6 @@ buildStage() {
     if (!visible) this.centerCanvas()
   }
   
-  createGroupFromSelection() {
-    if (this.selectedSeats.size < 2) return
-    
-    this.pushHistory()
-    const theme = this.theme
-    this.state.groups = [
-      ...this.state.groups,
-      {
-        id: randomId("group"),
-        name: `Group ${String(this.state.groups.length + 1).padStart(2, "0")}`,
-        seat_slot_ids: Array.from(this.selectedSeats),
-        color: theme.accentGreen
-      }
-    ]
-    this.scheduleRender(false)
-  }
-  
   deleteSelection() {
     this.cancelLabelEdit()
     this.pushHistory()
@@ -1730,10 +1702,6 @@ buildStage() {
     if (this.selectedSeats.size > 0) {
       const selectedIds = this.selectedSeats
       this.state.seats = this.state.seats.filter(s => !selectedIds.has(s.seat_slot_id))
-      this.state.groups = this.state.groups.map(g => ({
-        ...g,
-        seat_slot_ids: g.seat_slot_ids.filter(id => !selectedIds.has(id))
-      }))
       this.selectedSeats.clear()
     }
     
@@ -1759,8 +1727,7 @@ buildStage() {
       ...this.state,
       revision: this.state.revision,
       seats: this.state.seats.map(s => ({ ...s })),
-      objects: this.state.objects.map(o => ({ ...o })),
-      groups: this.state.groups.map(g => ({ ...g }))
+      objects: this.state.objects.map(o => ({ ...o }))
     }
   }
   

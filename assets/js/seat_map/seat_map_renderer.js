@@ -1,5 +1,5 @@
 import Konva from "konva"
-import { getThemeColors, getStatusColors, withAlpha } from "./seat_map_theme"
+import { getThemeColors, getStatusColors } from "./seat_map_theme"
 
 export const SEAT_WIDTH = 64
 export const SEAT_HEIGHT = 64
@@ -249,13 +249,6 @@ export function createHitTarget(seat, scale = 1) {
   })
 }
 
-export function getMemberSeats(group, allSeats) {
-  if (!group || !group.seat_slot_ids) return []
-  return group.seat_slot_ids
-    .map(id => allSeats.find(seat => seat.seat_slot_id === id))
-    .filter(Boolean)
-}
-
 export function calculateBounds(seats) {
   if (!seats || seats.length === 0) {
     return { x: 0, y: 0, width: 0, height: 0 }
@@ -272,129 +265,6 @@ export function calculateBounds(seats) {
   const maxY = Math.max(...ys.map((y, i) => y + heights[i] / 2))
 
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
-}
-
-export function renderGroupBounds(layer, group, seats, theme) {
-  const memberSeats = getMemberSeats(group, seats)
-  if (memberSeats.length === 0) return
-
-  const bounds = calculateBounds(memberSeats)
-  const color = group.color
-
-  const rect = new Konva.Rect({
-    x: bounds.x - 12,
-    y: bounds.y - 16,
-    width: bounds.width + 24,
-    height: bounds.height + 32,
-    stroke: color,
-    strokeWidth: 2,
-    dash: [8, 6],
-    cornerRadius: 12,
-    fill: withAlpha(color, 0.08),
-    perfectDrawEnabled: false,
-    shadowForStrokeEnabled: false,
-    listening: false
-  })
-
-  layer.add(rect)
-  return rect
-}
-
-export function renderGroupLabel(layer, group, seats, teamAssignments, theme) {
-  const hasAssignment = teamAssignments.some(a => a.group_id === group.id)
-  if (hasAssignment || !group.name) return
-
-  const memberSeats = getMemberSeats(group, seats)
-  if (memberSeats.length === 0) return
-
-  const bounds = calculateBounds(memberSeats)
-  const color = group.color
-
-  const text = new Konva.Text({
-    text: group.name,
-    fontFamily: theme.fontFamily,
-    fontSize: 13,
-    fontStyle: "600",
-    fill: theme.textPrimary,
-    listening: false
-  })
-
-  const labelWidth = text.width() + 16
-  const labelHeight = 20
-  const labelGroup = new Konva.Group({
-    x: bounds.x + bounds.width / 2 - labelWidth / 2,
-    y: bounds.y + bounds.height / 2 - labelHeight / 2,
-    listening: false
-  })
-
-  labelGroup.add(new Konva.Rect({
-    x: 0,
-    y: 0,
-    width: labelWidth,
-    height: labelHeight,
-    cornerRadius: 10,
-    fill: withAlpha(color, 0.9),
-    stroke: withAlpha("#ffffff", 0.2),
-    strokeWidth: 1,
-    perfectDrawEnabled: false,
-    shadowForStrokeEnabled: false
-  }))
-
-  text.position({ x: 8, y: 5 })
-  labelGroup.add(text)
-  layer.add(labelGroup)
-
-  return labelGroup
-}
-
-export function renderTeamLabel(layer, assignment, groups, seats, theme) {
-  const group = groups.find(g => g.id === assignment.group_id)
-  const memberSeats = getMemberSeats(group, seats)
-
-  const bounds = memberSeats.length > 0 ? calculateBounds(memberSeats) : null
-  const x = bounds ? bounds.x + bounds.width / 2 : (assignment.label_x || 0)
-  const y = bounds ? bounds.y + bounds.height / 2 - 12 : (assignment.label_y || 0)
-
-  const text = new Konva.Text({
-    text: `${assignment.team_name} · ${assignment.tournament_name}`,
-    fontFamily: theme.fontFamily,
-    fontSize: 11,
-    fontStyle: "600",
-    fill: theme.textPrimary,
-    perfectDrawEnabled: false,
-    listening: false
-  })
-
-  const width = text.width() + 20
-  const height = 22
-  const labelGroup = new Konva.Group({
-    x: x - width / 2,
-    y: y - height / 2,
-    listening: false
-  })
-
-  labelGroup.add(new Konva.Rect({
-    x: 0,
-    y: 0,
-    width,
-    height,
-    cornerRadius: 10,
-    fill: withAlpha(assignment.color, 0.92),
-    stroke: withAlpha("#ffffff", 0.2),
-    strokeWidth: 1,
-    shadowColor: "rgba(0, 0, 0, 0.4)",
-    shadowBlur: 12,
-    shadowOffset: { x: 0, y: 4 },
-    shadowOpacity: 0.8,
-    perfectDrawEnabled: false,
-    shadowForStrokeEnabled: false
-  }))
-
-  text.position({ x: 10, y: 6 })
-  labelGroup.add(text)
-  layer.add(labelGroup)
-
-  return labelGroup
 }
 
 export function countdownLabel(isoValue) {
