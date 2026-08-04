@@ -38,28 +38,28 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     # Seed one Room from the existing main seat map, sizing the canvas from its
     # published version's dimensions.
     execute("""
-    INSERT INTO rooms (name, width, height, inserted_at, updated_at)
+    INSERT INTO #{qualified(:rooms)} (name, width, height, inserted_at, updated_at)
     SELECT 'Main Room',
-           COALESCE((SELECT width FROM seat_map_versions
+           COALESCE((SELECT width FROM #{qualified(:seat_map_versions)}
                      WHERE seat_map_id = sm.id AND status = 'published'
                      ORDER BY revision DESC LIMIT 1), 1920),
-           COALESCE((SELECT height FROM seat_map_versions
+           COALESCE((SELECT height FROM #{qualified(:seat_map_versions)}
                      WHERE seat_map_id = sm.id AND status = 'published'
                      ORDER BY revision DESC LIMIT 1), 1080),
            NOW(), NOW()
-    FROM seat_maps sm
+    FROM #{qualified(:seat_maps)} sm
     WHERE sm.slug = 'main-room' AND sm.deleted_at IS NULL
     LIMIT 1
     """)
 
-    execute("UPDATE rooms SET public_id = lpad(crockford32(id), 8, '0')")
+    execute("UPDATE #{qualified(:rooms)} SET public_id = lpad(crockford32(id), 8, '0')")
 
     # Point the Room at the published version (highest published revision).
     execute("""
-    UPDATE rooms
+    UPDATE #{qualified(:rooms)}
     SET published_version_id = (
-      SELECT v.id FROM seat_map_versions v
-      JOIN seat_maps sm ON sm.id = v.seat_map_id
+      SELECT v.id FROM #{qualified(:seat_map_versions)} v
+      JOIN #{qualified(:seat_maps)} sm ON sm.id = v.seat_map_id
       WHERE sm.slug = 'main-room' AND sm.deleted_at IS NULL
         AND v.status = 'published' AND v.deleted_at IS NULL
       ORDER BY v.revision DESC
@@ -78,23 +78,23 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     end
 
     execute("""
-    UPDATE seat_maps SET room_id = (SELECT id FROM rooms WHERE name = 'Main Room' LIMIT 1)
+    UPDATE #{qualified(:seat_maps)} SET room_id = (SELECT id FROM #{qualified(:rooms)} WHERE name = 'Main Room' LIMIT 1)
     WHERE deleted_at IS NULL
     """)
 
     execute("""
-    UPDATE seat_maps
+    UPDATE #{qualified(:seat_maps)}
     SET name = 'Main Layout'
     WHERE slug = 'main-room' AND deleted_at IS NULL
     """)
 
-    execute("UPDATE seat_maps SET public_id = lpad(crockford32(id), 8, '0') WHERE public_id IS NULL")
+    execute("UPDATE #{qualified(:seat_maps)} SET public_id = lpad(crockford32(id), 8, '0') WHERE public_id IS NULL")
 
     alter table(:seat_maps) do
       modify :public_id, :string, null: false
     end
 
-    execute("ALTER TABLE seat_maps ALTER COLUMN room_id SET NOT NULL")
+    execute("ALTER TABLE #{qualified(:seat_maps)} ALTER COLUMN room_id SET NOT NULL")
 
     create unique_index(:seat_maps, [:room_id, :name], where: "deleted_at IS NULL")
     create unique_index(:seat_maps, [:public_id], where: "deleted_at IS NULL")
@@ -112,13 +112,13 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     end
 
     execute("""
-    UPDATE seat_slots ss
+    UPDATE #{qualified(:seat_slots)} ss
     SET room_id = sm.room_id
-    FROM seat_maps sm
+    FROM #{qualified(:seat_maps)} sm
     WHERE ss.seat_map_id = sm.id AND ss.deleted_at IS NULL
     """)
 
-    execute("ALTER TABLE seat_slots ALTER COLUMN room_id SET NOT NULL")
+    execute("ALTER TABLE #{qualified(:seat_slots)} ALTER COLUMN room_id SET NOT NULL")
 
     create unique_index(:seat_slots, [:room_id, :label], where: "deleted_at IS NULL")
     create index(:seat_slots, [:room_id])
@@ -130,9 +130,9 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     # 4. seat_map_versions: drop status/name, retire redundant draft ------------
     # Soft-delete the draft when it is an exact duplicate of the published version.
     execute("""
-    UPDATE seat_map_versions d
+    UPDATE #{qualified(:seat_map_versions)} d
     SET deleted_at = NOW()
-    FROM seat_map_versions p
+    FROM #{qualified(:seat_map_versions)} p
     WHERE d.seat_map_id = p.seat_map_id
       AND d.status = 'draft' AND d.deleted_at IS NULL
       AND p.status = 'published' AND p.deleted_at IS NULL
@@ -150,7 +150,7 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     end
 
     execute("""
-    UPDATE settings SET active_room_id = (SELECT id FROM rooms WHERE name = 'Main Room' LIMIT 1)
+    UPDATE #{qualified(:settings)} SET active_room_id = (SELECT id FROM #{qualified(:rooms)} WHERE name = 'Main Room' LIMIT 1)
     WHERE id = 1
     """)
 
@@ -178,13 +178,13 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     end
 
     execute("""
-    UPDATE seat_slots ss
+    UPDATE #{qualified(:seat_slots)} ss
     SET seat_map_id = sm.id
-    FROM seat_maps sm
+    FROM #{qualified(:seat_maps)} sm
     WHERE ss.room_id = sm.room_id AND ss.deleted_at IS NULL
     """)
 
-    execute("ALTER TABLE seat_slots ALTER COLUMN seat_map_id SET NOT NULL")
+    execute("ALTER TABLE #{qualified(:seat_slots)} ALTER COLUMN seat_map_id SET NOT NULL")
 
     alter table(:seat_slots) do
       remove :room_id
@@ -202,13 +202,13 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     end
 
     execute("""
-    UPDATE seat_maps
+    UPDATE #{qualified(:seat_maps)}
     SET slug = 'main-room', name = 'Main Room'
     WHERE name = 'Main Layout' AND deleted_at IS NULL
     """)
 
     execute("""
-    UPDATE seat_maps SET slug = lower(replace(name, ' ', '-'))
+    UPDATE #{qualified(:seat_maps)} SET slug = lower(replace(name, ' ', '-'))
     WHERE slug IS NULL AND deleted_at IS NULL
     """)
 
@@ -223,5 +223,24 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
 
     # 1. rooms
     drop table(:rooms)
+  end
+
+  # Builds a schema-qualified table reference for raw SQL, honouring the migrator
+  # prefix (or the repo's `migration_default_prefix`), mirroring how Ecto's DSL
+  # resolves prefixes. Falls back to the bare table name when no prefix is set.
+  defp qualified(name) do
+    %{name: table_name, prefix: table_prefix} = table(name, prefix: migration_prefix())
+    if table_prefix, do: "#{table_prefix}.#{table_name}", else: table_name
+  end
+
+  defp migration_prefix do
+    prefix() || default_migration_prefix()
+  end
+
+  defp default_migration_prefix do
+    case repo().config()[:migration_default_prefix] do
+      nil -> nil
+      value -> to_string(value)
+    end
   end
 end
