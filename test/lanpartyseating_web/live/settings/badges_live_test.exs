@@ -53,7 +53,7 @@ defmodule LanpartyseatingWeb.Settings.BadgesLiveTest do
 
     test "Badges link is active on badges page", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
-      assert has_element?(view, ~s|.drawer-side a[href="/settings/badges"].active|)
+      assert has_element?(view, ~s|.drawer-side a[href="/settings/badges"].menu-active|)
     end
   end
 

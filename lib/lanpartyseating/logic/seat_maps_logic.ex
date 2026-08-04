@@ -60,7 +60,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
     first_map_name = attrs[:first_map_name] || "Main Layout"
 
     Multi.new()
-    |> Multi.insert(:room, %Room{} |> Room.changeset(%{name: attrs[:name], width: width, height: height}))
+    |> Multi.insert(:room, %Room{} |> Room.create_changeset(%{name: attrs[:name], width: width, height: height}))
     |> Multi.run(:seat_map, fn repo, %{room: room} ->
       %SeatMap{}
       |> SeatMap.create_changeset(%{room_id: room.id, name: first_map_name})
@@ -106,20 +106,20 @@ defmodule Lanpartyseating.SeatMapsLogic do
         {:error, :not_found}
 
       room ->
-        if TournamentsLogic.tournament_underway?() do
-          {:error, {:tournament_in_progress, room.name}}
-        else
-          setting = SettingsLogic.get_settings()
+        case TournamentsLogic.tournament_underway_name() do
+          nil ->
+            if SettingsLogic.get_settings().active_room_id == room.id do
+              {:ok, :already_active}
+            else
+              cancel_all_active_reservations("room changed")
+              SettingsLogic.get_settings() |> Setting.changeset(%{active_room_id: room.id}) |> Repo.update!()
+              broadcast_map_update(nil, [])
+              @endpoint.broadcast("desktop:all", "seat_map_changed", %{})
+              {:ok, room}
+            end
 
-          if setting.active_room_id == room.id do
-            {:ok, :already_active}
-          else
-            cancel_all_active_reservations("room changed")
-            setting |> Setting.changeset(%{active_room_id: room.id}) |> Repo.update!()
-            broadcast_map_update(nil, [])
-            @endpoint.broadcast("desktop:all", "seat_map_changed", %{})
-            {:ok, room}
-          end
+          tournament_name ->
+            {:error, {:tournament_in_progress, tournament_name}}
         end
     end
   end
@@ -308,6 +308,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
       else
         current_published = room.published_version
         same_map? = not is_nil(current_published) and current_published.seat_map_id == map.id
+        tournament_name = TournamentsLogic.tournament_underway_name()
 
         multi =
           Multi.new()
@@ -319,8 +320,8 @@ defmodule Lanpartyseating.SeatMapsLogic do
                   {:error, {:active_reservations, ids}} -> {:error, {:active_reservations, ids}}
                 end
 
-              TournamentsLogic.tournament_underway?() ->
-                {:error, {:tournament_in_progress, room.name}}
+              not is_nil(tournament_name) ->
+                {:error, {:tournament_in_progress, tournament_name}}
 
               true ->
                 {:ok, :cross}

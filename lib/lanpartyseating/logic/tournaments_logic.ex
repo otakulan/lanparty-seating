@@ -19,6 +19,13 @@ defmodule Lanpartyseating.TournamentsLogic do
   (start_date <= now + tournament_buffer_minutes and end_date > now).
   """
   def tournament_underway? do
+    not is_nil(tournament_underway_name())
+  end
+
+  @doc """
+  Returns the name of an underway Tournament (within its buffer window), or nil.
+  """
+  def tournament_underway_name do
     buffer_minutes = Lanpartyseating.SettingsLogic.get_settings().tournament_buffer_minutes
     now = DateTime.utc_now()
     tournament_buffer = DateTime.add(now, buffer_minutes, :minute)
@@ -26,7 +33,9 @@ defmodule Lanpartyseating.TournamentsLogic do
     Tournament
     |> where([t], is_nil(t.deleted_at))
     |> where([t], t.start_date < ^tournament_buffer and t.end_date > ^now)
-    |> Repo.exists?()
+    |> limit(1)
+    |> select([t], t.name)
+    |> Repo.one()
   end
 
   def get_upcoming_tournaments do

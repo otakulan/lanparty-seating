@@ -97,17 +97,17 @@ defmodule LanpartyseatingWeb.SettingsLiveTest do
 
     test "seat map link is active on seat map page", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
-      assert has_element?(view, ~s|.drawer-side a[href="/settings/seat-maps"].active|)
+      assert has_element?(view, ~s|.drawer-side a[href="/settings/seat-maps"].menu-active|)
     end
 
     test "users link is active on users page", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/users")
-      assert has_element?(view, ~s|.drawer-side a[href="/settings/users"].active|)
+      assert has_element?(view, ~s|.drawer-side a[href="/settings/users"].menu-active|)
     end
 
     test "badges link is active on badges page", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/badges")
-      assert has_element?(view, ~s|.drawer-side a[href="/settings/badges"].active|)
+      assert has_element?(view, ~s|.drawer-side a[href="/settings/badges"].menu-active|)
     end
   end
 

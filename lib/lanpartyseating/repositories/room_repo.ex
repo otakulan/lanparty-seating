@@ -36,7 +36,6 @@ defmodule Lanpartyseating.Room do
 
   def create_changeset(room, attrs) do
     room
-    |> changeset(attrs)
-    |> put_change(:public_id, Lanpartyseating.SeatMap.public_id())
+    |> changeset(Map.put(attrs, :public_id, Lanpartyseating.SeatMap.public_id()))
   end
 end

@@ -35,8 +35,7 @@ defmodule Lanpartyseating.SeatMap do
   """
   def create_changeset(seat_map, attrs) do
     seat_map
-    |> changeset(attrs)
-    |> put_change(:public_id, public_id())
+    |> changeset(Map.put(attrs, :public_id, public_id()))
   end
 
   @doc """

@@ -49,7 +49,7 @@ defmodule LanpartyseatingWeb.Settings.ScannersLiveTest do
 
     test "Scanners link is active on scanners page", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/settings/scanners")
-      assert has_element?(view, ~s|.drawer-side a[href="/settings/scanners"].active|)
+      assert has_element?(view, ~s|.drawer-side a[href="/settings/scanners"].menu-active|)
     end
   end
 
