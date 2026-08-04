@@ -265,7 +265,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapLive do
             </div>
           </div>
 
-          <SeatMap.canvas id="editor-seat-map" hook="SeatMapEditor" payload={@map_payload} mode="editor" class="flex-1 min-h-100" stage_class="h-full" phx-ignore>
+          <SeatMap.canvas id="editor-seat-map" hook="SeatMapEditor" payload={@map_payload} mode="editor" class="flex-1 min-h-100" stage_class="h-full">
             <:toolbar with_zoom_buttons>
               <div class="flex flex-wrap gap-1">
                 <button type="button" data-seat-map-command="add-seat" class="btn btn-xs btn-success gap-1">

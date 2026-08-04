@@ -67,7 +67,16 @@ defmodule LanpartyseatingWeb.Components.SeatMap do
     >
       <.background {assigns} />
 
-      <div data-seat-map-stage class={[@stage_class || "h-full w-full"]} tabindex="0" phx-ignore></div>
+      <%!-- phx-update="ignore" keeps LiveView patches away from the Konva canvas,
+           the inline label editor and the canvas context menu --%>
+      <div
+        id={"#{@id}-stage"}
+        data-seat-map-stage
+        class={[@stage_class || "h-full w-full"]}
+        tabindex="0"
+        phx-update="ignore"
+      >
+      </div>
 
       <.minimap {assigns} />
 

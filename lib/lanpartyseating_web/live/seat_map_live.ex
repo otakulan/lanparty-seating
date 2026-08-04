@@ -63,7 +63,7 @@ defmodule LanpartyseatingWeb.SeatMapLive do
     ~H"""
     <div class="h-fill bg-base-200 flex flex-col">
       <div class="flex-1 p-3 md:p-4 min-h-0 relative">
-        <SeatMap.canvas id="interactive-seat-map" hook="SeatMapCanvas" payload={@map_payload} mode="view" class="h-full" phx-ignore>
+        <SeatMap.canvas id="interactive-seat-map" hook="SeatMapCanvas" payload={@map_payload} mode="view" class="h-full">
           <:toolbar with_zoom_buttons with_legend></:toolbar>
         </SeatMap.canvas>
       </div>
