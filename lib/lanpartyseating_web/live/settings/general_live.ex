@@ -96,7 +96,13 @@ defmodule LanpartyseatingWeb.Settings.GeneralLive do
             </p>
             <.form for={%{}} phx-change="set_active_room" class="max-w-sm">
               <select name="room_id" disabled={@rooms == []} class="select select-bordered select-sm w-full bg-base-100 text-base-content/70">
-                <option :for={room <- @rooms} value={room.id} selected={room.id == @active_room_id}><%= room.name %></option>
+                <%= if @rooms == [] do %>
+                  <option selected>No rooms</option>
+                <% else %>
+                  <option :for={room <- @rooms} value={room.id} selected={room.id == @active_room_id}>
+                    <%= room.name %>
+                  </option>
+                <% end %>
               </select>
             </.form>
           </.admin_section>

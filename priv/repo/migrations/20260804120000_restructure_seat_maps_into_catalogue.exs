@@ -184,8 +184,9 @@ defmodule Lanpartyseating.Repo.Migrations.RestructureSeatMapsIntoCatalogue do
     WHERE ss.room_id = sm.room_id AND ss.deleted_at IS NULL
     """)
 
+    execute("ALTER TABLE seat_slots ALTER COLUMN seat_map_id SET NOT NULL")
+
     alter table(:seat_slots) do
-      modify :seat_map_id, references(:seat_maps, on_delete: :delete_all), null: false
       remove :room_id
     end
 
