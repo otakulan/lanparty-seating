@@ -4,6 +4,8 @@ defmodule Lanpartyseating.Setting do
 
   @primary_key {:id, :id, autogenerate: false}
 
+  @type t :: %__MODULE__{}
+
   @setup_states [:not_started, :admin_created, :room_created, :layout_ready, :complete]
 
   def setup_states, do: @setup_states
