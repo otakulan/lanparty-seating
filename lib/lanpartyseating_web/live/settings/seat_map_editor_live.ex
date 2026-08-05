@@ -78,8 +78,13 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
     end
   end
 
+  def handle_event("edit_map_name", _params, socket) do
+    {:noreply, assign(socket, :editing_map_name, true)}
+  end
+
   def handle_event("rename_map", %{"name" => name}, socket) do
     name = String.trim(name)
+    socket = assign(socket, :editing_map_name, false)
 
     case SeatMapsLogic.rename_seat_map(socket.assigns.seat_map_id, name) do
       {:ok, _map} ->
@@ -195,16 +200,16 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
               </p>
             </div>
             <div class="flex items-center gap-4">
-              <div class="form-control">
-                <input
-                  type="text"
-                  name="name"
-                  value={@map_name}
-                  placeholder="Map name"
-                  phx-blur="rename_map"
-                  class="input input-bordered input-sm w-64 bg-base-100 text-base-content"
-                />
-              </div>
+              <.editable_text
+                id="map-name"
+                value={@map_name}
+                editing={@editing_map_name}
+                edit_event="edit_map_name"
+                save_event="rename_map"
+                edit_title="Rename this map"
+                class="text-lg font-semibold text-base-content"
+                input_class="input input-bordered input-sm w-64 bg-base-100 text-base-content"
+              />
               <div class="flex items-center gap-2">
                 <span class="text-tiny uppercase tracking-[0.15em] text-base-content/60">Rev</span>
                 <span class="font-mono text-success">{@revision}</span>
@@ -386,6 +391,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
     |> assign(:seat_map_id, payload.seat_map_id)
     |> assign(:map_payload, payload)
     |> assign(:map_name, payload.name || "Untitled")
+    |> assign(:editing_map_name, false)
     |> assign(:revision, payload.revision || 1)
     |> assign(:background_kind, payload.background_kind || "none")
     |> assign(:background_value, background_editor_value(payload))
