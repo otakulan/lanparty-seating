@@ -15,161 +15,11 @@ defmodule Lanpartyseating.SeatMapsLogic do
   alias Lanpartyseating.SeatSlot
   alias Lanpartyseating.SeatSlotAssignment
   alias Lanpartyseating.SeatSlotStatus
-  alias Lanpartyseating.Setting
+  alias Lanpartyseating.RoomsLogic
   alias Lanpartyseating.SettingsLogic
   alias Lanpartyseating.TournamentsLogic
 
   @endpoint LanpartyseatingWeb.Endpoint
-
-  # ---------------------------------------------------------------------------
-  # Rooms
-  # ---------------------------------------------------------------------------
-
-  @doc """
-  Returns the Active Room the application currently serves, or `{:error, :no_room}` on a
-  fresh install with no Active Room set (so callers can render an empty state).
-  """
-  def get_active_room do
-    case SettingsLogic.get_settings() do
-      %Setting{active_room_id: nil} ->
-        {:error, :no_room}
-
-      %Setting{active_room_id: id} ->
-        case Repo.get(Room, id) do
-          nil -> {:error, :no_room}
-          room -> {:ok, Repo.preload(room, :published_version)}
-        end
-    end
-  end
-
-  @doc "Non-deleted Rooms, for the catalogue dropdown and the General settings page."
-  def list_rooms do
-    Room
-    |> where([room], is_nil(room.deleted_at))
-    |> order_by([room], asc: room.name)
-    |> Repo.all()
-  end
-
-  @animals ~w(
-    alpaca anteater badger beaver bison bobcat buffalo camel cheetah chipmunk
-    cobra condor cougar coyote crane cricket crocodile dingo dolphin donkey
-    dragonfly eagle eel elephant elk falcon ferret flamingo fox frog gazelle
-    gecko gerbil gibbon giraffe gopher gorilla hamster hare hawk hedgehog heron
-    hippo hornet hummingbird hyena ibex iguana impala jackal jaguar jellyfish
-    kangaroo koala lemur leopard lion llama lynx macaw manatee marmot marten
-    meerkat mongoose moose moth narwhal newt ocelot octopus okapi opossum
-    orangutan orca ostrich otter owl panda pangolin panther parrot partridge
-    peacock pelican penguin pheasant pigeon platypus porcupine puma python
-    quail rabbit raccoon raven reindeer rhino roadrunner robin salamander
-    salmon scallop scorpion seagull seahorse seal shark sheep shrew skunk
-    sloth snail snake spider squid squirrel starfish stork swan tapir tarantula
-    tiger toad tortoise toucan turkey turtle vulture wallaby walrus warthog
-    weasel whale wildebeest wolf wolverine wombat woodpecker yak zebra
-  )
-
-  @doc """
-  Generates a memorable random room name from three animals, e.g. `"zebra-unicorn-goat"`.
-  """
-  def random_room_name do
-    @animals
-    |> Enum.shuffle()
-    |> Enum.take(3)
-    |> Enum.join("-")
-  end
-
-  @doc """
-  Creates a Room plus its first (unpublished, empty) Seat Map. Sets `active_room_id` on the
-  settings singleton only when none was set, so the first Room becomes the Active Room.
-  """
-  def create_room(attrs) when is_map(attrs) do
-    attrs = SeatMapLayout.atomize_keys(attrs)
-    width = parse_dimension(attrs[:width], 1920)
-    height = parse_dimension(attrs[:height], 1080)
-    first_map_name = attrs[:first_map_name] || "Main Layout"
-
-    Multi.new()
-    |> Multi.insert(:room, %Room{} |> Room.create_changeset(%{name: attrs[:name], width: width, height: height}))
-    |> Multi.run(:seat_map, fn repo, %{room: room} ->
-      %SeatMap{}
-      |> SeatMap.create_changeset(%{room_id: room.id, name: first_map_name})
-      |> repo.insert()
-    end)
-    |> Multi.run(:version, fn repo, %{seat_map: seat_map, room: room} ->
-      %SeatMapVersion{}
-      |> SeatMapVersion.changeset(%{
-        seat_map_id: seat_map.id,
-        revision: 1,
-        width: room.width,
-        height: room.height,
-        background_kind: "none",
-        background_value: nil,
-        data: empty_map_data()
-      })
-      |> repo.insert()
-    end)
-    |> Multi.run(:activate, fn repo, %{room: room} ->
-      if is_nil(SettingsLogic.get_settings().active_room_id) do
-        repo.get!(Setting, 1)
-        |> Setting.changeset(%{active_room_id: room.id})
-        |> repo.update()
-      else
-        {:ok, :noop}
-      end
-    end)
-    |> Repo.transaction()
-    |> case do
-      {:ok, %{room: room}} -> {:ok, room}
-      {:error, _op, reason, _changes} -> {:error, reason}
-    end
-  end
-
-  @doc """
-  Switches the Active Room. Follows the same rules as a cross-map publish: refuses while a
-  Tournament is underway, otherwise cancels active reservations, switches, and broadcasts
-  `seat_map_changed` so desktop clients disconnect.
-  """
-  def set_active_room(room_id) when is_integer(room_id) do
-    case Repo.get(Room, room_id) do
-      nil ->
-        {:error, :not_found}
-
-      room ->
-        case TournamentsLogic.tournament_underway_name() do
-          nil ->
-            if SettingsLogic.get_settings().active_room_id == room.id do
-              {:ok, :already_active}
-            else
-              cancel_all_active_reservations("room changed")
-              SettingsLogic.get_settings() |> Setting.changeset(%{active_room_id: room.id}) |> Repo.update!()
-              broadcast_map_update(nil, [])
-              @endpoint.broadcast("desktop:all", "seat_map_changed", %{})
-              {:ok, room}
-            end
-
-          tournament_name ->
-            {:error, {:tournament_in_progress, tournament_name}}
-        end
-    end
-  end
-
-  @doc """
-  Soft-deletes a Room. Refuses when it is the Active Room.
-  """
-  def delete_room(room_id) when is_integer(room_id) do
-    case Repo.get(Room, room_id) do
-      nil ->
-        {:error, :not_found}
-
-      room ->
-        if SettingsLogic.get_settings().active_room_id == room.id do
-          {:error, :active}
-        else
-          room
-          |> Room.changeset(%{deleted_at: DateTime.utc_now() |> DateTime.truncate(:second)})
-          |> Repo.update()
-        end
-    end
-  end
 
   # ---------------------------------------------------------------------------
   # Seat Map catalogue
@@ -328,7 +178,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
   """
   def publish_seat_map(seat_map_id) when is_integer(seat_map_id) do
     with {:ok, map} <- get_seat_map(seat_map_id),
-         {:ok, room} <- get_active_room() do
+         {:ok, room} <- RoomsLogic.get_active_room() do
       newest = newest_version(map.id)
 
       if is_nil(newest) do
@@ -359,7 +209,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
             if check == :same do
               {:ok, :noop}
             else
-              cancel_all_active_reservations_in_repo(repo, "seat map changed")
+              RoomsLogic.cancel_all_active_reservations_in_repo(repo, "seat map changed")
               {:ok, :cancelled}
             end
           end)
@@ -457,7 +307,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
   Resolves the Active Room's published Version. Returns `{:error, :no_room}` / `{:error, :none_published}`.
   """
   def get_published_version do
-    with {:ok, room} <- get_active_room() do
+    with {:ok, room} <- RoomsLogic.get_active_room() do
       case room.published_version do
         nil -> {:error, :none_published}
         version -> {:ok, version}
@@ -600,7 +450,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
   end
 
   defp published_seat_map?(seat_map) do
-    case get_active_room() do
+    case RoomsLogic.get_active_room() do
       {:ok, %Room{published_version: %SeatMapVersion{seat_map_id: seat_map_id}}} ->
         seat_map_id == seat_map.id
 
@@ -854,21 +704,6 @@ defmodule Lanpartyseating.SeatMapsLogic do
     )
   end
 
-  defp cancel_all_active_reservations(reason) do
-    cancel_all_active_reservations_in_repo(Repo, reason)
-  end
-
-  defp cancel_all_active_reservations_in_repo(repo, reason) do
-    now = DateTime.utc_now() |> DateTime.truncate(:second)
-
-    from(r in Reservation,
-      where: is_nil(r.deleted_at),
-      where: r.start_date <= ^now and r.end_date > ^now,
-      where: not is_nil(r.seat_slot_id)
-    )
-    |> repo.update_all(set: [deleted_at: now, incident: reason])
-  end
-
   @doc "Counts reservations currently in use (active), for the cross-map publish confirm modal."
   def active_reservation_count do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
@@ -1048,13 +883,6 @@ defmodule Lanpartyseating.SeatMapsLogic do
   defp parse_int(value) when is_float(value), do: round(value)
   defp parse_int(value) when is_binary(value), do: value |> Float.parse() |> elem(0) |> round()
   defp parse_int(_value), do: 0
-
-  defp parse_dimension(value, default) do
-    case parse_int(value) do
-      parsed when is_integer(parsed) and parsed > 0 -> parsed
-      _ -> default
-    end
-  end
 
   defp datetime_to_iso(nil), do: nil
   defp datetime_to_iso(%DateTime{} = datetime), do: DateTime.to_iso8601(datetime)

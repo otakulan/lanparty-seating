@@ -2,6 +2,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
   use Lanpartyseating.DataCase, async: false
 
   alias Lanpartyseating.Repo
+  alias Lanpartyseating.RoomsLogic
   alias Lanpartyseating.Reservation
   alias Lanpartyseating.Room
   alias Lanpartyseating.SeatMapsLogic
@@ -20,7 +21,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
       first_map_name: "Main Layout"
     }
 
-    {:ok, room} = SeatMapsLogic.create_room(Map.merge(base, attrs))
+    {:ok, room} = RoomsLogic.create_room(Map.merge(base, attrs))
     room
   end
 
@@ -113,7 +114,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
 
   describe "create_room/1" do
     test "produces a Room plus one unpublished empty Seat Map" do
-      {:ok, room} = SeatMapsLogic.create_room(%{name: "Main Room", width: 640, height: 480, first_map_name: "Main Layout"})
+      {:ok, room} = RoomsLogic.create_room(%{name: "Main Room", width: 640, height: 480, first_map_name: "Main Layout"})
 
       assert room.name == "Main Room"
       assert room.width == 640
@@ -131,11 +132,11 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
     test "sets active_room_id only when none was set" do
       set_active_room_id!(nil)
 
-      {:ok, room} = SeatMapsLogic.create_room(%{name: "First Room", width: 100, height: 100})
+      {:ok, room} = RoomsLogic.create_room(%{name: "First Room", width: 100, height: 100})
       assert Repo.get!(Setting, 1).active_room_id == room.id
 
       # A second room must not steal the Active Room slot
-      {:ok, _other} = SeatMapsLogic.create_room(%{name: "Second Room", width: 100, height: 100})
+      {:ok, _other} = RoomsLogic.create_room(%{name: "Second Room", width: 100, height: 100})
       assert Repo.get!(Setting, 1).active_room_id == room.id
     end
   end
@@ -152,7 +153,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
       reservation = insert_active_reservation!(first_seat_slot_id(map1))
 
       room2 = create_room!()
-      assert {:ok, %Room{id: id}} = SeatMapsLogic.set_active_room(room2.id)
+      assert {:ok, %Room{id: id}} = RoomsLogic.set_active_room(room2.id)
       assert id == room2.id
       assert Repo.get!(Setting, 1).active_room_id == room2.id
 
@@ -166,7 +167,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
       set_active_room_id!(room1.id)
       room2 = create_room!()
 
-      assert {:error, {:tournament_in_progress, "Ongoing Match"}} = SeatMapsLogic.set_active_room(room2.id)
+      assert {:error, {:tournament_in_progress, "Ongoing Match"}} = RoomsLogic.set_active_room(room2.id)
       assert Repo.get!(Setting, 1).active_room_id == room1.id
     end
   end
@@ -175,7 +176,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
     test "refuses to delete the Active Room" do
       room = create_room!()
       set_active_room_id!(room.id)
-      assert {:error, :active} = SeatMapsLogic.delete_room(room.id)
+      assert {:error, :active} = RoomsLogic.delete_room(room.id)
     end
 
     test "soft-deletes a non-active Room" do
@@ -183,7 +184,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
       set_active_room_id!(room1.id)
       room2 = create_room!()
 
-      assert {:ok, deleted} = SeatMapsLogic.delete_room(room2.id)
+      assert {:ok, deleted} = RoomsLogic.delete_room(room2.id)
       assert deleted.deleted_at != nil
     end
   end

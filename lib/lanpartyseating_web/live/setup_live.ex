@@ -8,7 +8,7 @@ defmodule LanpartyseatingWeb.SetupLive do
   use LanpartyseatingWeb, :live_view
 
   alias Lanpartyseating.OnboardingLogic
-  alias Lanpartyseating.SeatMapsLogic
+  alias Lanpartyseating.RoomsLogic
 
   @defaults %{
               reservation_duration_minutes: 50,
@@ -23,7 +23,7 @@ defmodule LanpartyseatingWeb.SetupLive do
       socket =
         socket
         |> assign(:page_title, "Setup")
-        |> assign(:room_name, SeatMapsLogic.random_room_name())
+        |> assign(:room_name, RoomsLogic.random_room_name())
         |> assign(:layout_choice, :empty)
         |> assign(:import_json, "")
         |> assign(:just_completed, false)

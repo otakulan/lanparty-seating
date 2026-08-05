@@ -6,6 +6,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
   import LanpartyseatingWeb.ConnCase
 
   alias Lanpartyseating.Repo
+  alias Lanpartyseating.RoomsLogic
   alias Lanpartyseating.SeatMapsLogic
   alias Lanpartyseating.Setting
 
@@ -21,7 +22,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
       first_map_name: "Main Layout"
     }
 
-    {:ok, room} = SeatMapsLogic.create_room(Map.merge(base, attrs))
+    {:ok, room} = RoomsLogic.create_room(Map.merge(base, attrs))
     room
   end
 
@@ -149,7 +150,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
       |> element(~s|button[phx-click="new_room"]|)
       |> render_click()
 
-      names = SeatMapsLogic.list_rooms() |> Enum.map(& &1.name)
+      names = RoomsLogic.list_rooms() |> Enum.map(& &1.name)
       assert [name] = Enum.filter(names, &String.match?(&1, ~r/^[a-z]+-[a-z]+-[a-z]+$/))
 
       assert render(view) =~ name

@@ -5,7 +5,7 @@ defmodule LanpartyseatingWeb.Settings.GeneralLive do
   """
   use LanpartyseatingWeb, :live_view
 
-  alias Lanpartyseating.SeatMapsLogic
+  alias Lanpartyseating.RoomsLogic
   alias Lanpartyseating.SettingsLogic
   alias LanpartyseatingWeb.Components.SettingsNav
 
@@ -18,7 +18,7 @@ defmodule LanpartyseatingWeb.Settings.GeneralLive do
   end
 
   def handle_event("set_active_room", %{"room_id" => room_id}, socket) do
-    case SeatMapsLogic.set_active_room(String.to_integer(room_id)) do
+    case RoomsLogic.set_active_room(String.to_integer(room_id)) do
       {:ok, _room} ->
         {:noreply, put_flash(load(socket), :info, "Active room updated")}
 
@@ -101,7 +101,7 @@ defmodule LanpartyseatingWeb.Settings.GeneralLive do
 
   defp load(socket) do
     settings = SettingsLogic.get_settings()
-    rooms = SeatMapsLogic.list_rooms()
+    rooms = RoomsLogic.list_rooms()
 
     socket
     |> assign(:rooms, rooms)

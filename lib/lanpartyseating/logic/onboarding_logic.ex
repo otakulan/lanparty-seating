@@ -22,6 +22,7 @@ defmodule Lanpartyseating.OnboardingLogic do
   alias Lanpartyseating.Accounts.User
   alias Lanpartyseating.Repo
   alias Lanpartyseating.SeatMapLayout
+  alias Lanpartyseating.RoomsLogic
   alias Lanpartyseating.SeatMapsLogic
   alias Lanpartyseating.Setting
   alias Lanpartyseating.SettingsLogic
@@ -97,7 +98,7 @@ defmodule Lanpartyseating.OnboardingLogic do
   @doc "The Active Room's first Seat Map. Returns `{:ok, map}` or `{:error, reason}`."
   @spec current_room_map() :: {:ok, SeatMap.t()} | {:error, :no_room | :no_map}
   def current_room_map do
-    with {:ok, room} <- SeatMapsLogic.get_active_room() do
+    with {:ok, room} <- RoomsLogic.get_active_room() do
       case SeatMapsLogic.list_seat_maps(room.id) do
         [] -> {:error, :no_map}
         [map | _rest] -> {:ok, map}
@@ -128,12 +129,12 @@ defmodule Lanpartyseating.OnboardingLogic do
   @doc "Creates the Room (random animal name when omitted) and advances to the Layout step."
   @spec create_room(map()) :: {:ok, Room.t()} | {:error, reason()}
   def create_room(attrs \\ %{}) do
-    attrs = Map.put_new(attrs, :name, SeatMapsLogic.random_room_name())
+    attrs = Map.put_new(attrs, :name, RoomsLogic.random_room_name())
 
     with {:ok, changes} <-
            run_transaction(
              Multi.new()
-             |> Multi.run(:room, fn _repo, _changes -> SeatMapsLogic.create_room(attrs) end)
+             |> Multi.run(:room, fn _repo, _changes -> RoomsLogic.create_room(attrs) end)
              |> guard_state(:admin_created)
              |> transition(:room_created)
            ) do

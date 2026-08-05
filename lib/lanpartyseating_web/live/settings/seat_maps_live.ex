@@ -6,6 +6,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   use LanpartyseatingWeb, :live_view
 
   alias Lanpartyseating.PubSub
+  alias Lanpartyseating.RoomsLogic
   alias Lanpartyseating.SeatMapsLogic
   alias LanpartyseatingWeb.Components.SettingsNav
 
@@ -28,7 +29,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   # --- Room scoping ----------------------------------------------------------
 
   def handle_event("set_active_room", %{"room_id" => room_id}, socket) do
-    case SeatMapsLogic.set_active_room(String.to_integer(room_id)) do
+    case RoomsLogic.set_active_room(String.to_integer(room_id)) do
       {:ok, :already_active} ->
         {:noreply, load(socket, String.to_integer(room_id))}
 
@@ -62,7 +63,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   end
 
   def handle_event("new_room", _params, socket) do
-    case SeatMapsLogic.create_room(%{name: SeatMapsLogic.random_room_name()}) do
+    case RoomsLogic.create_room(%{name: RoomsLogic.random_room_name()}) do
       {:ok, room} ->
         {:noreply, put_flash(load(socket, room.id), :info, "Room created")}
 
@@ -94,7 +95,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
     target = Enum.find(maps, &(&1.id == String.to_integer(map_id)))
 
     is_cross =
-      case SeatMapsLogic.get_active_room() do
+      case RoomsLogic.get_active_room() do
         {:ok, room} ->
           room.published_version && room.published_version.seat_map_id != target.id
 
@@ -309,7 +310,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   end
 
   defp load(socket, selected_room_id) do
-    rooms = SeatMapsLogic.list_rooms()
+    rooms = RoomsLogic.list_rooms()
 
     selected_room_id =
       case selected_room_id do
@@ -334,7 +335,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   end
 
   defp active_room_id do
-    case SeatMapsLogic.get_active_room() do
+    case RoomsLogic.get_active_room() do
       {:ok, room} -> room.id
       _ -> nil
     end
