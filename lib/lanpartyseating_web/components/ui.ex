@@ -340,13 +340,17 @@ defmodule LanpartyseatingWeb.Components.UI do
   attr :class, :string, default: "mb-10"
 
   slot :inner_block, required: true
+  slot :trailing
 
   def admin_section(assigns) do
     ~H"""
     <section class={@class}>
-      <h2 class={["text-xl font-semibold mb-4 border-b border-base-300 pb-2", @title_class]}>
-        {@title}
-      </h2>
+      <div class="mb-4 flex items-center justify-between gap-4 border-b border-base-300 pb-2">
+        <h2 class={["text-xl font-semibold", @title_class]}>
+          {@title}
+        </h2>
+        {render_slot(@trailing)}
+      </div>
       {render_slot(@inner_block)}
     </section>
     """

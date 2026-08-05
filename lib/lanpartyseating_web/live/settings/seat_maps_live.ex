@@ -181,15 +181,6 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
           <.page_header title="Seat Maps">
             <:trailing>
               <div class="flex items-center gap-2">
-                <.form for={%{}} phx-change="set_active_room">
-                  <select disabled={@rooms == []} name="room_id" class="select select-bordered select-sm bg-base-100 text-base-content/70">
-                    <%= if @rooms != [] do %>
-                      <option :for={room <- @rooms} value={room.id} selected={room.id == @selected_room_id}><%= room.name %></option>
-                    <% else %>
-                      <option selected>No room</option>
-                    <% end %>
-                  </select>
-                </.form>
                 <button phx-click="new_room" class="btn btn-sm btn-ghost">
                   <Icons.plus class="w-4 h-4" /> New room
                 </button>
@@ -201,6 +192,19 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
           </.page_header>
 
           <.admin_section title={@room_name}>
+            <:trailing>
+              <div class="flex items-center gap-2">
+                <.form for={%{}} phx-change="set_active_room">
+                  <select disabled={@rooms == []} name="room_id" class="select select-bordered select-sm bg-base-100 text-base-content/70">
+                    <%= if @rooms != [] do %>
+                      <option :for={room <- @rooms} value={room.id} selected={room.id == @selected_room_id}><%= room.name %></option>
+                    <% else %>
+                      <option selected>No room</option>
+                    <% end %>
+                  </select>
+                </.form>
+              </div>
+            </:trailing>
             <div class="overflow-x-auto border border-base-300 rounded-lg">
               <table class="table">
                 <thead>
