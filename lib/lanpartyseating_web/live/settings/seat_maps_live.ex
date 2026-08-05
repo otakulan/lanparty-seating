@@ -39,8 +39,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
     {:noreply, assign(socket, :editing_room_name, true)}
   end
 
-  def handle_event("save_room_name", params, socket) do
-    name = params["name"] || params["value"]
+  def handle_event("save_room_name", %{"value" => name}, socket) do
     room_id = socket.assigns.selected_room_id
     socket = assign(socket, :editing_room_name, false)
 
@@ -123,7 +122,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
 
   # --- Rename ----------------------------------------------------------------
 
-  def handle_event("rename_map", %{"map_id" => map_id, "name" => name}, socket) do
+  def handle_event("rename_map", %{"map_id" => map_id, "value" => name}, socket) do
     case SeatMapsLogic.rename_seat_map(String.to_integer(map_id), String.trim(name)) do
       {:ok, _map} ->
         {:noreply, load(socket, socket.assigns.selected_room_id)}
@@ -288,10 +287,12 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
                           <input type="hidden" name="map_id" value={map.id} />
                           <input
                             type="text"
-                            name="name"
+                            name="value"
                             value={map.name}
+                            autocomplete="off"
                             class="input input-xs input-bordered w-48"
                             phx-blur="rename_map"
+                            phx-value-map_id={map.id}
                           />
                         </form>
                       </td>

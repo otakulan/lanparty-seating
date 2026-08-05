@@ -84,11 +84,24 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       view
-      |> form("#rename-map-#{map_id}", %{"name" => "New Name", "map_id" => map_id})
+      |> form("#rename-map-#{map_id}", %{"value" => "New Name", "map_id" => map_id})
       |> render_submit()
 
       assert has_element?(view, ~s|input[value="New Name"]|)
       refute has_element?(view, ~s|input[value="Main Layout"]|)
+    end
+
+    test "blurring the map name input renames it", %{conn: conn, room: room} do
+      map_id = map_id(room, "Main Layout")
+
+      {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
+
+      # phx-blur reports the element value as "value" and picks up phx-value-map_id
+      view
+      |> element(~s|#rename-map-#{map_id} input[phx-blur="rename_map"]|)
+      |> render_blur(%{"value" => "Blurred Name", "map_id" => to_string(map_id)})
+
+      assert has_element?(view, ~s|input[value="Blurred Name"]|)
     end
 
     test "duplicate creates a suffixed copy", %{conn: conn, room: room} do
@@ -265,14 +278,14 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
 
       view |> element(~s|button[phx-click="edit_room_name"]|) |> render_click()
 
-      assert has_element?(view, ~s|input[name="name"][value="Original Room"][phx-blur="save_room_name"]|)
+      assert has_element?(view, ~s|input[name="value"][value="Original Room"][phx-blur="save_room_name"]|)
     end
 
     test "blurring saves the new name", %{conn: conn, room: room} do
       {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       view |> element(~s|button[phx-click="edit_room_name"]|) |> render_click()
-      html = view |> element(~s|form[phx-submit="save_room_name"] input|) |> render_blur(%{"name" => "Renamed Room"})
+      html = view |> element(~s|form[phx-submit="save_room_name"] input|) |> render_blur(%{"value" => "Renamed Room"})
 
       assert html =~ "Renamed Room"
       assert Repo.get!(Room, room.id).name == "Renamed Room"
@@ -283,7 +296,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       view |> element(~s|button[phx-click="edit_room_name"]|) |> render_click()
-      html = view |> element(~s|form[phx-submit="save_room_name"] input|) |> render_blur(%{"name" => "  "})
+      html = view |> element(~s|form[phx-submit="save_room_name"] input|) |> render_blur(%{"value" => "  "})
 
       assert html =~ "Room name cannot be empty"
       assert html =~ "Original Room"
@@ -297,7 +310,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLiveTest do
       {:ok, view, _html} = live(conn, ~p"/settings/seat-maps")
 
       view |> element(~s|button[phx-click="edit_room_name"]|) |> render_click()
-      html = view |> element(~s|form[phx-submit="save_room_name"] input|) |> render_blur(%{"name" => "Taken Room"})
+      html = view |> element(~s|form[phx-submit="save_room_name"] input|) |> render_blur(%{"value" => "Taken Room"})
 
       assert html =~ "already exists"
       assert html =~ "Original Room"

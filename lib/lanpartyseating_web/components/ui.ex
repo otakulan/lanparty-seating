@@ -371,9 +371,11 @@ defmodule LanpartyseatingWeb.Components.UI do
        Renders a label that turns into a focused text input when its pencil is clicked.
 
        The caller owns the state: it flips its own `editing` assign in `edit_event`, and
-       persists (or rejects and reverts) in `save_event`, which fires on blur and on submit
-       with a `"name"` param. Rejecting simply means leaving the stored value untouched and
-       clearing `editing` — the label re-renders from `value`.
+       persists (or rejects) in `save_event`. Rejecting simply means leaving the stored value
+       untouched and clearing `editing` — the label re-renders from `value`.
+
+       The input is named `value` because that is the key `phx-blur` reports the element's
+       value under, so blur and submit deliver the same `%{"value" => text}` params.
 
        ## Examples
 
@@ -405,7 +407,7 @@ defmodule LanpartyseatingWeb.Components.UI do
         <form id={@id} phx-submit={@save_event} class="inline-flex items-center" {@rest}>
           <input
             type="text"
-            name="name"
+            name="value"
             value={@value}
             autocomplete="off"
             class={@input_class}

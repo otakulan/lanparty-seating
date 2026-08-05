@@ -82,7 +82,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
     {:noreply, assign(socket, :editing_map_name, true)}
   end
 
-  def handle_event("rename_map", %{"name" => name}, socket) do
+  def handle_event("rename_map", %{"value" => name}, socket) do
     name = String.trim(name)
     socket = assign(socket, :editing_map_name, false)
 
