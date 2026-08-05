@@ -90,10 +90,6 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "walks the whole wizard to completion with an empty layout", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
-
-      view
-
       {:ok, view, _html} = create_account(conn)
 
       assert has_element?(view, "#room-form")
@@ -124,10 +120,6 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "imports a JSON layout on the layout step", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
-
-      view
-
       {:ok, view, _html} = create_account(conn)
 
       view
@@ -143,10 +135,6 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "shows an error for invalid JSON and stays on the layout step", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
-
-      view
-
       {:ok, view, _html} = create_account(conn)
 
       view
@@ -174,7 +162,7 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
 
     test "completes on a freshly migrated database with no settings row", %{conn: conn} do
       Repo.delete_all(Setting)
-      {:ok, view, html} = live(conn, ~p"/setup")
+      {:ok, _view, html} = live(conn, ~p"/setup")
 
       assert html =~ "Create your admin account"
 
@@ -213,10 +201,6 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "toggles between empty and import layout choices", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
-
-      view
-
       {:ok, view, _html} = create_account(conn)
 
       view
@@ -233,10 +217,6 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "rejects non-map JSON on import and stays on the layout step", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
-
-      view
-
       {:ok, view, _html} = create_account(conn)
 
       view
@@ -253,10 +233,6 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "persists the kiosk seat-picking toggle through completion", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
-
-      view
-
       {:ok, view, _html} = create_account(conn)
 
       view
@@ -284,10 +260,6 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "rejects out-of-range settings and stays on the settings step", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
-
-      view
-
       {:ok, view, _html} = create_account(conn)
 
       view
@@ -314,10 +286,6 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "links the completion screen to the room's seat map editor", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
-
-      view
-
       {:ok, view, _html} = create_account(conn)
 
       view
