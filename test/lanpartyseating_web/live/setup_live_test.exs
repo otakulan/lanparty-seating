@@ -232,6 +232,22 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       assert Repo.get!(Setting, 1).setup_state == :room_created
     end
 
+    test "rejects a structurally invalid layout on import and stays on the layout step", %{conn: conn} do
+      {:ok, view, _html} = create_account(conn)
+
+      view
+      |> form("#room-form", %{room: %{"name" => "My Hall"}})
+      |> render_submit()
+
+      render_click(view, "set_layout_choice", %{"choice" => "import"})
+      render_change(view, "set_import_json", %{"json" => Jason.encode!(%{"seats" => %{}})})
+      render_click(view, "finish_layout")
+
+      assert render(view) =~ "Invalid layout JSON"
+      assert has_element?(view, "textarea")
+      assert Repo.get!(Setting, 1).setup_state == :room_created
+    end
+
     test "persists the kiosk seat-picking toggle through completion", %{conn: conn} do
       {:ok, view, _html} = create_account(conn)
 

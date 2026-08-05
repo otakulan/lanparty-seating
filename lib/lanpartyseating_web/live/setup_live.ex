@@ -80,6 +80,7 @@ defmodule LanpartyseatingWeb.SetupLive do
 
   defp resolve({:ok, _result}, socket), do: {:noreply, reload(socket)}
   defp resolve({:error, :invalid_json}, socket), do: {:noreply, put_flash(socket, :error, "Invalid JSON")}
+  defp resolve({:error, :invalid_layout}, socket), do: {:noreply, put_flash(socket, :error, "Invalid layout JSON")}
 
   defp resolve({:error, %Ecto.Changeset{} = changeset}, socket) do
     {:noreply, put_flash(socket, :error, format_changeset_errors(changeset))}

@@ -21,6 +21,7 @@ defmodule Lanpartyseating.OnboardingLogic do
   alias Lanpartyseating.Accounts
   alias Lanpartyseating.Accounts.User
   alias Lanpartyseating.Repo
+  alias Lanpartyseating.SeatMapLayout
   alias Lanpartyseating.SeatMapsLogic
   alias Lanpartyseating.Setting
   alias Lanpartyseating.SettingsLogic
@@ -141,11 +142,11 @@ defmodule Lanpartyseating.OnboardingLogic do
   def import_layout(%{"json" => json}) when is_binary(json) do
     with :ok <- ensure_state(:room_created),
          {:ok, map} <- current_room_map(),
-         {:ok, decoded} <- decode_layout(json),
+         {:ok, normalized} <- SeatMapLayout.from_json(json),
          {:ok, changes} <-
            run_transaction(
              Multi.new()
-             |> Multi.run(:save, fn _repo, _changes -> SeatMapsLogic.save_version(map.id, decoded, 1) end)
+             |> Multi.run(:save, fn _repo, _changes -> SeatMapsLogic.save_version(map.id, normalized, 1) end)
              |> Multi.run(:publish, fn _repo, _changes -> SeatMapsLogic.publish_seat_map(map.id) end)
              |> guard_state(:room_created)
              |> transition(:layout_ready)
@@ -197,26 +198,27 @@ defmodule Lanpartyseating.OnboardingLogic do
 
           setting ->
             setting
-            |> Setting.changeset(%{setup_state: next_state})
-            |> then(fn changeset -> if(attrs, do: Setting.changeset(changeset, attrs), else: changeset) end)
+            |> transition_changeset(next_state, attrs)
             |> repo.update()
         end
       end
     )
   end
 
+  defp transition_changeset(setting, next_state, nil) do
+    Setting.changeset(setting, %{setup_state: next_state})
+  end
+
+  defp transition_changeset(setting, next_state, attrs) do
+    setting
+    |> Setting.changeset(%{setup_state: next_state})
+    |> Setting.changeset(attrs)
+  end
+
   defp run_transaction(multi) do
     case Repo.transaction(multi) do
       {:ok, changes} -> {:ok, changes}
       {:error, _operation, reason, _changes} -> {:error, reason}
-    end
-  end
-
-  defp decode_layout(json) do
-    case Jason.decode(json) do
-      {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
-      {:ok, _non_map} -> {:error, :invalid_json}
-      {:error, _exception} -> {:error, :invalid_json}
     end
   end
 end
