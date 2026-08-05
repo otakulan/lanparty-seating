@@ -1,7 +1,8 @@
 defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   @moduledoc """
-  Catalogue of the Active Room's Seat Maps: list, rename, publish, duplicate, delete, and
-  create new maps and rooms.
+  Catalogue of a Room's Seat Maps: list, rename, publish, duplicate, delete, and create new
+  maps and rooms. The room dropdown only scopes what the page shows; the Active Room is
+  chosen in General settings.
   """
   use LanpartyseatingWeb, :live_view
 
@@ -28,17 +29,62 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
 
   # --- Room scoping ----------------------------------------------------------
 
-  def handle_event("set_active_room", %{"room_id" => room_id}, socket) do
-    case RoomsLogic.set_active_room(String.to_integer(room_id)) do
-      {:ok, :already_active} ->
-        {:noreply, load(socket, String.to_integer(room_id))}
+  def handle_event("select_room", %{"room_id" => room_id}, socket) do
+    {:noreply, load(socket, String.to_integer(room_id))}
+  end
 
+  # --- Room rename -----------------------------------------------------------
+
+  def handle_event("edit_room_name", _params, socket) do
+    {:noreply, assign(socket, :editing_room_name, true)}
+  end
+
+  def handle_event("save_room_name", params, socket) do
+    name = params["name"] || params["value"]
+    room_id = socket.assigns.selected_room_id
+    socket = assign(socket, :editing_room_name, false)
+
+    case RoomsLogic.rename_room(room_id, name) do
       {:ok, _room} ->
-        {:noreply, put_flash(load(socket, String.to_integer(room_id)), :info, "Active room updated")}
+        {:noreply, load(socket, room_id)}
 
-      {:error, {:tournament_in_progress, name}} ->
-        {:noreply,
-         put_flash(socket, :error, "Cannot switch rooms while #{name} is underway")}
+      {:error, :blank_name} ->
+        {:noreply, put_flash(socket, :error, "Room name cannot be empty")}
+
+      {:error, :name_taken} ->
+        {:noreply, put_flash(socket, :error, "A room named #{String.trim(name)} already exists")}
+
+      {:error, changeset = %Ecto.Changeset{}} ->
+        {:noreply, put_flash(socket, :error, format_error(changeset))}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, inspect(reason))}
+    end
+  end
+
+  # --- Room deletion ---------------------------------------------------------
+
+  def handle_event("open_delete_room", _params, socket) do
+    {:noreply, assign(socket, :deleting_room, true)}
+  end
+
+  def handle_event("cancel_delete_room", _params, socket) do
+    {:noreply, assign(socket, :deleting_room, false)}
+  end
+
+  def handle_event("confirm_delete_room", _params, socket) do
+    name = socket.assigns.room_name
+    socket = assign(socket, :deleting_room, false)
+
+    case RoomsLogic.delete_room(socket.assigns.selected_room_id) do
+      {:ok, _room} ->
+        {:noreply, put_flash(load(socket, nil), :info, "Room #{name} deleted")}
+
+      {:error, :active} ->
+        {:noreply, put_flash(socket, :error, "Cannot delete the active room")}
+
+      {:error, :last_room} ->
+        {:noreply, put_flash(socket, :error, "Cannot delete the last remaining room")}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, inspect(reason))}
@@ -90,22 +136,19 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
   # --- Publish ---------------------------------------------------------------
 
   def handle_event("open_publish", %{"map_id" => map_id}, socket) do
-    room_id = socket.assigns.selected_room_id
-    maps = SeatMapsLogic.list_seat_maps(room_id)
-    target = Enum.find(maps, &(&1.id == String.to_integer(map_id)))
+    target = Enum.find(socket.assigns.maps, &(&1.id == String.to_integer(map_id)))
+    live? = socket.assigns.selected_room_id == socket.assigns.active_room_id
+    cross? = not target.published
+    count = if live? and cross?, do: SeatMapsLogic.active_reservation_count(), else: 0
 
-    is_cross =
-      case RoomsLogic.get_active_room() do
-        {:ok, room} ->
-          room.published_version && room.published_version.seat_map_id != target.id
-
-        _ ->
-          true
-      end
-
-    count = if is_cross, do: SeatMapsLogic.active_reservation_count(), else: 0
-
-    {:noreply, assign(socket, :publish_target, %{map_id: target.id, name: target.name, cross: is_cross, reservation_count: count})}
+    {:noreply,
+     assign(socket, :publish_target, %{
+       map_id: target.id,
+       name: target.name,
+       live: live?,
+       cross: cross?,
+       reservation_count: count
+     })}
   end
 
   def handle_event("cancel_publish", _params, socket) do
@@ -193,9 +236,20 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
           </.page_header>
 
           <.admin_section title={@room_name}>
+            <:title_content>
+              <.editable_text
+                id="room-name"
+                value={@room_name}
+                editing={@editing_room_name}
+                editable={not is_nil(@selected_room_id)}
+                edit_event="edit_room_name"
+                save_event="save_room_name"
+                edit_title="Rename this room"
+              />
+            </:title_content>
             <:trailing>
               <div class="flex items-center gap-2">
-                <.form for={%{}} phx-change="set_active_room">
+                <.form for={%{}} phx-change="select_room">
                   <select disabled={@rooms == []} name="room_id" class="select select-bordered select-sm bg-base-100 text-base-content/70">
                     <%= if @rooms != [] do %>
                       <option :for={room <- @rooms} value={room.id} selected={room.id == @selected_room_id}><%= room.name %></option>
@@ -204,6 +258,15 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
                     <% end %>
                   </select>
                 </.form>
+                <button
+                  phx-click="open_delete_room"
+                  disabled={not @room_deletable}
+                  title={delete_room_hint(@rooms, @selected_room_id, @active_room_id)}
+                  class="btn btn-sm btn-ghost text-error"
+                >
+                  <Icons.trash class="w-4 h-4" />
+                  Delete room
+                </button>
               </div>
             </:trailing>
             <div class="overflow-x-auto border border-base-300 rounded-lg">
@@ -252,19 +315,27 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
                         <% end %>
                       </td>
                       <td class="text-right whitespace-nowrap">
-                        <.link navigate={~p"/settings/seat-maps/#{map.public_id}/edit"} class="btn btn-xs btn-ghost">Edit</.link>
-                        <button phx-click="open_publish" phx-value-map_id={map.id} class="btn btn-xs btn-primary">Publish</button>
-                        <%
-                           extra_attrs =  if map.published, do: [disabled: "true", title: "Cannot delete the published map"], else: []
-                        %>
+                        <.link navigate={~p"/settings/seat-maps/#{map.public_id}/edit"} class="btn btn-xs btn-outline" title="Edit layout">
+                          <Icons.edit class="w-3 h-3"/>
+                        </.link>
                         <button
-                          class={"btn btn-xs btn-error " <> if(map.published, do: "btn-disabled", else: "")}
-                          data-confirm={"Delete #{map.name}?"}
-                          phx-click={if(map.published, do: "", else: "delete_map")}
+                          phx-click="open_publish"
                           phx-value-map_id={map.id}
-                          {extra_attrs}
+                          disabled={not map.publishable}
+                          title={publish_hint(map)}
+                          class="btn btn-xs btn-primary"
                         >
-                          Delete
+                          <Icons.monitor_up class="w-3 h-3" />
+                        </button>
+                        <button
+                          phx-click="delete_map"
+                          phx-value-map_id={map.id}
+                          disabled={map.published}
+                          data-confirm={"Delete #{map.name}?"}
+                          title={if map.published, do: "Cannot delete the published map", else: "Delete this map"}
+                          class="btn btn-xs btn-error"
+                        >
+                          <Icons.trash class="w-3 h-3" />
                         </button>
                       </td>
                     </tr>
@@ -288,14 +359,19 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
           </form>
           <%= if @publish_target do %>
             <h3 class="text-lg font-bold mb-2">Publish "<%= @publish_target.name %>"?</h3>
-            <%= if @publish_target.cross do %>
-              <p class="text-sm text-base-content/70 mb-4">
-                This switches the Room to a different map. <%= @publish_target.reservation_count %> active reservation(s) will be cancelled and desktop clients disconnected.
-              </p>
-            <% else %>
-              <p class="text-sm text-base-content/70 mb-4">
-                This republishes the current map.
-              </p>
+            <%= cond do %>
+              <% not @publish_target.live -> %>
+                <p class="text-sm text-base-content/70 mb-4">
+                  <%= @room_name %> is not the active room, so nothing goes live until it is activated in General settings.
+                </p>
+              <% @publish_target.cross -> %>
+                <p class="text-sm text-base-content/70 mb-4">
+                  This switches the Room to a different map. <%= @publish_target.reservation_count %> active reservation(s) will be cancelled and desktop clients disconnected.
+                </p>
+              <% true -> %>
+                <p class="text-sm text-base-content/70 mb-4">
+                  This republishes the current map.
+                </p>
             <% end %>
             <div class="modal-action">
               <button phx-click="cancel_publish" class="btn btn-ghost">Cancel</button>
@@ -305,17 +381,34 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
         </div>
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
       </div>
+
+      <div class={"modal " <> if(@deleting_room, do: "modal-open", else: "")}>
+        <div class="modal-box">
+          <%= if @deleting_room do %>
+            <h3 class="text-lg font-bold mb-2">Delete "<%= @room_name %>"?</h3>
+            <p class="text-sm text-base-content/70 mb-4">
+              This also deletes the room's <%= length(@maps) %> seat map(s) and every version they hold. Seats and PCs stay in the database.
+            </p>
+            <div class="modal-action">
+              <button phx-click="cancel_delete_room" class="btn btn-ghost">Cancel</button>
+              <button phx-click="confirm_delete_room" class="btn btn-error">Delete room</button>
+            </div>
+          <% end %>
+        </div>
+        <form phx-submit="cancel_delete_room" class="modal-backdrop"><button>close</button></form>
+      </div>
     </div>
     """
   end
 
   defp load(socket, selected_room_id) do
     rooms = RoomsLogic.list_rooms()
+    active_room_id = active_room_id()
 
     selected_room_id =
       case selected_room_id do
         id when is_integer(id) -> id
-        _ -> active_room_id()
+        _ -> active_room_id
       end
 
     maps = if is_nil(selected_room_id),
@@ -328,11 +421,25 @@ defmodule LanpartyseatingWeb.Settings.SeatMapsLive do
     socket
     |> assign(:rooms, rooms)
     |> assign(:selected_room_id, selected_room_id)
+    |> assign(:active_room_id, active_room_id)
     |> assign(:room_name, room_name)
     |> assign(:maps, maps)
     |> assign(:versions_by_map, versions_by_map)
+    |> assign(:room_deletable, length(rooms) > 1 and not is_nil(selected_room_id) and selected_room_id != active_room_id)
+    |> assign(:editing_room_name, false)
     |> assign(:publish_target, socket.assigns[:publish_target])
+    |> assign(:deleting_room, socket.assigns[:deleting_room] || false)
   end
+
+  defp publish_hint(%{publishable: true}), do: "Publish this map to its room"
+  defp publish_hint(%{published: true}), do: "Already published"
+  defp publish_hint(_map), do: "Nothing to publish"
+
+  defp delete_room_hint(rooms, _selected_room_id, _active_room_id) when length(rooms) <= 1,
+    do: "Cannot delete the last remaining room"
+
+  defp delete_room_hint(_rooms, room_id, room_id), do: "Cannot delete the active room"
+  defp delete_room_hint(_rooms, _selected_room_id, _active_room_id), do: "Delete this room and its seat maps"
 
   defp active_room_id do
     case RoomsLogic.get_active_room() do

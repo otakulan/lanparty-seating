@@ -68,6 +68,7 @@ Database (PostgreSQL via Ecto)
 | `countdown_long` | Countdown with hours support |
 | `page_header` | Consistent page headers with optional trailing slot |
 | `admin_section` | Admin page sections with bordered heading |
+| `editable_text` | Label with a pencil that swaps in a focused input (caller owns the state) |
 | `labeled_input` | Form inputs with horizontal labels |
 | `data_table` | Styled data tables |
 | `modal` | DaisyUI modal dialogs |
@@ -75,7 +76,8 @@ Database (PostgreSQL via Ecto)
 **Seat map components:**
 - Use `lib/lanpartyseating_web/components/seat_map.ex` for the shared viewer/editor shell.
 - Konva hooks live in `assets/js/hooks/seat_map_canvas.js`, `assets/js/hooks/seat_map_editor.js`, and `assets/js/hooks/seat_map_kiosk.js`.
-- Public routes are `/`, `/map`, `/kiosk` and `/kiosk/map` (there is no `/display/map`). The catalogue lives at `/settings/seat-maps`; the editor at `/settings/seat-maps/:public_id/edit`; General settings (Active Room selector) at `/settings`. The "New room" button in the catalogue creates a Room with a random animal name (see `SeatMapsLogic.random_room_name/0`).
+- Public routes are `/`, `/map`, `/kiosk` and `/kiosk/map` (there is no `/display/map`). The catalogue lives at `/settings/seat-maps`; the editor at `/settings/seat-maps/:public_id/edit`; General settings (Active Room selector) at `/settings`. The "New room" button in the catalogue creates a Room with a random animal name (see `RoomsLogic.random_room_name/0`).
+- The catalogue's room dropdown only scopes which Room's maps are listed — switching the Active Room happens in General settings. The catalogue also renames a Room inline (pencil next to the heading) and deletes it (`RoomsLogic.delete_room/1`), which is refused for the Active Room and for the last remaining Room.
 - Vocabulary and the seat map / rooms model are defined in `CONTEXT.md` and `docs/adr/` (see esp. ADR-0001..0005).
 
 **Onboarding (first-run setup):**
@@ -213,7 +215,7 @@ ESP32-based exit badge scanners allow attendees to cancel reservations at exit p
 14. **HTTPS for WebBluetooth**: Dev provisioning requires HTTPS on port 4001. Certs must be generated with OpenSSL directly (not `mix phx.gen.cert`) due to OTP 28 + Chrome SSL compatibility issues.
 15. **Seat Identity vs Placement**: `seat_slot` is the attendee-facing physical location, owned by the Room (`seat_slots.room_id`), while `pc_asset` is the remotely managed machine currently assigned to that slot. A Seat Map only places Seats; it does not own them.
 16. **Append-only Versions**: `seat_map_versions` are immutable and numbered by `revision`. Saving appends a new Version; publishing points the Room's `published_version_id` at a map's newest Version. Seats reparent to the Room, and `settings.active_room_id` selects which Room the app serves.
-17. **Published Map Safety**: Publishing the currently published map keeps the per-seat guard (refused if it moves/removes a Seat with an active reservation or tournament hold). Publishing a *different* map cancels all reservations, broadcasts `seat_map_changed`, and is refused while a Tournament is underway or within its buffer.
+17. **Published Map Safety**: Publishing points a map's *own* Room at its newest Version. The guards only apply when that Room is the Active Room: republishing the live map keeps the per-seat guard (refused if it moves/removes a Seat with an active reservation or tournament hold), while publishing a *different* map cancels all reservations, broadcasts `seat_map_changed`, and is refused while a Tournament is underway or within its buffer. Publishing inside a non-active Room touches nothing live.
 
 
 <!-- phoenix-gen-auth-start -->
