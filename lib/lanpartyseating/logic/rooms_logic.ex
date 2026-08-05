@@ -133,14 +133,56 @@ defmodule Lanpartyseating.RoomsLogic do
   end
 
   @doc """
-  Soft-deletes a Room. Refuses when it is the Active Room.
+  Renames a Room. Refuses a blank name (`{:error, :blank_name}`) and a name another live Room
+  already answers to (`{:error, :name_taken}`).
+  """
+  def rename_room(room_id, name) when is_integer(room_id) and is_binary(name) do
+    name = String.trim(name)
+
+    with {:ok, room} <- fetch_room(room_id),
+         :ok <- ensure_name_available(room, name) do
+      room
+      |> Room.changeset(%{name: name})
+      |> Repo.update()
+    end
+  end
+
+  @doc """
+  Soft-deletes a Room and cascades the soft delete to its Seat Maps and their Versions.
+  Refuses when it is the Active Room (`{:error, :active}`) or the only Room left
+  (`{:error, :last_room}`).
   """
   def delete_room(room_id) when is_integer(room_id) do
     with {:ok, room} <- fetch_room(room_id),
-         :ok <- ensure_not_active(room) do
-      room
-      |> Room.changeset(%{deleted_at: DateTime.utc_now() |> DateTime.truncate(:second)})
-      |> Repo.update()
+         :ok <- ensure_not_active(room),
+         :ok <- ensure_not_last_room() do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      room_map_ids = from(seat_map in SeatMap, where: seat_map.room_id == ^room.id, select: seat_map.id)
+
+      Multi.new()
+      |> Multi.update(:room, Room.changeset(room, %{deleted_at: now}))
+      |> Multi.update_all(
+        :versions,
+        from(version in SeatMapVersion,
+          where: version.seat_map_id in subquery(room_map_ids) and is_nil(version.deleted_at)
+        ),
+        set: [deleted_at: now]
+      )
+      |> Multi.update_all(
+        :seat_maps,
+        from(seat_map in SeatMap, where: seat_map.room_id == ^room.id and is_nil(seat_map.deleted_at)),
+        set: [deleted_at: now]
+      )
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{room: room}} ->
+          broadcast_map_update()
+          {:ok, room}
+
+        {:error, _op, reason, _changes} ->
+          {:error, reason}
+      end
     end
   end
 
@@ -179,6 +221,27 @@ defmodule Lanpartyseating.RoomsLogic do
     else
       :ok
     end
+  end
+
+  defp ensure_name_available(_room, ""), do: {:error, :blank_name}
+
+  defp ensure_name_available(room, name) do
+    taken? =
+      Room
+      |> where([other], is_nil(other.deleted_at) and other.id != ^room.id)
+      |> where([other], fragment("lower(?)", other.name) == ^String.downcase(name))
+      |> Repo.exists?()
+
+    if taken?, do: {:error, :name_taken}, else: :ok
+  end
+
+  defp ensure_not_last_room do
+    count =
+      Room
+      |> where([room], is_nil(room.deleted_at))
+      |> Repo.aggregate(:count, :id)
+
+    if count > 1, do: :ok, else: {:error, :last_room}
   end
 
   defp switch_active_room(room) do

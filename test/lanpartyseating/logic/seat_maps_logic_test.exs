@@ -172,6 +172,37 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
     end
   end
 
+  describe "rename_room/2" do
+    test "trims and applies the new name" do
+      room = create_room!(%{name: "Old Name"})
+
+      assert {:ok, renamed} = RoomsLogic.rename_room(room.id, "  New Name  ")
+      assert renamed.name == "New Name"
+    end
+
+    test "refuses a blank name" do
+      room = create_room!(%{name: "Keeper"})
+
+      assert {:error, :blank_name} = RoomsLogic.rename_room(room.id, "   ")
+      assert Repo.get!(Room, room.id).name == "Keeper"
+    end
+
+    test "refuses a name another live Room already answers to, ignoring case" do
+      _taken = create_room!(%{name: "Taken Name"})
+      room = create_room!(%{name: "Keeper"})
+
+      assert {:error, :name_taken} = RoomsLogic.rename_room(room.id, "taken name")
+      assert Repo.get!(Room, room.id).name == "Keeper"
+    end
+
+    test "keeping its own name is allowed" do
+      room = create_room!(%{name: "Same Name"})
+
+      assert {:ok, renamed} = RoomsLogic.rename_room(room.id, "Same Name")
+      assert renamed.name == "Same Name"
+    end
+  end
+
   describe "delete_room/1" do
     test "refuses to delete the Active Room" do
       room = create_room!()
@@ -186,6 +217,30 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
 
       assert {:ok, deleted} = RoomsLogic.delete_room(room2.id)
       assert deleted.deleted_at != nil
+      refute Enum.any?(RoomsLogic.list_rooms(), &(&1.id == room2.id))
+    end
+
+    test "refuses to delete the last remaining Room" do
+      room = create_room!()
+      set_active_room_id!(nil)
+
+      assert [%Room{}] = RoomsLogic.list_rooms()
+      assert {:error, :last_room} = RoomsLogic.delete_room(room.id)
+    end
+
+    test "cascades the soft delete to the Room's Seat Maps and Versions" do
+      room1 = create_room!()
+      set_active_room_id!(room1.id)
+
+      room2 = create_room!()
+      map_id = first_map_id(room2)
+      {:ok, _second} = SeatMapsLogic.create_seat_map(%{room_id: room2.id, name: "Second Layout"})
+
+      assert {:ok, _deleted} = RoomsLogic.delete_room(room2.id)
+
+      assert SeatMapsLogic.list_seat_maps(room2.id) == []
+      assert SeatMapsLogic.list_versions(map_id) == []
+      assert SeatMapsLogic.list_seat_maps(room1.id) != []
     end
   end
 
@@ -265,7 +320,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
 
       reservation = insert_active_reservation!(first_seat_slot_id(map_a))
 
-      map_b = first_map_id(create_room!())
+      {:ok, %{id: map_b}} = SeatMapsLogic.create_seat_map(%{room_id: room.id, name: "Second Layout"})
 
       {:ok, _} = SeatMapsLogic.publish_seat_map(map_b)
 
@@ -275,6 +330,26 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
 
       room = reload_room(room)
       assert room.published_version.seat_map_id == map_b
+    end
+
+    test "publishing a map of a non-active Room leaves the Active Room and its reservations alone" do
+      active = create_room!()
+      set_active_room_id!(active.id)
+      active_map = first_map_id(active)
+
+      {:ok, _} = SeatMapsLogic.save_version(active_map, editor_attrs([seat_payload("A01", 0, 0)]), 1)
+      {:ok, published} = SeatMapsLogic.publish_seat_map(active_map)
+
+      reservation = insert_active_reservation!(first_seat_slot_id(active_map))
+
+      offstage = create_room!()
+      offstage_map = first_map_id(offstage)
+
+      assert {:ok, _version} = SeatMapsLogic.publish_seat_map(offstage_map)
+
+      assert reload_room(active).published_version.id == published.id
+      assert Repo.get!(Reservation, reservation.id).deleted_at == nil
+      assert reload_room(offstage).published_version.seat_map_id == offstage_map
     end
 
     test "cross-map publish is refused while a Tournament is underway" do
@@ -288,7 +363,7 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
       reservation = insert_active_reservation!(first_seat_slot_id(map_a))
       insert_tournament_underway!("Ongoing Match")
 
-      map_b = first_map_id(create_room!())
+      {:ok, %{id: map_b}} = SeatMapsLogic.create_seat_map(%{room_id: room.id, name: "Second Layout"})
       assert {:error, {:tournament_in_progress, "Ongoing Match"}} = SeatMapsLogic.publish_seat_map(map_b)
 
       assert Repo.get!(Reservation, reservation.id).deleted_at == nil
@@ -305,6 +380,30 @@ defmodule Lanpartyseating.SeatMapsLogicTest do
   # ============================================================================
   # Catalogue actions
   # ============================================================================
+
+  describe "list_seat_maps/1" do
+    test "a map whose newest Version is already published is not publishable" do
+      room = create_room!()
+      set_active_room_id!(room.id)
+      map_id = first_map_id(room)
+
+      assert [%{publishable: true, published: false}] = SeatMapsLogic.list_seat_maps(room.id)
+
+      {:ok, _} = SeatMapsLogic.publish_seat_map(map_id)
+      assert [%{publishable: false, published: true}] = SeatMapsLogic.list_seat_maps(room.id)
+    end
+
+    test "saving a Version makes the published map publishable again" do
+      room = create_room!()
+      set_active_room_id!(room.id)
+      map_id = first_map_id(room)
+
+      {:ok, _} = SeatMapsLogic.publish_seat_map(map_id)
+      {:ok, _} = SeatMapsLogic.save_version(map_id, editor_attrs([seat_payload("A01", 0, 0)]), 1)
+
+      assert [%{publishable: true, published: true}] = SeatMapsLogic.list_seat_maps(room.id)
+    end
+  end
 
   describe "delete_seat_map/1" do
     test "refuses to delete the published map" do

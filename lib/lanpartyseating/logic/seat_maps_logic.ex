@@ -26,11 +26,13 @@ defmodule Lanpartyseating.SeatMapsLogic do
   # ---------------------------------------------------------------------------
 
   @doc """
-  Non-deleted Seat Maps for a Room, each annotated with its newest Version and whether the
-  map owns the Room's published Version.
+  Non-deleted Seat Maps for a Room, each annotated with its newest Version, whether the map
+  owns the Room's published Version, and whether publishing it would change anything
+  (`publishable`: false once the Room already publishes the map's newest Version).
   """
   def list_seat_maps(room_id) when is_integer(room_id) do
     room = Repo.get(Room, room_id) |> Repo.preload(:published_version)
+    published_version_id = room && room.published_version_id
     published_map_id = if room && room.published_version, do: room.published_version.seat_map_id
 
     SeatMap
@@ -47,7 +49,8 @@ defmodule Lanpartyseating.SeatMapsLogic do
         version_id: newest && newest.id,
         version_revision: newest && newest.revision,
         updated_at: newest && newest.updated_at,
-        published: published_map_id == map.id
+        published: published_map_id == map.id,
+        publishable: not is_nil(newest) and newest.id != published_version_id
       }
     end)
   end
@@ -172,13 +175,14 @@ defmodule Lanpartyseating.SeatMapsLogic do
   end
 
   @doc """
-  Publishes a Seat Map by pointing its Room at the map's newest Version. Same-map publishes
-  keep the per-seat guard; cross-map publishes cancel active reservations and broadcast to
-  desktop clients. Returns the published Version, or `{:error, reason}`.
+  Publishes a Seat Map by pointing its own Room at the map's newest Version. The reservation
+  and Tournament guards only bite when that Room is the Active Room: same-map publishes keep
+  the per-seat guard, cross-map publishes cancel active reservations and broadcast to desktop
+  clients. Returns the published Version, or `{:error, reason}`.
   """
   def publish_seat_map(seat_map_id) when is_integer(seat_map_id) do
-    with {:ok, map} <- get_seat_map(seat_map_id),
-         {:ok, room} <- RoomsLogic.get_active_room() do
+    with {:ok, map} <- get_seat_map(seat_map_id) do
+      room = room_of(map)
       newest = newest_version(map.id)
 
       if is_nil(newest) do
@@ -186,12 +190,16 @@ defmodule Lanpartyseating.SeatMapsLogic do
       else
         current_published = room.published_version
         same_map? = not is_nil(current_published) and current_published.seat_map_id == map.id
+        active_room? = SettingsLogic.get_settings().active_room_id == room.id
         tournament_name = TournamentsLogic.tournament_underway_name()
 
         multi =
           Multi.new()
           |> Multi.run(:check, fn _repo, _changes ->
             cond do
+              not active_room? ->
+                {:ok, :offstage}
+
               same_map? ->
                 case ensure_publishable_with_data(current_published, normalize_map_data(newest.data)) do
                   :ok -> {:ok, :same}
@@ -206,11 +214,11 @@ defmodule Lanpartyseating.SeatMapsLogic do
             end
           end)
           |> Multi.run(:cancel, fn repo, %{check: check} ->
-            if check == :same do
-              {:ok, :noop}
-            else
+            if check == :cross do
               RoomsLogic.cancel_all_active_reservations_in_repo(repo, "seat map changed")
               {:ok, :cancelled}
+            else
+              {:ok, :noop}
             end
           end)
           |> Multi.run(:publish, fn repo, _changes ->
@@ -246,6 +254,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
   # ---------------------------------------------------------------------------
 
   @doc "Loads the editor state for a Seat Map identified by `public_id`."
+  @spec get_editor_payload(binary()) :: {:ok, %{}} | {:error, any()}
   def get_editor_payload(public_id) when is_binary(public_id) do
     with {:ok, map} <- get_seat_map_by_public_id(public_id),
          {:ok, newest} <- {:ok, newest_version(map.id) || :none} do
@@ -450,13 +459,14 @@ defmodule Lanpartyseating.SeatMapsLogic do
   end
 
   defp published_seat_map?(seat_map) do
-    case RoomsLogic.get_active_room() do
-      {:ok, %Room{published_version: %SeatMapVersion{seat_map_id: seat_map_id}}} ->
-        seat_map_id == seat_map.id
-
-      _ ->
-        false
+    case room_of(seat_map) do
+      %Room{published_version: %SeatMapVersion{seat_map_id: seat_map_id}} -> seat_map_id == seat_map.id
+      _room -> false
     end
+  end
+
+  defp room_of(%SeatMap{room_id: room_id}) do
+    Repo.get!(Room, room_id) |> Repo.preload(:published_version)
   end
 
   defp next_duplicate_name(room_id, base_name) when is_binary(base_name) do
@@ -522,7 +532,6 @@ defmodule Lanpartyseating.SeatMapsLogic do
             shape: seat.shape,
             status: Atom.to_string(runtime[:status] || :available),
             reservation_end_date: datetime_to_iso(runtime[:reservation_end_date]),
-            legacy_station_number: runtime[:legacy_station_number],
             pc_asset_code: runtime[:pc_asset_code],
             pc_hostname: runtime[:pc_hostname]
           }
@@ -696,7 +705,6 @@ defmodule Lanpartyseating.SeatMapsLogic do
            status: status,
            label: seat_slot.label,
            reservation_end_date: reservation && reservation.end_date,
-           legacy_station_number: seat_slot.legacy_station_number,
            pc_asset_code: assignment && assignment.code,
            pc_hostname: assignment && assignment.hostname
          }}
