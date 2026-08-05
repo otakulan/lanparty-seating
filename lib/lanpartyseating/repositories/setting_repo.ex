@@ -4,12 +4,17 @@ defmodule Lanpartyseating.Setting do
 
   @primary_key {:id, :id, autogenerate: false}
 
+  @setup_states [:not_started, :admin_created, :room_created, :layout_ready, :complete]
+
+  def setup_states, do: @setup_states
+
   schema "settings" do
     field :row_padding, :integer
     field :column_padding, :integer
     field :reservation_duration_minutes, :integer
     field :tournament_buffer_minutes, :integer
     field :seat_picking_enabled_in_kiosk, :boolean, default: false
+    field :setup_state, Ecto.Enum, values: @setup_states, default: :not_started
 
     belongs_to :active_room, Lanpartyseating.Room,
       foreign_key: :active_room_id,
@@ -28,7 +33,8 @@ defmodule Lanpartyseating.Setting do
       :reservation_duration_minutes,
       :tournament_buffer_minutes,
       :seat_picking_enabled_in_kiosk,
-      :active_room_id
+      :active_room_id,
+      :setup_state
     ])
     |> validate_number(:row_padding, greater_than_or_equal_to: 0)
     |> validate_number(:column_padding, greater_than_or_equal_to: 0)

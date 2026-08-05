@@ -13,6 +13,7 @@ defmodule LanpartyseatingWeb.Router do
     plug(:put_secure_browser_headers)
     plug(:put_root_layout, {LanpartyseatingWeb.Layouts, :root})
     plug(:fetch_current_scope_for_user)
+    plug(LanpartyseatingWeb.Plugs.RedirectIfSetupIncomplete)
   end
 
   pipeline :api do
@@ -56,6 +57,11 @@ defmodule LanpartyseatingWeb.Router do
       live("/", DisplayLive, :index)
       live("/map", SeatMapLive, :interactive)
       live("/stations", StationsLive, :index)
+    end
+
+    live_session :setup,
+      layout: {LanpartyseatingWeb.Layouts, :setup} do
+      live("/setup", SetupLive, :index)
     end
   end
 

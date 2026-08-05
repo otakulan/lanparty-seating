@@ -162,3 +162,17 @@ for station_number <- 1..10 do
 end
 
 IO.puts("Locked stations 1-10 for League of Legends tournament")
+
+# =============================================================================
+# SETUP STATE
+# =============================================================================
+# The seed pre-creates an admin user, so a seeded database skips the onboarding
+# wizard and starts in the fully-configured state.
+# =============================================================================
+
+Lanpartyseating.Repo.get(Lanpartyseating.Setting, 1)
+|> Kernel.||(%Lanpartyseating.Setting{id: 1})
+|> Ecto.Changeset.change(setup_state: :complete)
+|> Lanpartyseating.Repo.insert_or_update!()
+
+IO.puts("Marked setup as complete")

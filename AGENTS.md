@@ -44,14 +44,14 @@ Database (PostgreSQL via Ecto)
 
 ## Directory Structure
 
-- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, reservation, scanner, seat_maps, settings, station, tournaments)
-- `lib/lanpartyseating/repositories/` - Ecto schema definitions (badge_scanner, pc_asset, room, scanner_wifi_config, seat_map, seat_map_version, seat_slot, seat_slot_assignment, seat_slot_status)
+- `lib/lanpartyseating/logic/` - Business logic modules (badges, maintenance, onboarding, reservation, scanner, seat_maps, settings, station, tournaments)
+- `lib/lanpartyseating/repositories/` - Ecto schema definitions (badge_scanner, pc_asset, room, scanner_wifi_config, seat_map, seat_map_version, seat_slot, seat_slot_assignment, seat_slot_status, setting)
 - `lib/lanpartyseating/tasks/` - GenServer background tasks (expiration_kickstarter, expire_reservation, expire_tournament, start_tournament)
 - `lib/lanpartyseating/accounts/` - User authentication (phx.gen.auth generated)
-- `lib/lanpartyseating_web/live/` - LiveView pages (display, display_seat_map, logs, maintenance, profile, seat_map, settings, settings/seat_maps_live, settings/seat_map_editor_live, settings/general_live, stations, tournaments)
+- `lib/lanpartyseating_web/live/` - LiveView pages (display, display_seat_map, logs, maintenance, profile, seat_map, setup, settings, settings/seat_maps_live, settings/seat_map_editor_live, settings/general_live, stations, tournaments)
 - `lib/lanpartyseating_web/components/` - Reusable components (display_modal, icons, layouts, nav, seat_map, settings_nav, station_modal, tournament_modal, ui)
 - `lib/lanpartyseating_web/controllers/api/v1/` - REST API controllers (reservation_controller for scanner badge cancellation)
-- `lib/lanpartyseating_web/plugs/` - Custom Plug modules (scanner_auth for bearer token authentication)
+- `lib/lanpartyseating_web/plugs/` - Custom Plug modules (redirect_if_setup_incomplete gate, scanner_auth for bearer token authentication)
 
 ## Development Best Practices
 
@@ -77,6 +77,12 @@ Database (PostgreSQL via Ecto)
 - Konva hooks live in `assets/js/hooks/seat_map_canvas.js`, `assets/js/hooks/seat_map_editor.js`, and `assets/js/hooks/seat_map_kiosk.js`.
 - Public routes are `/`, `/map`, `/kiosk` and `/kiosk/map` (there is no `/display/map`). The catalogue lives at `/settings/seat-maps`; the editor at `/settings/seat-maps/:public_id/edit`; General settings (Active Room selector) at `/settings`. The "New room" button in the catalogue creates a Room with a random animal name (see `SeatMapsLogic.random_room_name/0`).
 - Vocabulary and the seat map / rooms model are defined in `CONTEXT.md` and `docs/adr/` (see esp. ADR-0001..0005).
+
+**Onboarding (first-run setup):**
+- The setup wizard lives at `/setup` (`lib/lanpartyseating_web/live/setup_live.ex`), a public page backed by the monotonic `setup_state` enum on the settings singleton (`:not_started → :admin_created → :room_created → :layout_ready → :complete`).
+- Steps are driven by `lib/lanpartyseating/logic/onboarding_logic.ex`; each step performs its resource write and its state transition in one `Ecto.Multi`, so the enum never drifts from reality.
+- The `RedirectIfSetupIncomplete` plug (`lib/lanpartyseating_web/plugs/`) bounces every browser request to `/setup` until `setup_state == :complete`. Exempt: `/setup`, `/livez`, `/readyz`, `/healthz`, `/api` (static assets bypass the router entirely).
+- The app is treated as not-live until `:complete`; `/setup` redirects to `/settings` once onboarding finishes. Seeds and the test helper mark setup complete, so a seeded DB skips the wizard.
 
 **When to create components:**
 - Extract to `ui.ex` when a pattern appears in 2+ places

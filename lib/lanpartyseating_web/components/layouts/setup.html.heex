@@ -1,0 +1,24 @@
+<%= if Phoenix.Flash.get(@flash, :error) do %>
+  <div class="pointer-events-none fixed inset-x-3 top-3 z-50 flex justify-center sm:inset-x-4 sm:top-4">
+    <div class="pointer-events-auto alert alert-error w-full max-w-xl items-start shadow-lg">
+      <span class="min-w-0 grow text-sm break-words" style="white-space: pre-wrap;">
+        {Phoenix.Flash.get(@flash, :error)}
+      </span>
+      <button
+        type="button"
+        class="btn btn-sm btn-circle btn-ghost shrink-0"
+        phx-click="lv:clear-flash"
+        phx-value-key="error"
+        aria-label="Dismiss"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+<% end %>
+
+<div class="h-dvh overflow-y-auto">
+  {@inner_content}
+</div>
