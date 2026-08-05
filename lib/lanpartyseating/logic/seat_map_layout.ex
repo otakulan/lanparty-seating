@@ -27,7 +27,9 @@ defmodule Lanpartyseating.SeatMapLayout do
        """
   @spec from_json(String.t()) :: {:ok, layout()} | {:error, error()}
   def from_json(json) when is_binary(json) do
-    case Jason.decode(json) do
+    json_library = Phoenix.json_library()
+
+    case json_library.decode(json) do
       {:ok, %{} = decoded} -> normalize_and_validate(decoded)
       {:ok, _non_object} -> {:error, :invalid_json}
       {:error, _exception} -> {:error, :invalid_json}
