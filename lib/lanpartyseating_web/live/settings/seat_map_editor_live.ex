@@ -56,7 +56,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
   def handle_event("save_version", %{"map" => %{"revision" => revision} = map}, socket) do
     case SeatMapsLogic.save_version(socket.assigns.seat_map_id, map, revision) do
       {:ok, _version} ->
-        payload = load_editor_payload(socket.assigns.public_id)
+        {:ok, payload} = load_editor_payload(socket.assigns.public_id)
 
         {:noreply,
          socket
@@ -86,7 +86,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
         {:noreply, assign(socket, :map_name, name) |> put_flash(:info, "Name updated")}
 
       {:error, changeset} ->
-        refreshed = load_editor_payload(socket.assigns.public_id)
+        {:ok, refreshed} = load_editor_payload(socket.assigns.public_id)
         {:noreply, assign(socket, :map_name, refreshed.name) |> put_flash(:error, format_error(changeset))}
     end
   end
@@ -98,9 +98,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
   def handle_event("import_json", %{"import" => %{"json" => json}}, socket) do
     with {:ok, decoded} <- SeatMapLayout.from_json(json),
          merged <- Map.put(decoded, :revision, socket.assigns.revision),
-         {:ok, _version} <- SeatMapsLogic.save_version(socket.assigns.seat_map_id, merged, socket.assigns.revision) do
-      payload = load_editor_payload(socket.assigns.public_id)
-
+         {:ok, _version} <- SeatMapsLogic.save_version(socket.assigns.seat_map_id, merged, socket.assigns.revision),
+         {:ok, payload} <- load_editor_payload(socket.assigns.public_id) do
       {:noreply,
        socket
        |> assign_editor_payload(payload)
@@ -130,7 +129,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
 
     case SeatMapsLogic.save_version(socket.assigns.seat_map_id, payload, socket.assigns.revision) do
       {:ok, _version} ->
-        refreshed = load_editor_payload(socket.assigns.public_id)
+        {:ok, refreshed} = load_editor_payload(socket.assigns.public_id)
 
         {:noreply,
          socket
@@ -147,7 +146,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
   end
 
   def handle_info({:seat_map_updated, _payload}, socket) do
-    payload = load_editor_payload(socket.assigns.public_id)
+    {:ok, payload} = load_editor_payload(socket.assigns.public_id)
 
     stale_version =
       payload.revision != socket.assigns.revision and
