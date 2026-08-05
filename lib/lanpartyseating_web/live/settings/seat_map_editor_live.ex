@@ -2,6 +2,7 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
   use LanpartyseatingWeb, :live_view
 
   alias Lanpartyseating.PubSub
+  alias Lanpartyseating.SeatMapLayout
   alias Lanpartyseating.SeatMapsLogic
   alias LanpartyseatingWeb.Components.SeatMap
   alias LanpartyseatingWeb.Components.SettingsNav
@@ -95,8 +96,8 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
   end
 
   def handle_event("import_json", %{"import" => %{"json" => json}}, socket) do
-    with {:ok, decoded} <- Jason.decode(json),
-         merged <- Map.put(decoded, "revision", socket.assigns.revision),
+    with {:ok, decoded} <- SeatMapLayout.from_json(json),
+         merged <- Map.put(decoded, :revision, socket.assigns.revision),
          {:ok, _version} <- SeatMapsLogic.save_version(socket.assigns.seat_map_id, merged, socket.assigns.revision) do
       payload = load_editor_payload(socket.assigns.public_id)
 
@@ -106,8 +107,11 @@ defmodule LanpartyseatingWeb.Settings.SeatMapEditorLive do
        |> push_event("seat_map_update", %{map: payload})
        |> put_flash(:info, "JSON imported")}
     else
-      {:error, %Jason.DecodeError{}} ->
+      {:error, :invalid_json} ->
         {:noreply, put_flash(socket, :error, "Invalid JSON")}
+
+      {:error, :invalid_layout} ->
+        {:noreply, put_flash(socket, :error, "Invalid layout JSON")}
 
       {:error, {:stale, _latest}} ->
         {:noreply, put_flash(socket, :error, "This map changed elsewhere")}

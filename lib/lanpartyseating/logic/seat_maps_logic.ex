@@ -10,6 +10,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
   alias Lanpartyseating.Reservation
   alias Lanpartyseating.Room
   alias Lanpartyseating.SeatMap
+  alias Lanpartyseating.SeatMapLayout
   alias Lanpartyseating.SeatMapVersion
   alias Lanpartyseating.SeatSlot
   alias Lanpartyseating.SeatSlotAssignment
@@ -81,7 +82,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
   settings singleton only when none was set, so the first Room becomes the Active Room.
   """
   def create_room(attrs) when is_map(attrs) do
-    attrs = atomize_keys(attrs)
+    attrs = SeatMapLayout.atomize_keys(attrs)
     width = parse_dimension(attrs[:width], 1920)
     height = parse_dimension(attrs[:height], 1080)
     first_map_name = attrs[:first_map_name] || "Main Layout"
@@ -219,7 +220,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
 
   @doc "Creates a new Seat Map with one empty Version at revision 1."
   def create_seat_map(attrs) when is_map(attrs) do
-    attrs = atomize_keys(attrs)
+    attrs = SeatMapLayout.atomize_keys(attrs)
 
     with {:ok, room} <- {:ok, Repo.get(Room, attrs[:room_id]) || :none} do
       if room == :none do
@@ -750,7 +751,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
   end
 
   defp seat_signature(seat) do
-    seat = normalize_seat(seat)
+    seat = SeatMapLayout.normalize_seat(seat)
 
     {seat.seat_slot_id,
      %{
@@ -889,7 +890,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
           Enum.map(
             seats,
             fn seat ->
-              label = normalize_label(seat.label)
+              label = SeatMapLayout.normalize_label(seat.label)
               seat_slot_id = Map.get(slot_ids_by_key, seat.seat_slot_id || label)
               %{seat | seat_slot_id: seat_slot_id, label: label}
             end
@@ -920,7 +921,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
       seats,
       {:ok, %{}, []},
       fn seat, {:ok, slot_ids_by_key, touched_slot_ids} ->
-        label = normalize_label(seat.label)
+        label = SeatMapLayout.normalize_label(seat.label)
         seat_slot_id = seat.seat_slot_id
 
         slot_result =
@@ -1018,7 +1019,7 @@ defmodule Lanpartyseating.SeatMapsLogic do
   end
 
   defp normalize_editor_attrs(attrs) do
-    attrs = atomize_keys(attrs)
+    attrs = SeatMapLayout.atomize_keys(attrs)
 
     data =
       attrs[:data] ||
@@ -1037,67 +1038,11 @@ defmodule Lanpartyseating.SeatMapsLogic do
   defp normalize_map_data(nil), do: empty_map_data()
 
   defp normalize_map_data(data) when is_map(data) do
-    data = atomize_keys(data)
-
-    %{
-      meta: data[:meta] || %{},
-      seats: Enum.map(data.seats, &normalize_seat/1),
-      objects: Enum.map(data.objects, &normalize_object/1)
-    }
+    case SeatMapLayout.normalize_and_validate(data) do
+      {:ok, normalized} -> normalized
+      {:error, _reason} -> empty_map_data()
+    end
   end
-
-  defp normalize_seat(seat) do
-    seat = atomize_keys(seat)
-
-    %{
-      seat_slot_id: parse_optional_int(seat[:seat_slot_id]),
-      label: normalize_label(seat.label),
-      x: seat.x,
-      y: seat.y,
-      width: seat.width,
-      height: seat.height,
-      rotation: seat.rotation,
-      shape: seat.shape,
-      locked: normalize_locked(seat[:locked])
-    }
-  end
-
-  defp normalize_object(object) do
-    object = atomize_keys(object)
-
-    %{
-      id: object[:id] || Ecto.UUID.generate(),
-      type: object.type,
-      x: object.x,
-      y: object.y,
-      width: object.width,
-      height: object.height,
-      rotation: object.rotation,
-      text: object[:text],
-      font_size: parse_optional_int(object[:font_size]),
-      fill: object[:fill],
-      fill_secondary: object[:fill_secondary],
-      stroke: object[:stroke],
-      locked: normalize_locked(object[:locked]),
-      front: normalize_front(object[:front])
-    }
-  end
-
-  defp normalize_locked(true), do: true
-  defp normalize_locked("true"), do: true
-  defp normalize_locked(_), do: false
-
-  defp normalize_front(true), do: true
-  defp normalize_front("true"), do: true
-  defp normalize_front(_), do: false
-
-  defp normalize_label(nil), do: "A01"
-  defp normalize_label(label) when is_binary(label), do: label |> String.trim() |> String.upcase()
-  defp normalize_label(label), do: label |> to_string() |> normalize_label()
-
-  defp parse_optional_int(nil), do: nil
-  defp parse_optional_int(""), do: nil
-  defp parse_optional_int(value), do: parse_int(value)
 
   defp parse_int(value) when is_integer(value), do: value
   defp parse_int(value) when is_float(value), do: round(value)
@@ -1110,35 +1055,6 @@ defmodule Lanpartyseating.SeatMapsLogic do
       _ -> default
     end
   end
-
-  defp atomize_keys(%_{} = struct), do: struct |> Map.from_struct() |> atomize_keys()
-
-  defp atomize_keys(map) when is_map(map) do
-    Map.new(
-      map,
-      fn
-        {key, value} when is_binary(key) ->
-          atom =
-            try do
-              String.to_existing_atom(key)
-            rescue
-              ArgumentError -> key
-            end
-
-          {atom, atomize_value(value)}
-
-        {key, value} ->
-          {key, atomize_value(value)}
-      end
-    )
-  end
-
-  defp atomize_keys(other), do: other
-
-  defp atomize_value(%_{} = struct), do: struct |> Map.from_struct() |> atomize_keys()
-  defp atomize_value(value) when is_map(value), do: atomize_keys(value)
-  defp atomize_value(value) when is_list(value), do: Enum.map(value, &atomize_value/1)
-  defp atomize_value(value), do: value
 
   defp datetime_to_iso(nil), do: nil
   defp datetime_to_iso(%DateTime{} = datetime), do: DateTime.to_iso8601(datetime)

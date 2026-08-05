@@ -1,12 +1,17 @@
 defmodule Lanpartyseating.SeatMapLayout do
   @moduledoc """
-             Decodes, normalizes, and validates seat map layout JSON.
+             Decodes, normalizes, and validates seat map layout data.
 
-             Both the onboarding wizard and the map editor accept a layout as JSON exported
-             from another event's editor. That JSON arrives as string-keyed maps of whatever
-             the source produced. This module is the single place that turns it into the
-             canonical atom-keyed shape the app persists, applying defaults for missing
-             values and rejecting input that is not a well-formed layout.
+             Layouts arrive as JSON exported from another event's editor (during onboarding
+             and from the map editor's import). That JSON is a string-keyed map of whatever
+             the source produced. This module is the single source of truth for turning it
+             into the canonical atom-keyed shape the app persists: it decodes, applies
+             defaults for missing values, coerces types, and rejects input that is not a
+             well-formed layout.
+
+             `SeatMapsLogic` reuses the same normalizers (`normalize_seat/1`,
+             `normalize_object/1`, `normalize_label/1`, `atomize_keys/1`) so that every
+             path that touches layout data agrees on the canonical shape.
 
              ## Errors
 
@@ -48,8 +53,8 @@ defmodule Lanpartyseating.SeatMapLayout do
   def normalize_and_validate(%{} = data) do
     data = atomize_keys(data)
 
-    with {:ok, seats} <- normalize_entries(data[:seats], &normalize_seat/1),
-         {:ok, objects} <- normalize_entries(data[:objects], &normalize_object/1) do
+    with {:ok, seats} <- normalize_seats(data[:seats]),
+         {:ok, objects} <- normalize_objects(data[:objects]) do
       {:ok,
        data
        |> Map.put(:seats, seats)
@@ -60,19 +65,82 @@ defmodule Lanpartyseating.SeatMapLayout do
 
   def normalize_and_validate(_other), do: {:error, :invalid_layout}
 
-  # -- entries ----------------------------------------------------------------
+  @doc "Normalizes a single seat to its canonical shape (never raises)."
+  @spec normalize_seat(map()) :: map()
+  def normalize_seat(%{} = seat) do
+    seat = atomize_keys(seat)
 
-  defp normalize_entries(nil, _normalize), do: {:ok, []}
+    %{
+      seat_slot_id: optional_int(seat[:seat_slot_id]),
+      label: normalize_label(seat[:label]),
+      x: number(seat[:x], 0),
+      y: number(seat[:y], 0),
+      width: number(seat[:width], 60),
+      height: number(seat[:height], 60),
+      rotation: number(seat[:rotation], 0),
+      shape: string(seat[:shape], "rect"),
+      locked: bool(seat[:locked]),
+    }
+  end
 
-  defp normalize_entries(entries, normalize) when is_list(entries) do
+  @doc "Normalizes a single object (shape) to its canonical form (never raises)."
+  @spec normalize_object(map()) :: map()
+  def normalize_object(%{} = object) do
+    object = atomize_keys(object)
+
+    %{
+      id: object[:id] || Ecto.UUID.generate(),
+      type: string(object[:type], "rect"),
+      x: number(object[:x], 0),
+      y: number(object[:y], 0),
+      width: number(object[:width], 100),
+      height: number(object[:height], 100),
+      rotation: number(object[:rotation], 0),
+      text: object[:text],
+      font_size: optional_int(object[:font_size]),
+      fill: object[:fill],
+      fill_secondary: object[:fill_secondary],
+      stroke: object[:stroke],
+      locked: bool(object[:locked]),
+      front: bool(object[:front]),
+    }
+  end
+
+  @doc "Normalizes a seat/object label to its canonical uppercase form."
+  @spec normalize_label(any()) :: String.t()
+  def normalize_label(nil), do: "A01"
+
+  def normalize_label(label) when is_binary(label), do: label |> String.trim() |> String.upcase()
+
+  def normalize_label(label), do: label |> to_string() |> normalize_label()
+
+  @doc "Recursively atomizes map keys, keeping unknown string keys as-is."
+  @spec atomize_keys(any()) :: any()
+  def atomize_keys(%_{} = struct), do: struct |> Map.from_struct() |> atomize_keys()
+
+  def atomize_keys(%{} = map) do
+    Map.new(map, fn {key, value} -> {existing_atom_or_keep(key), atomize_value(value)} end)
+  end
+
+  def atomize_keys(other), do: other
+
+  # -- validation internals ---------------------------------------------------
+
+  defp normalize_seats(nil), do: {:ok, []}
+  defp normalize_seats(seats) when is_list(seats), do: reduce_entries(seats, &normalize_seat/1)
+  defp normalize_seats(_other), do: {:error, :invalid_layout}
+
+  defp normalize_objects(nil), do: {:ok, []}
+  defp normalize_objects(objects) when is_list(objects), do: reduce_entries(objects, &normalize_object/1)
+  defp normalize_objects(_other), do: {:error, :invalid_layout}
+
+  defp reduce_entries(entries, normalize) do
     entries
     |> Enum.reduce_while(
       {:ok, []},
-      fn entry, {:ok, acc} ->
-        case normalize.(entry) do
-          {:ok, normalized} -> {:cont, {:ok, [normalized | acc]}}
-          {:error, _reason} = error -> {:halt, error}
-        end
+      fn
+        %{} = entry, {:ok, acc} -> {:cont, {:ok, [normalize.(entry) | acc]}}
+        _entry, _acc -> {:halt, {:error, :invalid_layout}}
       end
     )
     |> case do
@@ -81,61 +149,10 @@ defmodule Lanpartyseating.SeatMapLayout do
     end
   end
 
-  defp normalize_entries(_other, _normalize), do: {:error, :invalid_layout}
-
-  defp normalize_seat(%{} = seat) do
-    seat = atomize_keys(seat)
-
-    {:ok,
-     %{
-       seat_slot_id: optional_int(seat[:seat_slot_id]),
-       label: label(seat[:label]),
-       x: number(seat[:x], 0),
-       y: number(seat[:y], 0),
-       width: number(seat[:width], 60),
-       height: number(seat[:height], 60),
-       rotation: number(seat[:rotation], 0),
-       shape: string(seat[:shape], "rect"),
-       locked: bool(seat[:locked]),
-     }}
-  end
-
-  defp normalize_seat(_other), do: {:error, :invalid_layout}
-
-  defp normalize_object(%{} = object) do
-    object = atomize_keys(object)
-
-    {:ok,
-     %{
-       id: object[:id] || Ecto.UUID.generate(),
-       type: string(object[:type], "rect"),
-       x: number(object[:x], 0),
-       y: number(object[:y], 0),
-       width: number(object[:width], 100),
-       height: number(object[:height], 100),
-       rotation: number(object[:rotation], 0),
-       text: object[:text],
-       font_size: optional_int(object[:font_size]),
-       fill: object[:fill],
-       fill_secondary: object[:fill_secondary],
-       stroke: object[:stroke],
-       locked: bool(object[:locked]),
-       front: bool(object[:front]),
-     }}
-  end
-
-  defp normalize_object(_other), do: {:error, :invalid_layout}
-
   defp normalize_meta(%{} = meta), do: meta
   defp normalize_meta(_other), do: %{}
 
   # -- coercion helpers -------------------------------------------------------
-
-  defp label(nil), do: "A01"
-
-  defp label(value) when is_binary(value), do: value |> String.trim() |> String.upcase()
-
-  defp label(value), do: value |> to_string() |> label()
 
   defp number(value, default) do
     case value do
@@ -160,12 +177,6 @@ defmodule Lanpartyseating.SeatMapLayout do
   defp bool(true), do: true
   defp bool("true"), do: true
   defp bool(_other), do: false
-
-  defp atomize_keys(%{} = map) do
-    Map.new(map, fn {key, value} -> {existing_atom_or_keep(key), atomize_value(value)} end)
-  end
-
-  defp atomize_keys(other), do: other
 
   defp existing_atom_or_keep(key) when is_binary(key) do
     String.to_existing_atom(key)
