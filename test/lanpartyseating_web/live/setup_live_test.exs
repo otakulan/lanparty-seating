@@ -3,8 +3,10 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
 
   import Phoenix.LiveViewTest
 
+  alias Lanpartyseating.Accounts.User
   alias Lanpartyseating.OnboardingLogic
   alias Lanpartyseating.Repo
+  alias Lanpartyseating.Room
   alias Lanpartyseating.Setting
 
   defp set_setup_state!(state) do
@@ -138,6 +140,218 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
 
       {:ok, view, _html} = live(conn, ~p"/setup")
 
+      assert render(view) =~ "Publish empty layout"
+      assert has_element?(view, "h1", "Get started")
+    end
+
+    test "completes on a freshly migrated database with no settings row", %{conn: conn} do
+      Repo.delete_all(Setting)
+      {:ok, view, html} = live(conn, ~p"/setup")
+
+      assert html =~ "Create your admin account"
+
+      view
+      |> form("#account-form", %{user: account_params()})
+      |> render_submit()
+
+      assert has_element?(view, "#room-form")
+
+      view
+      |> form("#room-form", %{room: %{"name" => "My Hall"}})
+      |> render_submit()
+
+      render_click(view, "finish_layout")
+
+      view
+      |> form(
+        "#settings-form",
+        %{
+          settings: %{"reservation_duration_minutes" => "50", "tournament_buffer_minutes" => "30"},
+        }
+      )
+      |> render_submit()
+
+      assert has_element?(view, "h1", "You're all set!")
+      assert Repo.get!(Setting, 1).setup_state == :complete
+    end
+
+    test "rejects a too-short password and keeps the operator on the account step", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/setup")
+
+      view
+      |> form(
+        "#account-form",
+        %{
+          user:
+            %{
+              "name" => "Operator",
+              "email" => "operator@example.com",
+              "password" => "short",
+              "password_confirmation" => "short",
+            },
+        }
+      )
+      |> render_submit()
+
+      assert render(view) =~ "Create your admin account"
+      assert has_element?(view, "#account-form")
+      assert Repo.aggregate(User, :count, :id) == 0
+    end
+
+    test "toggles between empty and import layout choices", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/setup")
+
+      view
+      |> form("#account-form", %{user: account_params()})
+      |> render_submit()
+
+      view
+      |> form("#room-form", %{room: %{"name" => "My Hall"}})
+      |> render_submit()
+
+      assert render(view) =~ "Publish empty layout"
+      refute render(view) =~ "Import &amp; publish"
+
+      render_click(view, "set_layout_choice", %{"choice" => "import"})
+
+      assert render(view) =~ "Import &amp; publish"
+      assert has_element?(view, "textarea")
+    end
+
+    test "rejects non-map JSON on import and stays on the layout step", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/setup")
+
+      view
+      |> form("#account-form", %{user: account_params()})
+      |> render_submit()
+
+      view
+      |> form("#room-form", %{room: %{"name" => "My Hall"}})
+      |> render_submit()
+
+      render_click(view, "set_layout_choice", %{"choice" => "import"})
+      render_change(view, "set_import_json", %{"json" => "42"})
+      render_click(view, "finish_layout")
+
+      assert render(view) =~ "Invalid JSON"
+      assert has_element?(view, "textarea")
+      assert Repo.get!(Setting, 1).setup_state == :room_created
+    end
+
+    test "persists the kiosk seat-picking toggle through completion", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/setup")
+
+      view
+      |> form("#account-form", %{user: account_params()})
+      |> render_submit()
+
+      view
+      |> form("#room-form", %{room: %{"name" => "My Hall"}})
+      |> render_submit()
+
+      render_click(view, "finish_layout")
+
+      view
+      |> form(
+        "#settings-form",
+        %{
+          settings:
+            %{
+              "reservation_duration_minutes" => "50",
+              "tournament_buffer_minutes" => "30",
+              "seat_picking_enabled_in_kiosk" => "true",
+            },
+        }
+      )
+      |> render_submit()
+
+      assert has_element?(view, "h1", "You're all set!")
+      assert Repo.get!(Setting, 1).seat_picking_enabled_in_kiosk == true
+    end
+
+    test "rejects out-of-range settings and stays on the settings step", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/setup")
+
+      view
+      |> form("#account-form", %{user: account_params()})
+      |> render_submit()
+
+      view
+      |> form("#room-form", %{room: %{"name" => "My Hall"}})
+      |> render_submit()
+
+      render_click(view, "finish_layout")
+
+      view
+      |> form(
+        "#settings-form",
+        %{
+          settings:
+            %{
+              "reservation_duration_minutes" => "1000",
+              "tournament_buffer_minutes" => "30",
+            },
+        }
+      )
+      |> render_submit()
+
+      assert has_element?(view, "#settings-form")
+      assert Repo.get!(Setting, 1).setup_state == :layout_ready
+    end
+
+    test "links the completion screen to the room's seat map editor", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/setup")
+
+      view
+      |> form("#account-form", %{user: account_params()})
+      |> render_submit()
+
+      view
+      |> form("#room-form", %{room: %{"name" => "My Hall"}})
+      |> render_submit()
+
+      render_click(view, "finish_layout")
+
+      view
+      |> form(
+        "#settings-form",
+        %{
+          settings: %{"reservation_duration_minutes" => "50", "tournament_buffer_minutes" => "30"},
+        }
+      )
+      |> render_submit()
+
+      assert has_element?(view, "h1", "You're all set!")
+
+      map_public_id =
+        case OnboardingLogic.current_room_map() do
+          {:ok, map} -> map.public_id
+          _otherwise -> nil
+        end
+
+      assert has_element?(
+               view,
+               "a[href=\"/settings/seat-maps/#{map_public_id}/edit\"]",
+               "Add seats"
+             )
+    end
+
+    test "resumes at the room step after account creation and a reload", %{conn: conn} do
+      rooms_before = Repo.aggregate(Room, :count, :id)
+      OnboardingLogic.create_admin(account_params())
+      {:ok, view, _html} = live(conn, ~p"/setup")
+
+      assert render(view) =~ "1 of 4 steps completed"
+      assert has_element?(view, "#room-form")
+      assert Repo.aggregate(Room, :count, :id) == rooms_before
+    end
+
+    test "resumes at the layout step after room creation and a reload", %{conn: conn} do
+      OnboardingLogic.create_admin(account_params())
+      OnboardingLogic.create_room(%{name: "My Hall"})
+      {:ok, view, _html} = live(conn, ~p"/setup")
+
+      assert render(view) =~ "2 of 4 steps completed"
       assert render(view) =~ "Publish empty layout"
       assert has_element?(view, "h1", "Get started")
     end
