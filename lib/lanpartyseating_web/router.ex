@@ -63,6 +63,10 @@ defmodule LanpartyseatingWeb.Router do
       layout: {LanpartyseatingWeb.Layouts, :setup} do
       live("/setup", SetupLive, :index)
     end
+
+    # Account creation + login during onboarding. A controller (not the LiveView) must
+    # handle this because the browser session can only be written on an HTTP response.
+    post("/setup/login", SetupController, :login)
   end
 
   # Authentication routes (login pages)

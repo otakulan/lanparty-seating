@@ -18,9 +18,18 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
   defp account_params do
     %{
       "name" => "Operator",
-      "email" => "operator@example.com",
+      "email" => "operator+#{System.unique_integer()}@example.com",
       "password" => "a-very-long-password",
       "password_confirmation" => "a-very-long-password",
+    }
+  end
+
+  defp short_params do
+    %{
+      "name" => "Operator",
+      "email" => "operator+short+#{System.unique_integer()}@example.com",
+      "password" => "short",
+      "password_confirmation" => "short",
     }
   end
 
@@ -37,6 +46,25 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
         objects: [],
       }
     )
+  end
+
+  # Account creation is a real HTTP POST to the controller (a LiveView cannot write the
+  # session over the websocket), so drive it through the controller and follow the
+  # redirect back into the wizard at the room step.
+  #
+  # `mix ecto.reset` seeds a Room (id=1) and the wizard creates another, so remove the
+  # seeded one (and its dependents) to give the wizard a clean slate. This runs in the
+  # test's sandboxed transaction.
+  defp create_account(conn) do
+    Repo.delete_all(Lanpartyseating.SeatMapVersion)
+    Repo.delete_all(Lanpartyseating.SeatMap)
+    Repo.delete_all(Lanpartyseating.SeatSlot)
+    Repo.delete_all(Lanpartyseating.Room)
+
+    conn
+    |> post(~p"/setup/login", %{"user" => account_params()})
+    |> redirected_to(302)
+    |> then(&live(conn, &1))
   end
 
   describe "gate" do
@@ -65,8 +93,8 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       {:ok, view, _html} = live(conn, ~p"/setup")
 
       view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+
+      {:ok, view, _html} = create_account(conn)
 
       assert has_element?(view, "#room-form")
 
@@ -99,8 +127,8 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       {:ok, view, _html} = live(conn, ~p"/setup")
 
       view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+
+      {:ok, view, _html} = create_account(conn)
 
       view
       |> form("#room-form", %{room: %{"name" => "My Hall"}})
@@ -118,8 +146,8 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       {:ok, view, _html} = live(conn, ~p"/setup")
 
       view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+
+      {:ok, view, _html} = create_account(conn)
 
       view
       |> form("#room-form", %{room: %{"name" => "My Hall"}})
@@ -150,9 +178,7 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
 
       assert html =~ "Create your admin account"
 
-      view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+      {:ok, view, _html} = create_account(conn)
 
       assert has_element?(view, "#room-form")
 
@@ -176,24 +202,12 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
     end
 
     test "rejects a too-short password and keeps the operator on the account step", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/setup")
+      conn = post(conn, ~p"/setup/login", %{"user" => short_params()})
+      assert redirected_to(conn, 302) == ~p"/setup"
 
-      view
-      |> form(
-        "#account-form",
-        %{
-          user:
-            %{
-              "name" => "Operator",
-              "email" => "operator@example.com",
-              "password" => "short",
-              "password_confirmation" => "short",
-            },
-        }
-      )
-      |> render_submit()
+      {:ok, view, html} = live(conn, ~p"/setup")
 
-      assert render(view) =~ "Create your admin account"
+      assert html =~ "Create your admin account"
       assert has_element?(view, "#account-form")
       assert Repo.aggregate(User, :count, :id) == 0
     end
@@ -202,8 +216,8 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       {:ok, view, _html} = live(conn, ~p"/setup")
 
       view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+
+      {:ok, view, _html} = create_account(conn)
 
       view
       |> form("#room-form", %{room: %{"name" => "My Hall"}})
@@ -222,8 +236,8 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       {:ok, view, _html} = live(conn, ~p"/setup")
 
       view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+
+      {:ok, view, _html} = create_account(conn)
 
       view
       |> form("#room-form", %{room: %{"name" => "My Hall"}})
@@ -242,8 +256,8 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       {:ok, view, _html} = live(conn, ~p"/setup")
 
       view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+
+      {:ok, view, _html} = create_account(conn)
 
       view
       |> form("#room-form", %{room: %{"name" => "My Hall"}})
@@ -273,8 +287,8 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       {:ok, view, _html} = live(conn, ~p"/setup")
 
       view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+
+      {:ok, view, _html} = create_account(conn)
 
       view
       |> form("#room-form", %{room: %{"name" => "My Hall"}})
@@ -303,8 +317,8 @@ defmodule LanpartyseatingWeb.SetupLiveTest do
       {:ok, view, _html} = live(conn, ~p"/setup")
 
       view
-      |> form("#account-form", %{user: account_params()})
-      |> render_submit()
+
+      {:ok, view, _html} = create_account(conn)
 
       view
       |> form("#room-form", %{room: %{"name" => "My Hall"}})

@@ -53,8 +53,8 @@ defmodule LanpartyseatingWeb.UserAuth do
 
     conn
     |> renew_session(nil)
-    |> put_session(:badge_id, badge.id)
-    |> put_session(:live_socket_id, "badges_sessions:#{badge.id}")
+    |> Plug.Conn.put_session(:badge_id, badge.id)
+    |> Plug.Conn.put_session(:live_socket_id, "badges_sessions:#{badge.id}")
     |> redirect(to: user_return_to || signed_in_path(conn))
   end
 
@@ -120,7 +120,7 @@ defmodule LanpartyseatingWeb.UserAuth do
       conn = fetch_cookies(conn, signed: [@remember_me_cookie])
 
       if token = conn.cookies[@remember_me_cookie] do
-        {token, conn |> put_token_in_session(token) |> put_session(:user_remember_me, true)}
+        {token, conn |> put_token_in_session(token) |> Plug.Conn.put_session(:user_remember_me, true)}
       else
         nil
       end
@@ -196,12 +196,12 @@ defmodule LanpartyseatingWeb.UserAuth do
 
   defp write_remember_me_cookie(conn, token) do
     conn
-    |> put_session(:user_remember_me, true)
+    |> Plug.Conn.put_session(:user_remember_me, true)
     |> put_resp_cookie(@remember_me_cookie, token, @remember_me_options)
   end
 
   defp put_token_in_session(conn, token) do
-    put_session(conn, :user_token, token)
+    Plug.Conn.put_session(conn, :user_token, token)
   end
 
   @doc """
@@ -300,7 +300,7 @@ defmodule LanpartyseatingWeb.UserAuth do
   end
 
   defp maybe_store_return_to(%{method: "GET"} = conn) do
-    put_session(conn, :user_return_to, current_path(conn))
+    Plug.Conn.put_session(conn, :user_return_to, current_path(conn))
   end
 
   defp maybe_store_return_to(conn), do: conn

@@ -35,10 +35,6 @@ defmodule LanpartyseatingWeb.SetupLive do
     end
   end
 
-  def handle_event("create_admin", %{"user" => user_params}, socket) do
-    user_params |> OnboardingLogic.create_admin() |> resolve(socket)
-  end
-
   def handle_event("create_room", %{"room" => room_params}, socket) do
     room_params |> OnboardingLogic.create_room() |> resolve(socket)
   end
@@ -199,7 +195,8 @@ defmodule LanpartyseatingWeb.SetupLive do
     assigns = %{}
 
     ~H"""
-    <.form for={%{}} as={:user} id="account-form" phx-submit="create_admin" class="space-y-4">
+    <form id="account-form" action={to_string(~p"/setup/login")} method="post" class="space-y-4">
+      <input name="_csrf_token" type="hidden" value={Plug.CSRFProtection.get_csrf_token()} />
       <div class="grid gap-x-4 sm:grid-cols-2">
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Name</legend>
@@ -222,7 +219,7 @@ defmodule LanpartyseatingWeb.SetupLive do
       <.step_actions>
         <button class="btn btn-primary w-full sm:w-auto">Create account</button>
       </.step_actions>
-    </.form>
+    </form>
     """
   end
 
