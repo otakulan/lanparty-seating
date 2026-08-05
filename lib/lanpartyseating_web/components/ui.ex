@@ -9,6 +9,8 @@ defmodule LanpartyseatingWeb.Components.UI do
   import LanpartyseatingWeb.Helpers
   use LanpartyseatingWeb.Components.Icons
 
+  alias Phoenix.LiveView.JS
+
   # ============================================================================
   # Station Legend Component
   # ============================================================================
@@ -340,6 +342,7 @@ defmodule LanpartyseatingWeb.Components.UI do
   attr :class, :string, default: "mb-10"
 
   slot :inner_block, required: true
+  slot :title_content
   slot :trailing
 
   def admin_section(assigns) do
@@ -347,12 +350,85 @@ defmodule LanpartyseatingWeb.Components.UI do
     <section class={@class}>
       <div class="mb-4 flex items-center justify-between gap-4 border-b border-base-300 pb-2">
         <h2 class={["text-xl font-semibold", @title_class]}>
-          {@title}
+          <%= if @title_content != [] do %>
+            {render_slot(@title_content)}
+          <% else %>
+            {@title}
+          <% end %>
         </h2>
         {render_slot(@trailing)}
       </div>
       {render_slot(@inner_block)}
     </section>
+    """
+  end
+
+  # ============================================================================
+  # Editable Text Component
+  # ============================================================================
+
+  @doc """
+       Renders a label that turns into a focused text input when its pencil is clicked.
+
+       The caller owns the state: it flips its own `editing` assign in `edit_event`, and
+       persists (or rejects and reverts) in `save_event`, which fires on blur and on submit
+       with a `"name"` param. Rejecting simply means leaving the stored value untouched and
+       clearing `editing` — the label re-renders from `value`.
+
+       ## Examples
+
+           <.editable_text
+             id="room-name"
+             value={@room_name}
+             editing={@editing_room_name}
+             edit_event="edit_room_name"
+             save_event="save_room_name"
+             edit_title="Rename this room"
+           />
+
+       """
+  attr :id, :string, required: true
+  attr :value, :string, required: true
+  attr :editing, :boolean, default: false
+  attr :edit_event, :string, required: true
+  attr :save_event, :string, required: true
+  attr :edit_title, :string, default: "Rename"
+  attr :editable, :boolean, default: true
+  attr :class, :string, default: nil
+  attr :input_class, :string, default: "input input-sm input-bordered w-64"
+  attr :rest, :global, include: ~w(phx-value-id)
+
+  def editable_text(assigns) do
+    ~H"""
+    <span class={["inline-flex items-center gap-2", @class]}>
+      <%= if @editing do %>
+        <form id={@id} phx-submit={@save_event} class="inline-flex items-center" {@rest}>
+          <input
+            type="text"
+            name="name"
+            value={@value}
+            autocomplete="off"
+            class={@input_class}
+            phx-blur={@save_event}
+            phx-mounted={JS.focus()}
+            {@rest}
+          />
+        </form>
+      <% else %>
+        {@value}
+        <button
+          :if={@editable}
+          id={"#{@id}-edit"}
+          type="button"
+          phx-click={@edit_event}
+          title={@edit_title}
+          class="btn btn-xs btn-ghost text-base-content/50"
+          {@rest}
+        >
+          <Icons.pencil class="w-4 h-4" />
+        </button>
+      <% end %>
+    </span>
     """
   end
 
