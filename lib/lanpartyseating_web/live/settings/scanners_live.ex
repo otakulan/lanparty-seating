@@ -556,13 +556,6 @@ defmodule LanpartyseatingWeb.Settings.ScannersLive do
               <p class="mt-2">
                 Include the scanner token in the Authorization header: <code>Authorization: Bearer lpss_...</code>
               </p>
-              <%= if Mix.env() == :dev do %>
-                <p class="mt-2">
-                  <.link href="/api/docs" target="_blank" class="link link-primary">
-                    View API Documentation (Swagger UI)
-                  </.link>
-                </p>
-              <% end %>
             </div>
           </div>
         </div>
