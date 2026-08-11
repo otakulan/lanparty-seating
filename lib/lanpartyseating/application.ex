@@ -12,6 +12,8 @@ defmodule Lanpartyseating.Application do
       # Database must be ready before anything queries it
       Lanpartyseating.Repo,
       {Task, fn -> ensure_settings_exist() end},
+      # Carousel image cache (ETS-backed, must start after Repo)
+      Lanpartyseating.CarouselCache,
       # Telemetry and metrics
       LanpartyseatingWeb.Telemetry,
       Lanpartyseating.PromEx,

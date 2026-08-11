@@ -40,6 +40,9 @@ defmodule LanpartyseatingWeb.Router do
   scope "/", LanpartyseatingWeb do
     pipe_through(:browser)
 
+    # Carousel image serving (plain controller, no LiveView)
+    get "/carousel/images/:id", CarouselImageController, :show
+
     live_session :public,
       on_mount: [
         {LanpartyseatingWeb.UserAuth, :mount_current_scope},
@@ -89,6 +92,7 @@ defmodule LanpartyseatingWeb.Router do
       live("/settings/reservations", Settings.ReservationsLive, :reservations)
       live("/settings/users", Settings.UsersLive, :users)
       live("/settings/badges", Settings.BadgesLive, :badges)
+      live("/settings/carousel", Settings.CarouselLive, :carousel)
       live("/settings/scanners", Settings.ScannersLive, :scanners)
     end
   end

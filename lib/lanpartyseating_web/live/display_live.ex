@@ -4,6 +4,7 @@ defmodule LanpartyseatingWeb.DisplayLive do
   alias Lanpartyseating.TournamentsLogic
   alias Lanpartyseating.SettingsLogic
   alias Lanpartyseating.StationLogic
+  alias Lanpartyseating.CarouselLogic
 
   defp assign_stations(socket, station_list) do
     {stations, {columns, rows}} = StationLogic.stations_by_xy(station_list)
@@ -40,7 +41,10 @@ defmodule LanpartyseatingWeb.DisplayLive do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubSub, "station_update")
       Phoenix.PubSub.subscribe(PubSub, "tournament_update")
+      Phoenix.PubSub.subscribe(PubSub, "carousel_update")
     end
+
+    carousel_images = CarouselLogic.list_images()
 
     socket =
       socket
@@ -48,12 +52,17 @@ defmodule LanpartyseatingWeb.DisplayLive do
       |> assign(:rowpad, settings.row_padding)
       |> assign_stations(station_list)
       |> assign(:tournaments, tournaments)
+      |> assign(:carousel_images, carousel_images)
 
     {:ok, socket}
   end
 
   def handle_info({:tournaments, tournaments}, socket) do
     {:noreply, assign(socket, :tournaments, tournaments)}
+  end
+
+  def handle_info({:carousel, :updated}, socket) do
+    {:noreply, assign(socket, :carousel_images, CarouselLogic.list_images())}
   end
 
   def handle_info({:stations, station_list}, socket) do
@@ -71,8 +80,8 @@ defmodule LanpartyseatingWeb.DisplayLive do
 
   def render(assigns) do
     ~H"""
-    <div class="flex flex-row">
-      <div class="flex flex-col w-2/3 pr-5">
+    <div class="flex flex-row h-[calc(100vh-7rem)]">
+      <div class="flex flex-col w-2/3 pr-5 overflow-y-auto">
         <%!-- STATION MAP --%>
         <div class="flex items-center justify-between mb-2">
           <h1 class="text-3xl font-bold">Stations</h1>
@@ -194,46 +203,76 @@ defmodule LanpartyseatingWeb.DisplayLive do
           <p class="text-base-content/50 py-4">No upcoming tournaments / Aucun tournoi à venir</p>
         <% end %>
       </div>
-      <div class="flex flex-col grow pl-4 border-l border-base-300">
-        <h1 class="text-3xl font-bold mb-4">Rules and Information</h1>
-        <ul class="list-disc pl-5 space-y-2 text-lg">
-          <li>
-            <b class="text-warning">No spectators</b>. You need a reservation to be inside and to seat at a station
-          </li>
-          <li>
-            <b class="text-warning">No free accounts</b>. You need to your own account to play games
-          </li>
-          <li><b class="text-warning">No OSU</b> for music copyright reasons</li>
-          <li>
-            <b class="text-warning">Tournaments</b>:
-            <ul class="list-disc pl-5 mt-1 space-y-1 text-base">
-              <li>Complete teams will be prioritized</li>
-              <li>Register your team or as a solo player at the info desk located at the room's entrance</li>
-              <li>All tournaments are single elimination with prizes for the winning team</li>
-            </ul>
-          </li>
-        </ul>
+      <div class="flex flex-col grow pl-4 border-l border-base-300 overflow-hidden min-h-0">
+        <h1 class="text-3xl font-bold mb-4">Games Available / Jeux disponibles</h1>
 
-        <h1 class="text-3xl font-bold mt-8 mb-4">Règlements et informations</h1>
-        <ul class="list-disc pl-5 space-y-2 text-lg">
-          <li>
-            <b class="text-warning">Pas de spectateurs</b>. Il est nécessaire de faire une réservation avant d'entrer dans la zone et de s'asseoir
-          </li>
-          <li>
-            <b class="text-warning">Pas de comptes de jeu gratuit</b>. Vous devez posséder des comptes pour jouer aux jeux
-          </li>
-          <li>
-            <b class="text-warning">Pas de OSU</b> pour des raisons de droits d'auteur
-          </li>
-          <li>
-            <b class="text-warning">Tournois</b>:
-            <ul class="list-disc pl-5 mt-1 space-y-1 text-base">
-              <li>Les équipes complètes seront priorisées</li>
-              <li>Enregistrez-vous ou votre équipe au bureau d'information à l'entrée de la salle</li>
-              <li>Tous les tournois sont à élimination simple avec des prix pour l'équipe gagnante</li>
-            </ul>
-          </li>
-        </ul>
+        <%= if @carousel_images != [] do %>
+          <div
+            id="game-carousel"
+            class="flex-1 flex flex-col min-h-0"
+            x-data={"{
+              currentIndex: 0,
+              total: #{length(@carousel_images)},
+              intervalId: null,
+              init() {
+                if (this.total > 1) {
+                  this.intervalId = setInterval(() => {
+                    this.currentIndex = (this.currentIndex + 1) % this.total;
+                  }, 2000);
+                }
+              },
+              destroy() {
+                if (this.intervalId) clearInterval(this.intervalId);
+              }
+            }"}
+            @mouseenter="if (intervalId) { clearInterval(intervalId); intervalId = null; }"
+            @mouseleave="if (total > 1) { intervalId = setInterval(() => { currentIndex = (currentIndex + 1) % total; }, 2000); }"
+          >
+            <%!-- Slides area — takes remaining space after dots --%>
+            <div class="relative flex-1 min-h-0">
+              <%= for {image, index} <- Enum.with_index(@carousel_images) do %>
+                <div
+                  class="absolute inset-0 flex flex-col items-center transition-opacity duration-700"
+                  x-show={"currentIndex === #{index}"}
+                  x-transition:enter="transition ease-out duration-700"
+                  x-transition:enter-start="opacity-0"
+                  x-transition:enter-end="opacity-100"
+                  x-transition:leave="transition ease-in duration-500"
+                  x-transition:leave-start="opacity-100"
+                  x-transition:leave-end="opacity-0"
+                >
+                  <div class="flex-1 min-h-0 flex items-center justify-center w-full">
+                    <img
+                      src={~p"/carousel/images/#{image.id}"}
+                      alt={image.title || "Game cover"}
+                      class="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                    />
+                  </div>
+                  <%= if image.title do %>
+                    <p class="text-xl font-semibold mt-2 text-center flex-shrink-0">{image.title}</p>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+
+            <%!-- Dot indicators — in flow below the slides --%>
+            <%= if length(@carousel_images) > 1 do %>
+              <div class="flex justify-center gap-2 py-2 flex-shrink-0">
+                <%= for {_image, index} <- Enum.with_index(@carousel_images) do %>
+                  <button
+                    class="w-3 h-3 rounded-full transition-colors"
+                    x-bind:class={"currentIndex === #{index} ? 'bg-primary' : 'bg-base-content/30'"}
+                    x-on:click={"currentIndex = #{index}"}
+                  />
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="flex-1 flex items-center justify-center text-base-content/50">
+            <p class="text-lg">No games configured / Aucun jeu configur&eacute;</p>
+          </div>
+        <% end %>
       </div>
     </div>
     """
